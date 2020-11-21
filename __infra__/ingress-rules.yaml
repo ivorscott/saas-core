@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: devpie-client-ingress-rules
+  annotations:
+    traefik.ingress.kubernetes.io/router.pathmatcher: PathPrefix
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  rules:
+    - host: client-backend.devpie.local
+      http:
+        paths:
+          - path: /v1/users
+            backend:
+              serviceName: app-identity-svc
+              servicePort: 4000

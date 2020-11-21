@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: view-db-identity-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: "10Gi"
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: view-db-identity-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: "3Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: view-db-identity-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: view-db-identity
+  template:
+    metadata:
+      labels:
+        app: view-db-identity
+    spec:
+      volumes:
+        - name: view-db-identity-volume
+          persistentVolumeClaim:
+            claimName: view-db-identity-claim
+      containers:
+        - name: view-db-identity
+          image: postgres:11.6
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "250m"
+              memory: "250Mi"
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: view-db-identity-database-name
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: view-db-identity-username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: view-db-identity-password
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: view-db-identity-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: view-db-identity-svc
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: view-db-identity

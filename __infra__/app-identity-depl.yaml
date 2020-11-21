@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-identity-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-identity
+  template:
+    metadata:
+      labels:
+        app: app-identity
+    spec:
+      containers:
+        - image: devpies/client-app-identity
+          name: app-identity
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "250m"
+              memory: "250Mi"
+          env:
+            - name: APP_NAME
+              value: Identity
+            - name: NODE_ENV
+              value: development
+            - name: PORT
+              value: "4000"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: view-db-identity-url
+            - name: AUTH0_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-domain
+            - name: AUTH0_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-audience
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-identity-svc
+spec:
+  selector:
+    app: app-identity
+  ports:
+    - name: app-identity
+      port: 4000
+      targetPort: 4000
