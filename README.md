@@ -20,7 +20,7 @@ End users send requests to Applications. Applications write messages (commands o
 - An Application is a feature with its own endpoints that accepts user interaction.
 - Applications provide immediate responses to user input.
 
-[ ] Build Identity App (Typescript)
+[x] Build Identity App (Typescript)
 
 [ ] Build Projects App (Typescript)
 

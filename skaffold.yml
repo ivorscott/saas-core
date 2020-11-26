@@ -11,6 +11,15 @@ build:
       docker:
         dockerfile: Dockerfile
         target: dev
+    - image: devpies/client-com-identity
+      context: identity/component
+      sync:
+        manual:
+          - src: "*.go"
+            dest: .
+      docker:
+        dockerfile: Dockerfile
+        target: dev
   local:
     push: false
     useDockerCLI: true

@@ -1,14 +1,9 @@
-import express, { Router, Request, Response, NextFunction } from "express";
 import Knex from "knex";
-
-interface Queries {
-  loadUser: (id: string) => any;
-}
-
-interface Handlers {
-  findIdentity: (req: Request, res: Response, next: NextFunction) => any;
-  saveIdentity: (req: Request, res: Response, next: NextFunction) => void;
-}
+import { Stan } from "node-nats-streaming";
+import express, { Router, Request, Response, NextFunction } from "express";
+import { v4 as uuidV4 } from "uuid";
+import { Commands } from "@devpie/client-events";
+import { AddUserPublisher } from "./publish-add-user";
 
 export interface Feature {
   queries: Queries;
@@ -16,22 +11,76 @@ export interface Feature {
   router: Router;
 }
 
-function createHandlers({ queries }: { queries: Queries }) {
-  function saveIdentity(req: Request, res: Response, next: NextFunction) {
-    return res.send({});
-  }
+interface Auth0User {
+  auth0Id: string;
+  email: string;
+  emailVerified: boolean;
+  firstName: string;
+  lastName: string;
+  picture: string;
+  locale: string;
+}
 
-  function findIdentity(req: Request, res: Response, next: NextFunction) {
-    return res.status(200).send({});
+interface Queries {
+  loadUser: (id: string) => any;
+}
+
+interface Actions {
+  addUser: (traceId: string, user: Auth0User) => void;
+}
+
+interface Handlers {
+  findIdentityIfExists: (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => any;
+}
+
+function createActions(natsClient: Stan, queries: Queries): Actions {
+  async function addUser(traceId: string, user: Auth0User) {
+    try {
+      const publisher = new AddUserPublisher(natsClient);
+      const userId = uuidV4();
+
+      const subject: Commands.AddUser = Commands.AddUser;
+
+      const command = {
+        id: uuidV4(),
+        subject,
+        metadata: {
+          traceId,
+          userId,
+        },
+        data: { id: userId, ...user },
+      };
+
+      await publisher.publish(command);
+    } catch (error) {
+      console.log("error:", error);
+    }
+    return;
   }
 
   return {
-    findIdentity,
-    saveIdentity,
+    addUser,
   };
 }
 
-function createQueries({ db }: { db: Promise<Knex> }): Queries {
+function createHandlers(actions: Actions) {
+  function findIdentityIfExists(req: Request, res: Response) {
+    const auth0User = req.user;
+    actions.addUser(req.context.traceId, auth0User);
+    return res.status(200).send({});
+    // .send({ error: "user not found" });
+  }
+
+  return {
+    findIdentityIfExists,
+  };
+}
+
+function createQueries(db: Promise<Knex>): Queries {
   function loadUser(id: string) {
     return db
       .then((client) => client("users").where({ id }))
@@ -43,14 +92,14 @@ function createQueries({ db }: { db: Promise<Knex> }): Queries {
   };
 }
 
-function createIdentity({ db }: { db: Promise<Knex> }): Feature {
-  const queries = createQueries({ db });
-  const handlers = createHandlers({ queries });
+function createIdentity(db: Promise<Knex>, natsClient: Stan): Feature {
+  const queries = createQueries(db);
+  const actions = createActions(natsClient, queries);
+  const handlers = createHandlers(actions);
 
   const router = express.Router();
 
-  router.route("/").post(handlers.saveIdentity);
-  router.route("/me").get(handlers.findIdentity);
+  router.route("/me").get(handlers.findIdentityIfExists);
 
   return { handlers, queries, router };
 }

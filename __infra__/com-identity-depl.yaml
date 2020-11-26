@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: com-identity-depl
+spec:
+  selector:
+    matchLabels:
+      app: com-identity
+  template:
+    metadata:
+      labels:
+        app: com-identity
+    spec:
+      containers:
+        - image: devpies/client-com-identity
+          name: com-identity
