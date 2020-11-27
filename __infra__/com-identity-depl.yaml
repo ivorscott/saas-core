@@ -14,3 +14,22 @@ spec:
       containers:
         - image: devpies/client-com-identity
           name: com-identity
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: view-db-identity-database-name
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: view-db-identity-username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: view-db-identity-password
+            - name: POSTGRES_HOST
+              value: view-db-identity-svc
+
