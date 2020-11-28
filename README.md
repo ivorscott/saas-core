@@ -90,7 +90,7 @@ cd identity/component
 
 migrate create -ext sql -dir migrations -seq create_table 
 
-docker build -t devpies/com-db-identity-migration:v000001 .
+docker build -t devpies/com-db-identity-migration:v000001 ./migrations
 
 docker push devpies/com-db-identity-migration:v000001  
 ```
