@@ -1,16 +1,58 @@
 # CQRS Event Architecture for Devpie Client
 
-This project uses CQRS and event sourcing.
+This backend uses CQRS and event sourcing. It should be used with the [devpie-client-app](https://github.com/ivorscott/devpie-client-app).
 
-Event types and definitions are defined in a separate [repository](https://github.com/ivorscott/devpie-client-common-module).
+It uses [devpie-client-events](https://github.com/ivorscott/devpie-client-common-module), a shared library that spans across 
+3 language specific packages: in Typescript, Python and Golang. The Typescript commands and events are the source of truth. The library 
+uses [Quicktype](https://quicktype.io/) to generate code for the Golang and Python packages. Therefore, microservices can 
+be developed in multiple languages while using the shared library.
 
-The frontend application lives in its own [repository](https://github.com/ivorscott/devpie-client-app).
+### Goal
+
+This is an experimental project for learning. If it gets serious I will discontinue this version, clone it, and use it 
+as the base for a company.
+
+Devpie Client is a business management tool for performing software development with clients. Features will include 
+kanaban or agile style board management and auxiliary services like cost estimation, payments and more. 
+
+## How Data Moves Through The System
 
 ![cqrs architecture](cqrs.png)
 
-### How Data Moves Through The System
-
 End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Services (Components) pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use to send responses to users.
+
+## Setup 
+
+#### Requirements
+
+* [Docker Desktop](https://docs.docker.com/desktop/) (Kubernetes enabled)
+* [Tilt](https://tilt.dev/)
+* [Create Auth0 account](http://auth0.com/)
+* Fork repository to automate your own Auth0 configuration.
+* [Enable Auth0 Github Deployments Extension](https://auth0.com/docs/extensions/github-deployments)
+    
+#### Configuration
+* \__infra\__ contains the kubernetes infrastructure
+* \__a0\__ contains the auth0 configuration
+
+## Usage
+
+Run front and back ends simultaneously. For faster development don't run the [devpie-client-app](https://github.com/ivorscott/devpie-client-app) in a container/pod.
+
+```bash
+# frontend
+npm start
+
+# backend
+tilt up
+```
+
+### Debugging the database
+
+```bash
+# run temporary pod to enter a database through pgcli 
+k run pgcli --rm --image=devpies/pgcli -it --command -- pgcli postgres://postgres:postgres@view-db-identity-svc:5432/identity
+```
 
 ## ToDo
 
@@ -32,7 +74,7 @@ End users send requests to Applications. Applications write messages (commands o
 - All state transitions will be stored by NATS Streaming in streams of messages. These state transitions become the authoritative state we use to make decisions.
 - NATS Streaming is a durable state store as well as a transport mechanism.
 
-[ ] Integrate NATS Streaming
+[x] Integrate NATS Streaming
 
 ### Components
 
@@ -42,7 +84,7 @@ End users send requests to Applications. Applications write messages (commands o
 - Micoservices don't share databases with other services
 - Micoservices allow us to use the technology stack best suited to achieve required performance
 
-[ ] Build Identity Service (Golang)
+[x] Build Identity Service (Golang)
 
 [ ] Build Projects Service (Typescript)
 
@@ -66,7 +108,7 @@ End users send requests to Applications. Applications write messages (commands o
 - View Data are not authoritative state, but derived from authoritative state.
 - View Data can be stored in any format or database that makes sense for the Application
 
-[ ] Identity
+[x] Identity
 
 [ ] Projects (jsonb)
 
