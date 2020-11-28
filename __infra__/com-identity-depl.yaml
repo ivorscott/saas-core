@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: com-identity-depl
+spec:
+  selector:
+    matchLabels:
+      app: com-identity
+  template:
+    metadata:
+      labels:
+        app: com-identity
+    spec:
+      containers:
+        - image: devpies/client-com-identity
+          name: com-identity
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: com-db-identity-database-name
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: com-db-identity-username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: com-db-identity-password
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: com-db-identity-host
+      initContainers:
+        - name: schema-migration
+          image: devpies/com-db-identity-migration:v000001
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: com-db-identity-url
+          command: ["migrate"]
+          args: ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
+

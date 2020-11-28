@@ -4,8 +4,7 @@ metadata:
   name: devpie-client-ingress-rules
   annotations:
     traefik.ingress.kubernetes.io/router.pathmatcher: PathPrefix
-    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: client-backend.devpie.local
@@ -15,3 +14,8 @@ spec:
             backend:
               serviceName: app-identity-svc
               servicePort: 4000
+          - path: /
+            backend:
+              serviceName: nats-svc
+              servicePort: 8222
+

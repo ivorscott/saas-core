@@ -15,21 +15,20 @@ spec:
       containers:
         - name: nats
           image: nats-streaming:0.19.0-alpine3.12
-          args:
-            [
-              "-p",
+          args: [
+              "-p", # Use port for clients (default: 4222)
               "4222",
-              "-m",
+              "-m", # Use port for http monitoring
               "8222",
-              "-hbi",
+              "-hbi", # Interval at which server sends heartbeat to a client
               "5s",
-              "-hbt",
+              "-hbt", # How long server waits for a heartbeat response
               "5s",
-              "-hbf",
+              "-hbf", # Number of failed heartbeats before server closes the client connection
               "2",
-              "-SD",
-              "-cid",
-              "identity",
+              "-SD", # Enable STAN debugging output
+              "-cid", # Cluster ID (default: test-cluster)
+              "devpie-client",
             ]
 ---
 apiVersion: v1

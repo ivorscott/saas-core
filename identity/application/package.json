@@ -1,11 +1,13 @@
 {
-  "name": "devpie-client-cqrs-core",
+  "name": "application",
   "version": "1.0.0",
   "description": "This project uses CQRS and event sourcing.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "ts-node-dev --rs --notify false index.ts"
+    "dev": "ts-node-dev --rs --notify false index.ts",
+    "build": "tsc",
+    "pretty": "npx prettier --write ."
   },
   "repository": {
     "type": "git",
@@ -19,7 +21,7 @@
   },
   "homepage": "https://github.com/ivorscott/devpie-client-cqrs-core#readme",
   "dependencies": {
-    "@devpie/client-events": "0.0.13",
+    "@devpie/client-events": "0.0.17",
     "@types/cors": "^2.8.8",
     "body-parser": "^1.19.0",
     "camelcase-keys": "^6.2.2",
