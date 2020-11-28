@@ -13,30 +13,35 @@ import (
 	stan "github.com/nats-io/stan.go"
 )
 
-var SeededRand *rand.Rand = rand.New(
-	rand.NewSource(time.Now().UnixNano()))
-
 const (
 	Url = "nats://nats-svc:4222"
 	QueueGroup = "com-identity-queue"
 	ClusterId = "devpie-client"
-
 )
 
-func handleNewUser(m *stan.Msg) {
-	fmt.Printf("Received a message: %s\n", string(m.Data))
+var seededRand *rand.Rand = rand.New(
+	rand.NewSource(time.Now().UnixNano()))
 
-	// TODO: save user in dedicated database
+var clientID = fmt.Sprintf("com-identity-%d", rand.Int())
 
-	m.Ack()
-}
+var repo, repoErr = NewRepository(Config{
+	User:       os.Getenv("POSTGRES_USER"),
+	Host:       os.Getenv("POSTGRES_HOST"),
+	Name:       os.Getenv("POSTGRES_DB"),
+	Password:   os.Getenv("POSTGRES_PASSWORD"),
+	DisableTLS: true,
+})
+
+var infolog = log.New(os.Stdout, fmt.Sprintf("%s-identity-component: ", ClusterId), log.Lmicroseconds|log.Lshortfile)
 
 func main() {
-	infolog := log.New(os.Stdout, "devpie-client-identity-component: ", log.Lmicroseconds|log.Lshortfile)
+	if repoErr != nil {
+		log.Fatal(repoErr)
+	}
+	defer repo.Close()
 
 	infolog.Printf("main : Started")
 
-	var ClientID = fmt.Sprintf("com-identity-%d", rand.Int())
 
 	dur, err := time.ParseDuration("5s")
 	if err != nil {
@@ -44,20 +49,16 @@ func main() {
 	}
 	AckWaitTimeout := stan.AckWait(dur)
 
-	// Listen for an interrupt or terminate signal.
-	// Signal package requires a buffered channel.
-
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	c, close := events.NewClient(ClusterId, ClientID , Url)
+	c, close := events.NewClient(ClusterId, clientID , Url)
 	defer close()
 
-	c.Listen(string(events.CommandsAddUser), QueueGroup, handleNewUser, stan.DeliverAllAvailable(), stan.SetManualAckMode(),
+	c.Listen(string(events.CommandsAddUser), QueueGroup, handleAddUserCommand, stan.DeliverAllAvailable(), stan.SetManualAckMode(),
 		AckWaitTimeout, stan.DurableName(QueueGroup))
 
 	select {
-	// Graceful shutdown
 	case sig := <-shutdown:
 		infolog.Println("main : Start shutdown", sig)
 		close()

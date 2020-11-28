@@ -19,17 +19,31 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: view-db-identity-database-name
+                  key: com-db-identity-database-name
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: view-db-identity-username
+                  key: com-db-identity-username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: view-db-identity-password
+                  key: com-db-identity-password
             - name: POSTGRES_HOST
-              value: view-db-identity-svc
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: com-db-identity-host
+      initContainers:
+        - name: schema-migration
+          image: devpies/com-db-identity-migration:v000001
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: com-db-identity-url
+          command: ["migrate"]
+          args: ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
 
