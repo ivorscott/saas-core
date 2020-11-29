@@ -37,7 +37,7 @@ spec:
                   key: com-db-identity-host
       initContainers:
         - name: schema-migration
-          image: devpies/com-db-identity-migration:v000001
+          image: devpies/com-db-identity-migration:v000003
           env:
             - name: DB_URL
               valueFrom:
