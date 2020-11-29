@@ -40,5 +40,10 @@ func handleAddUserCommand(m *stan.Msg) {
 
 	m.Ack()
 
-	//c.Publish(string(events.EventsUserAdded), nu)
+	bytes, err := u.Marshal()
+	if err !=nil {
+		log.Fatal(err)
+	}
+
+	c.Publish(string(events.EventsUserAdded), bytes)
 }
