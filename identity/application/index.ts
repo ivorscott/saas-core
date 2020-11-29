@@ -1,4 +1,4 @@
-import Knex from "knex";
+import { Client } from "pg";
 import { env } from "./env";
 import { v4 as uuidV4 } from "uuid";
 import { createIdentity } from "./identity";
@@ -6,7 +6,9 @@ import { createExpressApp } from "./express";
 
 import nats from "node-nats-streaming";
 
-const client = Promise.resolve(Knex(env.DATABASE_URL));
+const client = new Client({ connectionString: env.DATABASE_URL });
+
+client.connect();
 
 const stan = nats.connect("devpie-client", uuidV4(), {
   url: "http://nats-svc:4222",
