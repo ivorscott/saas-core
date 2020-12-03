@@ -46,6 +46,6 @@ func handleAddUserCommand(m *stan.Msg) {
 	}
 
 	cat := events.Identity
-	sn := fmt.Sprintf("%s-%s", cat, nu.ID)
+	sn := fmt.Sprintf("%s.%s", cat, nu.ID)
 	c.Publish(sn, bytes)
 }

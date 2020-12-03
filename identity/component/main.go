@@ -55,7 +55,7 @@ func main() {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	
-	sn := fmt.Sprintf("%s:command",events.Identity) 
+	sn := fmt.Sprintf("%s.command",events.Identity)
 
 	c.Listen(sn, QueueGroup, handleAddUserCommand, stan.DeliverAllAvailable(), stan.SetManualAckMode(),
 		AckWaitTimeout, stan.DurableName(QueueGroup))

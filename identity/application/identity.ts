@@ -54,7 +54,7 @@ function createActions(natsClient: Stan, queries: Queries): Actions {
   async function addUser(traceId: string, user: Auth0User) {
     try {
       const userId = uuidV4();
-      const streamName = `${Categories.Identity}:command`;
+      const streamName = `${Categories.Identity}.command`;
       const publisher = new AddUserPublisher(natsClient, streamName);
 
       const type: Commands.AddUser = Commands.AddUser;

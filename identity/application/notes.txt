@@ -48,7 +48,7 @@ Problem with Event Sourcing is how to derive the true state (current state) of e
 Determine what is the entity's state now.
 
 You need a projection function, which is essentially a reducer function that
-iterates over an array of events and accumalates a current value and returns the
+iterates over an array of events and accumulates a current value and returns the
 resulting value.
 
 Events.reduce((acc, curr){
