@@ -1,7 +1,7 @@
 import { Stan } from "node-nats-streaming";
 import express, { Router, Request, Response } from "express";
 import { v4 as uuidV4 } from "uuid";
-import { Commands } from "@devpie/client-events";
+import { Categories, Commands } from "@devpie/client-events";
 import { AddUserPublisher } from "./publish-add-user";
 import { Client } from "pg";
 
@@ -53,14 +53,15 @@ function createActions(natsClient: Stan, queries: Queries): Actions {
 
   async function addUser(traceId: string, user: Auth0User) {
     try {
-      const publisher = new AddUserPublisher(natsClient);
       const userId = uuidV4();
+      const streamName = `${Categories.Identity}:command`;
+      const publisher = new AddUserPublisher(natsClient, streamName);
 
-      const subject: Commands.AddUser = Commands.AddUser;
+      const type: Commands.AddUser = Commands.AddUser;
 
       const command = {
         id: uuidV4(),
-        subject,
+        type,
         metadata: {
           traceId,
           userId,

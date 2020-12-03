@@ -45,5 +45,7 @@ func handleAddUserCommand(m *stan.Msg) {
 		log.Fatal(err)
 	}
 
-	c.Publish(string(events.EventsUserAdded), bytes)
+	cat := events.Identity
+	sn := fmt.Sprintf("%s-%s", cat, nu.ID)
+	c.Publish(sn, bytes)
 }
