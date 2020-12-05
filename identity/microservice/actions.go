@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/ivorscott/devpie-client-events/go/events"
 	"github.com/nats-io/stan.go"
 	"log"
@@ -17,7 +18,10 @@ func handleAddUserCommand(m *stan.Msg) {
 
 	ud := u.Data
 
+	fmt.Printf("Command user data: %+v", u)
+
 	nu = NewUser{
+		ID: ud.ID,
 		Auth0ID: ud.Auth0ID,
 		Email: ud.Email,
 		EmailVerified: ud.EmailVerified,
@@ -27,10 +31,21 @@ func handleAddUserCommand(m *stan.Msg) {
 		Locale: &ud.Locale,
 	}
 
-	_, err = CreateUser(repo, nu, nu.Auth0ID, time.Now())
+	fmt.Printf("New user: %+v", nu)
+
+	_, err = CreateUser(repo, nu, time.Now())
 	if err !=nil {
 		log.Fatal(err)
 	}
 
 	m.Ack()
+
+	bytes, err := u.Marshal()
+	if err !=nil {
+		log.Fatal(err)
+	}
+
+	cat := events.Identity
+	sn := fmt.Sprintf("%s.%s", cat, nu.ID)
+	c.Publish(sn, bytes)
 }

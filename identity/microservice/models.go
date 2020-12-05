@@ -21,6 +21,7 @@ type User struct {
 }
 
 type NewUser struct {
+	ID 			  string  `json:"user_id"`
 	Auth0ID       string  `json:"auth0Id" `
 	Email         string  `json:"email"`
 	EmailVerified bool    `json:"emailVerified"`

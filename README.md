@@ -18,7 +18,7 @@ kanaban or agile style board management and auxiliary services like cost estimat
 
 ![cqrs architecture](cqrs.png)
 
-End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Services (Components) pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use to send responses to users.
+End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Microservices pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use to send responses to users.
 
 ## Setup 
 
@@ -43,7 +43,7 @@ If you wish, you can create aliases for routine tasks as well.
 ```bash
 # inside your .bashrc or .zshrc file
 
-export COM_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
+export MIC_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
 export VIEW_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
 
 alias k=kubectl
@@ -65,19 +65,19 @@ tilt up
 Pgcli is a command line interface for Postgres with auto-completion and syntax highlighting.
 
 ```bash
-pgcli $COM_DB_IDENTITY
+pgcli $MIC_DB_IDENTITY
 ```
 
 ### Migrations
-Components and Aggregators should have remote [database services](elephantsql.com).
+Microservices and Aggregators should have remote [database services](elephantsql.com).
 
 Migrations exist under the following paths:
 
-- `<feature>/component/migrations`
+- `<feature>/microservice/migrations`
 - `<feature>/aggregator/migrations`
 
 #### Migration flow
-1. move to a feature's `component` or `aggregator`
+1. move to a feature's `microservice` or `aggregator`
 2. create a `migration`
 3. add sql for `up` and `down` migration files
 4. `tag` an image containing the latest migrations
@@ -86,13 +86,13 @@ Migrations exist under the following paths:
 For example:
 
 ```bash
-cd identity/component
+cd identity/microservice
 
 migrate create -ext sql -dir migrations -seq create_table 
 
-docker build -t devpies/com-db-identity-migration:v000001 ./migrations
+docker build -t devpies/mic-db-identity-migration:v000001 ./migrations
 
-docker push devpies/com-db-identity-migration:v000001  
+docker push devpies/mic-db-identity-migration:v000001  
 ```
 Then apply the latest migration with `initContainers`
 
@@ -100,53 +100,53 @@ Then apply the latest migration with `initContainers`
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: com-identity-depl
+  name: mic-identity-depl
 spec:
   selector:
     matchLabels:
-      app: com-identity
+      app: mic-identity
   template:
     metadata:
       labels:
-        app: com-identity
+        app: mic-identity
     spec:
       containers:
-        - image: devpies/client-com-identity
-          name: com-identity
+        - image: devpies/client-mic-identity
+          name: mic-identity
           env:
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: com-db-identity-database-name
+                  key: mic-db-identity-database-name
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: com-db-identity-username
+                  key: mic-db-identity-username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: com-db-identity-password
+                  key: mic-db-identity-password
             - name: POSTGRES_HOST
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: com-db-identity-host
+                  key: mic-db-identity-host
 # ============================================
 #  Init containers are specialized containers
 #  that run before app containers in a Pod.
 # ============================================
       initContainers:
         - name: schema-migration
-          image: devpies/com-db-identity-migration:v000001
+          image: devpies/mic-db-identity-migration:v000001
           env:
             - name: DB_URL
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: com-db-identity-url
+                  key: mic-db-identity-url
           command: ["migrate"]
           args: ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
 ```
@@ -166,13 +166,12 @@ Learn more about migrate cli [here](https://github.com/golang-migrate/migrate/bl
 - All state transitions will be stored by NATS Streaming in streams of messages. These state transitions become the authoritative state used to make decisions.
 - NATS Streaming is a durable state store as well as a transport mechanism.
 
-### Components
+### Microservices
 
-- Components are services
-- Microservices are small and focused doing one thing well
-- Microservices are autonomous components that encapsulate a distinct business process
-- Micoservices don't share databases with other services
-- Micoservices allow us to use the technology stack best suited to achieve required performance
+- Microservices are autonomous units of functionality that model a single business concern.
+- Microservices are small and focused doing one thing well.
+- Micoservices don't share databases with other Microservices.
+- Micoservices allow us to use the technology stack best suited to achieve required performance.
 
 ### Aggregators
 

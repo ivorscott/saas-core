@@ -33,8 +33,11 @@ var repo, repoErr = NewRepository(Config{
 })
 
 var infolog = log.New(os.Stdout, fmt.Sprintf("%s-identity-component: ", ClusterId), log.Lmicroseconds|log.Lshortfile)
+var c, closeConn = events.NewClient(ClusterId, clientID , Url)
 
 func main() {
+	defer closeConn()
+
 	if repoErr != nil {
 		log.Fatal(repoErr)
 	}
@@ -51,17 +54,16 @@ func main() {
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+	
+	sn := fmt.Sprintf("%s.command",events.Identity)
 
-	c, close := events.NewClient(ClusterId, clientID , Url)
-	defer close()
-
-	c.Listen(string(events.CommandsAddUser), QueueGroup, handleAddUserCommand, stan.DeliverAllAvailable(), stan.SetManualAckMode(),
+	c.Listen(sn, QueueGroup, handleAddUserCommand, stan.DeliverAllAvailable(), stan.SetManualAckMode(),
 		AckWaitTimeout, stan.DurableName(QueueGroup))
 
 	select {
 	case sig := <-shutdown:
 		infolog.Println("main : Start shutdown", sig)
-		close()
+		closeConn()
 		infolog.Println("main : Closed NATS connection", sig)
 		os.Exit(1)
 	}
