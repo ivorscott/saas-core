@@ -3,7 +3,7 @@ import express, { Router, Request, Response } from "express";
 import { v4 as uuidV4 } from "uuid";
 import { Categories, Commands } from "@devpie/client-events";
 import { AddUserPublisher } from "./publish-add-user";
-import { Client } from "pg";
+import { Pool } from "pg";
 
 export interface Feature {
   queries: Queries;
@@ -104,14 +104,13 @@ function createHandlers(actions: Actions) {
   };
 }
 
-function createQueries(db: Client): Queries {
+function createQueries(db: Pool): Queries {
   function loadUser(auth0Id: string) {
     return db.query(
       "SELECT user_id, auth0_id, email, email_verified, first_name, last_name, picture, created, locale FROM users WHERE auth0_id = $1",
       [auth0Id],
       (err, res) => {
         if (err) throw err;
-        db.end();
         return res.rowCount ? res.rows[0] : {};
       },
     );
@@ -122,7 +121,7 @@ function createQueries(db: Client): Queries {
   };
 }
 
-export function createIdentity(db: Client, natsClient: Stan): Feature {
+export function createIdentity(db: Pool, natsClient: Stan): Feature {
   const queries = createQueries(db);
   const actions = createActions(natsClient, queries);
   const handlers = createHandlers(actions);

@@ -29,6 +29,12 @@ spec:
               value: development
             - name: PORT
               value: "4000"
+            - name: NATS_SERVER
+              value: "http://nats-svc:4222"
+            - name: CLUSTER_ID
+              value: "devpie-client"
+            - name: CLIENT_ID
+              value: app-identity
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
@@ -54,7 +60,8 @@ spec:
                   name: secrets
                   key: view-db-identity-url
           command: ["migrate"]
-          args: ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
+          args:
+            ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
 ---
 apiVersion: v1
 kind: Service

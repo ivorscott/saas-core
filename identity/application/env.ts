@@ -6,6 +6,9 @@ enum Env {
   NODE_ENV = "NODE_ENV",
   PORT = "PORT",
   VERSION = "VERSION",
+  NATS_SERVER = "NATS_SERVER",
+  CLUSTER_ID = "CLUSTER_ID",
+  CLIENT_ID = "CLIENT_ID",
   AUTH0_DOMAIN = "AUTH0_DOMAIN",
   AUTH0_AUDIENCE = "AUTH0_AUDIENCE",
 }
@@ -18,6 +21,9 @@ export interface Environment {
   [Env.VERSION]: string;
   [Env.AUTH0_DOMAIN]: string;
   [Env.AUTH0_AUDIENCE]: string;
+  [Env.NATS_SERVER]: string;
+  [Env.CLUSTER_ID]: string;
+  [Env.CLIENT_ID]: string;
 }
 
 type Maybe<T> = T | undefined;
@@ -39,6 +45,9 @@ const env: Environment = {
   [Env.AUTH0_AUDIENCE]: importFromEnv(Env.AUTH0_AUDIENCE),
   [Env.AUTH0_DOMAIN]: importFromEnv(Env.AUTH0_DOMAIN),
   [Env.DATABASE_URL]: importFromEnv(Env.DATABASE_URL),
+  [Env.NATS_SERVER]: importFromEnv(Env.NATS_SERVER),
+  [Env.CLUSTER_ID]: importFromEnv(Env.CLUSTER_ID),
+  [Env.CLIENT_ID]: importFromEnv(Env.CLIENT_ID),
   [Env.NODE_ENV]: importFromEnv(Env.NODE_ENV),
   [Env.PORT]: parseInt(importFromEnv(Env.PORT), 10),
   [Env.VERSION]: packageJson.version,
