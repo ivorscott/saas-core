@@ -1,13 +1,17 @@
 package main
 
-// DB models
-
+// ========================================
+// User Models
+// ========================================
 
 import (
 	"time"
 )
 
-// Users represent user data from the database
+// ========================================
+// User represents a registered auth0 user
+// ========================================
+
 type User struct {
 	ID            string    `db:"user_id" json:"id" `
 	Auth0ID       string    `db:"auth0_id" json:"auth0Id" `
