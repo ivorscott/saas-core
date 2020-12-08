@@ -24,9 +24,9 @@ spec:
           env:
             - name: NATS_URL
               value: "nats://nats-svc:4222"
-            - name: ClientId
+            - name: CLIENT_ID
               value: "mic-identity"
-            - name: ClusterId
+            - name: CLUSTER_ID
               value: "devpie-client"
             - name: POSTGRES_DB
               valueFrom:

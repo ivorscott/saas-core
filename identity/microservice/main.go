@@ -57,7 +57,7 @@ func main() {
 	// Create NATS Client
     // ========================================
 
-	c, Close := events.NewClient(clu, cid , url)
+	c, Close := events.NewClient(clu, cid, url)
 	defer Close()
 
     // ========================================

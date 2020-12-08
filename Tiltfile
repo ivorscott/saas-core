@@ -8,4 +8,6 @@ k8s_yaml([
 ])
 
 docker_build('devpies/client-app-identity', 'identity/application', target='dev')
+
 docker_build('devpies/client-mic-identity', 'identity/microservice', target='dev')
+
