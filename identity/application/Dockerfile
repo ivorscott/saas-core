@@ -13,8 +13,7 @@ RUN npm i --only=development \
     && npm config ls -l
 COPY . .
 CMD ["./node_modules/.bin/ts-node-dev", \
-    "--rs", "--notify", "false", "index.ts"]
-
+    "--rs", "--notify", "false", "--transpile-only", "--ignore-watch", "node_modules", "index.ts"]
 FROM dev as test
 RUN npm audit
 
