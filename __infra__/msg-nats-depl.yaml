@@ -63,7 +63,9 @@ spec:
         - name: nats
           image: nats-streaming:0.19.0-alpine3.12
           args: [
-              "-store",
+              "-mc",
+              "0",
+              "-st",
               "sql",
               "-sql_driver",
               "postgres",
@@ -71,7 +73,7 @@ spec:
               "user=postgres password=postgres dbname=postgres host=localhost port=5432 readTimeout=5s writeTimeout=5s sslmode=disable",
               "-p", # Use port for clients (default: 4222)
               "4222",
-              "-m", # Use port for http monitoring
+              "-m", # Use port for http monitoring (default: 8222)
               "8222",
               "-hbi", # Interval at which server sends heartbeat to a client
               "5s",
