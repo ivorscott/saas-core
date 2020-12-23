@@ -18,4 +18,3 @@ spec:
             backend:
               serviceName: nats-svc
               servicePort: 8222
-

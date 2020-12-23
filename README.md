@@ -67,6 +67,10 @@ Pgcli is a command line interface for Postgres with auto-completion and syntax h
 ```bash
 pgcli $MIC_DB_IDENTITY
 ```
+Debug the nats streaming server sql store. Use pgcli from within the cluster.
+```bash
+kubectl run pgcli --rm -i -t --env=DB_URL="postgresql://postgres:postgres@nats-svc:5432/postgres" --image devpies/pgcli
+```
 
 ### Migrations
 Microservices and Aggregators should have remote [database services](elephantsql.com).
@@ -184,4 +188,3 @@ Learn more about migrate cli [here](https://github.com/golang-migrate/migrate/bl
 - View Data are not for making decisions
 - View Data are not authoritative state, but derived from authoritative state.
 - View Data can be stored in any format or database that makes sense for the Application
-

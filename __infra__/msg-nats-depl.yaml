@@ -129,3 +129,5 @@ spec:
       port: 4222
     - name: monitoring
       port: 8222
+    - name: postgres
+      port: 5432
