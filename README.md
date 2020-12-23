@@ -61,15 +61,21 @@ npm start
 tilt up
 ```
 
-### Debugging databases
-Pgcli is a command line interface for Postgres with auto-completion and syntax highlighting.
-
+### Debugging remote databases outside of kubernetes
 ```bash
 pgcli $MIC_DB_IDENTITY
 ```
-Debug the nats streaming server sql store. Use pgcli from within the cluster.
+### Debugging local databases within kubernetes
+The nats streaming server uses an sql store to persist data. In development, it's using a local database volume. 
+Connect to it by doing the following:
 ```bash
 kubectl run pgcli --rm -i -t --env=DB_URL="postgresql://postgres:postgres@nats-svc:5432/postgres" --image devpies/pgcli
+```
+#### Using pgadmin from within the cluster.
+To use pgadmin run a pod instance and use port fowarding. To access pgadmin go to localhost:8888 and enter credentials.
+```bash
+kubectl run pgadmin --env="PGADMIN_DEFAULT_EMAIL=test@example.com" --env="PGADMIN_DEFAULT_PASSWORD=SuperSecret" --image dpage/pgadmin4 
+kubectl port-forward pod/pgadmin 8888:80 
 ```
 
 ### Migrations
