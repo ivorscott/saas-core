@@ -36,7 +36,7 @@ End users send requests to Applications. Applications write messages (commands o
 * \__infra\__ contains the kubernetes infrastructure
 * \__auth0\__ contains the auth0 configuration
 
-Export environment variables for [remote database services](elephantsql.com) inside your `.bashrc` or `.zshrc` file.
+Export environment variables for connecting to remote database services inside your `.bashrc` or `.zshrc` file.
  
 If you wish, you can create aliases for routine tasks as well.
 
