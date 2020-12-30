@@ -77,7 +77,6 @@ To use pgadmin run a pod instance and use port fowarding. To access pgadmin go t
 kubectl run pgadmin --env="PGADMIN_DEFAULT_EMAIL=test@example.com" --env="PGADMIN_DEFAULT_PASSWORD=SuperSecret" --image dpage/pgadmin4 
 kubectl port-forward pod/pgadmin 8888:80 
 ```
-
 ### Migrations
 Microservices and Aggregators should have remote [database services](elephantsql.com).
 
