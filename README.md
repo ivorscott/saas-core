@@ -172,7 +172,7 @@ Learn more about migrate cli [here](https://github.com/golang-migrate/migrate/bl
 
 ### Messaging System
 
-- A stateful message broker plays a central role in entire architecture.
+- A stateful msg broker plays a central role in entire architecture.
 - All state transitions will be stored by NATS Streaming in streams of messages. These state transitions become the authoritative state used to make decisions.
 - NATS Streaming is a durable state store as well as a transport mechanism.
 

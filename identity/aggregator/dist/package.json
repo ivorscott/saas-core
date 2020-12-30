@@ -1,0 +1,41 @@
+{
+  "name": "aggregator",
+  "version": "1.0.0",
+  "description": "Listens for messages and updates the view data.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "ts-node-dev --rs --notify false --transpile-only --ignore-watch node_modules index.ts",
+    "gen": "protoc --js_out=import_style=commonjs,binary:. msg.proto",
+    "build": "tsc",
+    "pretty": "npx prettier --write ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivorscott/devpie-client-cqrs-core.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ivorscott/devpie-client-cqrs-core/issues"
+  },
+  "homepage": "https://github.com/ivorscott/devpie-client-cqrs-core#readme",
+  "dependencies": {
+    "@devpie/client-events": "0.0.27",
+    "@types/bluebird": "^3.5.33",
+    "bluebird": "^3.7.2",
+    "google-protobuf": "^3.14.0",
+    "node-nats-streaming": "^0.3.2",
+    "pg": "^8.5.1",
+    "typescript": "^4.1.2",
+    "uuid": "^8.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.10",
+    "@types/pg": "^7.14.7",
+    "@types/uuid": "^8.3.0",
+    "prettier": "^2.2.1",
+    "ts-node-dev": "^1.0.0"
+  }
+}

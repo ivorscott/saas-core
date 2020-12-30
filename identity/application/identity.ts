@@ -4,6 +4,7 @@ import { v4 as uuidV4 } from "uuid";
 import { Categories, Commands } from "@devpie/client-events";
 import { AddUserPublisher } from "./publish-add-user";
 import { Pool } from "pg";
+import camelcaseKeys from "camelcase-keys"
 
 export interface Feature {
   queries: Queries;
@@ -22,18 +23,18 @@ interface Auth0User {
 }
 
 interface User {
-  id: string;
-  auth0Id: string;
+  user_id: string;
+  auth0_id: string;
   email: string;
-  emailVerified: boolean;
-  firstName: string;
-  lastName: string;
+  email_verified: boolean;
+  first_name: string;
+  last_name: string;
   picture: string;
   locale: string;
 }
 
 interface Queries {
-  loadUser: (id: string) => any;
+  loadUser: (id: string) => Promise<User | undefined>;
 }
 
 interface Actions {
@@ -46,9 +47,21 @@ interface Handlers {
   saveIdentity: (req: Request, res: Response) => any;
 }
 
+enum SQL {
+  getUser,
+}
+const sqlStatements = [
+  "SELECT * FROM users WHERE auth0_id = $1 LIMIT 1", // getUser
+];
+
 function createActions(natsClient: Stan, queries: Queries): Actions {
   async function getUser(id: string) {
-    return await queries.loadUser(id);
+    return await queries.loadUser(id).then((user) => {
+      if (user) {
+       user = camelcaseKeys(user)
+      }
+      return user
+    });
   }
 
   async function addUser(traceId: string, user: Auth0User) {
@@ -68,7 +81,6 @@ function createActions(natsClient: Stan, queries: Queries): Actions {
         },
         data: { id: userId, ...user },
       };
-      console.log(command);
       await publisher.publish(command);
     } catch (error) {
       console.log("error:", error);
@@ -84,9 +96,10 @@ function createActions(natsClient: Stan, queries: Queries): Actions {
 
 function createHandlers(actions: Actions) {
   async function findIdentity(req: Request, res: Response) {
-    const auth0User = req.user;
-    const user = await actions.getUser(auth0User.auth0Id);
-    if (user?.id) {
+    const auth0Id = req.user.sub;
+    const user = await actions.getUser(auth0Id);
+
+    if (user) {
       return res.status(200).send(user);
     }
     return res.status(404).send({ error: "user not found" });
@@ -105,15 +118,10 @@ function createHandlers(actions: Actions) {
 }
 
 function createQueries(db: Pool): Queries {
-  function loadUser(auth0Id: string) {
-    return db.query(
-      "SELECT user_id, auth0_id, email, email_verified, first_name, last_name, picture, created, locale FROM users WHERE auth0_id = $1",
-      [auth0Id],
-      (err, res) => {
-        if (err) throw err;
-        return res.rowCount ? res.rows[0] : {};
-      },
-    );
+  function loadUser(auth0Id: string): Promise<User | undefined> {
+    return db
+      .query(sqlStatements[SQL.getUser], [auth0Id])
+      .then((res) => res.rows[0]);
   }
 
   return {

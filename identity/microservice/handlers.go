@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"github.com/google/uuid"
 
 	"github.com/ivorscott/devpie-client-events/go/events"
 	"github.com/nats-io/stan.go"
@@ -28,23 +29,20 @@ func (h Handlers) handleAddUser(m *stan.Msg) {
 
 	u := msg.Data
 
-	fmt.Printf("Sequence: %d, Subject: %s, Message: %+v,", m.Sequence, m.Subject, msg)
-
 	if _, err := RetrieveMeByAuth0ID(h.Repo, u.Auth0ID); err != nil {
 		nu = NewUser{
-			ID: u.ID,
-			Auth0ID: u.Auth0ID,
-			Email: u.Email,
+			ID:            u.ID,
+			Auth0ID:       u.Auth0ID,
+			Email:         u.Email,
 			EmailVerified: u.EmailVerified,
-			FirstName: &u.FirstName,
-			LastName: &u.LastName,
-			Picture: &u.Picture,
-			Locale: &u.Locale,
+			FirstName:     &u.FirstName,
+			LastName:      &u.LastName,
+			Picture:       &u.Picture,
+			Locale:        &u.Locale,
 		}
 
-		fmt.Printf("New user: %+v", nu)
-		_, err = CreateUser(h.Repo, nu, time.Now());
-		if err !=nil {
+		_, err = CreateUser(h.Repo, nu, time.Now())
+		if err != nil {
 			log.Fatal(err)
 		}
 
@@ -53,7 +51,30 @@ func (h Handlers) handleAddUser(m *stan.Msg) {
 			log.Fatal(err)
 		}
 
-		bytes, err := msg.Marshal()
+		id, err := uuid.NewRandom()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		ne := events.UserAddedEvent{
+			ID: id.String(),
+			Type: events.TypeUserAdded,
+			Data: events.UserAddedEventData{
+				ID:            u.ID,
+				Auth0ID:       u.Auth0ID,
+				Email:         u.Email,
+				EmailVerified: u.EmailVerified,
+				FirstName:     u.FirstName,
+				LastName:      u.LastName,
+				Picture:       u.Picture,
+				Locale:        u.Locale},
+			Metadata: events.Metadata{
+				TraceID: msg.Metadata.TraceID,
+				UserID: msg.Metadata.UserID,
+			},
+		}
+
+		bytes, err := ne.Marshal()
 		if err !=nil {
 			log.Fatal(err)
 		}

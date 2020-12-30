@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agg-identity-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agg-identity
+  template:
+    metadata:
+      labels:
+        app: agg-identity
+    spec:
+      containers:
+        - image: devpies/client-agg-identity
+          name: agg-identity
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "250m"
+              memory: "250Mi"
+          env:
+            - name: AGG_NAME
+              value: Identity
+            - name: NODE_ENV
+              value: development
+            - name: NATS_SERVER
+              value: "http://nats-svc:4222"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: view-db-identity-url
+            - name: NATS_DB_URL
+              value: postgresql://postgres:postgres@nats-svc:5432/postgres
+      initContainers:
+        - name: schema-migration
+          image: devpies/view-db-identity-migration:v000003
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: view-db-identity-url
+          command: ["migrate"]
+          args: ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]

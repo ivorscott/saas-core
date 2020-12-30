@@ -11,7 +11,7 @@ import (
 
 	"github.com/ivorscott/devpie-client-events/go/events"
 
-	stan "github.com/nats-io/stan.go"
+stan "github.com/nats-io/stan.go"
 )
 
 var seededRand *rand.Rand = rand.New(
