@@ -1,0 +1,72 @@
+// commands
+in the future
+AddUser
+ModifyUser
+
+// events
+in the past
+UserAdded
+UserModified
+
+// event streams (entity streams)
+- event streams are a collection of state transitions
+- events streams need a name
+- a good naming convention is to use a "category" (aka identity) and an ID
+- will only contain events related to that category
+
+// command streams
+You may have a command stream that contains all the commands for a
+given category
+
+Format for command stream names is "category", type and id
+
+identity:command-123
+
+// event stream naming
+what is the stream name?
+
+"identity-1223"
+Event
+Event
+Event
+Event
+Event
+Event
+Event
+
+"identity-4423"
+Event
+Event
+Event
+Event
+Event
+Event
+Event
+
+Problem with Event Sourcing is how to derive the true state (current state) of entity
+
+Determine what is the entity's state now.
+
+You need a projection function, which is essentially a reducer function that
+iterates over an array of events and accumulates a current value and returns the
+resulting value.
+
+Events.reduce((acc, curr){
+ if(somecheck) {
+ return acc
+ }
+
+ return {
+ // preform projection handler
+ }
+ }
+})
+
+// category stream
+This category stream will contain all entities of the given category.
+
+Contains entities
+"identity-1223"
+"identity-4423"
+
+but the naming is different here. Call the stream simply "category" with no ID.

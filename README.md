@@ -36,7 +36,7 @@ End users send requests to Applications. Applications write messages (commands o
 * \__infra\__ contains the kubernetes infrastructure
 * \__auth0\__ contains the auth0 configuration
 
-Export environment variables for [remote database services](elephantsql.com) inside your `.bashrc` or `.zshrc` file.
+Export environment variables for connecting to remote database services inside your `.bashrc` or `.zshrc` file.
  
 If you wish, you can create aliases for routine tasks as well.
 
@@ -85,7 +85,6 @@ To use pgadmin run a pod instance and use port fowarding. To access pgadmin go t
 kubectl run pgadmin --env="PGADMIN_DEFAULT_EMAIL=test@example.com" --env="PGADMIN_DEFAULT_PASSWORD=SuperSecret" --image dpage/pgadmin4 
 kubectl port-forward pod/pgadmin 8888:80 
 ```
-
 ### Migrations
 Microservices and Aggregators should have remote [database services](elephantsql.com).
 
