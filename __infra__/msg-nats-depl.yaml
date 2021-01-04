@@ -1,99 +1,3 @@
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: msg-nats-db-volume
-  labels:
-    type: local
-spec:
-  storageClassName: manual
-  capacity:
-    storage: "10Gi"
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/mnt/data"
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: msg-nats-db-claim
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: "3Gi"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nats-initdb-config
-data:
-  initdb.sql: |
-    CREATE TABLE IF NOT EXISTS ServerInfo (uniquerow INTEGER DEFAULT 1, id VARCHAR(1024), proto BYTEA, version INTEGER, PRIMARY KEY (uniquerow));
-    CREATE TABLE IF NOT EXISTS Clients (id VARCHAR(1024), hbinbox TEXT, PRIMARY KEY (id));
-    CREATE TABLE IF NOT EXISTS Channels (id INTEGER, name VARCHAR(1024) NOT NULL, maxseq BIGINT DEFAULT 0, maxmsgs INTEGER DEFAULT 0, maxbytes BIGINT DEFAULT 0, maxage BIGINT DEFAULT 0, deleted BOOL DEFAULT FALSE, PRIMARY KEY (id));
-    CREATE INDEX Idx_ChannelsName ON Channels (name(256));
-    CREATE TABLE IF NOT EXISTS Messages (id INTEGER, seq BIGINT, timestamp BIGINT, size INTEGER, data BYTEA, CONSTRAINT PK_MsgKey PRIMARY KEY(id, seq));
-    CREATE INDEX Idx_MsgsTimestamp ON Messages (timestamp);
-    CREATE TABLE IF NOT EXISTS Subscriptions (id INTEGER, subid BIGINT, lastsent BIGINT DEFAULT 0, proto BYTEA, deleted BOOL DEFAULT FALSE, CONSTRAINT PK_SubKey PRIMARY KEY(id, subid));
-    CREATE TABLE IF NOT EXISTS SubsPending (subid BIGINT, row BIGINT, seq BIGINT DEFAULT 0, lastsent BIGINT DEFAULT 0, pending BYTEA, acks BYTEA, CONSTRAINT PK_MsgPendingKey PRIMARY KEY(subid, row));
-    CREATE INDEX Idx_SubsPendingSeq ON SubsPending (seq);
-    CREATE TABLE IF NOT EXISTS StoreLock (id VARCHAR(30), tick BIGINT DEFAULT 0);
-
-    -- Updates for 0.10.0
-    ALTER TABLE Clients ADD proto BYTEA;
-
-    -- Updates for managing read position for aggregators
-    CREATE TABLE sub_sequence (
-    	subid VARCHAR(1024) PRIMARY KEY NOT NULL,
-    	seq INTEGER NOT NULL,
-    	timestamp TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc') NOT NULL
-    )
-  initfunc.sql: |
-    --Read all messages by category with global position
-
-    CREATE OR REPLACE FUNCTION get_category_stream(category character varying, seq bigint DEFAULT 1, batch_size bigint DEFAULT 1000) RETURNS SETOF record AS $$
-      WITH category_channels AS (
-        SELECT *
-        FROM channels
-        WHERE name LIKE '%' || category || '.________-____-____-____-____________' || '%'
-      ), all_messages AS (
-        SELECT *, ROW_NUMBER() OVER (ORDER BY (timestamp)) AS global_position
-        FROM messages
-      )
-
-      SELECT *
-      FROM all_messages
-      WHERE id IN (SELECT id FROM category_channels) AND global_position >= seq
-      ORDER BY timestamp
-      LIMIT batch_size
-    $$ LANGUAGE SQL;
-
-    --Get last read position message
-
-    CREATE OR REPLACE FUNCTION get_last_read_position(sub_id varchar (1024)) RETURNS sub_sequence AS $$
-      SELECT *
-      FROM sub_sequence
-      WHERE subid=$1
-      ORDER BY timestamp DESC
-      LIMIT 1
-    $$ LANGUAGE SQL;
-
-    --Write last position message
-
-    CREATE OR REPLACE FUNCTION write_read_position(streamName varchar(1024), seq integer) RETURNS void AS $$
-      INSERT INTO sub_sequence (
-        subid,
-        seq
-      ) VALUES (
-        streamName,
-        seq
-      )
-      ON CONFLICT DO NOTHING
-    $$ LANGUAGE SQL;
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -111,6 +15,32 @@ spec:
       containers:
         - name: nats
           image: nats-streaming:0.19.0-alpine3.12
+          env:
+            - name: MSG_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: msg-db-user
+            - name: MSG_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: msg-db-password
+            - name: MSG_DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: msg-db-name
+            - name: MSG_DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: msg-db-host
+            - name: MSG_DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: msg-db-port
           args: [
               "-mc",
               "0",
@@ -119,7 +49,7 @@ spec:
               "-sql_driver",
               "postgres",
               "-sql_source",
-              "user=postgres password=postgres dbname=postgres host=localhost port=5432 readTimeout=5s writeTimeout=5s sslmode=disable",
+              "user=$(MSG_DB_USER) password=$(MSG_DB_PASSWORD) dbname=$(MSG_DB_NAME) host=$(MSG_DB_HOST) port=$(MSG_DB_PORT) readTimeout=5s writeTimeout=5s sslmode=require",
               "-p", # Use port for clients (default: 4222)
               "4222",
               "-m", # Use port for http monitoring (default: 8222)
@@ -134,37 +64,18 @@ spec:
               "-cid", # Cluster ID (default: test-cluster)
               "devpie-client",
             ]
-        - name: msg-nats-db
-          image: postgres:11.6
-          imagePullPolicy: "IfNotPresent"
-          ports:
-            - containerPort: 5432
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "100Mi"
-            limits:
-              cpu: "250m"
-              memory: "250Mi"
+      initContainers:
+        - name: schema-migration
+          image: devpies/msg-db-migration:v000002
           env:
-            - name: POSTGRES_DB
-              value: postgres
-            - name: POSTGRES_USER
-              value: postgres
-            - name: POSTGRES_PASSWORD
-              value: postgres
-          volumeMounts:
-            - mountPath: /var/lib/postgresql/data
-              name: msg-nats-db-volume
-            - mountPath: /docker-entrypoint-initdb.d
-              name: nats-initdb
-      volumes:
-        - name: msg-nats-db-volume
-          persistentVolumeClaim:
-            claimName: msg-nats-db-claim
-        - name: nats-initdb
-          configMap:
-            name: nats-initdb-config
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: msg-db-url
+          command: ["migrate"]
+          args:
+            ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
 ---
 apiVersion: v1
 kind: Service
@@ -178,5 +89,3 @@ spec:
       port: 4222
     - name: monitoring
       port: 8222
-    - name: postgres
-      port: 5432

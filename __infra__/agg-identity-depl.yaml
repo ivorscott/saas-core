@@ -35,7 +35,10 @@ spec:
                   name: secrets
                   key: view-db-identity-url
             - name: NATS_DB_URL
-              value: postgresql://postgres:postgres@nats-svc:5432/postgres
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: msg-db-url
       initContainers:
         - name: schema-migration
           image: devpies/view-db-identity-migration:v000001
