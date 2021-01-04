@@ -1,43 +1,37 @@
-import nats from "node-nats-streaming";
+import nats, {Stan} from "node-nats-streaming";
 import { Pool } from "pg";
 import { env } from "./env";
 import { v4 as uuidV4 } from "uuid";
 import { createIdentity } from "./identity";
-import { createExpressApp } from "./express";
+import { createExpressApp } from "./app";
 
-const stan = nats.connect(env.CLUSTER_ID, `${env.CLIENT_ID}-${uuidV4()}`, {
-  url: env.NATS_SERVER,
+let stan: Stan = natsConnect()
+
+const viewDB = new Pool({ connectionString: env.DATABASE_URL });
+viewDB.connect();
+
+viewDB.on("error", (err) => {
+  console.error("Unexpected error on idle client", err);
+  process.exit(1);
 });
 
-const pool = new Pool({ connectionString: env.DATABASE_URL });
-pool.connect();
+stan.on("connection_lost", (error) => {
+  console.log("Disconnected from stan.", error);
+});
 
-// ==============================================================
-// The pool will emit an error on behalf of any idle clients
-// it contains if a backend error or network partition happens
-// ==============================================================
-
-pool.on("error", (err) => {
-  console.error("Unexpected error on idle client", err);
-  process.exit(-1);
+stan.on("close", () => {
+  console.log("NATS Streaming connection closed! Reconnecting...");
+  stan = natsConnect();
 });
 
 stan.on("connect", () => {
   console.log("Publisher connected to NATS");
 
-  stan.on("connection_lost", (error) => {
-    console.log("disconnected from stan", error);
-  });
-
-  stan.on("close", () => {
-    console.log("NATS connection closed!");
-  });
-
-  const feature = createIdentity(pool, stan);
+  const feature = createIdentity(viewDB, stan);
   const app = createExpressApp(feature, env);
 
   app.listen(env.PORT, () => {
-    console.log(`${env.APP_NAME} started`);
+    console.log(`${env.APP_NAME} started.`);
     console.table([
       ["Port", env.PORT],
       ["Environment", env.NODE_ENV],
@@ -46,10 +40,17 @@ stan.on("connect", () => {
 });
 
 process.on("SIGINT", () => {
-  console.log("SIGINT");
+  console.log("SIGINT detected.");
   stan.close();
 });
+
 process.on("SIGTERM", () => {
-  console.log("SIGTERM");
+  console.log("SIGTERM detected.");
   stan.close();
 });
+
+function natsConnect(): Stan {
+  return nats.connect(env.CLUSTER_ID, `${env.CLIENT_ID}-${uuidV4()}`, {
+    url: env.NATS_SERVER,
+  });
+}

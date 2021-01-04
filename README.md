@@ -61,6 +61,14 @@ npm start
 tilt up
 ```
 
+## Tests
+
+Navigate to the feature folder to run tests.
+```bash
+cd identity/application
+npm run tests
+```
+
 ### Debugging remote databases outside of kubernetes
 ```bash
 pgcli $MIC_DB_IDENTITY

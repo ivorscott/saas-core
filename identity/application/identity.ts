@@ -4,15 +4,16 @@ import { v4 as uuidV4 } from "uuid";
 import { Categories, Commands } from "@devpie/client-events";
 import { AddUserPublisher } from "./publish-add-user";
 import { Pool } from "pg";
-import camelcaseKeys from "camelcase-keys"
+import camelcaseKeys from "camelcase-keys";
 
 export interface Feature {
+  actions: Actions;
   queries: Queries;
   handlers: Handlers;
   router: Router;
 }
 
-interface Auth0User {
+export interface Auth0User {
   auth0Id: string;
   email: string;
   emailVerified: boolean;
@@ -22,7 +23,7 @@ interface Auth0User {
   locale: string;
 }
 
-interface User {
+export interface DBUser {
   user_id: string;
   auth0_id: string;
   email: string;
@@ -33,8 +34,19 @@ interface User {
   locale: string;
 }
 
+export interface User {
+  userId: string;
+  auth0Id: string;
+  email: string;
+  emailVerified: boolean;
+  firstName: string;
+  lastName: string;
+  picture: string;
+  locale: string;
+}
+
 interface Queries {
-  loadUser: (id: string) => Promise<User | undefined>;
+  loadUser: (auth0Id: string) => Promise<DBUser | undefined>;
 }
 
 interface Actions {
@@ -43,24 +55,47 @@ interface Actions {
 }
 
 interface Handlers {
-  findIdentity: (req: Request, res: Response) => any;
-  saveIdentity: (req: Request, res: Response) => any;
+  findIdentity: (req: Request, res: Response) => Promise<void>;
+  saveIdentity: (req: Request, res: Response) => Promise<void>;
 }
 
-enum SQL {
-  getUser,
+export enum ERR {
+  UserNotFound,
 }
-const sqlStatements = [
+
+export const errors = [
+  { error: "user not found" }, // userNotFound
+];
+
+export enum SQL {
+  GetUser,
+  AddUser,
+}
+
+export const sqlStatements = [
   "SELECT * FROM users WHERE auth0_id = $1 LIMIT 1", // getUser
 ];
 
-function createActions(natsClient: Stan, queries: Queries): Actions {
-  async function getUser(id: string) {
-    return await queries.loadUser(id).then((user) => {
-      if (user) {
-       user = camelcaseKeys(user)
+export function createQueries(db: Pool): Queries {
+  function loadUser(auth0Id: string): Promise<DBUser | undefined> {
+    return db
+      .query(sqlStatements[SQL.GetUser], [auth0Id])
+      .then((res) => res.rows[0]);
+  }
+
+  return {
+    loadUser,
+  };
+}
+
+export function createActions(natsClient: Stan, queries: Queries): Actions {
+  async function getUser(auth0Id: string) {
+    return await queries.loadUser(auth0Id).then((record: DBUser) => {
+      let user: User;
+      if (record) {
+        user = (camelcaseKeys(record) as unknown) as User;
       }
-      return user
+      return user;
     });
   }
 
@@ -100,15 +135,16 @@ function createHandlers(actions: Actions) {
     const user = await actions.getUser(auth0Id);
 
     if (user) {
-      return res.status(200).send(user);
+      res.status(200).send(user);
+      return;
     }
-    return res.status(404).send({ error: "user not found" });
+    res.status(404).send(errors[ERR.UserNotFound]);
   }
 
   async function saveIdentity(req: Request, res: Response) {
     const auth0User = req.body;
     await actions.addUser(req.context.traceId, auth0User);
-    return res.status(200).send({});
+    res.status(200).end();
   }
 
   return {
@@ -117,19 +153,18 @@ function createHandlers(actions: Actions) {
   };
 }
 
-function createQueries(db: Pool): Queries {
-  function loadUser(auth0Id: string): Promise<User | undefined> {
-    return db
-      .query(sqlStatements[SQL.getUser], [auth0Id])
-      .then((res) => res.rows[0]);
-  }
-
-  return {
-    loadUser,
+export function createIdentity(
+  db: Pool,
+  natsClient: Stan,
+): {
+  router: Router;
+  handlers: {
+    findIdentity: (req: Request, res: Response) => Promise<void>;
+    saveIdentity: (req: Request, res: Response) => Promise<void>;
   };
-}
-
-export function createIdentity(db: Pool, natsClient: Stan): Feature {
+  actions: Actions;
+  queries: Queries;
+} {
   const queries = createQueries(db);
   const actions = createActions(natsClient, queries);
   const handlers = createHandlers(actions);
@@ -139,5 +174,5 @@ export function createIdentity(db: Pool, natsClient: Stan): Feature {
   router.route("/").post(handlers.saveIdentity);
   router.route("/me").get(handlers.findIdentity);
 
-  return { handlers, queries, router };
+  return { handlers, actions, queries, router };
 }
