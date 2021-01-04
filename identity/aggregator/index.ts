@@ -3,8 +3,14 @@ import { env } from "./env";
 import { createMessageStore } from "./msg";
 import { createAggregator } from "./identity";
 
-const viewdb = new Pool({ connectionString: env.DATABASE_URL });
-const natsdb = new Pool({ connectionString: env.NATS_DB_URL });
+const viewdb = new Pool({
+  connectionString: env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+const natsdb = new Pool({
+  connectionString: env.NATS_DB_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
 viewdb.connect();
 viewdb.on("connect", () => console.log("connected to viewdb"));
