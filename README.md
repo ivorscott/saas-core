@@ -85,7 +85,7 @@ If you wish, you can create aliases for routine tasks as well.
 ```bash
 # inside your .bashrc or .zshrc file
 
-export $MSG_NATS=postgres://username:password@remote-db-host:5432/dbname
+export MSG_NATS=postgres://username:password@remote-db-host:5432/dbname
 export MIC_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
 export VIEW_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
 
