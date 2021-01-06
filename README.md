@@ -18,9 +18,10 @@ kanaban or agile style board management and auxiliary services like cost estimat
 
 #### Resources Being Used (no setup required)
 
-* [2 Free 20MB Managed Database Services](elephantsql.com)
 * [An Auth0 Account](http://auth0.com/)
 * [Auth0 Github Deployments Extension](https://auth0.com/docs/extensions/github-deployments)
+* [2 Free 20MB Managed Database Services](elephantsql.com)
+* [1 Digital Ocean 10Gb Managed Database](https://www.digitalocean.com/products/managed-databases/)
     
 #### Configuration
 * \__infra\__ contains the kubernetes infrastructure
