@@ -1,6 +1,6 @@
-# CQRS Event Architecture for Devpie Client
+# Core Event-driven Architecture for Devpie Client
 
-This backend uses CQRS and event sourcing. It should be used with the [devpie-client-app](https://github.com/ivorscott/devpie-client-app).
+This backend uses CQRS and event sourcing sparingly. It should be used with the [devpie-client-app](https://github.com/ivorscott/devpie-client-app).
 
 It uses [devpie-client-events](https://github.com/ivorscott/devpie-client-common-module), a shared library that spans across 
 3 language specific packages: in Typescript, Python and Golang. The Typescript commands and events are the source of truth. The library 
@@ -14,11 +14,53 @@ This is an experimental project for learning.
 Devpie Client is a business management tool for performing software development with clients. Features will include 
 kanaban or agile style board management and auxiliary services like cost estimation, payments and more. 
 
-## How Data Moves Through The System
+## How Data Moves Through CQRS System Parts
 
-![cqrs architecture](cqrs.png)
+![cqrs pattern](cqrs.png)
 
-End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Microservices pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use to send responses to users.
+CQRS is not an architecture. CQRS and Event sourcing are to be [used sparingly](https://medium.com/@hugo.oliveira.rocha/what-they-dont-tell-you-about-event-sourcing-6afc23c69e9a). CQRS optimizes writes from reads. For example, the `identity` feature makes strict use CQRS to write data in one shape and read it in one or more other shapes. Devpie Client will need to display all kinds of screens to its users. End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Microservices pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use to send responses to users.
+
+
+### Concepts
+<details>
+<summary>Read more</summary>
+<br>
+
+#### Applications
+
+- Applications are not microservices.
+- An Application is a feature with its own endpoints that accepts user interaction.
+- Applications provide immediate responses to user input.
+
+#### Messaging System
+
+- A stateful msg broker plays a central role in entire architecture.
+- All state transitions will be stored by NATS Streaming in streams of messages. These state transitions become the authoritative state used to make decisions.
+- NATS Streaming is a durable state store as well as a transport mechanism.
+
+#### Microservices
+
+- Microservices are autonomous units of functionality that model a single business concern.
+- Microservices are small and focused doing one thing well.
+- Micoservices don't share databases with other Microservices.
+- Micoservices allow us to use the technology stack best suited to achieve required performance.
+
+#### Aggregators
+
+- Aggregators aggregate state transitions into View Data that Applications use to render a template (SSR) or enrich the client.
+
+#### View Data
+
+- View Data are read-only models derived from state transitions.
+- View Data are eventually consistent
+- View Data are not for making decisions
+- View Data are not authoritative state, but derived from authoritative state.
+- View Data can be stored in any format or database that makes sense for the Application
+</details>
+
+## How Data Moves Through Microservices
+
+Most features will be plain Microservices. Microservices send and receive messages through the NATS Streaming library.
 
 ## Setup 
 
@@ -61,7 +103,7 @@ npm start
 tilt up
 ```
 
-## Tests
+## Testing
 
 Navigate to the feature folder to run tests.
 ```bash
@@ -112,6 +154,9 @@ docker build -t devpies/mic-db-identity-migration:v000001 ./migrations
 docker push devpies/mic-db-identity-migration:v000001  
 ```
 Then apply the latest migration with `initContainers`
+<details>
+<summary>View example</summary>
+<br>
 
 ```yaml
 apiVersion: apps/v1
@@ -167,37 +212,6 @@ spec:
           command: ["migrate"]
           args: ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
 ```
+</details>
+
 Learn more about migrate cli [here](https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md). 
-
-## Concepts
-
-### Applications
-
-- Applications are not microservices.
-- An Application is a feature with its own endpoints that accepts user interaction.
-- Applications provide immediate responses to user input.
-
-### Messaging System
-
-- A stateful msg broker plays a central role in entire architecture.
-- All state transitions will be stored by NATS Streaming in streams of messages. These state transitions become the authoritative state used to make decisions.
-- NATS Streaming is a durable state store as well as a transport mechanism.
-
-### Microservices
-
-- Microservices are autonomous units of functionality that model a single business concern.
-- Microservices are small and focused doing one thing well.
-- Micoservices don't share databases with other Microservices.
-- Micoservices allow us to use the technology stack best suited to achieve required performance.
-
-### Aggregators
-
-- Aggregators aggregate state transitions into View Data that Applications use to render a template (SSR) or enrich the client.
-
-### View Data
-
-- View Data are read-only models derived from state transitions.
-- View Data are eventually consistent
-- View Data are not for making decisions
-- View Data are not authoritative state, but derived from authoritative state.
-- View Data can be stored in any format or database that makes sense for the Application
