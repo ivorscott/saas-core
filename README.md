@@ -85,6 +85,7 @@ If you wish, you can create aliases for routine tasks as well.
 ```bash
 # inside your .bashrc or .zshrc file
 
+export $MSG_NATS=postgres://username:password@remote-db-host:5432/dbname
 export MIC_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
 export VIEW_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
 
@@ -112,15 +113,12 @@ npm run tests
 ```
 
 ### Debugging remote databases outside of kubernetes
+Provide `pgcli` the remote connection string.
 ```bash
-pgcli $MIC_DB_IDENTITY
+pgcli $MIC_DB_IDENTITY 
+# OPTIONS: [ $MSG_NATS | $MIC_DB_IDENTITY | $VIEW_DB_IDENTITY ... ]
 ```
-### Debugging local databases within kubernetes
-The nats streaming server uses an sql store to persist data. In development, it's using a local database volume. 
-Connect to it by doing the following:
-```bash
-kubectl run pgcli --rm -i -t --env=DB_URL="postgresql://postgres:postgres@nats-svc:5432/postgres" --image devpies/pgcli
-```
+
 #### Using pgadmin from within the cluster.
 To use pgadmin run a pod instance and use port fowarding. To access pgadmin go to localhost:8888 and enter credentials.
 ```bash
@@ -133,7 +131,7 @@ Microservices and Aggregators should have remote [database services](elephantsql
 Migrations exist under the following paths:
 
 - `<feature>/microservice/migrations`
-- `<feature>/aggregator/migrations`
+- `<feature>/aggregator/migrations` 
 
 #### Migration flow
 1. move to a feature's `microservice` or `aggregator`
@@ -142,7 +140,9 @@ Migrations exist under the following paths:
 4. `tag` an image containing the latest migrations
 5. `push` image to registry
 
-For example:
+<details>
+<summary>View example</summary>
+<br>
 
 ```bash
 cd identity/microservice
@@ -153,6 +153,8 @@ docker build -t devpies/mic-db-identity-migration:v000001 ./migrations
 
 docker push devpies/mic-db-identity-migration:v000001  
 ```
+</details>
+
 Then apply the latest migration with `initContainers`
 <details>
 <summary>View example</summary>
