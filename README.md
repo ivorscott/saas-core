@@ -1,27 +1,78 @@
 # Core Event-driven Architecture for Devpie Client
 
-This backend uses CQRS and event sourcing sparingly. It should be used with the [devpie-client-app](https://github.com/ivorscott/devpie-client-app).
-
-It uses [devpie-client-events](https://github.com/ivorscott/devpie-client-common-module), a shared library that spans across 
-3 language specific packages: in Typescript, Python and Golang. The Typescript commands and events are the source of truth. The library 
-uses [Quicktype](https://quicktype.io/) to generate code for the Golang and Python packages. Therefore, microservices can 
-be developed in multiple languages while using the shared library.
-
-### Goal
+## Goal
 
 This is an experimental project for learning.
 
 Devpie Client is a business management tool for performing software development with clients. Features will include 
 kanaban or agile style board management and auxiliary services like cost estimation, payments and more. 
 
+
+### Setup 
+
+#### Requirements
+* [Docker Desktop](https://docs.docker.com/desktop/) (Kubernetes enabled)
+* [Pgcli](https://www.pgcli.com/install)
+* [Migrate CLI](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
+* [Tilt](https://tilt.dev/)
+
+#### Resources Being Used (no setup required)
+
+* [2 Free 20MB Managed Database Services](elephantsql.com)
+* [An Auth0 Account](http://auth0.com/)
+* [Auth0 Github Deployments Extension](https://auth0.com/docs/extensions/github-deployments)
+    
+#### Configuration
+* \__infra\__ contains the kubernetes infrastructure
+* \__auth0\__ contains the auth0 configuration
+
+Required secrets files:
+
+1. `__infra__/secrets.yaml`
+2. `.env`
+
+Available samples:
+1. `__infra__/secrets.sample.yaml`
+2. `.env.sample`
+
+Copy the secret environment variables to your `.bashrc` or `.zshrc` file. These environment variables contain remote 
+database connection strings you can use to connect with pgcli for debugging.
+ 
+If you wish, you can create aliases for routine tasks as well.
+
+```bash
+# Use inside your .bashrc or .zshrc file
+
+export MSG_NATS=postgres://username:password@remote-db-host:5432/dbname
+export MIC_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
+export VIEW_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
+
+alias k=kubectl
+```
+
+## Architecture 
+
+This backend uses CQRS and event sourcing sparingly. 
+CQRS is not an architecture. You don't use CQRS everywhere.
+ 
+This backend should be used with the [devpie-client-app](https://github.com/ivorscott/devpie-client-app).
+It uses [devpie-client-events](https://github.com/ivorscott/devpie-client-common-module) as a shared library to generate 
+message interfaces across multiple programming languages, but the Typescript definitions in the events repository are the source of truth.
+
 ## How Data Moves Through CQRS System Parts
+
+[CQRS allows you to scale your writes and reads separately](https://medium.com/@hugo.oliveira.rocha/what-they-dont-tell-you-about-event-sourcing-6afc23c69e9a). For example, the `identity` feature makes strict use CQRS to write data in one shape and read it in one or more other shapes. This introduces eventual consistency and requires the frontend's support in handling eventual consistent data intelligently. 
+
+Devpie Client will need to display all kinds of screens to its users. End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Microservices pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use to send responses to users.
+
 
 ![cqrs pattern](cqrs.png)
 
-CQRS is not an architecture. CQRS and Event sourcing are to be [used sparingly](https://medium.com/@hugo.oliveira.rocha/what-they-dont-tell-you-about-event-sourcing-6afc23c69e9a). CQRS optimizes writes from reads. For example, the `identity` feature makes strict use CQRS to write data in one shape and read it in one or more other shapes. Devpie Client will need to display all kinds of screens to its users. End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Microservices pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use to send responses to users.
-
 
 ### Concepts
+
+Let's review the concepts involved in the above diagram.
+
 <details>
 <summary>Read more</summary>
 <br>
@@ -62,37 +113,7 @@ CQRS is not an architecture. CQRS and Event sourcing are to be [used sparingly](
 
 Most features will be plain Microservices. Microservices send and receive messages through the NATS Streaming library.
 
-## Setup 
-
-#### Requirements
-* [Docker Desktop](https://docs.docker.com/desktop/) (Kubernetes enabled)
-* [Pgcli](https://www.pgcli.com/install)
-* [Migrate CLI](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
-* [Free 20MB Managed Database Services](elephantsql.com)
-* [Tilt](https://tilt.dev/)
-* [Create Auth0 Account](http://auth0.com/)
-* Fork repository to automate your own Auth0 configuration.
-* [Enable Auth0 Github Deployments Extension](https://auth0.com/docs/extensions/github-deployments)
-    
-#### Configuration
-* \__infra\__ contains the kubernetes infrastructure
-* \__auth0\__ contains the auth0 configuration
-
-Export environment variables for connecting to remote database services inside your `.bashrc` or `.zshrc` file.
- 
-If you wish, you can create aliases for routine tasks as well.
-
-```bash
-# inside your .bashrc or .zshrc file
-
-export MSG_NATS=postgres://username:password@remote-db-host:5432/dbname
-export MIC_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
-export VIEW_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
-
-alias k=kubectl
-```
-
-## Usage
+## Developement
 
 Run front and back ends simultaneously. For faster development don't run the [devpie-client-app](https://github.com/ivorscott/devpie-client-app) in a container/pod.
 
@@ -104,7 +125,7 @@ npm start
 tilt up
 ```
 
-## Testing
+### Testing
 
 Navigate to the feature folder to run tests.
 ```bash
@@ -112,15 +133,18 @@ cd identity/application
 npm run tests
 ```
 
-### Debugging remote databases outside of kubernetes
-Provide `pgcli` the remote connection string.
+### Debugging
+ 
+#### Inspecting Managed Databases
+Provide `pgcli` a remote connection string.
 ```bash
 pgcli $MIC_DB_IDENTITY 
-# OPTIONS: [ $MSG_NATS | $MIC_DB_IDENTITY | $VIEW_DB_IDENTITY ... ]
+
+# opts: [ $MSG_NATS | $MIC_DB_IDENTITY | $VIEW_DB_IDENTITY ... ]
 ```
 
-#### Using pgadmin from within the cluster.
-To use pgadmin run a pod instance and use port fowarding. To access pgadmin go to localhost:8888 and enter credentials.
+#### Using PgAdmin 
+If you prefer a UI to debug postgres you may use pgadmin. Run a pod instance and then apply port fowarding. To access pgadmin go to `localhost:8888` and enter the credentials below.
 ```bash
 kubectl run pgadmin --env="PGADMIN_DEFAULT_EMAIL=test@example.com" --env="PGADMIN_DEFAULT_PASSWORD=SuperSecret" --image dpage/pgadmin4 
 kubectl port-forward pod/pgadmin 8888:80 
@@ -133,7 +157,7 @@ Migrations exist under the following paths:
 - `<feature>/microservice/migrations`
 - `<feature>/aggregator/migrations` 
 
-#### Migration flow
+#### Migration Flow
 1. move to a feature's `microservice` or `aggregator`
 2. create a `migration`
 3. add sql for `up` and `down` migration files
