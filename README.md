@@ -1,6 +1,6 @@
-# CQRS Event Architecture for Devpie Client
+# Core Event-driven Architecture for Devpie Client
 
-This backend uses CQRS and event sourcing. It should be used with the [devpie-client-app](https://github.com/ivorscott/devpie-client-app).
+This backend uses CQRS and event sourcing sparingly. It should be used with the [devpie-client-app](https://github.com/ivorscott/devpie-client-app).
 
 It uses [devpie-client-events](https://github.com/ivorscott/devpie-client-common-module), a shared library that spans across 
 3 language specific packages: in Typescript, Python and Golang. The Typescript commands and events are the source of truth. The library 
@@ -14,11 +14,53 @@ This is an experimental project for learning.
 Devpie Client is a business management tool for performing software development with clients. Features will include 
 kanaban or agile style board management and auxiliary services like cost estimation, payments and more. 
 
-## How Data Moves Through The System
+## How Data Moves Through CQRS System Parts
 
-![cqrs architecture](cqrs.png)
+![cqrs pattern](cqrs.png)
 
-End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Services (Components) pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use to send responses to users.
+CQRS is not an architecture. CQRS and Event sourcing are to be [used sparingly](https://medium.com/@hugo.oliveira.rocha/what-they-dont-tell-you-about-event-sourcing-6afc23c69e9a). CQRS optimizes writes from reads. For example, the `identity` feature makes strict use CQRS to write data in one shape and read it in one or more other shapes. Devpie Client will need to display all kinds of screens to its users. End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Microservices pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use to send responses to users.
+
+
+### Concepts
+<details>
+<summary>Read more</summary>
+<br>
+
+#### Applications
+
+- Applications are not microservices.
+- An Application is a feature with its own endpoints that accepts user interaction.
+- Applications provide immediate responses to user input.
+
+#### Messaging System
+
+- A stateful msg broker plays a central role in entire architecture.
+- All state transitions will be stored by NATS Streaming in streams of messages. These state transitions become the authoritative state used to make decisions.
+- NATS Streaming is a durable state store as well as a transport mechanism.
+
+#### Microservices
+
+- Microservices are autonomous units of functionality that model a single business concern.
+- Microservices are small and focused doing one thing well.
+- Micoservices don't share databases with other Microservices.
+- Micoservices allow us to use the technology stack best suited to achieve required performance.
+
+#### Aggregators
+
+- Aggregators aggregate state transitions into View Data that Applications use to render a template (SSR) or enrich the client.
+
+#### View Data
+
+- View Data are read-only models derived from state transitions.
+- View Data are eventually consistent
+- View Data are not for making decisions
+- View Data are not authoritative state, but derived from authoritative state.
+- View Data can be stored in any format or database that makes sense for the Application
+</details>
+
+## How Data Moves Through Microservices
+
+Most features will be plain Microservices. Microservices send and receive messages through the NATS Streaming library.
 
 ## Setup 
 
@@ -36,14 +78,15 @@ End users send requests to Applications. Applications write messages (commands o
 * \__infra\__ contains the kubernetes infrastructure
 * \__auth0\__ contains the auth0 configuration
 
-Export environment variables for [remote database services](elephantsql.com) inside your `.bashrc` or `.zshrc` file.
+Export environment variables for connecting to remote database services inside your `.bashrc` or `.zshrc` file.
  
 If you wish, you can create aliases for routine tasks as well.
 
 ```bash
 # inside your .bashrc or .zshrc file
 
-export COM_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
+export MSG_NATS=postgres://username:password@remote-db-host:5432/dbname
+export MIC_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
 export VIEW_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
 
 alias k=kubectl
@@ -61,128 +104,116 @@ npm start
 tilt up
 ```
 
-### Debugging databases
-Pgcli is a command line interface for Postgres with auto-completion and syntax highlighting.
+## Testing
 
+Navigate to the feature folder to run tests.
 ```bash
-pgcli $COM_DB_IDENTITY
+cd identity/application
+npm run tests
 ```
 
+### Debugging remote databases outside of kubernetes
+Provide `pgcli` the remote connection string.
+```bash
+pgcli $MIC_DB_IDENTITY 
+# OPTIONS: [ $MSG_NATS | $MIC_DB_IDENTITY | $VIEW_DB_IDENTITY ... ]
+```
+
+#### Using pgadmin from within the cluster.
+To use pgadmin run a pod instance and use port fowarding. To access pgadmin go to localhost:8888 and enter credentials.
+```bash
+kubectl run pgadmin --env="PGADMIN_DEFAULT_EMAIL=test@example.com" --env="PGADMIN_DEFAULT_PASSWORD=SuperSecret" --image dpage/pgadmin4 
+kubectl port-forward pod/pgadmin 8888:80 
+```
 ### Migrations
-Components and Aggregators should have remote [database services](elephantsql.com).
+Microservices and Aggregators should have remote [database services](elephantsql.com).
 
 Migrations exist under the following paths:
 
-- `<feature>/component/migrations`
-- `<feature>/aggregator/migrations`
+- `<feature>/microservice/migrations`
+- `<feature>/aggregator/migrations` 
 
 #### Migration flow
-1. move to a feature's `component` or `aggregator`
+1. move to a feature's `microservice` or `aggregator`
 2. create a `migration`
 3. add sql for `up` and `down` migration files
 4. `tag` an image containing the latest migrations
 5. `push` image to registry
 
-For example:
+<details>
+<summary>View example</summary>
+<br>
 
 ```bash
-cd identity/component
+cd identity/microservice
 
 migrate create -ext sql -dir migrations -seq create_table 
 
-docker build -t devpies/com-db-identity-migration:v000001 ./migrations
+docker build -t devpies/mic-db-identity-migration:v000001 ./migrations
 
-docker push devpies/com-db-identity-migration:v000001  
+docker push devpies/mic-db-identity-migration:v000001  
 ```
+</details>
+
 Then apply the latest migration with `initContainers`
+<details>
+<summary>View example</summary>
+<br>
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: com-identity-depl
+  name: mic-identity-depl
 spec:
   selector:
     matchLabels:
-      app: com-identity
+      app: mic-identity
   template:
     metadata:
       labels:
-        app: com-identity
+        app: mic-identity
     spec:
       containers:
-        - image: devpies/client-com-identity
-          name: com-identity
+        - image: devpies/client-mic-identity
+          name: mic-identity
           env:
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: com-db-identity-database-name
+                  key: mic-db-identity-database-name
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: com-db-identity-username
+                  key: mic-db-identity-username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: com-db-identity-password
+                  key: mic-db-identity-password
             - name: POSTGRES_HOST
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: com-db-identity-host
+                  key: mic-db-identity-host
 # ============================================
 #  Init containers are specialized containers
 #  that run before app containers in a Pod.
 # ============================================
       initContainers:
         - name: schema-migration
-          image: devpies/com-db-identity-migration:v000001
+          image: devpies/mic-db-identity-migration:v000001
           env:
             - name: DB_URL
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: com-db-identity-url
+                  key: mic-db-identity-url
           command: ["migrate"]
           args: ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
 ```
+</details>
+
 Learn more about migrate cli [here](https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md). 
-
-## Concepts
-
-### Applications
-
-- Applications are not microservices.
-- An Application is a feature with its own endpoints that accepts user interaction.
-- Applications provide immediate responses to user input.
-
-### Messaging System
-
-- A stateful message broker plays a central role in entire architecture.
-- All state transitions will be stored by NATS Streaming in streams of messages. These state transitions become the authoritative state used to make decisions.
-- NATS Streaming is a durable state store as well as a transport mechanism.
-
-### Components
-
-- Components are services
-- Microservices are small and focused doing one thing well
-- Microservices are autonomous components that encapsulate a distinct business process
-- Micoservices don't share databases with other services
-- Micoservices allow us to use the technology stack best suited to achieve required performance
-
-### Aggregators
-
-- Aggregators aggregate state transitions into View Data that Applications use to render a template (SSR) or enrich the client.
-
-### View Data
-
-- View Data are read-only models derived from state transitions.
-- View Data are eventually consistent
-- View Data are not for making decisions
-- View Data are not authoritative state, but derived from authoritative state.
-- View Data can be stored in any format or database that makes sense for the Application
-
