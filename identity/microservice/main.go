@@ -11,18 +11,17 @@ import (
 
 	"github.com/ivorscott/devpie-client-events/go/events"
 
-stan "github.com/nats-io/stan.go"
+	stan "github.com/nats-io/stan.go"
 )
 
 var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))
 
-
 func main() {
-	
-    // ========================================
+
+	// ========================================
 	// Required Variables
-    // ========================================
+	// ========================================
 
 	url := os.Getenv("NATS_URL")
 	clu := os.Getenv("CLUSTER_ID")
@@ -31,15 +30,15 @@ func main() {
 
 	// ========================================
 	// Default Logger Setup
-    // ========================================
+	// ========================================
 
 	infolog := log.New(os.Stdout, fmt.Sprintf("%s: ", cid), log.Lmicroseconds|log.Lshortfile)
 
 	infolog.Printf("main : Started")
-	
-    // ========================================
+
+	// ========================================
 	// Dedicated Database For Microservice
-    // ========================================
+	// ========================================
 
 	repo, err := NewRepository(Config{
 		User:       os.Getenv("POSTGRES_USER"),
@@ -53,16 +52,16 @@ func main() {
 	}
 	defer repo.Close()
 
-    // ========================================
+	// ========================================
 	// Create NATS Client
-    // ========================================
+	// ========================================
 
 	c, Close := events.NewClient(clu, cid, url)
 	defer Close()
 
-    // ========================================
+	// ========================================
 	// Handle Messages
-    // ========================================
+	// ========================================
 
 	h := NewHandlers(repo, c)
 
@@ -71,13 +70,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	streamName := fmt.Sprintf("%s.command",events.Identity)
+	streamName := fmt.Sprintf("%s.command", events.Identity)
 
 	c.Listen(streamName, qg, h.handleAddUser, stan.DeliverAllAvailable(), stan.SetManualAckMode(), stan.AckWait(dur), stan.DurableName(qg))
 
-    // ========================================
+	// ========================================
 	// Graceful Shutdown
-    // ========================================
+	// ========================================
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
