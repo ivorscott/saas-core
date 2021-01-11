@@ -1,0 +1,33 @@
+{
+  "name": "@devpie/client-events",
+  "version": "0.0.27",
+  "description": "Common module for event-driven architecture.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run build-ts && npm run build-go && npm run build-py",
+    "build-ts": "tsc",
+    "build-go": "quicktype src/events.ts -o go/events/events.go --package events",
+    "build-py": "quicktype src/events.ts -o py/events/__init__.py --just-types --nice-property-names --python-version 3.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ivorscott/devpie-client-events.git"
+  },
+  "keywords": [],
+  "author": "ivorscott",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ivorscott/devpie-client-events/issues"
+  },
+  "homepage": "https://github.com/ivorscott/devpie-client-events#readme",
+  "devDependencies": {
+    "quicktype": "^15.0.258",
+    "typescript": "^4.0.5"
+  },
+  "dependencies": {
+    "@types/node": "^14.14.7",
+    "express": "^4.17.1",
+    "node-nats-streaming": "^0.3.2"
+  }
+}

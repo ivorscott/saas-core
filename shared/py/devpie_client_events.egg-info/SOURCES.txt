@@ -1,0 +1,7 @@
+README.md
+setup.py
+devpie_client_events.egg-info/PKG-INFO
+devpie_client_events.egg-info/SOURCES.txt
+devpie_client_events.egg-info/dependency_links.txt
+devpie_client_events.egg-info/top_level.txt
+events/__init__.py

@@ -1,0 +1,35 @@
+Metadata-Version: 2.1
+Name: devpie-client-events
+Version: 0.0.27
+Summary: UNKNOWN
+Home-page: https://github.com/ivorscott/devpie-client-events
+Author: ivorscott
+Author-email: ivor@devpie.io
+License: UNKNOWN
+Description: # Common Module for Event-driven Architecture
+        
+        Designed for Command Query Responsibility Segregation (CQRS) and event sourcing.
+        
+        [Github Repository](https://github.com/ivorscott/devpie-client-events)
+        
+        ## Install
+        
+        ```
+        pip install devpie-client-events
+        ```
+        
+        Example:
+        
+        ```
+        import events
+        
+        print(events.Commands.ADD_USER.value)
+        print(events.Events.USER_ADDED.value)
+        ```
+        
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
