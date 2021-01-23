@@ -29,6 +29,8 @@ spec:
               value: development
             - name: PORT
               value: "4000"
+            - name: TIMEZONE
+              value: "Europe/Berlin"
             - name: NATS_SERVER
               value: "http://nats-svc:4222"
             - name: CLUSTER_ID
@@ -52,7 +54,7 @@ spec:
                   key: auth0-audience
       initContainers:
         - name: schema-migration
-          image: devpies/view-db-identity-migration:v000003
+          image: devpies/view-db-identity-migration:v000001
           env:
             - name: DB_URL
               valueFrom:

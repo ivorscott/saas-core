@@ -11,6 +11,7 @@ enum Env {
   CLIENT_ID = "CLIENT_ID",
   AUTH0_DOMAIN = "AUTH0_DOMAIN",
   AUTH0_AUDIENCE = "AUTH0_AUDIENCE",
+  TIMEZONE = "TIMEZONE",
 }
 
 export interface Environment {
@@ -24,6 +25,7 @@ export interface Environment {
   [Env.NATS_SERVER]: string;
   [Env.CLUSTER_ID]: string;
   [Env.CLIENT_ID]: string;
+  [Env.TIMEZONE]: string;
 }
 
 type Maybe<T> = T | undefined;
@@ -51,6 +53,7 @@ const env: Environment = {
   [Env.NODE_ENV]: importFromEnv(Env.NODE_ENV),
   [Env.PORT]: parseInt(importFromEnv(Env.PORT), 10),
   [Env.VERSION]: packageJson.version,
+  [Env.TIMEZONE]: importFromEnv((Env.TIMEZONE)),
 };
 
 export { env };
