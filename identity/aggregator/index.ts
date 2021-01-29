@@ -3,33 +3,49 @@ import { env } from "./env";
 import { createMessageStore } from "./msg";
 import { createAggregator } from "./identity";
 
+let viewClient: Pool
+let natsClient: Pool
+let identityAggregator: { start: () => void; stop: () => void; }
+
 const viewdb = new Pool({
   connectionString: env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
+
 const natsdb = new Pool({
   connectionString: env.NATS_DB_URL,
   ssl: { rejectUnauthorized: false },
 });
 
-viewdb.connect();
-viewdb.on("connect", () => console.log("connected to viewdb"));
-viewdb.on("error", () => console.log("error occured connecting to viewdb"));
+function main() {
+  Promise.all([viewdb.connect,natsdb.connect]).then(() => {
+    const messageStore = createMessageStore(natsdb);
+    identityAggregator = createAggregator(viewdb, messageStore);
+    identityAggregator.start();
+  })
+}
 
-natsdb.connect();
-natsdb.on("connect", () => console.log("connected to natsdb"));
-viewdb.on("error", () => console.log("error occured connecting to natsdb"));
+const reconnectHandler = ()=> {
+  console.log("[RECONNECTING]")
+  identityAggregator.stop()
+  Promise.all([viewClient.end,natsClient.end]).then(()=> {
+    main()
+  })
+}
 
-const messageStore = createMessageStore(natsdb);
-const identityAggregator = createAggregator(viewdb, messageStore);
-
-identityAggregator.start();
+viewdb.on("connect", () => console.log("[CONNECTED] to viewdb"));
+viewdb.on("error", () => console.log("[ERROR] connecting to viewdb"));
+natsdb.on("connect", () => console.log("[CONNECTED] to natsdb"));
+natsdb.on("error", () => console.log("[ERROR] connecting to natsdb"));
 
 process.on("SIGINT", () => {
-  console.log("SIGINT");
-  identityAggregator.stop();
+  console.log("[SIGINT]");
+   reconnectHandler()
 });
-process.on("SIGTERM", () => {
-  console.log("SIGTERM");
-  identityAggregator.stop();
+
+process.on("SIGTERM",  () => {
+  console.log("[SIGTERM]");
+   reconnectHandler()
 });
+
+main()

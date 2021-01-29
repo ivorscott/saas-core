@@ -4,7 +4,8 @@ metadata:
   name: devpie-client-ingress-rules
   annotations:
     traefik.ingress.kubernetes.io/router.pathmatcher: PathPrefix
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   rules:
     - host: client-backend.devpie.local

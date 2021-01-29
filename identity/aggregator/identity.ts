@@ -3,12 +3,12 @@ import { Pool } from "pg";
 
 function createHandlers(queries: any) {
   return {
-    [Events.UserAdded]: (event: any) => queries.addUser(event),
+    [Events.UserAdded]: async (event: any) => await queries.addUser(event),
   };
 }
 
-function createQueries(db: Pool) {
-  function addUser(event: UserAddedEvent) {
+ function createQueries(db: Pool) {
+   function addUser(event: UserAddedEvent) {
     return db.query(
       `INSERT INTO users (
         id,
