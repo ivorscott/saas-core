@@ -41,7 +41,7 @@ spec:
                   key: msg-db-url
       initContainers:
         - name: schema-migration
-          image: devpies/view-db-identity-migration:v000001
+          image: devpies/view-db-identity-migration:v000002
           env:
             - name: DB_URL
               valueFrom:
