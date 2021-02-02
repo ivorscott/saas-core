@@ -2,3 +2,4 @@ node_modules
 .idea
 __infra__/secrets.yaml
 .env
+.DS_Store
