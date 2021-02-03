@@ -15,6 +15,10 @@ spec:
             backend:
               serviceName: app-identity-svc
               servicePort: 4000
+          - path: /v1/accounting
+            backend:
+              serviceName: app-accounting-svc
+              servicePort: 4010
           - path: /
             backend:
               serviceName: nats-svc

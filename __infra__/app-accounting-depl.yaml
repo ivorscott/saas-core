@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-accounting-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-accounting
+  template:
+    metadata:
+      labels:
+        app: app-accounting
+    spec:
+      containers:
+        - image: devpies/client-app-accounting
+          name: app-accounting
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "250m"
+              memory: "250Mi"
+          env:
+            - name: APP_NAME
+              value: Accounting
+            - name: NODE_ENV
+              value: development
+            - name: PORT
+              value: "4010"
+            - name: TIMEZONE
+              value: "Europe/Berlin"
+            - name: NATS_SERVER
+              value: "http://nats-svc:4222"
+            - name: CLUSTER_ID
+              value: "devpie-client"
+            - name: CLIENT_ID
+              value: app-accounting
+            - name: AUTH0_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-domain
+            - name: AUTH0_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-audience
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-accounting-svc
+spec:
+  selector:
+    app: app-accounting
+  ports:
+    - name: app-accounting
+      port: 4010
+      targetPort: 4010
