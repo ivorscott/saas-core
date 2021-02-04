@@ -16,7 +16,7 @@ export interface NewAccount {
 }
 
 interface Actions {
-  addAccount: (traceId: string, user: NewAccount) => void;
+  addAccount: (traceId: string, account: NewAccount) => void;
 }
 
 interface Handlers {
@@ -27,7 +27,7 @@ export function createActions(natsClient: Stan): Actions {
 
   async function addAccount(traceId: string, account: NewAccount) {
     try {
-      const userId = uuidV4();
+      const userId = account.auth0Id; // Temporary. Should use user from token instead
       const streamName = `${Categories.Accounting}.command`;
       const publisher = new EnableAccountingPublisher(natsClient, streamName);
 
@@ -38,9 +38,9 @@ export function createActions(natsClient: Stan): Actions {
         type,
         metadata: {
           traceId,
-          userId,
+          userId, 
         },
-        data: { id: userId, ...account },
+        data: account,
       };
       await publisher.publish(command);
     } catch (error) {
