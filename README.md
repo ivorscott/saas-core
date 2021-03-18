@@ -20,26 +20,17 @@ kanaban or agile style board management and auxiliary services like cost estimat
 
 * [An Auth0 Account](http://auth0.com/)
 * [Auth0 Github Deployments Extension](https://auth0.com/docs/extensions/github-deployments)
-* [2 Free 20MB Managed Database Services](elephantsql.com)
-* [1 Digital Ocean 10Gb Managed Database](https://www.digitalocean.com/products/managed-databases/)
+* [3 Free 20MB Managed Database Services](elephantsql.com)
     
 #### Configuration
 * \__infra\__ contains the kubernetes infrastructure
 * \__auth0\__ contains the auth0 configuration
 
-Required secrets files:
+`__infra__/secrets.yaml` is required. Rename `__infra__/secrets.sample.yaml` 
+and provide base64 encoded credentials for all postgres databases properties (_username, password, host etc_.).
 
-1. `__infra__/secrets.yaml`
-2. `.env`
-
-Available samples:
-1. `__infra__/secrets.sample.yaml`
-2. `.env.sample`
-
-Copy the secret environment variables to your `.bashrc` or `.zshrc` file. These environment variables contain remote 
-database connection strings you can use to connect with pgcli for debugging.
- 
-If you wish, you can create aliases for routine tasks as well.
+For convenience, set the full remote db urls to environment variables to your `.bashrc` or `.zshrc` file. 
+You can use them to connect with pgcli for debugging.
 
 ```bash
 # Use inside your .bashrc or .zshrc file
