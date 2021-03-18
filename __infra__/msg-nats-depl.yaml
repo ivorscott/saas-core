@@ -20,27 +20,27 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: msg-db-user
+                  key: msg-db-nats-user
             - name: MSG_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: msg-db-password
+                  key: msg-db-nats-password
             - name: MSG_DB_NAME
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: msg-db-name
+                  key: msg-db-nats-name
             - name: MSG_DB_HOST
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: msg-db-host
+                  key: msg-db-nats-host
             - name: MSG_DB_PORT
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: msg-db-port
+                  key: msg-db-nats-port
           args: [
               "-mc",
               "0",
