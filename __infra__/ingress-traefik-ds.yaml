@@ -1,36 +1,4 @@
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: self-signed
-data:
-  cert.pem: |
-    -----BEGIN CERTIFICATE-----
-    MIIEITCCAomgAwIBAgIQdtrV+cJ4NfIr7n7MCJE9FDANBgkqhkiG9w0BAQsFADBh
-    MR4wHAYDVQQKExVta2NlcnQgZGV2ZWxvcG1lbnQgQ0ExGzAZBgNVBAsMEmljdW1t
-    aW5nQFhJTjcxNjU1MjEiMCAGA1UEAwwZbWtjZXJ0IGljdW1taW5nQFhJTjcxNjU1
-    MjAeFw0yMTAyMDEyMzA2MTdaFw0yMzA1MDEyMjA2MTdaMEYxJzAlBgNVBAoTHm1r
-    Y2VydCBkZXZlbG9wbWVudCBjZXJ0aWZpY2F0ZTEbMBkGA1UECwwSaWN1bW1pbmdA
-    WElONzE2NTUyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyfvpTmdh
-    1GL7chV0UhrQoBJ5GU8rg00DyzUglyHdH29ZepWcujF2U7dM9x7M8gKHkEbNPshn
-    gjrMdUGPD46UWpSTKvmfvn8xeGSfMNl/1qqBjbVt68I59Z31RswnoGim2pLXRud+
-    SlJosVm9x+3zacBWcwBF0bQEiuxLS+mYMJsvT1472f7Qg7XEnPCFE0Uxp2M646hu
-    Bv7brcXDq1n629CzzKb1/20aS/0uCmIB6bxjTQK/OvC7ETITFoWVRsdj1ZQVyfFr
-    gTwlJR5xqievoRj9UlFMMzGhuSjt9qQtChm8LVrcQRaPcXUBBob7I6R20Dfqg8PV
-    JQZBxpc03PY99wIDAQABo3AwbjAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYI
-    KwYBBQUHAwEwHwYDVR0jBBgwFoAUB/QgHTwX2G1Z6DJVWkD89adKP/swJgYDVR0R
-    BB8wHYIbY2xpZW50LWJhY2tlbmQuZGV2cGllLmxvY2FsMA0GCSqGSIb3DQEBCwUA
-    A4IBgQAjOsBne7ht78SrBlYHtLuW5XAW5GDL6lwfJDYzmET/fU5nsIAPKlhUdfeq
-    kJ0ItaAzjjhYTmYqLq/+5l4OL7u+6sVD427ES4+jKit3/MPVyrfhfEKOBr+hFw8h
-    0sxGtwTH3i4b5J2kryrYA70EuVXfV/+JiNMc53MeazjMRcvX0f3GTg3dfemSR6GT
-    pWgeVb7ruac16ikFBxELnivxfUSRePi8HsNGLO5Z+Otw6fPwWWfqyuao295iPSFs
-    w3cRmHEnA38F9egC7Z4xcEGy5jzLN2rv5cbhCA3Mmq6gdLxSWPqaSfhl/eFxSg1R
-    EzH0vv4uYjS2FHhrsIPMDW4PaRDXIeiO+iQYcoZU3elKYh0Jij9POsWsoN3ThBxR
-    newiSQwiVKDD5wtW2KPrr/ErHMCNcngEmPZfpgWyDmkGCHknNIxqaS+Sa/GaPd2h
-    FO+y5EkfInPfkazJtzm3BTgEpL1uIy+pyxvPByQRK3rI3MMFpe1qFCdSOPld4Moh
-    H+mjp80=
-    -----END CERTIFICATE-----
----
-apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: traefik-ingress-controller
@@ -58,7 +26,7 @@ spec:
       serviceAccountName: traefik-ingress-controller
       terminationGracePeriodSeconds: 60
       containers:
-        - image: traefik:2.3
+        - image: traefik:2.4
           name: traefik-ingress-lb
           ports:
             - name: http
@@ -76,7 +44,6 @@ spec:
           args:
             - --providers.kubernetesingress=true
             - --providers.kubernetesingress.ingressendpoint.hostname=localhost
-            - --providers.kubernetesingress.certauthfilepath=/certs/self-signed.pem
             - --api.dashboard=true
             - --api.insecure=true
             - --entrypoints.web.address=:80
@@ -88,14 +55,6 @@ spec:
             - --log=true
             - --log.level=INFO
             - --accesslog=true
-          volumeMounts:
-            - name: certs
-              mountPath: /certs/self-signed.pem
-              readOnly: true
-      volumes:
-        - name: certs
-          configMap:
-            name: self-signed
 ---
 kind: Service
 apiVersion: v1

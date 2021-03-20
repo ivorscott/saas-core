@@ -20,7 +20,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: msg-db-nats-user
+                  key: msg-db-nats-username
             - name: MSG_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -30,7 +30,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: msg-db-nats-name
+                  key: msg-db-nats-database-name
             - name: MSG_DB_HOST
               valueFrom:
                 secretKeyRef:
@@ -72,7 +72,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: msg-db-url
+                  key: msg-db-nats-url
           command: ["migrate"]
           args:
             ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]

@@ -38,7 +38,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: msg-db-url
+                  key: msg-db-nats-url
       initContainers:
         - name: schema-migration
           image: devpies/view-db-identity-migration:v000002
