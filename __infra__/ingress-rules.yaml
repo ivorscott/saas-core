@@ -5,8 +5,6 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.pathmatcher: PathPrefix
     traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
-#    traefik.ingress.kubernetes.io/router.tls.domains.0.main: devpie.local
-#    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: client-backend.devpie.local
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   rules:
