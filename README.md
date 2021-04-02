@@ -51,23 +51,31 @@ This backend should be used with the [devpie-client-app](https://github.com/ivor
 It uses [devpie-client-events](https://github.com/ivorscott/devpie-client-common-module) as a shared library to generate 
 message interfaces across multiple programming languages, but the Typescript definitions in the events repository are the source of truth.
 
-## How Data Moves Through CQRS System Parts
+## How Data Moves Through System Parts
 
+Two architectural models are adopted: _a traditional microservices model_ and 
+_an event sourcing model_ driven by CQRS.
 [CQRS allows you to scale your writes and reads separately](https://medium.com/@hugo.oliveira.rocha/what-they-dont-tell-you-about-event-sourcing-6afc23c69e9a). For example, the `identity` feature makes strict use CQRS to write data in one shape and read it in one or more other shapes. This introduces eventual consistency and requires the frontend's support in handling eventual consistent data intelligently. 
 
-Devpie Client will need to display all kinds of screens to its users. End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Microservices pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use to send responses to users.
+In the traditional microservices model every microservice has its own database. Within in
+the event sourcing model the authoritative state of truth is stored in a single message store (NATS).
+
+In both models, all events are persisted in a message store. In the traditional microservices model,
+the message store serves to promote a fault tolerant system. Microservices can have temporary downtime and return without 
+the loss of messages. In the event sourcing model, the current state of an entity is achieved through 
+projections on an event stream.
 
 
-![cqrs pattern](cqrs.png)
+![two models](arch.png)
 
+### The Event Sourcing Model
+Devpie Client will need to display all kinds of screens to its users. End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Components pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use at a later time (eventual consistency) to send responses to users.
 
-### Concepts
-
-Let's review the concepts involved in the above diagram.
 
 <details>
 <summary>Read more</summary>
-<br>
+
+### Definitions
 
 #### Applications
 
@@ -81,29 +89,25 @@ Let's review the concepts involved in the above diagram.
 - All state transitions will be stored by NATS Streaming in streams of messages. These state transitions become the authoritative state used to make decisions.
 - NATS Streaming is a durable state store as well as a transport mechanism.
 
-#### Microservices
+#### Components
 
-- Microservices are autonomous units of functionality that model a single business concern.
-- Microservices are small and focused doing one thing well.
-- Micoservices don't share databases with other Microservices.
-- Micoservices allow us to use the technology stack best suited to achieve required performance.
+- Components don't have their own database.
+- Components derive authoritative state from a message store using projections.
+- Components are small and focused doing one thing well.
 
 #### Aggregators
 
-- Aggregators aggregate state transitions into View Data that Applications use to render a template (SSR) or enrich the client.
+- Aggregators aggregate state transitions into View Data that Applications use to respond to a user.
 
 #### View Data
 
 - View Data are read-only models derived from state transitions.
-- View Data are eventually consistent
-- View Data are not for making decisions
+- View Data are eventually consistent.
+- View Data are not for making decisions.
 - View Data are not authoritative state, but derived from authoritative state.
 - View Data can be stored in any format or database that makes sense for the Application
 </details>
 
-## How Data Moves Through Microservices
-
-Most features will be plain Microservices. Microservices send and receive messages through the NATS Streaming library.
 
 ## Developement
 
