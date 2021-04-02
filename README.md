@@ -58,7 +58,7 @@ _an event sourcing model_ driven by CQRS.
 [CQRS allows you to scale your writes and reads separately](https://medium.com/@hugo.oliveira.rocha/what-they-dont-tell-you-about-event-sourcing-6afc23c69e9a). For example, the `identity` feature makes strict use CQRS to write data in one shape and read it in one or more other shapes. This introduces eventual consistency and requires the frontend's support in handling eventual consistent data intelligently. 
 
 In the traditional microservices model every microservice has its own database. Within
-the event sourcing model the authoritative state of truth is stored in a single message store (NATS).
+the event sourcing model the authoritative source of truth is stored in a single message store (NATS).
 
 In both models, all events are persisted in a message store. In the traditional microservices model,
 the message store serves to promote a fault tolerant system. Microservices can have temporary downtime and return without 
