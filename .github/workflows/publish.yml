@@ -24,23 +24,23 @@ jobs:
                 agg-identity:
                 - 'identity/aggregator/**'
 
-            # run only if 'mic-identity' files were changed
-            - name: identity microservice
-              if: steps.filter.outputs.mic-identity == 'true'
-              run: |
-                docker build . --tag ghcr.io/${{ github.repository_owner }}/mic-identity:latest
-                docker push ghcr.io/${{ github.repository_owner }}/mic-identity:latest
+          # run only if 'mic-identity' files were changed
+          - name: identity microservice
+            if: steps.filter.outputs.mic-identity == 'true'
+            run: |
+              docker build . --tag ghcr.io/${{ github.repository_owner }}/mic-identity:latest
+              docker push ghcr.io/${{ github.repository_owner }}/mic-identity:latest
 
-            # run only if 'app-identity' files were changed
-            - name: identity application
-              if: steps.filter.outputs.app-identity == 'true'
-              run: |
-                docker build . --tag ghcr.io/${{ github.repository_owner }}/app-identity:latest
-                docker push ghcr.io/${{ github.repository_owner }}/app-identity:latest
+          # run only if 'app-identity' files were changed
+          - name: identity application
+            if: steps.filter.outputs.app-identity == 'true'
+            run: |
+              docker build . --tag ghcr.io/${{ github.repository_owner }}/app-identity:latest
+              docker push ghcr.io/${{ github.repository_owner }}/app-identity:latest
 
-            # run only if 'agg-identity' files were changed
-            - name: identity aggregator
-              if: steps.filter.outputs.agg-identity == 'true'
-              run: |
-                docker build . --tag ghcr.io/${{ github.repository_owner }}/agg-identity:latest
-                docker push ghcr.io/${{ github.repository_owner }}/agg-identity:latest
+          # run only if 'agg-identity' files were changed
+          - name: identity aggregator
+            if: steps.filter.outputs.agg-identity == 'true'
+            run: |
+              docker build . --tag ghcr.io/${{ github.repository_owner }}/agg-identity:latest
+              docker push ghcr.io/${{ github.repository_owner }}/agg-identity:latest
