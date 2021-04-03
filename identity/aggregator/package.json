@@ -1,7 +1,7 @@
 {
   "name": "aggregator",
   "version": "1.0.0",
-  "description": "Listens for messages and updates the view data.",
+  "description": "Listens for messages and updates the view data",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
