@@ -8,7 +8,7 @@ RUN npm ci && npm cache clean --force
 FROM base as dev
 ENV NODE_ENV=development
 ENV PATH /application/node_modules/.bin:$PATH
-RUN npm i --only=development \
+RUN npm i \
     && npm cache clean --force \
     && npm config ls -l
 COPY . .
