@@ -1,4 +1,4 @@
-name: publish
+name: publish-app-identity
 
 on:
   push:

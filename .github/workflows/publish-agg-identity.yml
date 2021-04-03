@@ -1,4 +1,4 @@
-name: publish
+name: publish-agg-identity
 
 on:
   push:
