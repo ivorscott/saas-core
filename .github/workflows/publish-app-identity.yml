@@ -1,0 +1,23 @@
+name: publish
+
+on:
+  push:
+    paths:
+    - ".github/workflows/publish-app-identity.yml"
+    - "identity/application/**"
+
+jobs:
+    publish:
+      runs-on: ubuntu-latest
+      steps:
+          - uses: actions/checkout@v2
+          - uses: docker/login-action@v1
+            with:
+              registry: ghcr.io
+              username: ${{ github.repository_owner }}
+              password: ${{ secrets.GITHUB_TOKEN }}
+
+          - name: identity application
+            run: |
+              docker build ./identity/application --tag ghcr.io/${{ github.repository_owner }}/app-identity:latest
+              docker push ghcr.io/${{ github.repository_owner }}/app-identity:latest
