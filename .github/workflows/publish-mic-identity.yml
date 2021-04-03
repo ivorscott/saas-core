@@ -2,6 +2,7 @@ name: publish
 
 on:
   push:
+    paths:
     - "identity/microservice/**"
 
 jobs:
