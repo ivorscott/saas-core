@@ -18,7 +18,6 @@ jobs:
               password: ${{ secrets.GITHUB_TOKEN }}
 
           - name: identity aggregator
-            if: steps.filter.outputs.agg-identity == 'true'
             run: |
               docker build ./identity/aggregator --tag ghcr.io/${{ github.repository_owner }}/agg-identity:latest
               docker push ghcr.io/${{ github.repository_owner }}/agg-identity:latest
