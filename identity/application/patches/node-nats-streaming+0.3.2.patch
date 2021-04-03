@@ -1,0 +1,13 @@
+diff --git a/node_modules/node-nats-streaming/index.d.ts b/node_modules/node-nats-streaming/index.d.ts
+index 1ba3267..21c95de 100644
+--- a/node_modules/node-nats-streaming/index.d.ts
++++ b/node_modules/node-nats-streaming/index.d.ts
+@@ -37,7 +37,7 @@ export interface StanOptions extends ClientOpts {
+     stanEncoding?: string,
+     stanMaxPingOut?: number,
+     stanPingInterval?: number,
+-	nc?: nats.Client
++	// nc?: nats.Client
+ }
+ 
+ // these are standard node-nats options, some are omitted
