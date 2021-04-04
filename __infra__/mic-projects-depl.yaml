@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mic-projects-depl
+spec:
+  selector:
+    matchLabels:
+      app: mic-projects
+  template:
+    metadata:
+      labels:
+        app: mic-projects
+    spec:
+      containers:
+        - image: devpies/client-mic-projects
+          name: mic-projects
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "250m"
+              memory: "250Mi"
+          env:
+            - name: API_WEB_PORT
+              value: ":4000"
+            - name: API_WEB_FRONTEND_ADDRESS
+              value: "https://localhost:3000"
+            - name: API_WEB_AUTH_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mic-auth0-auth-domain
+            - name: API_WEB_AUTH_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mic-auth0-auth-audience
+            - name: API_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mic-db-projects-username
+            - name: API_DB_NAME
+              valueFrom:
+               secretKeyRef:
+                 name: secrets
+                 key: mic-db-projects-database-name
+            - name: API_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mic-db-projects-password
+            - name: API_DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mic-db-projects-host
+            - name: API_NATS_URL
+              value: "nats://nats-svc:4222"
+            - name: API_NATS_CLIENT_ID
+              value: "mic-projects"
+            - name: API_NATS_CLUSTER_ID
+              value: "devpie-client"
+      initContainers:
+        - name: schema-migration
+          image: devpies/mic-db-projects-migration:v000016
+          env:
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mic-db-projects-url
+          command: ["migrate"]
+          args:
+            ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mic-projects-svc
+spec:
+  selector:
+    app: mic-projects
+  ports:
+    - port: 4020
+      targetPort: 4000

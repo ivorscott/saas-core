@@ -28,7 +28,7 @@ spec:
             - name: NODE_ENV
               value: development
             - name: PORT
-              value: "4010"
+              value: "4000"
             - name: TIMEZONE
               value: "Europe/Berlin"
             - name: NATS_SERVER
@@ -56,6 +56,5 @@ spec:
   selector:
     app: app-accounting
   ports:
-    - name: app-accounting
-      port: 4010
-      targetPort: 4010
+    - port: 4010
+      targetPort: 4000

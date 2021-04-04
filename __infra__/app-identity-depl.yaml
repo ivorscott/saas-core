@@ -73,6 +73,5 @@ spec:
   selector:
     app: app-identity
   ports:
-    - name: app-identity
-      port: 4000
+    - port: 4000
       targetPort: 4000

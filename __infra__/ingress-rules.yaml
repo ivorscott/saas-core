@@ -19,6 +19,10 @@ spec:
             backend:
               serviceName: app-accounting-svc
               servicePort: 4010
+          - path: /v1/projects
+            backend:
+              serviceName: mic-projects-svc
+              servicePort: 4020
           - path: /
             backend:
               serviceName: nats-svc

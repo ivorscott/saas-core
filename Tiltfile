@@ -3,6 +3,7 @@ k8s_yaml([
     '__infra__/app-accounting-depl.yaml',
     '__infra__/agg-identity-depl.yaml',
     '__infra__/mic-identity-depl.yaml',
+    '__infra__/mic-projects-depl.yaml',
     '__infra__/ingress-rules.yaml',
     '__infra__/ingress-tls-secrets.yaml',
     '__infra__/ingress-traefik-ds.yaml',
@@ -13,6 +14,8 @@ k8s_yaml([
 docker_build('devpies/client-app-identity', 'identity/application', target='dev')
 
 docker_build('devpies/client-mic-identity', 'identity/microservice', target='dev')
+
+docker_build('devpies/client-mic-projects', 'projects', target='dev')
 
 docker_build('devpies/client-agg-identity', 'identity/aggregator', target='dev')
 
