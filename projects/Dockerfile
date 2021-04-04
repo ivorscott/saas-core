@@ -19,12 +19,14 @@ CMD ["./main"]
 
 FROM dev as build-stage
 
+RUN go build -o main ./cmd/api
+
 FROM aquasec/trivy:0.4.4 as trivy
 
-RUN trivy alpine:3.11.5 && \
+RUN trivy alpine:3.13.4 && \
     echo "No image vulnerabilities" > result
 
-FROM alpine:3.11.5 as prod
+FROM alpine:3.13.4 as prod
 
 COPY --from=trivy result secure
 COPY --from=build-stage main main
