@@ -29,7 +29,7 @@ RUN trivy alpine:3.13.4 && \
 FROM alpine:3.13.4 as prod
 
 COPY --from=trivy result secure
-COPY --from=build-stage main main
+COPY --from=build-stage /projects/main main
 
 EXPOSE 4000
 
