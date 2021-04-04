@@ -22,16 +22,3 @@ jobs:
               docker build ./identity/microservice --tag ghcr.io/${{ github.repository_owner }}/mic-identity:latest
               docker push ghcr.io/${{ github.repository_owner }}/mic-identity:latest
 
-#          # run only if 'app-identity' files were changed
-#          - name: identity application
-#            if: steps.filter.outputs.app-identity == 'true'
-#            run: |
-#              docker build ./identity/application --tag ghcr.io/${{ github.repository_owner }}/app-identity:latest
-#              docker push ghcr.io/${{ github.repository_owner }}/app-identity:latest
-#
-#          # run only if 'agg-identity' files were changed
-#          - name: identity aggregator
-#            if: steps.filter.outputs.agg-identity == 'true'
-#            run: |
-#              docker build ./identity/aggregator --tag ghcr.io/${{ github.repository_owner }}/agg-identity:latest
-#              docker push ghcr.io/${{ github.repository_owner }}/agg-identity:latest
