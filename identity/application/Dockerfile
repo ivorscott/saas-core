@@ -8,10 +8,10 @@ RUN npm ci && npm cache clean --force
 FROM base as dev
 ENV NODE_ENV=development
 ENV PATH /application/node_modules/.bin:$PATH
-COPY . .
-RUN npm i \
+RUN npm i --only=development  \
     && npm cache clean --force \
     && npm config ls -l
+COPY . .
 CMD ["./node_modules/.bin/ts-node-dev", \
     "--rs", "--notify", "false", "--transpile-only", "--ignore-watch", "node_modules", "index.ts"]
 FROM dev as test
