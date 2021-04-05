@@ -34,5 +34,5 @@ COPY --from=build-stage /projects/main main
 EXPOSE 4000
 
 HEALTHCHECK --interval=3s --timeout=3s CMD wget --spider -q http://localhost:4000/v1/health || exit 1
-
+    
 CMD ["./main"]

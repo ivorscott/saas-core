@@ -23,10 +23,10 @@ kanaban or agile style board management and auxiliary services like cost estimat
 * [3 Free 20MB Managed Database Services](elephantsql.com)
     
 #### Configuration
-* \__infra\__ contains the kubernetes infrastructure
+* \__k8s\__ contains the kubernetes infrastructure
 * \__auth0\__ contains the auth0 configuration
 
-`__infra__/secrets.yaml` is required. Rename `__infra__/secrets.sample.yaml` 
+`__k8s__/secrets.yaml` is required. Rename `__k8s__/secrets.sample.yaml` 
 and provide base64 encoded credentials for all postgres databases properties (_username, password, host etc_.).
 
 For convenience, set the full remote db urls to environment variables to your `.bashrc` or `.zshrc` file. 
