@@ -1,5 +1,7 @@
 FROM golang:1.15-alpine as base
 
+LABEL org.opencontainers.image.authors="devpie"
+
 ENV CGO_ENABLED=0
 
 WORKDIR /projects
