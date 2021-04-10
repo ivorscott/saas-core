@@ -13,7 +13,7 @@ spec:
         app: app-accounting
     spec:
       containers:
-        - image: devpies/client-app-accounting:latest
+        - image: devpies/app-accounting:latest
           name: app-accounting
           resources:
             requests:

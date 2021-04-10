@@ -3,22 +3,21 @@ name: publish-mic-identity
 on:
   push:
     paths:
-    - ".github/workflows/publish-mic-identity.yml"
-    - "identity/microservice/**"
+      - ".github/workflows/publish-mic-identity.yml"
+      - "identity/microservice/**"
 
 jobs:
-    publish:
-      runs-on: ubuntu-latest
-      steps:
-          - uses: actions/checkout@v2
-          - uses: docker/login-action@v1
-            with:
-              registry: ghcr.io
-              username: ${{ github.repository_owner }}
-              password: ${{ secrets.GITHUB_TOKEN }}
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-          - name: identity microservice
-            run: |
-              docker build ./identity/microservice --tag ghcr.io/${{ github.repository_owner }}/mic-identity:latest
-              docker push ghcr.io/${{ github.repository_owner }}/mic-identity:latest
-
+      - name: identity microservice
+        run: |
+          docker build ./identity/microservice --tag ghcr.io/${{ github.repository_owner }}/mic-identity:latest
+          docker push ghcr.io/${{ github.repository_owner }}/mic-identity:latest

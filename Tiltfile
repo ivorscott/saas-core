@@ -1,22 +1,22 @@
 k8s_yaml([
-    '__k8s__/app-identity-depl.yaml',
-    '__k8s__/app-accounting-depl.yaml',
-    '__k8s__/agg-identity-depl.yaml',
-    '__k8s__/mic-identity-depl.yaml',
-    '__k8s__/mic-projects-depl.yaml',
-    '__k8s__/ingress-rules.yaml',
-    '__k8s__/ingress-tls-secrets.yaml',
-    '__k8s__/ingress-traefik-ds.yaml',
-    '__k8s__/msg-nats-depl.yaml',
-    '__k8s__/secrets.yaml',
+    'manifests/app-identity-depl.yaml',
+    'manifests/app-accounting-depl.yaml',
+    'manifests/agg-identity-depl.yaml',
+    'manifests/mic-identity-depl.yaml',
+    'manifests/mic-projects-depl.yaml',
+    'manifests/ingress-rules.yaml',
+    'manifests/ingress-tls-secrets.yaml',
+    'manifests/ingress-traefik-ds.yaml',
+    'manifests/msg-nats-depl.yaml',
+    'manifests/secrets.yaml',
 ])
 
-docker_build('devpies/client-app-identity:latest', 'identity/application', target='dev')
+docker_build('devpies/app-identity:latest', 'identity/application', target='dev')
 
-docker_build('devpies/client-mic-identity:latest', 'identity/microservice', target='dev')
+docker_build('devpies/mic-identity:latest', 'identity/microservice', target='dev')
 
-docker_build('devpies/client-mic-projects:latest', 'projects', target='dev')
+docker_build('devpies/mic-projects:latest', 'projects', target='dev')
 
-docker_build('devpies/client-agg-identity:latest', 'identity/aggregator', target='dev')
+docker_build('devpies/agg-identity:latest', 'identity/aggregator', target='dev')
 
-docker_build('devpies/client-app-accounting:latest', 'accounting/application', target='dev')
+docker_build('devpies/app-accounting:latest', 'accounting/application', target='dev')

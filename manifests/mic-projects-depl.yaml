@@ -12,7 +12,7 @@ spec:
         app: mic-projects
     spec:
       containers:
-        - image: devpies/client-mic-projects:latest
+        - image: devpies/mic-projects:latest
           name: mic-projects
           resources:
             requests:

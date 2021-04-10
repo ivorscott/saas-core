@@ -3,21 +3,21 @@ name: publish-agg-identity
 on:
   push:
     paths:
-    - ".github/workflows/publish-agg-identity.yml"
-    - "identity/aggregator/**"
+      - ".github/workflows/publish-agg-identity.yml"
+      - "identity/aggregator/**"
 
 jobs:
-    publish:
-      runs-on: ubuntu-latest
-      steps:
-          - uses: actions/checkout@v2
-          - uses: docker/login-action@v1
-            with:
-              registry: ghcr.io
-              username: ${{ github.repository_owner }}
-              password: ${{ secrets.GITHUB_TOKEN }}
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-          - name: identity aggregator
-            run: |
-              docker build ./identity/aggregator --tag ghcr.io/${{ github.repository_owner }}/agg-identity:latest
-              docker push ghcr.io/${{ github.repository_owner }}/agg-identity:latest
+      - name: identity aggregator
+        run: |
+          docker build ./identity/aggregator --tag ghcr.io/${{ github.repository_owner }}/agg-identity:latest
+          docker push ghcr.io/${{ github.repository_owner }}/agg-identity:latest

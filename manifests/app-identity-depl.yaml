@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agg-identity-depl
+  name: app-identity-depl
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: agg-identity
+      app: app-identity
   template:
     metadata:
       labels:
-        app: agg-identity
+        app: app-identity
     spec:
       containers:
-        - image: devpies/client-agg-identity:latest
-          name: agg-identity
+        - image: devpies/app-identity:latest
+          name: app-identity
           resources:
             requests:
               cpu: "100m"
@@ -23,22 +23,35 @@ spec:
               cpu: "250m"
               memory: "250Mi"
           env:
-            - name: AGG_NAME
+            - name: APP_NAME
               value: Identity
             - name: NODE_ENV
               value: development
+            - name: PORT
+              value: "4000"
+            - name: TIMEZONE
+              value: "Europe/Berlin"
             - name: NATS_SERVER
               value: "http://nats-svc:4222"
+            - name: CLUSTER_ID
+              value: "devpie-client"
+            - name: CLIENT_ID
+              value: app-identity
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: secrets
                   key: view-db-identity-url
-            - name: NATS_DB_URL
+            - name: AUTH0_DOMAIN
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: msg-db-nats-url
+                  key: auth0-domain
+            - name: AUTH0_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-audience
       initContainers:
         - name: schema-migration
           image: devpies/view-db-identity-migration:v000002
@@ -51,3 +64,14 @@ spec:
           command: ["migrate"]
           args:
             ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-identity-svc
+spec:
+  selector:
+    app: app-identity
+  ports:
+    - port: 4000
+      targetPort: 4000
