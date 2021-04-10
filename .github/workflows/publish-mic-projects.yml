@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        env:
-          NAME: mic-projects
       - uses: docker/login-action@v1
         with:
           registry: ghcr.io
@@ -21,7 +19,7 @@ jobs:
 
       - name: Build and Push Image
         env:
-          IMAGE: ${{ github.repository_owner }}/$NAME
+          IMAGE: ${{ github.repository_owner }}/mic-projects
         run: |
           export VERSION=$(git rev-parse --short HEAD)
           docker build ./projects --tag ghcr.io/$IMAGE:$VERSION
@@ -32,7 +30,7 @@ jobs:
           repository: ${{ github.repository_owner }}/devpie-infra
           branch: ${{ github.ref }}
         env:
-          PATH: manifests/$NAME-depl.yaml
+          PATH: manifests/mic-projects-depl.yaml
         run: |
           sed -i '' 's/$NAME:.*/$IMAGE:$VERSION/' $PATH
           git config --local user.email github-actions@github.com
