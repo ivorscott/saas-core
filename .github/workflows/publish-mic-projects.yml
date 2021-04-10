@@ -23,15 +23,16 @@ jobs:
           IMAGE: mic-projects
         run: |
           export SHA=$(git rev-parse --short HEAD)
+
           docker build ./projects --tag ghcr.io/$OWNER/$IMAGE:$SHA
           docker push ghcr.io/$OWNER/$IMAGE:$SHA
+
+          echo $OWNER/$IMAGE:$SHA > .build-version
 
           cat > patch.sh <<EOF
           #!/bin/bash
           sed -i 's/$IMAGE:.*/$IMAGE:$SHA/' $IMAGE-depl.yaml
           EOF
-
-          cat patch.sh
 
           chmod +x patch.sh
 
@@ -41,12 +42,15 @@ jobs:
           token: ${{ secrets.PAT }}
           path: devpie-infra
       - run: |
+          export IMAGE=$(cat .build-version)
+
           mv patch.sh devpie-infra/manifests
           cd devpie-infra/manifests
+
           ./patch.sh
-          ls
+
           git config --local user.email github-actions@github.com
           git config --local user.name github-actions
           git add .
-          git commit -m "release $IMAGE:$VERSION"
+          git commit -m "new release: $IMAGE"
           git push
