@@ -19,7 +19,7 @@ jobs:
 
       - name: Build and Push Image
         env:
-          NEW_IMAGE: ${{ github.repository_owner }}/mic-projects:${{GITHUB_SHA::7}}
+          NEW_IMAGE: ${{ github.repository_owner }}/mic-projects:$(echo ${GITHUB_SHA} | cut -c1-8)
         run: |
           docker build ./projects --tag ghcr.io/$NEW_IMAGE
           docker push ghcr.io/$NEW_IMAGE
