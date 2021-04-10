@@ -19,10 +19,11 @@ jobs:
 
       - name: Build and Push Image
         env:
-          NEW_IMAGE: ${{ github.repository_owner }}/mic-projects:$(echo ${GITHUB_SHA} | cut -c1-8)
+          NEW_IMAGE: ${{ github.repository_owner }}/mic-projects
+          SHA8: ${GITHUB_SHA::8}
         run: |
-          docker build ./projects --tag ghcr.io/$NEW_IMAGE
-          docker push ghcr.io/$NEW_IMAGE
+          docker build ./projects --tag ghcr.io/$NEW_IMAGE:$SHA8
+          docker push ghcr.io/$NEW_IMAGE:$SHA8
 
       - uses: actions/checkout@v2
         with:
@@ -36,14 +37,14 @@ jobs:
       - name: Update Kubernetes resources
         run: |
           cd kustomize/base
-          kustomize edit set image mic-projects=$NEW_IMAGE
+          kustomize edit set image mic-projects=$NEW_IMAGE:$SHA8
           cat kustomization.yaml
 
       - name: Commit files
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git commit -am "Updated projects image: $NEW_IMAGE"
+          git commit -am "Updated projects image: $NEW_IMAGE:$SHA8"
 
       - name: Push changes
         uses: ad-m/github-push-action@master
