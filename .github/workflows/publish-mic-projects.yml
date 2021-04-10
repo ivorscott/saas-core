@@ -41,10 +41,9 @@ jobs:
           token: ${{ secrets.PAT }}
           path: devpie-infra
       - run: |
-          export VERSION=$(cat .build-version)
-          cd devpie-infra/manifests
+          mv patch.sh devpie-infra/manifests
+          ./devpie-infra/manifests/patch.sh
           ls
-          ./patch.sh
           git config --local user.email github-actions@github.com
           git config --local user.name github-actions
           git add .
