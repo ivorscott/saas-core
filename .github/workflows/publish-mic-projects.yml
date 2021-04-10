@@ -23,11 +23,10 @@ jobs:
           IMAGE: mic-projects
         run: |
           export SHA=$(git rev-parse --short HEAD)
+          echo $OWNER/$IMAGE:$SHA > .build-version
 
           docker build ./projects --tag ghcr.io/$OWNER/$IMAGE:$SHA
           docker push ghcr.io/$OWNER/$IMAGE:$SHA
-
-          echo $OWNER/$IMAGE:$SHA > .build-version
 
           cat > patch.sh <<EOF
           #!/bin/bash
@@ -51,6 +50,6 @@ jobs:
 
           git config --local user.email github-actions@github.com
           git config --local user.name github-actions
-          git add .
+          git add $IMAGE-depl.yaml
           git commit -m "new release: $IMAGE"
           git push
