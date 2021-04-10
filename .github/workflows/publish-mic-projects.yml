@@ -28,7 +28,7 @@ jobs:
 
           cat > patch.sh <<EOF
           #!/bin/bash
-          sed -i '' -e 's/$IMAGE:.*/$IMAGE:$SHA/' $IMAGE-depl.yaml
+          sed -i '' 's/$IMAGE:.*/$IMAGE:$SHA/' $IMAGE-depl.yaml
           EOF
 
           cat patch.sh
