@@ -34,7 +34,7 @@ jobs:
           export NEW_IMAGE=$(cat image.txt)
           cd devpie-infra
           ls
-          sed -i "" "s/mic-projects:.*/$NEW_IMAGE/" manifests/mic-projects-depl.yaml
+          sed -i "" "s/mic-projects:.*/$NEW_IMAGE/" ./manifests/mic-projects-depl.yaml
           git config --local user.email github-actions@github.com
           git config --local user.name github-actions
           git add .
