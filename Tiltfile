@@ -11,12 +11,12 @@ k8s_yaml([
     '__k8s__/secrets.yaml',
 ])
 
-docker_build('devpies/client-app-identity', 'identity/application', target='dev')
+docker_build('devpies/client-app-identity:latest', 'identity/application', target='dev')
 
-docker_build('devpies/client-mic-identity', 'identity/microservice', target='dev')
+docker_build('devpies/client-mic-identity:latest', 'identity/microservice', target='dev')
 
-docker_build('devpies/client-mic-projects', 'projects', target='dev')
+docker_build('devpies/client-mic-projects:latest', 'projects', target='dev')
 
-docker_build('devpies/client-agg-identity', 'identity/aggregator', target='dev')
+docker_build('devpies/client-agg-identity:latest', 'identity/aggregator', target='dev')
 
-docker_build('devpies/client-app-accounting', 'accounting/application', target='dev')
+docker_build('devpies/client-app-accounting:latest', 'accounting/application', target='dev')

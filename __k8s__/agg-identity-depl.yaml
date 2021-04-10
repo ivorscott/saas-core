@@ -13,7 +13,7 @@ spec:
         app: agg-identity
     spec:
       containers:
-        - image: devpies/client-agg-identity
+        - image: devpies/client-agg-identity:latest
           name: agg-identity
           resources:
             requests:
@@ -49,4 +49,5 @@ spec:
                   name: secrets
                   key: view-db-identity-url
           command: ["migrate"]
-          args: ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
+          args:
+            ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
