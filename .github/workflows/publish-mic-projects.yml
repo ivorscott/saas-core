@@ -28,7 +28,7 @@ jobs:
 
           cat > patch.sh <<EOF
           #!/bin/bash
-          sed -i '' 's/$IMAGE:.*/$IMAGE:$SHA/' $IMAGE-depl.yaml
+          sed -i '' -e 's/$IMAGE:.*/$IMAGE:$SHA/' $IMAGE-depl.yaml
           EOF
 
           cat patch.sh
@@ -42,7 +42,8 @@ jobs:
           path: devpie-infra
       - run: |
           mv patch.sh devpie-infra/manifests
-          ./devpie-infra/manifests/patch.sh
+          cd devpie-infra/manifests
+          ./patch.sh
           ls
           git config --local user.email github-actions@github.com
           git config --local user.name github-actions
