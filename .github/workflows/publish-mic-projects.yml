@@ -29,7 +29,10 @@ jobs:
         with:
           repository: ${{ github.repository_owner }}/devpie-infra
           ref: ${{ github.ref }}
+          token: ${{ secrets.PAT }}
+          path: devpie-infra
       - run: |
+          cd devpie-infra
           sed -i '' 's/$NAME:.*/$IMAGE:$VERSION/' manifests/mic-projects-depl.yaml
           git config --local user.email github-actions@github.com
           git config --local user.name github-actions
