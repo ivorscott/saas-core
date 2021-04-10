@@ -21,7 +21,7 @@ jobs:
         env:
           IMAGE: ${{ github.repository_owner }}/mic-projects
         run: |
-          export VERSION=git rev-parse | cut -c1-7
+          export VERSION=$(git rev-parse --short HEAD)
           docker build ./projects --tag ghcr.io/$IMAGE:$VERSION
           docker push ghcr.io/$IMAGE:$VERSION
 
