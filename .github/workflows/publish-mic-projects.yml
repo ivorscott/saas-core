@@ -24,14 +24,14 @@ jobs:
           export VERSION=$(git rev-parse --short HEAD)
           docker build ./projects --tag ghcr.io/$IMAGE:$VERSION
           docker push ghcr.io/$IMAGE:$VERSION
-          echo $VERSION > image.txt
+          echo $VERSION > .build-version
       - uses: actions/checkout@v2
         with:
           repository: ${{ github.repository_owner }}/devpie-infra
           token: ${{ secrets.PAT }}
           path: devpie-infra
       - run: |
-          export VERSION=$(cat version.txt)
+          export VERSION=$(cat .build-version)
           cd devpie-infra/manifests
           ls
           sed -i '' -e "s|mic-projects:.*|mic-projects:$VERSION|" mic-projects-depl.yaml
