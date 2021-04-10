@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: ${{ github.repository_owner }}/devpie-infra
-          branch: "main"
+          ref: ${{ github.ref }}
       - run: |
           sed -i '' 's/$NAME:.*/$IMAGE:$VERSION/' manifests/mic-projects-depl.yaml
           git config --local user.email github-actions@github.com
