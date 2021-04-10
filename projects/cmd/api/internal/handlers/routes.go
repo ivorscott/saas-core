@@ -11,7 +11,7 @@ import (
 )
 
 
-func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, FrontendAddress,
+func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, origins []string,
 	Auth0Audience, Auth0Domain string) http.Handler {
 
 	auth0 := &mid.Auth0{
@@ -22,7 +22,7 @@ func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, Fr
 	app := web.NewApp(shutdown, log, mid.Logger(log), auth0.Authenticate(), mid.Errors(log), mid.Panics(log))
 
 	cr := cors.New(cors.Options{
-		AllowedOrigins:   []string{FrontendAddress},
+		AllowedOrigins:   origins,
 		AllowedHeaders:   []string{"Authorization", "Cache-Control", "Content-Type", "Strict-Transport-Security"},
 		AllowedMethods:   []string{http.MethodOptions, http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodPatch},
 		AllowCredentials: true,

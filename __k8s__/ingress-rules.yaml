@@ -14,7 +14,7 @@ spec:
           - path: /
             backend:
               serviceName: spa-client-svc
-              servicePort: 3000
+              servicePort: 80
 
     - host: client-backend.devpie.local
       http:

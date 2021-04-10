@@ -10,6 +10,7 @@ import (
 	_ "net/http/pprof" // Register the pprof handlers
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -44,7 +45,7 @@ func run() error {
 			ReadTimeout      time.Duration `conf:"default:5s"`
 			WriteTimeout     time.Duration `conf:"default:5s"`
 			ShutdownTimeout  time.Duration `conf:"default:5s"`
-			FrontendAddress  string        `conf:"default:https://localhost:3000"`
+			CorsOrigins  string        `conf:"default:https://localhost:3000"`
 			AuthDomain       string        `conf:"default:none,noprint"`
 			AuthAudience     string        `conf:"default:none,noprint"`
 		}
@@ -113,9 +114,17 @@ func run() error {
 	// Make a channel to listen for shutdown signal from the OS.
 	shutdown := make(chan os.Signal, 1)
 
+	// Parse Cors Origins
+	rawOrigins := strings.Split(cfg.Web.CorsOrigins, ",")
+	origins := make([]string, len(rawOrigins))
+
+	for _, v := range rawOrigins {
+		origins = append(origins, strings.TrimSpace(v))
+	}
+
 	api := http.Server{
 		Addr: cfg.Web.Port,
-		Handler: handlers.API(shutdown, repo, infolog, cfg.Web.FrontendAddress, cfg.Web.AuthAudience,
+		Handler: handlers.API(shutdown, repo, infolog, origins, cfg.Web.AuthAudience,
 			cfg.Web.AuthDomain),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,

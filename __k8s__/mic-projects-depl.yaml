@@ -24,8 +24,8 @@ spec:
           env:
             - name: API_WEB_PORT
               value: ":4000"
-            - name: API_WEB_FRONTEND_ADDRESS
-              value: "https://localhost:3000"
+            - name: API_WEB_CORS_ORIGINS
+              value: "https://localhost:3000, https://devpie.local"
             - name: API_WEB_AUTH_DOMAIN
               valueFrom:
                 secretKeyRef:
