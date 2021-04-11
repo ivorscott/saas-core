@@ -1,6 +1,6 @@
 import { Pool } from "pg";
 import { env } from "./env";
-import { reconnectHandler, natsInstance} from "./nats"
+import { reconnectHandler, natsInstance } from "./nats-streaming";
 import { createIdentity } from "./identity";
 import { createExpressApp } from "./app";
 
@@ -12,7 +12,7 @@ viewDB.on("error", (err) => {
   process.exit(1);
 });
 
-reconnectHandler()
+reconnectHandler();
 
 const feature = createIdentity(viewDB, natsInstance);
 const app = createExpressApp(feature, env);

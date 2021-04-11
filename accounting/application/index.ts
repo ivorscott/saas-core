@@ -1,9 +1,9 @@
 import { env } from "./env";
-import { reconnectHandler, natsInstance} from "./nats"
+import { reconnectHandler, natsInstance } from "./nats-streaming";
 import { createAccounting } from "./accounting";
 import { createExpressApp } from "./app";
 
-reconnectHandler()
+reconnectHandler();
 
 const feature = createAccounting(natsInstance);
 const app = createExpressApp(feature, env);
