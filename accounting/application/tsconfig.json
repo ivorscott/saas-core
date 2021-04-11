@@ -4,7 +4,7 @@
     "target": "es2017",
     "outDir": "./dist",
     "baseUrl": "./",
-    "types": ["mocha", "jest"],
+    "types": ["jest"],
     "declaration": true,
     "removeComments": true,
     "esModuleInterop": true,
