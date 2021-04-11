@@ -1,5 +1,5 @@
 node_modules
 .idea
-__infra__/secrets.yaml
+manifests/secrets.yaml
 .env
 .DS_Store
