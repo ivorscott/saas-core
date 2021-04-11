@@ -7,7 +7,7 @@ function createExpressApp(feature: Feature, env: Environment) {
   const app = express();
 
   useMiddleware(app, env);
-  app.use("/v1/accounting", feature.router);
+  app.use("/api/v1/accounting", feature.router);
 
   return app;
 }
