@@ -71,11 +71,12 @@ Devpie Client will need to display all kinds of screens to its users. End users 
 - All state transitions will be stored by NATS Streaming in streams of messages. These state transitions become the authoritative state used to make decisions.
 - NATS Streaming is a durable state store as well as a transport mechanism.
 
-#### Components
+#### Message Handlers
 
-- Components don't have their own database.
-- Components derive authoritative state from a message store using projections.
-- Components are small and focused doing one thing well.
+- Message Handlers are not microservices.
+- Message Handlers don't have their own dedicated database.
+- Message Handlers derive authoritative state from a message store using projections.
+- Message Handlers are small and focused doing one thing well.
 
 #### Aggregators
 
