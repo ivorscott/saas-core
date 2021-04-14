@@ -44,7 +44,7 @@ jobs:
       - run: |
           export IMAGE=$(cat .build-version)
 
-          mv patch.sh devpie-infra-client/manifests
+          mv patch.sh devpie-client-infra/manifests
           cd devpie-client-infra/manifests
 
           ./patch.sh
