@@ -2,7 +2,7 @@ k8s_yaml([
     'manifests/app-identity-depl.yaml',
     'manifests/app-accounting-depl.yaml',
     'manifests/agg-identity-depl.yaml',
-    'manifests/mic-identity-depl.yaml',
+    'manifests/mh-identity-depl.yaml',
     'manifests/mic-projects-depl.yaml',
     'manifests/ingress-rules.yaml',
     'manifests/ingress-tls-secrets.yaml',
@@ -13,7 +13,7 @@ k8s_yaml([
 
 docker_build('devpies/app-identity:latest', 'core/identity/application', target='dev')
 
-docker_build('devpies/mic-identity:latest', 'core/identity/microservice', target='dev')
+docker_build('devpies/mh-identity:latest', 'core/identity/handler', target='dev')
 
 docker_build('devpies/mic-projects:latest', 'core/projects', target='dev')
 

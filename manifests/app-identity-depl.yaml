@@ -38,10 +38,7 @@ spec:
             - name: CLIENT_ID
               value: app-identity
             - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: view-db-identity-url
+              value: postgresql://postgres:postgres@viewdata-svc:5432/postgres?sslmode=disable
             - name: AUTH0_DOMAIN
               valueFrom:
                 secretKeyRef:
@@ -57,10 +54,7 @@ spec:
           image: devpies/view-db-identity-migration:v000002
           env:
             - name: DB_URL
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: view-db-identity-url
+              value: postgresql://postgres:postgres@viewdata-svc:5432/postgres?sslmode=disable
           command: ["migrate"]
           args:
             ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]

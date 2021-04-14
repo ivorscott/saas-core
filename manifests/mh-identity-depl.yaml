@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mic-identity-depl
+  name: mh-identity-depl
 spec:
   selector:
     matchLabels:
-      app: mic-identity
+      app: mh-identity
   template:
     metadata:
       labels:
-        app: mic-identity
+        app: mh-identity
     spec:
       containers:
-        - image: devpies/mic-identity:latest
-          name: mic-identity
+        - image: devpies/mh-identity:latest
+          name: mh-identity
           resources:
             requests:
               cpu: "100m"
@@ -25,7 +25,7 @@ spec:
             - name: NATS_URL
               value: "nats://nats-svc:4222"
             - name: CLIENT_ID
-              value: "mic-identity"
+              value: "mh-identity"
             - name: CLUSTER_ID
               value: "devpie-client"
             - name: POSTGRES_DB
@@ -35,13 +35,13 @@ spec:
             - name: POSTGRES_PASSWORD
               value: postgres
             - name: POSTGRES_HOST
-              value: mic-db-identity-svc
+              value: mh-db-identity-svc
       initContainers:
         - name: schema-migration
-          image: devpies/mic-db-identity-migration:v000003
+          image: devpies/mh-db-identity-migration:v000003
           env:
             - name: DB_URL
-              value: postgresql://postgres:postgres@mic-db-identity-svc:5432/postgres?sslmode=disable
+              value: postgresql://postgres:postgres@mh-db-identity-svc:5432/postgres?sslmode=disable
           command: ["migrate"]
           args:
             ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]

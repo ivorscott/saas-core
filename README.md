@@ -140,7 +140,7 @@ kubectl port-forward pod/pgadmin 8888:80
 Migrations exist under the following paths:
 
 - `./databases/nats/migrations`
-- `./core/<feature>/microservice/migrations`
+- `./core/<microservice>/migrations`
 - `./integrations/<feature>/aggregator/migrations`
 
 #### Migration Flow
@@ -156,7 +156,7 @@ Migrations exist under the following paths:
 <br>
 
 ```bash
-cd identity/microservice
+cd identity/handler
 
 migrate create -ext sql -dir migrations -seq create_table
 
