@@ -80,7 +80,9 @@ Devpie Client will need to display all kinds of screens to its users. End users 
 
 #### Aggregators
 
-- Aggregators aggregate state transitions into View Data that Applications use to respond to a user.
+- Aggregators poll databases and watch for new events.
+- Aggregators use new event data to update the View Data .
+- Aggregators aggregate state transitions into View Data for Applications to retrieve at a later time.
 
 #### View Data
 
@@ -88,7 +90,7 @@ Devpie Client will need to display all kinds of screens to its users. End users 
 - View Data are eventually consistent.
 - View Data are not for making decisions.
 - View Data are not authoritative state, but derived from authoritative state.
-- View Data can be stored in any format or database that makes sense for the Application
+- View Data can be stored in any format or database that makes sense for the Application.
 </details>
 
 ## Developement
