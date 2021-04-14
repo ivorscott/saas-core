@@ -12,36 +12,18 @@ kanaban or agile style board management and auxiliary services like cost estimat
 #### Requirements
 
 - [Docker Desktop](https://docs.docker.com/desktop/) (Kubernetes enabled)
-- [Pgcli](https://www.pgcli.com/install)
-- [Migrate CLI](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
 - [Tilt](https://tilt.dev/)
 
-#### Resources Being Used (no setup required)
+#### Accounts Being Used (no setup required)
 
-- [An Auth0 Account](http://auth0.com/)
-- [Auth0 Github Deployments Extension](https://auth0.com/docs/extensions/github-deployments)
-- [3 Free 20MB Managed Database Services](elephantsql.com)
+- AWS
+- Freshbooks
+- [Auth0](http://auth0.com/) with [Github Deployments](https://auth0.com/docs/extensions/github-deployments) enabled
 
 #### Configuration
 
-- \_\_k8s\_\_ contains the kubernetes infrastructure
-- \_\_auth0\_\_ contains the auth0 configuration
-
-`__k8s__/secrets.yaml` is required. Rename `__k8s__/secrets.sample.yaml`
+`manifests/secrets.yaml` is required. Rename `manifests/secrets.sample.yaml`
 and provide base64 encoded credentials for all postgres databases properties (_username, password, host etc_.).
-
-For convenience, set the full remote db urls to environment variables to your `.bashrc` or `.zshrc` file.
-You can use them to connect with pgcli for debugging.
-
-```bash
-# Use inside your .bashrc or .zshrc file
-
-export MSG_NATS=postgres://username:password@remote-db-host:5432/dbname
-export MIC_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
-export VIEW_DB_IDENTITY=postgres://username:password@remote-db-host:5432/dbname
-
-alias k=kubectl
-```
 
 ## Architecture
 
@@ -129,51 +111,34 @@ cd identity/application
 npm run tests
 ```
 
-### Debugging
+### Debugging local databases
 
-#### Inspecting Managed Databases
-
-Provide `pgcli` a remote connection string.
-
-```bash
-pgcli $MIC_DB_IDENTITY
-
-# opts: [ $MSG_NATS | $MIC_DB_IDENTITY | $VIEW_DB_IDENTITY ... ]
-```
-
-#### Debugging local databases within kubernetes
-
-The nats streaming server uses an sql store to persist data. In development, it's using a local database volume. Connect to it by doing the following:
+If you want autocompletion in the terminal, use `pgcli`:
 
 ```
 kubectl run pgcli --rm -i -t --env=DB_URL="postgresql://postgres:postgres@nats-svc:5432/postgres" --image devpies/pgcli
 ```
 
-#### Using PgAdmin
+If you prefer the old fashion way, use `kubectl exec`:
 
-If you prefer a UI to debug postgres you may use pgadmin. Run a pod instance and then apply port fowarding. To access pgadmin go to `localhost:8888` and enter the credentials below.
+```
+kubectl exec -it <pod> -- psql -h localhost -U postgres postgres
+```
+
+If you prefer having a UI to debug postgres, you use `PgAdmin`:
 
 ```bash
 kubectl run pgadmin --env="PGADMIN_DEFAULT_EMAIL=test@example.com" --env="PGADMIN_DEFAULT_PASSWORD=SuperSecret" --image dpage/pgadmin4
 kubectl port-forward pod/pgadmin 8888:80
 ```
 
-#### Using kubectl exec
-
-If you prefer the old fashion way.
-
-```
-kubectl exec -it <pod> -- psql -h localhost -U postgres postgres
-```
-
 ### Migrations
-
-Microservices and Aggregators should have remote [database services](elephantsql.com).
 
 Migrations exist under the following paths:
 
-- `<feature>/microservice/migrations`
-- `<feature>/aggregator/migrations`
+- `./databases/nats/migrations`
+- `./core/<feature>/microservice/migrations`
+- `./integrations/<feature>/aggregator/migrations`
 
 #### Migration Flow
 
@@ -201,6 +166,8 @@ docker push devpies/mic-db-identity-migration:v000001
 
 Then apply the latest migration with `initContainers`
 
+_Using [init containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) for migrations requires having a running database beforehand. Containers in a pod will start after init containers have executed._
+
 <details>
 <summary>View example</summary>
 <br>
@@ -209,53 +176,63 @@ Then apply the latest migration with `initContainers`
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mic-identity-depl
+  name: mic-projects-depl
 spec:
   selector:
     matchLabels:
-      app: mic-identity
+      app: mic-projects
   template:
     metadata:
       labels:
-        app: mic-identity
+        app: mic-projects
     spec:
       containers:
-        - image: devpies/client-mic-identity
-          name: mic-identity
+        - image: devpies/mic-projects:latest
+          name: mic-projects
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "250m"
+              memory: "250Mi"
           env:
-            - name: POSTGRES_DB
+            - name: API_WEB_PORT
+              value: ":4000"
+            - name: API_WEB_CORS_ORIGINS
+              value: "https://localhost:3000, https://devpie.local"
+            - name: API_WEB_AUTH_DOMAIN
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: mic-db-identity-database-name
-            - name: POSTGRES_USER
+                  key: auth0-domain
+            - name: API_WEB_AUTH_AUDIENCE
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: mic-db-identity-username
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-identity-password
-            - name: POSTGRES_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-identity-host
-      # ============================================
-      #  Init containers are specialized containers
-      #  that run before app containers in a Pod.
-      # ============================================
+                  key: auth0-audience
+            - name: API_DB_USER
+              value: postgres
+            - name: API_DB_NAME
+              value: postgres
+            - name: API_DB_PASSWORD
+              value: postgres
+            - name: API_DB_HOST
+              value: mic-db-projects-svc
+            - name: API_DB_DISABLE_TLS
+              value: "true"
+            - name: API_NATS_URL
+              value: "nats://nats-svc:4222"
+            - name: API_NATS_CLIENT_ID
+              value: "mic-projects"
+            - name: API_NATS_CLUSTER_ID
+              value: "devpie-client"
       initContainers:
         - name: schema-migration
-          image: devpies/mic-db-identity-migration:v000001
+          image: devpies/mic-db-projects-migration:v000016
           env:
             - name: DB_URL
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-identity-url
+              value: postgresql://postgres:postgres@mic-db-projects-svc:5432/postgres?sslmode=disable
           command: ["migrate"]
           args:
             ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
