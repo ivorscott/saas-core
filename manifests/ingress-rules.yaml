@@ -8,30 +8,30 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   rules:
-    - host: devpie.local
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: spa-client-svc
-              servicePort: 80
+    # - host: devpie.local
+    #   http:
+    #     paths:
+    #       - path: /
+    #         backend:
+    #           serviceName: spa-client-svc
+    #           servicePort: 80
 
     - host: client-backend.devpie.local
       http:
         paths:
-          - path: /v1/users
+          - path: /api/v1/users
             backend:
               serviceName: app-identity-svc
               servicePort: 4000
-          - path: /v1/accounting
+          - path: /api/v1/accounting
             backend:
               serviceName: app-accounting-svc
               servicePort: 4010
-          - path: /v1/projects
+          - path: /api/v1/projects
             backend:
               serviceName: mic-projects-svc
               servicePort: 4020
-          - path: /
+          - path: /api/
             backend:
               serviceName: nats-svc
               servicePort: 8222

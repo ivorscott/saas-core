@@ -29,34 +29,19 @@ spec:
             - name: CLUSTER_ID
               value: "devpie-client"
             - name: POSTGRES_DB
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-identity-database-name
+              value: postgres
             - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-identity-username
+              value: postgres
             - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-identity-password
+              value: postgres
             - name: POSTGRES_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-identity-host
+              value: mic-db-identity-svc
       initContainers:
         - name: schema-migration
           image: devpies/mic-db-identity-migration:v000003
           env:
             - name: DB_URL
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-identity-url
+              value: postgresql://postgres:postgres@mic-db-identity-svc:5432/postgres?sslmode=disable
           command: ["migrate"]
           args:
             ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]

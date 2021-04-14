@@ -17,30 +17,22 @@ spec:
           image: nats-streaming:0.19.0-alpine3.12
           env:
             - name: MSG_DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: msg-db-nats-username
+              value: postgres
             - name: MSG_DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: msg-db-nats-password
+              value: postgres
             - name: MSG_DB_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: msg-db-nats-database-name
+              value: postgres
             - name: MSG_DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: msg-db-nats-host
+              value: nats-db-store-svc
             - name: MSG_DB_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: msg-db-nats-port
+              value: "5432"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "250m"
+              memory: "250Mi"
           args: [
               "-mc",
               "0",
@@ -69,10 +61,7 @@ spec:
           image: devpies/msg-db-migration:v000002
           env:
             - name: DB_URL
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: msg-db-nats-url
+              value: postgresql://postgres:postgres@nats-db-store-svc:5432/postgres?sslmode=disable
           command: ["migrate"]
           args:
             ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]

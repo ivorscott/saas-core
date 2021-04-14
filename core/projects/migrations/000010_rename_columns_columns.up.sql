@@ -1,0 +1,1 @@
+ALTER TABLE columns RENAME COLUMN columns to "column";

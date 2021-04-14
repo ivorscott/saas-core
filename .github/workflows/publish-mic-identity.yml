@@ -38,14 +38,14 @@ jobs:
 
       - uses: actions/checkout@v2
         with:
-          repository: ${{ github.repository_owner }}/devpie-infra
+          repository: ${{ github.repository_owner }}/devpie-client-infra
           token: ${{ secrets.PAT }}
-          path: devpie-infra
+          path: devpie-client-infra
       - run: |
           export IMAGE=$(cat .build-version)
 
-          mv patch.sh devpie-infra/manifests
-          cd devpie-infra/manifests
+          mv patch.sh devpie-infraclient-/manifests
+          cd devpie-client-infra/manifests
 
           ./patch.sh
           rm patch.sh

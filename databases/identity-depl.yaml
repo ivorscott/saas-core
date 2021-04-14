@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mic-db-identity-depl
+spec:
+  selector:
+    matchLabels:
+      app: mic-db-identity
+  template:
+    metadata:
+      labels:
+        app: mic-db-identity
+    spec:
+      volumes:
+        - name: mic-db-identity-volume
+          hostPath:
+            path: "/Users/ivorscott/databases/identity"
+      containers:
+        - name: mic-db-identity
+          image: postgres:11.6
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "250m"
+              memory: "250Mi"
+          env:
+            - name: POSTGRES_DB
+              value: postgres
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: mic-db-identity-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mic-db-identity-svc
+spec:
+  selector:
+    app: mic-db-identity
+  ports:
+    - port: 5432
+      targetPort: 5432

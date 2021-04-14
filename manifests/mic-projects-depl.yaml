@@ -25,37 +25,27 @@ spec:
             - name: API_WEB_PORT
               value: ":4000"
             - name: API_WEB_CORS_ORIGINS
-              value: "https://localhost:3000, https://devpie.local, https://qa.devpie.io"
+              value: "https://localhost:3000, https://devpie.local"
             - name: API_WEB_AUTH_DOMAIN
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: mic-auth0-auth-domain
+                  key: auth0-domain
             - name: API_WEB_AUTH_AUDIENCE
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: mic-auth0-auth-audience
+                  key: auth0-audience
             - name: API_DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-projects-username
+              value: postgres
             - name: API_DB_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-projects-database-name
+              value: postgres
             - name: API_DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-projects-password
+              value: postgres
             - name: API_DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-projects-host
+              value: mic-db-projects-svc
+            - name: API_DB_DISABLE_TLS
+              value: "true"
             - name: API_NATS_URL
               value: "nats://nats-svc:4222"
             - name: API_NATS_CLIENT_ID
@@ -67,10 +57,7 @@ spec:
           image: devpies/mic-db-projects-migration:v000016
           env:
             - name: DB_URL
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: mic-db-projects-url
+              value: postgresql://postgres:postgres@mic-db-projects-svc:5432/postgres?sslmode=disable
           command: ["migrate"]
           args:
             ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
