@@ -24,7 +24,7 @@ jobs:
         run: |
           export SHA=$(git rev-parse --short HEAD)
 
-          docker build ./projects --tag ghcr.io/$OWNER/$IMAGE:$SHA
+          docker build ./core/projects --tag ghcr.io/$OWNER/$IMAGE:$SHA
           docker push ghcr.io/$OWNER/$IMAGE:$SHA
 
           echo $OWNER/$IMAGE:$SHA > .build-version
