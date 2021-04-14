@@ -19,4 +19,4 @@ docker_build('devpies/mic-projects:latest', 'core/projects', target='dev')
 
 docker_build('devpies/agg-identity:latest', 'core/identity/aggregator', target='dev')
 
-docker_build('devpies/app-accounting:latest', 'integrations/accounting/application', target='dev')
+docker_build('devpies/app-accounting:latest', 'integrations/freshbooks/application', target='dev')

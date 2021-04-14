@@ -41,7 +41,7 @@ spec:
               "-sql_driver",
               "postgres",
               "-sql_source",
-              "user=$(MSG_DB_USER) password=$(MSG_DB_PASSWORD) dbname=$(MSG_DB_NAME) host=$(MSG_DB_HOST) port=$(MSG_DB_PORT) readTimeout=5s writeTimeout=5s sslmode=require",
+              "user=$(MSG_DB_USER) password=$(MSG_DB_PASSWORD) dbname=$(MSG_DB_NAME) host=$(MSG_DB_HOST) port=$(MSG_DB_PORT) readTimeout=5s writeTimeout=5s sslmode=disable",
               "-p", # Use port for clients (default: 4222)
               "4222",
               "-m", # Use port for http monitoring (default: 8222)

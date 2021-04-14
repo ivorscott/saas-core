@@ -2,6 +2,12 @@ import nats, { Stan } from "node-nats-streaming";
 import { env } from "./env";
 import { v4 as uuidV4 } from "uuid";
 
+interface ReconnectData {
+  nc: {
+    currentServer: { lastConnect: number };
+  };
+}
+
 export let natsInstance = null;
 
 export const connectNats = (): Stan => {
@@ -21,8 +27,16 @@ export const connectNats = (): Stan => {
     console.log("reconnecting");
   });
 
-  stan.on("reconnect", () => {
-    console.log("[NATS] reconnect");
+  stan.on("reconnect", (data: ReconnectData) => {
+    const {
+      nc: { currentServer },
+    } = data;
+    const formatOptions = { hour12: true, timeZone: env.TIMEZONE };
+    const datetimeString = new Date(currentServer.lastConnect).toLocaleString(
+      "en-US",
+      formatOptions,
+    );
+    console.log(`[NATS] reconnect`, datetimeString);
   });
 
   stan.on("permission_error", function (err) {
