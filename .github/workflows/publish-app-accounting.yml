@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - ".github/workflows/publish-app-accounting.yml"
-      - "accounting/application/**"
+      - "integrations/freshbooks/application/**"
 
 jobs:
   publish:

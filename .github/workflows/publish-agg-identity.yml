@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - ".github/workflows/publish-agg-identity.yml"
-      - "identity/aggregator/**"
+      - "core/identity/aggregator/**"
 
 jobs:
   publish:

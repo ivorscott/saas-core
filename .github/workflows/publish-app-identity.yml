@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - ".github/workflows/publish-app-identity.yml"
-      - "identity/application/**"
+      - "core/identity/application/**"
 
 jobs:
   publish:

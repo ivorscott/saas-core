@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - ".github/workflows/publish-mic-projects.yml"
-      - "projects/**"
+      - "core/projects/**"
 
 jobs:
   publish:
