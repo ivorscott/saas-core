@@ -1,4 +1,4 @@
-name: publish-mic-identity
+name: publish-mh-identity
 
 on:
   push:
@@ -24,7 +24,8 @@ jobs:
         run: |
           export SHA=$(git rev-parse --short HEAD)
 
-          docker build ./core/identity/handler --tag ghcr.io/$OWNER/$IMAGE:$SHA
+          docker build --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg GITHUB_TOKEN=${{ secrets.PAT }} ./core/identity/handler --tag ghcr.io/$OWNER/$IMAGE:$SHA 
+
           docker push ghcr.io/$OWNER/$IMAGE:$SHA
 
           echo $OWNER/$IMAGE:$SHA > .build-version
