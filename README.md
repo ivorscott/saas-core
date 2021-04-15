@@ -101,8 +101,8 @@ Run front and back ends simultaneously. For faster development don't run the [de
 # devpie-client-app
 npm start
 
-# devpie-client-cqrs-core
-tilt up
+# devpie-client-core
+make up
 ```
 
 ### Testing
@@ -110,7 +110,7 @@ tilt up
 Navigate to the feature folder to run tests.
 
 ```bash
-cd identity/application
+cd core/identity/application
 npm run tests
 ```
 
