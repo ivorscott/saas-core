@@ -3,3 +3,4 @@ node_modules
 manifests/secrets.yaml
 .env
 .DS_Store
+.gitpass
