@@ -140,29 +140,28 @@ kubectl port-forward pod/pgadmin 8888:80
 Migrations exist under the following paths:
 
 - `./databases/nats/migrations`
-- `./core/<microservice>/migrations`
-- `./integrations/<feature>/aggregator/migrations`
+- `./databases/projects/migrations`
+- `./databases/identity/migrations`
 
 #### Migration Flow
 
-1. move to a feature's `microservice` or `aggregator`
-2. create a `migration`
-3. add sql for `up` and `down` migration files
-4. `tag` an image containing the latest migrations
-5. `push` image to registry
+1. create a `migration`
+2. add sql for `up` and `down` migration files
+3. `tag` an image containing the latest migrations
+4. `push` image to registry
 
 <details>
 <summary>View example</summary>
 <br>
 
 ```bash
-cd identity/handler
+cd databases/projects
 
 migrate create -ext sql -dir migrations -seq create_table
 
-docker build -t devpies/mic-db-identity-migration:v000001 ./migrations
+docker build -t devpies/mic-db-projects-migration:v000001 ./migrations
 
-docker push devpies/mic-db-identity-migration:v000001
+docker push devpies/mic-db-projects-migration:v000001
 ```
 
 </details>

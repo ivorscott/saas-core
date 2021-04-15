@@ -3,7 +3,7 @@ name: publish-mic-identity
 on:
   push:
     paths:
-      - ".github/workflows/publish-mic-identity.yml"
+      - ".github/workflows/publish-mh-identity.yml"
       - "core/identity/handler/**"
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
         run: |
           export SHA=$(git rev-parse --short HEAD)
 
-          docker build ./core/identity/microservice --tag ghcr.io/$OWNER/$IMAGE:$SHA
+          docker build ./core/identity/handler --tag ghcr.io/$OWNER/$IMAGE:$SHA
           docker push ghcr.io/$OWNER/$IMAGE:$SHA
 
           echo $OWNER/$IMAGE:$SHA > .build-version
