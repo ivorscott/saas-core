@@ -1,3 +1,5 @@
+import { version } from "./package.json";
+
 enum Env {
   NODE_ENV = "NODE_ENV",
   VERSION = "VERSION",
@@ -15,6 +17,7 @@ export interface Environment {
   [Env.CLUSTER_ID]: string;
   [Env.CLIENT_ID]: string;
   [Env.TIMEZONE]: string;
+  [Env.VERSION]: string;
 }
 
 type Maybe<T> = T | undefined;
@@ -33,6 +36,7 @@ function importFromEnv(key: string): string {
 
 const env: Environment = {
   [Env.NODE_ENV]: importFromEnv(Env.NODE_ENV),
+  [Env.VERSION]: version,
   [Env.NATS_SERVER]: importFromEnv(Env.NATS_SERVER),
   [Env.NATS_DB_URL]: importFromEnv(Env.NATS_DB_URL),
   [Env.CLUSTER_ID]: importFromEnv(Env.CLUSTER_ID),
