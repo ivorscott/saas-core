@@ -3,7 +3,7 @@ import { env } from "./env";
 import { v4 as uuidV4 } from "uuid";
 import { Message } from "node-nats-streaming";
 import { UserAddedPublisher } from "./publish-user-added";
-import { deserializeMessage } from "msg-deserialize";
+import { deserializeMessage } from "./msg-deserialize";
 import { createMessageStore } from "./msg";
 
 import {
@@ -23,6 +23,8 @@ export class AddUserListener extends Listener<AddUserCommand> {
       connectionString: env.NATS_DB_URL,
       ssl: { rejectUnauthorized: false },
     });
+
+    console.log("Test");
 
     const { replayEvents } = createMessageStore(db, deserializeMessage);
 
