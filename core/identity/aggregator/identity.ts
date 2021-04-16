@@ -7,8 +7,8 @@ function createHandlers(queries: any) {
   };
 }
 
- function createQueries(db: Pool) {
-   function addUser(event: UserAddedEvent) {
+function createQueries(db: Pool) {
+  function addUser(event: UserAddedEvent) {
     return db.query(
       `INSERT INTO users (
         id,

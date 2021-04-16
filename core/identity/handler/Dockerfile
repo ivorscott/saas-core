@@ -1,26 +1,25 @@
-ARG GITHUB_USER
-ARG GITHUB_TOKEN
-
-FROM golang:1.14-alpine as base
-
-ENV CGO_ENABLED=0 
-
-WORKDIR /
+FROM node:alpine3.12 as base
+ENV NODE_ENV=production
+EXPOSE 4000
+WORKDIR /handler
+COPY package*.json ./
+RUN npm ci && npm cache clean --force
 
 FROM base as dev
-
-ARG GITHUB_USER
-ARG GITHUB_TOKEN
-
-RUN apk add --no-cache git \ 
-&& echo "machine github.com login $GITHUB_USER password $GITHUB_TOKEN" > ~/.netrc
-
-COPY go.mod go.sum ./
-RUN go mod download && go mod verify
+ENV NODE_ENV=development
+ENV PATH /handler/node_modules/.bin:$PATH
+RUN npm i --only=development  \
+    && npm cache clean --force \
+    && npm config ls -l
 COPY . .
+CMD ["./node_modules/.bin/ts-node-dev", \
+    "--rs", "--notify", "false", "--transpile-only", "--ignore-watch", "node_modules", "index.ts"]
+FROM dev as test
+RUN npm audit
 
-RUN go env && go build -o main .
+FROM test as build-stage
+RUN npm run build
 
-CMD ["./main"]
-
-
+FROM base as prod
+COPY --from=build-stage /handler/dist /handler/dist
+CMD ["node", "./dist/index.js"]

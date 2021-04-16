@@ -22,9 +22,13 @@ spec:
               cpu: "250m"
               memory: "250Mi"
           env:
-            - name: NATS_URL
+            - name: NATS_SERVER
               value: "nats://nats-svc:4222"
             - name: CLIENT_ID
               value: "mh-identity"
+            - name: TIMEZONE
+              value: "Europe/Berlin"
             - name: CLUSTER_ID
               value: "devpie-client"
+            - name: NATS_DB_URL
+              value: postgresql://postgres:postgres@nats-db-store-svc:5432/postgres?sslmode=disable

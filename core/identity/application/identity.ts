@@ -99,8 +99,6 @@ export function createActions(natsClient: Stan, queries: Queries): Actions {
     });
   }
 
-  // TODO: add Client
-
   async function addUser(traceId: string, user: Auth0User) {
     try {
       const userId = uuidV4();
@@ -118,6 +116,8 @@ export function createActions(natsClient: Stan, queries: Queries): Actions {
         },
         data: { id: userId, ...user },
       };
+
+      console.log("AddUser: ", command);
       await publisher.publish(command);
     } catch (error) {
       console.log("error:", error);

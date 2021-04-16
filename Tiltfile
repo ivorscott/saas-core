@@ -11,12 +11,19 @@ k8s_yaml([
     'manifests/secrets.yaml',
 ])
 
+docker_build('devpies/mh-identity:latest', 'core/identity/handler', target='dev')
+
 docker_build('devpies/agg-identity:latest', 'core/identity/aggregator', target='dev')
 
 docker_build('devpies/app-accounting:latest', 'integrations/freshbooks/application', target='dev')
 
 docker_build('devpies/app-identity:latest', 'core/identity/application', target='dev')
 
-docker_build('devpies/mh-identity:latest', 'core/identity/handler',  build_args=read_json('.gitpass'), target='dev')
-
 docker_build('devpies/mic-projects:latest', 'core/projects', target='dev')
+
+
+docker_build('devpies/view-db-identity-migration:latest', 'databases/viewdata')
+
+docker_build('devpies/mic-db-projects-migration:latest', 'databases/projects')
+
+docker_build(' devpies/msg-db-nats-migration:latest', 'databases/nats')

@@ -54,7 +54,7 @@ spec:
               value: "devpie-client"
       initContainers:
         - name: schema-migration
-          image: devpies/mic-db-projects-migration:v000016
+          image: devpies/mic-db-projects-migration:latest
           env:
             - name: DB_URL
               value: postgresql://postgres:postgres@mic-db-projects-svc:5432/postgres?sslmode=disable

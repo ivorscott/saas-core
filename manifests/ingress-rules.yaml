@@ -31,7 +31,7 @@ spec:
             backend:
               serviceName: mic-projects-svc
               servicePort: 4020
-          - path: /api/
+          - path: /
             backend:
               serviceName: nats-svc
               servicePort: 8222

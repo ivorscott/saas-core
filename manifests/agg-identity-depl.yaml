@@ -35,7 +35,7 @@ spec:
               value: postgresql://postgres:postgres@nats-db-store-svc:5432/postgres?sslmode=disable
       initContainers:
         - name: schema-migration
-          image: devpies/view-db-identity-migration:v000002
+          image: devpies/view-db-identity-migration:latest
           env:
             - name: DB_URL
               value: postgresql://postgres:postgres@viewdata-svc:5432/postgres?sslmode=disable

@@ -1,0 +1,48 @@
+{
+  "name": "message-handler",
+  "version": "1.0.0",
+  "description": "Listens for messages and handle them",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "ts-node-dev --rs --notify false --transpile-only --ignore-watch node_modules index.ts",
+    "gen": "protoc --js_out=import_style=commonjs,binary:. msg.proto",
+    "build": "tsc",
+    "pretty": "npx prettier --write ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devpies/devpie-client-cqrs-core.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/devpies/devpie-client-cqrs-core/issues"
+  },
+  "homepage": "https://github.com/devpies/devpie-client-cqrs-core#readme",
+  "dependencies": {
+    "@devpie/client-events": "0.0.33",
+    "@types/bluebird": "^3.5.33",
+    "bluebird": "^3.7.2",
+    "google-protobuf": "^3.14.0",
+    "node-nats-streaming": "^0.3.2",
+    "pg": "^8.5.1",
+    "typescript": "^4.1.2",
+    "uuid": "^8.3.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "@babel/preset-typescript": "^7.12.7",
+    "@types/node": "^14.14.41",
+    "@types/pg": "^7.14.7",
+    "@types/uuid": "^8.3.0",
+    "prettier": "^2.2.1",
+    "ts-node-dev": "^1.0.0",
+    "jest": "^26.6.3",
+    "@types/jest": "^26.0.22",
+    "babel-jest": "^26.6.3",
+    "ts-jest": "^26.4.4"
+  }
+}

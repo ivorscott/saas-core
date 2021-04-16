@@ -3,11 +3,16 @@
         "data",
         "databases",
         "depl",
+        "devpies",
+        "gitpass",
         "ivorscott",
         "lib",
+        "netrc",
         "postgresql",
+        "traefik",
         "users",
         "var",
-        "viewdata"
+        "viewdata",
+        "workdir"
     ]
 }

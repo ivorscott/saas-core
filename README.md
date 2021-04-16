@@ -141,7 +141,7 @@ Migrations exist under the following paths:
 
 - `./databases/nats/migrations`
 - `./databases/projects/migrations`
-- `./databases/identity/migrations`
+- `./databases/viewdata/migrations`
 
 #### Migration Flow
 
@@ -189,7 +189,7 @@ spec:
         app: mic-projects
     spec:
       containers:
-        - image: devpies/mic-projects:latest
+        - image: devpies/mic-projects:325b1c2
           name: mic-projects
           resources:
             requests:
