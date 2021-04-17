@@ -20,10 +20,3 @@ docker_build('devpies/app-accounting:latest', 'integrations/freshbooks/applicati
 docker_build('devpies/app-identity:latest', 'core/identity/application', target='dev')
 
 docker_build('devpies/mic-projects:latest', 'core/projects', target='dev')
-
-
-docker_build('devpies/view-db-identity-migration:latest', 'databases/viewdata/migrations')
-
-docker_build('devpies/mic-db-projects-migration:latest', 'databases/projects/migrations')
-
-docker_build('devpies/msg-db-nats-migration:latest', 'databases/nats/migrations')

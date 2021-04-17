@@ -1,13 +1,11 @@
 import * as express from "express";
+import { Auth0Claims, ReqContext } from "types";
 
 declare global {
   namespace Express {
     interface Request {
-      user: any;
-      context: {
-        userId: string;
-        traceId: string;
-      };
+      user: Auth0Claims;
+      context: ReqContext;
     }
   }
 }

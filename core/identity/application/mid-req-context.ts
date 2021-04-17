@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from "express";
 function requestContext(req: Request, _res: Response, next: NextFunction) {
   req.context = {
     traceId: v4(),
-    userId: "",
+    userId: req.user.sub,
   };
   next();
 }

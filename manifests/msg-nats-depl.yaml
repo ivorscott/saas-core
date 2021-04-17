@@ -58,7 +58,7 @@ spec:
             ]
       initContainers:
         - name: schema-migration
-          image: devpies/msg-db-nats-migration:latest
+          image: devpies/msg-db-nats-migration:v000003
           env:
             - name: DB_URL
               value: postgresql://postgres:postgres@nats-db-store-svc:5432/postgres?sslmode=disable

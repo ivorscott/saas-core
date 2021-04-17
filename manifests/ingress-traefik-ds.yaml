@@ -26,7 +26,7 @@ spec:
       serviceAccountName: traefik-ingress-controller
       terminationGracePeriodSeconds: 60
       containers:
-        - image: traefik:2.4
+        - image: traefik:2.4.8
           name: traefik-ingress-lb
           ports:
             - name: http
@@ -52,9 +52,6 @@ spec:
             - --entrypoints.web.http.redirections.entryPoint.to=websecure
             - --entrypoints.web.http.redirections.entryPoint.scheme=https
             - --entrypoints.websecure.address=:443
-            - --log=true
-            - --log.level=INFO
-            - --accesslog=true
 ---
 kind: Service
 apiVersion: v1

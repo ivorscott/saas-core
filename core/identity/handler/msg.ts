@@ -1,38 +1,21 @@
-import { Message } from "@devpie/client-events";
-import { ParseMsg } from "./msg-deserialize";
-import { Pool } from "pg";
+import nats, { Stan } from "node-nats-streaming";
+import { env } from "./env";
+import { v4 as uuidV4 } from "uuid";
 
-const sqlStatements = [
-  "SELECT * FROM get_category_stream($1,$2,$3) as (id integer, seq bigint, timestamp bigint, size integer, data bytea, global_position bigint)",
-];
+export const connectNats = () => {
+  const stan = nats.connect(env.CLUSTER_ID, `${env.CLIENT_ID}-${uuidV4()}`, {
+    url: env.NATS_SERVER,
+  });
 
-enum SQL {
-  get_category_stream,
-}
+  return new Promise<Stan>((resolve, reject) => {
+    stan.on("connect", () => {
+      console.log("Publisher connected to NATS");
+      resolve(stan);
+    });
 
-function createReplayEvents(db: Pool, parser: ParseMsg) {
-  async function replayEvents(
-    streamName: string,
-    fromPosition = 0,
-    maxMessages = 1000,
-  ) {
-    const values = [streamName, fromPosition, maxMessages];
-    return await db
-      .query(sqlStatements[SQL.get_category_stream], values)
-      .then((res) => {
-        return res.rows.map(parser);
-      });
-  }
-
-  return replayEvents;
-}
-
-export function createMessageStore(db: Pool, parser: ParseMsg) {
-  db.connect();
-
-  const replayEvents = createReplayEvents(db, parser);
-
-  return {
-    replayEvents,
-  };
-}
+    stan.on("error", (error) => {
+      console.log("[Nats] error", error);
+      reject(error);
+    });
+  });
+};

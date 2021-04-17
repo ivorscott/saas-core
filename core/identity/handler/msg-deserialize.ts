@@ -31,8 +31,6 @@ export function deserializeMessage(msg: RawMessage): Message {
   const text = buff.toString("ascii");
   const { type, metadata, data } = JSON.parse(text);
 
-  console.log("deserializing the data =====================");
-
   return {
     id: msg.id,
     seq: parseInt(msg.seq, 10),

@@ -1,19 +1,22 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es2017",
+    "target": "es2015",
     "outDir": "./dist",
     "baseUrl": "./",
-    "types": ["jest"],
+    "types": ["node", "jest"],
+    "strict": true,
     "declaration": true,
     "removeComments": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "sourceMap": true,
-    "incremental": true
+    "incremental": true,
+    "forceConsistentCasingInFileNames": true
   },
   "exclude": ["node_modules", "dist"]
 }

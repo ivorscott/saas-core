@@ -1,9 +1,10 @@
+import { Pool } from "pg";
 import { Stan } from "node-nats-streaming";
-import express, { Router, Request, Response } from "express";
-import { v4 as uuidV4 } from "uuid";
+import { DBUser, ReqContext, Auth0User, User } from "types";
 import { Categories, Commands } from "@devpie/client-events";
 import { AddUserPublisher } from "./publish-add-user";
-import { Pool } from "pg";
+import { v4 as uuidV4 } from "uuid";
+import express, { Router, Request, Response } from "express";
 import camelcaseKeys from "camelcase-keys";
 
 export interface Feature {
@@ -13,45 +14,13 @@ export interface Feature {
   router: Router;
 }
 
-export interface Auth0User {
-  auth0Id: string;
-  email: string;
-  emailVerified: boolean;
-  firstName: string;
-  lastName: string;
-  picture: string;
-  locale: string;
-}
-
-export interface DBUser {
-  user_id: string;
-  auth0_id: string;
-  email: string;
-  email_verified: boolean;
-  first_name: string;
-  last_name: string;
-  picture: string;
-  locale: string;
-}
-
-export interface User {
-  userId: string;
-  auth0Id: string;
-  email: string;
-  emailVerified: boolean;
-  firstName: string;
-  lastName: string;
-  picture: string;
-  locale: string;
-}
-
 interface Queries {
   loadUser: (auth0Id: string) => Promise<DBUser | undefined>;
 }
 
 interface Actions {
-  addUser: (traceId: string, user: Auth0User) => void;
-  getUser: (id: string) => Promise<User | undefined>;
+  addUser: (ctx: ReqContext, user: Auth0User) => void;
+  getUser: (ctx: ReqContext, id: string) => Promise<User | undefined>;
 }
 
 interface Handlers {
@@ -63,9 +32,7 @@ export enum ERR {
   UserNotFound,
 }
 
-export const errors = [
-  { error: "user not found" }, // userNotFound
-];
+export const errors = [{ error: "user not found" }];
 
 export enum SQL {
   GetUser,
@@ -89,7 +56,7 @@ export function createQueries(db: Pool): Queries {
 }
 
 export function createActions(natsClient: Stan, queries: Queries): Actions {
-  async function getUser(auth0Id: string) {
+  async function getUser(ctx: ReqContext, auth0Id: string) {
     return await queries.loadUser(auth0Id).then((record: DBUser) => {
       let user: User;
       if (record) {
@@ -99,22 +66,18 @@ export function createActions(natsClient: Stan, queries: Queries): Actions {
     });
   }
 
-  async function addUser(traceId: string, user: Auth0User) {
+  async function addUser(ctx: ReqContext, user: Auth0User) {
     try {
-      const userId = uuidV4();
-      const streamName = `${Categories.Identity}.command`;
-      const publisher = new AddUserPublisher(natsClient, streamName);
+      const cmdStream = `${Categories.Identity}.command`;
+      const publisher = new AddUserPublisher(natsClient, cmdStream);
 
       const type: Commands.AddUser = Commands.AddUser;
 
       const command = {
         id: uuidV4(),
         type,
-        metadata: {
-          traceId,
-          userId,
-        },
-        data: { id: userId, ...user },
+        metadata: ctx,
+        data: { id: uuidV4(), ...user },
       };
 
       console.log("AddUser: ", command);
@@ -134,7 +97,7 @@ export function createActions(natsClient: Stan, queries: Queries): Actions {
 function createHandlers(actions: Actions) {
   async function findIdentity(req: Request, res: Response) {
     const auth0Id = req.user.sub;
-    const user = await actions.getUser(auth0Id);
+    const user = await actions.getUser(req.context, auth0Id);
 
     if (user) {
       res.status(200).send(user);
@@ -144,8 +107,8 @@ function createHandlers(actions: Actions) {
   }
 
   async function saveIdentity(req: Request, res: Response) {
-    const auth0User = req.body;
-    await actions.addUser(req.context.traceId, auth0User);
+    const auth0User = req.body as Auth0User;
+    await actions.addUser(req.context, auth0User);
     res.status(200).end();
   }
 

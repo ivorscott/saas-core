@@ -4,7 +4,7 @@ CREATE OR REPLACE FUNCTION get_category_stream(category character varying, seq b
 WITH category_channels AS (
     SELECT *
     FROM channels
-    WHERE name LIKE '%' || category || '.________-____-____-____-____________' || '%'
+    WHERE name LIKE '%' || category || '.auth0|________________________' || '%'
 ), all_messages AS (
     SELECT *, ROW_NUMBER() OVER (ORDER BY (timestamp)) AS global_position
     FROM messages

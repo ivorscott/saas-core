@@ -119,7 +119,7 @@ npm run tests
 If you want autocompletion in the terminal, use `pgcli`:
 
 ```
-kubectl run pgcli --rm -i -t --env=DB_URL="postgresql://postgres:postgres@nats-svc:5432/postgres" --image devpies/pgcli
+kubectl run pgcli --rm -i -t --env=DB_URL="postgresql://postgres:postgres@nats-db-store-svc:5432/postgres" --image devpies/pgcli
 ```
 
 If you prefer the old fashion way, use `kubectl exec`:

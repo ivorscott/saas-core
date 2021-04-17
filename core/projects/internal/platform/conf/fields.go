@@ -65,7 +65,7 @@ func extractFields(prefix []string, target interface{}) ([]field, error) {
 
 		fieldName := structField.Name
 
-		// Get and options.  TODO: Need more.
+		// Get and options. 
 		fieldOpts, err := parseTag(fieldTags)
 		if err != nil {
 			return nil, fmt.Errorf("conf: error parsing tags for field %s: %s", fieldName, err)
@@ -177,7 +177,6 @@ func parseTag(tagStr string) (fieldOptions, error) {
 				f.help = tagPropVal
 			}
 		default:
-			// TODO: Do we check for integrity issues here?
 		}
 	}
 
