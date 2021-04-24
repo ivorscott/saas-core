@@ -14,6 +14,9 @@ import (
 type Auth0 struct {
 	Audience     string
 	Domain       string
+	M2MClient    string
+	M2MSecret    string
+	MAPIAudience string
 }
 
 type Jwks struct {

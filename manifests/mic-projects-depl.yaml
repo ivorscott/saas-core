@@ -52,9 +52,24 @@ spec:
               value: "mic-projects"
             - name: API_NATS_CLUSTER_ID
               value: "devpie-client"
+            - name: API_WEB_AUTH_M_2_M_CLIENT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-m2m-client
+            - name: API_WEB_AUTH_M_2_M_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-m2m-secret
+            - name: API_WEB_AUTH_MAPI_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-mapi-audience
       initContainers:
         - name: schema-migration
-          image: devpies/mic-db-projects-migration:v000016
+          image: devpies/mic-db-projects-migration:v000018
           env:
             - name: DB_URL
               value: postgresql://postgres:postgres@mic-db-projects-svc:5432/postgres?sslmode=disable

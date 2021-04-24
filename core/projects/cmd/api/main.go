@@ -8,7 +8,6 @@ import (
 	_ "net/http/pprof" // Register the pprof handlers
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -40,15 +39,18 @@ func run() error {
 
 	var cfg struct {
 		Web struct {
-			Port             string        `conf:"default::4000"`
-			Debug            string        `conf:"default:localhost:6060"`
-			Production       bool          `conf:"default:false"`
-			ReadTimeout      time.Duration `conf:"default:5s"`
-			WriteTimeout     time.Duration `conf:"default:5s"`
-			ShutdownTimeout  time.Duration `conf:"default:5s"`
-			CorsOrigins  string        `conf:"default:https://localhost:3000"`
-			AuthDomain       string        `conf:"default:none,noprint"`
-			AuthAudience     string        `conf:"default:none,noprint"`
+			Port            string        `conf:"default::4000"`
+			Debug           string        `conf:"default:localhost:6060"`
+			Production      bool          `conf:"default:false"`
+			ReadTimeout     time.Duration `conf:"default:5s"`
+			WriteTimeout    time.Duration `conf:"default:5s"`
+			ShutdownTimeout time.Duration `conf:"default:5s"`
+			CorsOrigins     string        `conf:"default:https://localhost:3000"`
+			AuthDomain      string        `conf:"default:none,noprint"`
+			AuthAudience    string        `conf:"default:none,noprint"`
+			AuthM2MClient   string        `conf:"default:none,noprint"`
+			AuthM2MSecret   string        `conf:"default:none,noprint"`
+			AuthMAPIAudience string        `conf:"default:none,noprint"`
 		}
 		DB struct {
 			User       string `conf:"default:postgres"`
@@ -115,18 +117,10 @@ func run() error {
 	// Make a channel to listen for shutdown signal from the OS.
 	shutdown := make(chan os.Signal, 1)
 
-	// Parse Cors Origins
-	rawOrigins := strings.Split(cfg.Web.CorsOrigins, ",")
-	origins := make([]string, len(rawOrigins))
-
-	for _, v := range rawOrigins {
-		origins = append(origins, strings.TrimSpace(v))
-	}
-
 	api := http.Server{
 		Addr: cfg.Web.Port,
-		Handler: handlers.API(shutdown, repo, infolog, origins, cfg.Web.AuthAudience,
-			cfg.Web.AuthDomain),
+		Handler: handlers.API(shutdown, repo, infolog, cfg.Web.CorsOrigins, cfg.Web.AuthAudience,
+			cfg.Web.AuthDomain, cfg.Web.AuthMAPIAudience, cfg.Web.AuthM2MClient, cfg.Web.AuthM2MSecret),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}

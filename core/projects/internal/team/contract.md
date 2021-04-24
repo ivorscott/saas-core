@@ -1,11 +1,11 @@
 # project member
 
-`TODO: multi user project`
+Multi user project
 
 ## Scenario 1
 
 1. Tom creates "Project"
-   Tom is the project "Maintainer"
+   Tom is the project "Team Leader"
    Tom is the first project "Member"
 2. Tom invites Jerry to project A
    A member is created for Jerry
@@ -24,7 +24,7 @@
 ## Scenario 2
 
 1. Tom requests to leave Project
-   Tom makes Jerry the Maintainer
+   Tom makes Jerry the Team Leader
    Tom loses access to the project
 
 ## Scenario 3
