@@ -1,37 +1,44 @@
 package handlers
 
 import (
+	"fmt"
+	"github.com/devpies/devpie-client-events/go/events"
+	"github.com/ivorscott/devpie-client-backend-go/cmd/api/internal/listeners"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
-	"strings"
+	"time"
 
 	"github.com/ivorscott/devpie-client-backend-go/internal/mid"
 	"github.com/ivorscott/devpie-client-backend-go/internal/platform/database"
 	"github.com/ivorscott/devpie-client-backend-go/internal/platform/web"
-	"github.com/rs/cors"
 )
 
+var seededRand *rand.Rand = rand.New(
+	rand.NewSource(time.Now().UnixNano()))
 
 func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, origins string,
-	Auth0Audience, Auth0Domain, Auth0MAPIAudience,Auth0M2MClient,Auth0M2MSecret string) http.Handler {
+	Auth0Audience, Auth0Domain, Auth0MAPIAudience, Auth0M2MClient, Auth0M2MSecret, SendgridAPIKey, NatsURL,
+	NatsClientId, NatsClusterId string) http.Handler {
+
+	clusterId := fmt.Sprintf("%s-%d", NatsClientId, rand.Int())
+	queueGroup := fmt.Sprintf("%s-queue", NatsClientId)
 
 	auth0 := &mid.Auth0{
 		Audience:     Auth0Audience,
 		Domain:       Auth0Domain,
 		MAPIAudience: Auth0MAPIAudience,
-		M2MClient: Auth0M2MClient,
-		M2MSecret: Auth0M2MSecret,
+		M2MClient:    Auth0M2MClient,
+		M2MSecret:    Auth0M2MSecret,
 	}
 
 	app := web.NewApp(shutdown, log, mid.Logger(log), auth0.Authenticate(), mid.Errors(log), mid.Panics(log))
 
-	cr := cors.New(cors.Options{
-		AllowedOrigins:   parseOrigins(origins),
-		AllowedHeaders:   []string{"Authorization", "Cache-Control", "Content-Type", "Strict-Transport-Security"},
-		AllowedMethods:   []string{http.MethodOptions, http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut, http.MethodPatch},
-		AllowCredentials: true,
-	})
+	nats, close := events.NewClient(NatsClusterId, clusterId, NatsURL)
+	defer close()
+
+	l := listeners.NewListeners(log, repo)
 
 	h := HealthCheck{repo: repo}
 
@@ -40,7 +47,7 @@ func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, or
 	t := Tasks{repo: repo, log: log, auth0: auth0}
 	c := Columns{repo: repo, log: log, auth0: auth0}
 	p := Projects{repo: repo, log: log, auth0: auth0}
-	te := Team{repo: repo, log: log, auth0: auth0, origins: origins}
+	tm := Team{repo: repo, log: log, auth0: auth0, origins: origins, sendgridAPIKey: SendgridAPIKey}
 
 	app.Handle(http.MethodGet, "/api/v1/projects", p.List)
 	app.Handle(http.MethodPost, "/api/v1/projects", p.Create)
@@ -53,19 +60,11 @@ func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, or
 	app.Handle(http.MethodPatch, "/api/v1/projects/{pid}/tasks/{tid}", t.Update)
 	app.Handle(http.MethodPatch, "/api/v1/projects/{pid}/tasks/{tid}/move", t.Move)
 	app.Handle(http.MethodDelete, "/api/v1/projects/{pid}/columns/{cid}/tasks/{tid}", t.Delete)
-	app.Handle(http.MethodPost, "/api/v1/projects/{pid}/team", te.Create)
-	app.Handle(http.MethodGet, "/api/v1/projects/{pid}/team", te.Retrieve)
-	app.Handle(http.MethodPost, "/api/v1/projects/team/{tid}/invite", te.Invite)
+	app.Handle(http.MethodPost, "/api/v1/projects/{pid}/team", tm.Create)
+	app.Handle(http.MethodGet, "/api/v1/projects/{pid}/team", tm.Retrieve)
+	app.Handle(http.MethodPost, "/api/v1/projects/team/{tid}/invite", tm.Invite)
 
-	return cr.Handler(app)
-}
+	l.RegisterAll(nats, queueGroup)
 
-func parseOrigins(origins string) []string {
-	rawOrigins := strings.Split(origins, ",")
-	o := make([]string, len(rawOrigins))
-
-	for _, v := range rawOrigins {
-		o = append(o, strings.TrimSpace(v))
-	}
-	return o
+	return Cors(origins).Handler(app)
 }

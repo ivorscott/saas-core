@@ -5,28 +5,42 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 )
 
-const connectionEndpoint = "/api/v2/connections"
 
-func GetConnectionId(token *Token, AuthDomain string) (string, error) {
-	var conn []struct {
-		ID   string
-		Name string
+const changePasswordEndpoint = "/api/v2/tickets/password-change"
+
+func ChangePasswordTicket(token *Token, AuthDomain string, member InvitedUser, resultUrl string) (string, error) {
+	var passTicket struct{ Ticket string }
+
+	baseUrl := "https://" + AuthDomain
+	resource := changePasswordEndpoint
+	timeToLive := 432000
+
+	connId, err := GetConnectionId(token, AuthDomain)
+	if err != nil {
+		return "", err
 	}
 
-	urlStr := "https://" + AuthDomain + connectionEndpoint
+	uri, err := url.ParseRequestURI(baseUrl)
+	if err != nil {
+		return "", err
+	}
 
-	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
+	uri.Path = resource
+	urlStr := uri.String()
+
+	jsonStr := fmt.Sprintf("{ \"connection_id\":\"%s\",\"email\":\"%s\",\"result_url\":\"%s\",\"ttl_sec\":%d,\"mark_email_as_verified\":true }", connId, member.Email, resultUrl, timeToLive)
+
+	req, err := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(jsonStr))
 	if err != nil {
 		return "", err
 	}
 
 	req.Header.Add("content-type", "application/json")
 	req.Header.Add("authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
-	q := req.URL.Query()
-	q.Add("strategy", "auth0")
-	req.URL.RawQuery = q.Encode()
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -35,15 +49,12 @@ func GetConnectionId(token *Token, AuthDomain string) (string, error) {
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
 
-	if err := json.Unmarshal(body, &conn); err != nil {
+	if err := json.Unmarshal(body, &passTicket); err != nil {
 		return "", err
 	}
 
-	for _, v := range conn {
-		if v.Name == DatabaseConnection {
-			return v.ID, nil
-		}
-	}
+	passTicket.Ticket = passTicket.Ticket + "invite"
 
-	return "", err
+	return passTicket.Ticket, err
 }
+

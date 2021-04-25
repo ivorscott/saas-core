@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,7 +12,7 @@ import (
 
 const usersEndpoint = "/api/v2/users"
 
-func CreateUser(token *Token, AuthDomain, email string) (*InvitedUser, error) {
+func CreateUser(token *Token, AuthDomain, email string) (InvitedUser, error) {
 	var iu InvitedUser
 
 	connectionType := DatabaseConnection
@@ -24,18 +23,17 @@ func CreateUser(token *Token, AuthDomain, email string) (*InvitedUser, error) {
 
 	uri, err := url.ParseRequestURI(baseUrl)
 	if err != nil {
-		return nil, err
+		return iu, err
 	}
 
 	uri.Path = resource
 	urlStr := uri.String()
 
-	jsonStr := fmt.Sprintf("{ \"email\": \"%s\",\"connection\":\"%s\",\"password\":\"%s\", \"email_verified\": false }", email, connectionType, defaultPassword)
-	log.Println(jsonStr)
+	jsonStr := fmt.Sprintf("{ \"email\": \"%s\",\"connection\":\"%s\",\"password\":\"%s\", \"email_verified\": false, \"verify_email\": false }", email, connectionType, defaultPassword)
 
 	req, err := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(jsonStr))
 	if err != nil {
-		return nil, err
+		return iu, err
 	}
 
 	req.Header.Add("content-type", "application/json")
@@ -43,17 +41,14 @@ func CreateUser(token *Token, AuthDomain, email string) (*InvitedUser, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return iu, err
 	}
 	defer res.Body.Close()
 
 	body, _ := ioutil.ReadAll(res.Body)
 	if err := json.Unmarshal(body, &iu); err != nil {
-		return nil, err
+		return iu, err
 	}
 
-	log.Printf("response=========== %s", string(body))
-	log.Printf("response=========== %+v", iu)
-
-	return &iu, nil
+	return iu, nil
 }

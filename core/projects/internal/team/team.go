@@ -7,7 +7,6 @@ import (
 	"github.com/ivorscott/devpie-client-backend-go/internal/platform/database"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
-	"log"
 	"time"
 )
 
@@ -18,7 +17,7 @@ var (
 )
 
 // Create adds a new Team
-func Create(ctx context.Context, repo *database.Repository, nt NewTeam, pid, uid string, now time.Time) (*Team, error) {
+func Create(ctx context.Context, repo *database.Repository, nt NewTeam, pid, uid string, now time.Time) (Team, error) {
 	t := Team{
 		ID:       uuid.New().String(),
 		Name:     nt.Name,
@@ -38,20 +37,18 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTeam, pid, uid
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
-		return nil, errors.Wrapf(err, "inserting team: %v", nt)
+		return t, errors.Wrap(err, "inserting team")
 	}
 
-	return &t, nil
+	return t, nil
 }
 
-func Retrieve(ctx context.Context, repo *database.Repository, pid string) (*Team, error) {
+func Retrieve(ctx context.Context, repo *database.Repository, pid string) (Team, error) {
 	var t Team
 
 	if _, err := uuid.Parse(pid); err != nil {
-		return nil, ErrInvalidID
+		return t, ErrInvalidID
 	}
-
-	project := []string{pid}
 
 	stmt := repo.SQ.Select(
 		"team_id",
@@ -64,24 +61,17 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid string) (*Team
 	).Where("? <@ projects")
 
 	q, args, err := stmt.ToSql()
-	log.Println(ctx, q)
 	if err != nil {
-		return nil, errors.Wrapf(err, "building query: %v", args)
+		return t, errors.Wrapf(err, "building query: %v", args)
 	}
 
-	if err := repo.DB.QueryRowContext(ctx, q,  pq.Array(project)).Scan(&t.ID, &t.LeaderID, &t.Name, (*pq.StringArray)(&t.Projects), &t.Created);err != nil {
+	if err := repo.DB.QueryRowContext(ctx, q,  pq.Array([]string{pid})).Scan(&t.ID, &t.LeaderID, &t.Name, (*pq.StringArray)(&t.Projects), &t.Created);err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrNotFound
+			return t, ErrNotFound
 		}
-		return nil, err
+		return t, err
 	}
 
-	return &t, nil
+	return t, nil
 }
 
-//func CreateTeamMember(ctx context.Context, repo *database.Repository, m NewMember, tid string, time time.Time) (*Member, error) {
-//
-//
-//	log.Println(tid, ni)
-//		return nil, nil
-//}

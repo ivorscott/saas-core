@@ -12,3 +12,7 @@ down:
 db: 
 	kubectl apply -f ./databases
 .PHONY: db
+
+dbd:
+	kubectl delete -f ./databases
+.PHONY: dbd

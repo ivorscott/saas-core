@@ -1,3 +1,6 @@
+ARG GITHUB_USER
+ARG GITHUB_TOKEN
+
 FROM golang:1.15-alpine as base
 
 LABEL org.opencontainers.image.authors="devpie"
@@ -8,15 +11,20 @@ WORKDIR /projects
 
 FROM base as dev
 
-COPY go.* ./
-
-RUN go mod download
-COPY . .
-
-RUN go env
+ARG GITHUB_USER
+ARG GITHUB_TOKEN
 
 EXPOSE 4000
-RUN go build -o main ./cmd/api
+
+RUN apk add --no-cache git \
+&& echo "machine github.com login $GITHUB_USER password $GITHUB_TOKEN" > ~/.netrc
+
+COPY go.* ./
+RUN go mod download && go mod verify
+COPY . .
+
+RUN go env && go build -o main ./cmd/api
+
 CMD ["./main"]
 
 FROM dev as build-stage
@@ -30,10 +38,11 @@ RUN trivy alpine:3.13.4 && \
 
 FROM alpine:3.13.4 as prod
 
+EXPOSE 4000
+
 COPY --from=trivy result secure
 COPY --from=build-stage /projects/main main
 
-EXPOSE 4000
 
 HEALTHCHECK --interval=3s --timeout=3s CMD wget --spider -q http://localhost:4000/v1/health || exit 1
     

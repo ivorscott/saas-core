@@ -101,14 +101,18 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid stri
 
 // Update modifies data about a Task. It will error if the specified ID is
 // invalid or does not reference an existing Task.
-func Update(ctx context.Context, repo *database.Repository, pid, tid string, ut UpdateTask) error {
+func Update(ctx context.Context, repo *database.Repository, pid, tid string, update UpdateTask) error {
 	t, err := Retrieve(ctx, repo, tid)
 	if err != nil {
 		return err
 	}
 
-	t.Title = *ut.Title
-	t.Content = ut.Content
+	if update.Title != nil {
+		t.Title = *update.Title
+	}
+	if update.Content != nil {
+		t.Content = *update.Content
+	}
 
 	stmt := repo.SQ.Update(
 		"tasks",

@@ -39,18 +39,19 @@ func run() error {
 
 	var cfg struct {
 		Web struct {
-			Port            string        `conf:"default::4000"`
-			Debug           string        `conf:"default:localhost:6060"`
-			Production      bool          `conf:"default:false"`
-			ReadTimeout     time.Duration `conf:"default:5s"`
-			WriteTimeout    time.Duration `conf:"default:5s"`
-			ShutdownTimeout time.Duration `conf:"default:5s"`
-			CorsOrigins     string        `conf:"default:https://localhost:3000"`
-			AuthDomain      string        `conf:"default:none,noprint"`
-			AuthAudience    string        `conf:"default:none,noprint"`
-			AuthM2MClient   string        `conf:"default:none,noprint"`
-			AuthM2MSecret   string        `conf:"default:none,noprint"`
+			Port             string        `conf:"default::4000"`
+			Debug            string        `conf:"default:localhost:6060"`
+			Production       bool          `conf:"default:false"`
+			ReadTimeout      time.Duration `conf:"default:5s"`
+			WriteTimeout     time.Duration `conf:"default:5s"`
+			ShutdownTimeout  time.Duration `conf:"default:5s"`
+			CorsOrigins      string        `conf:"default:https://localhost:3000"`
+			AuthDomain       string        `conf:"default:none,noprint"`
+			AuthAudience     string        `conf:"default:none,noprint"`
+			AuthM2MClient    string        `conf:"default:none,noprint"`
+			AuthM2MSecret    string        `conf:"default:none,noprint"`
 			AuthMAPIAudience string        `conf:"default:none,noprint"`
+			SendgridAPIKey   string        `conf:"default:none,noprint"`
 		}
 		DB struct {
 			User       string `conf:"default:postgres"`
@@ -59,11 +60,11 @@ func run() error {
 			Name       string `conf:"default:postgres"`
 			DisableTLS bool   `conf:"default:false"`
 		}
-		//Nats struct {
-		//	Url string `conf:"default:nats://"`
-		//	ClientId string `conf:"default:client-id"`
-		//	ClusterId string `conf:"default:cluster-id"`
-		//}
+		Nats struct {
+			Url       string `conf:"default:nats://"`
+			ClientId  string `conf:"default:client-id"`
+			ClusterId string `conf:"default:cluster-id"`
+		}
 	}
 
 	if err := conf.Parse(os.Args[1:], "API", &cfg); err != nil {
@@ -120,7 +121,8 @@ func run() error {
 	api := http.Server{
 		Addr: cfg.Web.Port,
 		Handler: handlers.API(shutdown, repo, infolog, cfg.Web.CorsOrigins, cfg.Web.AuthAudience,
-			cfg.Web.AuthDomain, cfg.Web.AuthMAPIAudience, cfg.Web.AuthM2MClient, cfg.Web.AuthM2MSecret),
+			cfg.Web.AuthDomain, cfg.Web.AuthMAPIAudience, cfg.Web.AuthM2MClient, cfg.Web.AuthM2MSecret,
+			cfg.Web.SendgridAPIKey, cfg.Nats.Url, cfg.Nats.ClientId, cfg.Nats.ClusterId),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}

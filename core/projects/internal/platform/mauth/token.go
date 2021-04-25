@@ -15,13 +15,14 @@ import (
 	"time"
 )
 
+type PemHandler func(token *jwt.Token) (string, error)
+
 var (
 	ErrNotFound = errors.New("token not found")
 )
 
 const oauthEndpoint = "/oauth/token"
 
-// Create auth0 management token
 func NewManagementToken(Domain, M2MClient, M2MSecret, MAPIAudience string) (*Token, error) {
 	baseUrl := "https://" + Domain
 	resource := oauthEndpoint
@@ -67,9 +68,7 @@ func NewManagementToken(Domain, M2MClient, M2MSecret, MAPIAudience string) (*Tok
 	return &token, nil
 }
 
-type PemHandler func(token *jwt.Token) (string, error)
 
-// Check management api token for expiration
 func IsExpired(mt *Token, getPemCert PemHandler) bool {
 	token, err := jwt.ParseWithClaims(mt.AccessToken, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		cert, err := getPemCert(token)
@@ -98,7 +97,6 @@ func IsExpired(mt *Token, getPemCert PemHandler) bool {
 	return false
 }
 
-// Retrieve auth0 management token
 func Retrieve(ctx context.Context, repo *database.Repository) (*Token, error) {
 	var t Token
 
@@ -125,7 +123,6 @@ func Retrieve(ctx context.Context, repo *database.Repository) (*Token, error) {
 	return &t, nil
 }
 
-// Persist auth0 management token
 func Persist(ctx context.Context, repo *database.Repository, nt *Token, now time.Time) error {
 	t := Token{
 		ID:          uuid.New().String(),
@@ -148,7 +145,6 @@ func Persist(ctx context.Context, repo *database.Repository, nt *Token, now time
 	return nil
 }
 
-// Delete auth0 management token
 func Delete(ctx context.Context, repo *database.Repository) error {
 	stmt := repo.SQ.Delete("ma_token")
 

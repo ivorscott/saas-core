@@ -19,4 +19,5 @@ docker_build('devpies/app-accounting:latest', 'integrations/freshbooks/applicati
 
 docker_build('devpies/app-identity:latest', 'core/identity/application', target='dev')
 
-docker_build('devpies/mic-projects:latest', 'core/projects', target='dev')
+docker_build('devpies/mic-projects:latest', 'core/projects',
+ build_args=read_json('.gitpass'), target='dev')

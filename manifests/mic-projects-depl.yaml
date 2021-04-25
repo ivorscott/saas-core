@@ -67,9 +67,14 @@ spec:
                 secretKeyRef:
                   name: secrets
                   key: auth0-mapi-audience
+            - name: API_WEB_SENDGRID_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: sendgrid-api-key
       initContainers:
         - name: schema-migration
-          image: devpies/mic-db-projects-migration:v000018
+          image: devpies/mic-db-projects-migration:v000019
           env:
             - name: DB_URL
               value: postgresql://postgres:postgres@mic-db-projects-svc:5432/postgres?sslmode=disable
