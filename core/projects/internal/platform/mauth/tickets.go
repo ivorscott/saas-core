@@ -7,17 +7,15 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
-
 
 const changePasswordEndpoint = "/api/v2/tickets/password-change"
 
-func ChangePasswordTicket(token *Token, AuthDomain string, member InvitedUser, resultUrl string) (string, error) {
+func ChangePasswordTicket(token *Token, AuthDomain string, member InvitedUser, ttl time.Duration, resultUrl string) (string, error) {
 	var passTicket struct{ Ticket string }
 
 	baseUrl := "https://" + AuthDomain
-	resource := changePasswordEndpoint
-	timeToLive := 432000
 
 	connId, err := GetConnectionId(token, AuthDomain)
 	if err != nil {
@@ -29,10 +27,10 @@ func ChangePasswordTicket(token *Token, AuthDomain string, member InvitedUser, r
 		return "", err
 	}
 
-	uri.Path = resource
+	uri.Path = changePasswordEndpoint
 	urlStr := uri.String()
 
-	jsonStr := fmt.Sprintf("{ \"connection_id\":\"%s\",\"email\":\"%s\",\"result_url\":\"%s\",\"ttl_sec\":%d,\"mark_email_as_verified\":true }", connId, member.Email, resultUrl, timeToLive)
+	jsonStr := fmt.Sprintf("{ \"connection_id\":\"%s\",\"email\":\"%s\",\"result_url\":\"%s\",\"ttl_sec\":%d,\"mark_email_as_verified\":true }", connId, member.Email, resultUrl, ttl.Seconds())
 
 	req, err := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(jsonStr))
 	if err != nil {

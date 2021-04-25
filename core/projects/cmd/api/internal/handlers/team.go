@@ -3,6 +3,8 @@ package handlers
 import (
 	"fmt"
 	"github.com/go-chi/chi"
+	"github.com/ivorscott/devpie-client-backend-go/internal/member"
+	"github.com/ivorscott/devpie-client-backend-go/internal/membership"
 	"github.com/ivorscott/devpie-client-backend-go/internal/platform/mauth"
 	"github.com/ivorscott/devpie-client-backend-go/internal/user"
 	"github.com/pkg/errors"
@@ -53,7 +55,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 		InviteAccepted: true,
 	}
 
-	m, err := team.CreateMember(r.Context(), t.repo, nm, time.Now())
+	m, err := membership.CreateMember(r.Context(), t.repo, nm, time.Now())
 	if err != nil {
 		return err
 	}
@@ -85,16 +87,18 @@ func (t *Team) Retrieve(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (t *Team) Invite(w http.ResponseWriter, r *http.Request) error {
+	var day = 24 * 60 * 60 * time.Second
+	var link string
 	var token *mauth.Token
 	var invite mauth.NewInvite
-	var link string
+	var role membership.Role = membership.Editor
 
 	if err := web.Decode(r, &invite); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 
-	// Get valid management api token
+	// Get valid token
 	token, err := mauth.Retrieve(r.Context(), t.repo)
 	if err == mauth.ErrNotFound || mauth.IsExpired(token, t.auth0.GetPemCert) {
 		token, err = mauth.NewManagementToken(t.auth0.Domain, t.auth0.M2MClient, t.auth0.M2MSecret, t.auth0.MAPIAudience)
@@ -113,40 +117,41 @@ func (t *Team) Invite(w http.ResponseWriter, r *http.Request) error {
 
 	tid := chi.URLParam(r, "tid")
 	link = strings.Split(t.origins, ",")[0]
+	ttl, err := time.ParseDuration(fmt.Sprintf("%s", 5*day))
+	if err != nil {
+		return err
+	}
 
 	for _, email := range invite.Emails {
 
-		nm := team.NewMember{
+		nm := membership.NewMembership{
 			TeamID:         tid,
-			IsLeader:       false,
-			InviteSent:     true,
-			InviteAccepted: false,
+			Role:       role.String(),
 		}
 
 		u, err := user.RetrieveByEmail(t.repo,email)
 		if err != nil {
-			 invitee, err := mauth.CreateUser(token, t.auth0.Domain, email)
+			// new users
+			invitee, err := mauth.CreateUser(token, t.auth0.Domain, email)
 			 if err != nil {
 				 return err
 			 }
 
 			nm.UserID = invitee.UserId
 
-			link, err = mauth.ChangePasswordTicket(token, t.auth0.Domain, invitee, link)
+			link, err = mauth.ChangePasswordTicket(token, t.auth0.Domain, invitee, ttl, link)
 			if err != nil {
 				 return err
 			}
 		 } else {
+		 	// existing users
 			nm.UserID = u.Auth0ID
 		}
 
+		// create invite
 		t.SendInvite(email, link)
+		invite.CreateInvite()
 
-		// TODO: Create Team member in database
-		_, err = team.CreateMember(r.Context(), t.repo, nm, time.Now())
-		if err != nil {
-			return err
-		}
 	}
 
 	return web.Respond(r.Context(), w, nil, http.StatusCreated)
