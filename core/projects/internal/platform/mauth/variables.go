@@ -16,13 +16,4 @@ type CustomClaims struct {
 	jwt.StandardClaims
 }
 
-type NewInvite struct {
-	Emails []string `json:"emailList"`
-}
-
-type InvitedUser struct {
-	Email  string `json:"email"`
-	UserId string `json:"user_id"`
-}
-
 const DatabaseConnection = "Username-Password-Authentication"

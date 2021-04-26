@@ -18,7 +18,7 @@ type NewTask struct {
 }
 
 type UpdateTask struct {
-	Title   *string `json:"title" validate:"required"`
+	Title   *string `json:"title"`
 	Content *string `json:"content"`
 }
 

@@ -6,19 +6,24 @@ import (
 
 type Project struct {
 	ID          string    `db:"project_id" json:"id"`
-	UserID      string    `db:"user_id" json:"userId"`
 	Name        string    `db:"name" json:"name"`
-	Open        bool      `db:"open" json:"open"`
+	TeamID      string    `db:"team_id" json:"teamId"`
+	UserID      string    `db:"user_id" json:"userId"`
+	Active      bool      `db:"active" json:"active"`
+	Public      bool      `db:"public" json:"public"`
 	ColumnOrder []string  `db:"column_order" json:"columnOrder"`
 	Created     time.Time `db:"created" json:"created"`
 }
 
 type NewProject struct {
-	Name string `db:"name" json:"name"`
+	Name   string `json:"name" validate:"required"`
+	TeamID string `json:"teamId"`
 }
 
 type UpdateProject struct {
-	Name        string   `db:"name" json:"name"`
-	Open        bool     `db:"open" json:"open"`
-	ColumnOrder []string `db:"column_order" json:"columnOrder"`
+	Name        *string   `json:"name"`
+	Active      *bool     `json:"active"`
+	Public      *bool     `json:"public"`
+	TeamID      *string   `json:"teamId"`
+	ColumnOrder *[]string `json:"columnOrder"`
 }

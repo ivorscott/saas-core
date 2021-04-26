@@ -12,8 +12,13 @@ import (
 
 const usersEndpoint = "/api/v2/users"
 
-func CreateUser(token *Token, AuthDomain, email string) (InvitedUser, error) {
-	var iu InvitedUser
+type User struct{
+	ID string
+	Email string
+}
+
+func CreateUser(token *Token, AuthDomain, email string) (User, error) {
+	var u User
 
 	connectionType := DatabaseConnection
 	defaultPassword := uuid.New().String()
@@ -23,7 +28,7 @@ func CreateUser(token *Token, AuthDomain, email string) (InvitedUser, error) {
 
 	uri, err := url.ParseRequestURI(baseUrl)
 	if err != nil {
-		return iu, err
+		return u, err
 	}
 
 	uri.Path = resource
@@ -33,7 +38,7 @@ func CreateUser(token *Token, AuthDomain, email string) (InvitedUser, error) {
 
 	req, err := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(jsonStr))
 	if err != nil {
-		return iu, err
+		return u, err
 	}
 
 	req.Header.Add("content-type", "application/json")
@@ -41,14 +46,14 @@ func CreateUser(token *Token, AuthDomain, email string) (InvitedUser, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return iu, err
+		return u, err
 	}
 	defer res.Body.Close()
 
 	body, _ := ioutil.ReadAll(res.Body)
-	if err := json.Unmarshal(body, &iu); err != nil {
-		return iu, err
+	if err := json.Unmarshal(body, &u); err != nil {
+		return u, err
 	}
 
-	return iu, nil
+	return u, nil
 }

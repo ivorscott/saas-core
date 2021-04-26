@@ -3,9 +3,10 @@ package handlers
 import (
 	"fmt"
 	"github.com/go-chi/chi"
-	"github.com/ivorscott/devpie-client-backend-go/internal/member"
+	"github.com/ivorscott/devpie-client-backend-go/internal/invite"
 	"github.com/ivorscott/devpie-client-backend-go/internal/membership"
 	"github.com/ivorscott/devpie-client-backend-go/internal/platform/mauth"
+	"github.com/ivorscott/devpie-client-backend-go/internal/project"
 	"github.com/ivorscott/devpie-client-backend-go/internal/user"
 	"github.com/pkg/errors"
 	"github.com/sendgrid/sendgrid-go"
@@ -31,9 +32,8 @@ type Team struct {
 }
 
 func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
-	// TODO: Create Team member for team leader in database
-
 	var nt team.NewTeam
+	var role membership.Role = membership.Admin
 
 	pid := chi.URLParam(r, "pid")
 	uid := t.auth0.GetUserBySubject(r)
@@ -43,35 +43,42 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	tm, err := team.Create(r.Context(), t.repo, nt, pid, uid, time.Now())
+	tm, err := team.Create(r.Context(), t.repo, nt, uid, time.Now())
 	if err != nil {
 		return err
 	}
 
-	nm := team.NewMember{
-		UserID:         uid,
-		TeamID:         tm.ID,
-		IsLeader:       true,
-		InviteAccepted: true,
+	nm := membership.NewMembership{
+		UserID: uid,
+		TeamID: tm.ID,
+		Role:   role.String(),
 	}
 
-	m, err := membership.CreateMember(r.Context(), t.repo, nm, time.Now())
+	up := project.UpdateProject{
+		TeamID: &tm.ID,
+	}
+
+	if _, err := project.Update(r.Context(), t.repo, pid, up, uid); err != nil {
+		return err
+	}
+	_, err = membership.Create(r.Context(), t.repo, nm, time.Now())
 	if err != nil {
 		return err
 	}
 
-	res := struct {
-		Team   team.Team
-		Member team.Member
-	}{tm, m}
-
-	return web.Respond(r.Context(), w, res, http.StatusCreated)
+	return web.Respond(r.Context(), w, nil, http.StatusCreated)
 }
 
 func (t *Team) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
+	uid := t.auth0.GetUserBySubject(r)
 
-	tm, err := team.Retrieve(r.Context(), t.repo, pid)
+	p, err := project.Retrieve(r.Context(), t.repo, pid, uid)
+	if err != nil {
+		return err
+	}
+	log.Print(p)
+	tm, err := team.Retrieve(r.Context(), t.repo, p.TeamID)
 	if err != nil {
 		switch err {
 		case team.ErrNotFound:
@@ -90,10 +97,9 @@ func (t *Team) Invite(w http.ResponseWriter, r *http.Request) error {
 	var day = 24 * 60 * 60 * time.Second
 	var link string
 	var token *mauth.Token
-	var invite mauth.NewInvite
-	var role membership.Role = membership.Editor
+	var list invite.NewList
 
-	if err := web.Decode(r, &invite); err != nil {
+	if err := web.Decode(r, &list); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
@@ -122,61 +128,95 @@ func (t *Team) Invite(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	for _, email := range invite.Emails {
+	for _, email := range list.Emails {
 
-		nm := membership.NewMembership{
-			TeamID:         tid,
-			Role:       role.String(),
+		ni := invite.NewInvite{
+			TeamID: tid,
 		}
 
-		u, err := user.RetrieveByEmail(t.repo,email)
+		// existing user
+		u, err := user.RetrieveByEmail(t.repo, email)
 		if err != nil {
-			// new users
-			invitee, err := mauth.CreateUser(token, t.auth0.Domain, email)
-			 if err != nil {
-				 return err
-			 }
-
-			nm.UserID = invitee.UserId
-
-			link, err = mauth.ChangePasswordTicket(token, t.auth0.Domain, invitee, ttl, link)
+			// new user
+			nu, err := mauth.CreateUser(token, t.auth0.Domain, email)
 			if err != nil {
-				 return err
+				return err
 			}
-		 } else {
-		 	// existing users
-			nm.UserID = u.Auth0ID
+
+			ni.UserID = nu.ID
+
+			link, err = mauth.ChangePasswordTicket(token, t.auth0.Domain, nu, ttl, link)
+			if err != nil {
+				return err
+			}
+		} else {
+			ni.UserID = u.ID
 		}
 
-		// create invite
-		t.SendInvite(email, link)
-		invite.CreateInvite()
+		if err := t.SendMail(email, link); err != nil {
+			return err
+		}
 
+		if _, err := invite.Create(r.Context(), t.repo, ni, time.Now()); err != nil {
+			return err
+		}
 	}
 
 	return web.Respond(r.Context(), w, nil, http.StatusCreated)
 }
 
-func (t *Team) SendInvite(email, link string) {
+func (t *Team) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
+	var ui invite.UpdateInvite
+	var role membership.Role = membership.Editor
+	var accepted bool
+
+	tid := chi.URLParam(r, "tid")
+
+	if err := web.Decode(r, &ui); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return err
+	}
+
+	if ui.Accepted != nil {
+		accepted = *ui.Accepted
+	}
+
+	if accepted {
+		nm := membership.NewMembership{
+			TeamID: tid,
+			Role:   role.String(),
+		}
+		if _, err := membership.Create(r.Context(), t.repo, nm, time.Now()); err != nil {
+			return err
+		}
+	}
+
+	return web.Respond(r.Context(), w, nil, http.StatusCreated)
+}
+
+func (t *Team) SendMail(email, link string) error {
+	from := mail.NewEmail("DevPie", "people@devpie.io")
+	subject := "You've been invited to a Team on DevPie!"
+	to := mail.NewEmail("Invitee", email)
+
 	html := ""
 	html += "<strong>Join Devpie</strong>"
 	html += "<br/>"
 	html += "<p>To accept your invitation, <a href=\"%s\">create an account</a>.</p>"
-
-	from := mail.NewEmail("DevPie", "people@devpie.io")
-	subject := "You've been invited to a Project on DevPie!"
-	to := mail.NewEmail("Invitee", email)
-	plainTextContent := "What is this used for exactly.... subtitle???"
 	htmlContent := fmt.Sprintf(html, link)
+
+	plainTextContent := fmt.Sprintf("You've been invited to a Team on DevPie! %s ", link)
 
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 	client := sendgrid.NewSendClient(t.sendgridAPIKey)
+
 	response, err := client.Send(message)
 	if err != nil {
-		log.Println(err)
+		return err
 	} else {
-		fmt.Println(response.StatusCode)
-		fmt.Println(response.Body)
-		fmt.Println(response.Headers)
+		t.log.Println(response.StatusCode)
+		t.log.Println(response.Body)
+		t.log.Println(response.Headers)
 	}
+	return nil
 }

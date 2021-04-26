@@ -11,47 +11,49 @@ import (
 	"time"
 )
 
-// The Project package shouldn't know anything about http
-// While it may identify common know errors, how to respond is left to the handlers
 var (
-	ErrNotFound         = errors.New("project not found")
-	ErrInvalidID        = errors.New("id provided was not a valid UUID")
-	ErrEmptyColumnOrder = errors.New("project column order provided was empty")
+	ErrNotFound  = errors.New("project not found")
+	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-func Retrieve(ctx context.Context, repo *database.Repository, pid string, uid string) (*Project, error) {
+func Retrieve(ctx context.Context, repo *database.Repository, pid string, uid string) (Project, error) {
 	var p Project
 
 	if _, err := uuid.Parse(pid); err != nil {
-		return nil, ErrInvalidID
+		return p, ErrInvalidID
 	}
+
+	// TODO: Check ownership at Team and User level before granting access
+	// TODO: Also allow site Admins (where role==admin in Auth0)
 
 	stmt := repo.SQ.Select(
 		"project_id",
 		"name",
-		"open",
+		"team_id",
 		"user_id",
+		"active",
+		"public",
 		"column_order",
 		"created",
 	).From(
 		"projects",
-	).Where(sq.Eq{"project_id": "?", "user_id": "?"})
+	).Where(sq.Eq{"project_id": "?","user_id":"?"})
 
 	q, args, err := stmt.ToSql()
 	if err != nil {
-		return nil, errors.Wrapf(err, "building query: %v", args)
+		return p, errors.Wrapf(err, "building query: %v", args)
 	}
 
 	row := repo.DB.QueryRowContext(ctx, q, pid, uid)
-	err = row.Scan(&p.ID, &p.Name, &p.Open, &p.UserID, (*pq.StringArray)(&p.ColumnOrder), &p.Created)
+	err = row.Scan(&p.ID, &p.Name, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.Created)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrNotFound
+			return p, ErrNotFound
 		}
-		return nil, err
+		return p, err
 	}
 
-	return &p, nil
+	return p, nil
 }
 
 func List(ctx context.Context, repo *database.Repository, uid string) ([]Project, error) {
@@ -61,8 +63,10 @@ func List(ctx context.Context, repo *database.Repository, uid string) ([]Project
 	stmt := repo.SQ.Select(
 		"project_id",
 		"name",
-		"open",
+		"team_id",
 		"user_id",
+		"active",
+		"public",
 		"column_order",
 		"created",
 	).From("projects").Where(sq.Eq{"user_id": "?"})
@@ -76,7 +80,7 @@ func List(ctx context.Context, repo *database.Repository, uid string) ([]Project
 		return nil, errors.Wrap(err, "selecting projects")
 	}
 	for rows.Next() {
-		err = rows.Scan(&p.ID, &p.Name, &p.Open, &p.UserID, (*pq.StringArray)(&p.ColumnOrder), &p.Created)
+		err = rows.Scan(&p.ID, &p.Name, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.Created)
 		if err != nil {
 			return nil, errors.Wrap(err, "scanning row into Struct")
 		}
@@ -86,13 +90,12 @@ func List(ctx context.Context, repo *database.Repository, uid string) ([]Project
 	return ps, nil
 }
 
-// Create adds a new Project
-func Create(ctx context.Context, repo *database.Repository, np NewProject, uid string, now time.Time) (*Project, error) {
+func Create(ctx context.Context, repo *database.Repository, np NewProject, uid string, now time.Time) (Project, error) {
 	p := Project{
 		ID:          uuid.New().String(),
 		Name:        np.Name,
-		Open:        true,
 		UserID:      uid,
+		TeamID:      np.TeamID,
 		ColumnOrder: []string{"column-1", "column-2", "column-3", "column-4"},
 		Created:     now.UTC(),
 	}
@@ -102,53 +105,61 @@ func Create(ctx context.Context, repo *database.Repository, np NewProject, uid s
 	).SetMap(map[string]interface{}{
 		"project_id":   p.ID,
 		"name":         p.Name,
-		"open":         p.Open,
+		"team_id":      p.TeamID,
 		"user_id":      p.UserID,
+		"active":       p.Active,
+		"public":       p.Public,
 		"column_order": pq.Array(p.ColumnOrder),
 		"created":      now.UTC(),
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
-		return nil, errors.Wrapf(err, "inserting project: %v", np)
+		return p, errors.Wrapf(err, "inserting project: %v", p)
 	}
 
-	return &p, nil
+	return p, nil
 }
 
-// Update modifies data about a Project. It will error if the specified ID is
-// invalid or does not reference an existing Project.
-func Update(ctx context.Context, repo *database.Repository, pid string, update UpdateProject, uid string) error {
+func Update(ctx context.Context, repo *database.Repository, pid string, update UpdateProject, uid string) (Project, error) {
 	p, err := Retrieve(ctx, repo, pid, uid)
 	if err != nil {
-		return err
+		return p, err
 	}
 
-	p.Name = update.Name
-	p.Open = update.Open
-
-	if len(update.ColumnOrder) != 0 {
-		return ErrEmptyColumnOrder
+	if update.Name != nil {
+		p.Name = *update.Name
 	}
-
-	p.ColumnOrder = update.ColumnOrder
+	if update.Active != nil {
+		p.Active = *update.Active
+	}
+	if update.Public != nil {
+		p.Public = *update.Public
+	}
+	if update.ColumnOrder != nil {
+		p.ColumnOrder = *update.ColumnOrder
+	}
+	if update.TeamID != nil {
+		p.TeamID = *update.TeamID
+	}
 
 	stmt := repo.SQ.Update(
-		"project",
+		"projects",
 	).SetMap(map[string]interface{}{
 		"name":         p.Name,
-		"open":         p.Open,
-		"column_order": p.ColumnOrder,
-	}).Where(sq.Eq{"project_id": pid,"user_id": uid})
+		"active":       p.Active,
+		"public":       p.Public,
+		"column_order": pq.Array(p.ColumnOrder),
+		"team_id":      p.TeamID,
+	}).Where(sq.Eq{"user_id": uid, "project_id": pid})
 
 	_, err = stmt.ExecContext(ctx)
 	if err != nil {
-		return errors.Wrap(err, "updating project")
+		return p, errors.Wrap(err, "updating project")
 	}
 
-	return nil
+	return p, nil
 }
 
-// Delete removes the Project identified by a given ID.
 func Delete(ctx context.Context, repo *database.Repository, pid, uid string) error {
 	if _, err := uuid.Parse(pid); err != nil {
 		return ErrInvalidID

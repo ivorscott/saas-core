@@ -20,6 +20,6 @@ type NewColumn struct {
 }
 
 type UpdateColumn struct {
-	Title      *string   `json:"title"`
-	TaskIDS    []string `json:"taskIds"`
+	Title   *string   `json:"title"`
+	TaskIDS *[]string `json:"taskIds"`
 }

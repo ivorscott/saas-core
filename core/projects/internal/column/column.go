@@ -11,21 +11,16 @@ import (
 	"time"
 )
 
-// The Column package shouldn't know anything about http
-// While it may identify common know errors, how to respond is left to the handlers
 var (
 	ErrNotFound  = errors.New("column not found")
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-func Retrieve(ctx context.Context, repo *database.Repository, pid, cid string) (*Column, error) {
+func Retrieve(ctx context.Context, repo *database.Repository, cid string) (Column, error) {
 	var c Column
 
 	if _, err := uuid.Parse(cid); err != nil {
-		return nil, ErrInvalidID
-	}
-	if _, err := uuid.Parse(pid); err != nil {
-		return nil, ErrInvalidID
+		return c, ErrInvalidID
 	}
 
 	stmt := repo.SQ.Select(
@@ -37,22 +32,22 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid, cid string) (
 		"created",
 	).From(
 		"columns",
-	).Where(sq.Eq{"column_id": "?", "project_id": "?"})
+	).Where(sq.Eq{"column_id": "?"})
 
 	q, args, err := stmt.ToSql()
 	if err != nil {
-		return nil, errors.Wrapf(err, "building query: %v", args)
+		return c, errors.Wrapf(err, "building query: %v", args)
 	}
 
-	err = repo.DB.QueryRowContext(ctx, q, cid, pid).Scan(&c.ID, &c.ProjectID, &c.Title, &c.ColumnName, (*pq.StringArray)(&c.TaskIDS), &c.Created)
+	err = repo.DB.QueryRowContext(ctx, q, cid).Scan(&c.ID, &c.ProjectID, &c.Title, &c.ColumnName, (*pq.StringArray)(&c.TaskIDS), &c.Created)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrNotFound
+			return c, ErrNotFound
 		}
-		return nil, err
+		return c, err
 	}
 
-	return &c, nil
+	return c, nil
 }
 
 func List(ctx context.Context, repo *database.Repository, pid string) ([]Column, error) {
@@ -87,8 +82,7 @@ func List(ctx context.Context, repo *database.Repository, pid string) ([]Column,
 	return cs, nil
 }
 
-// Create adds a new Column
-func Create(ctx context.Context, repo *database.Repository, nc NewColumn, now time.Time) (*Column, error) {
+func Create(ctx context.Context, repo *database.Repository, nc NewColumn, now time.Time) (Column, error) {
 	c := Column{
 		ID:         uuid.New().String(),
 		Title:      nc.Title,
@@ -110,16 +104,19 @@ func Create(ctx context.Context, repo *database.Repository, nc NewColumn, now ti
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
-		return nil, errors.Wrapf(err, "inserting column: %v", nc)
+		return c, errors.Wrapf(err, "inserting column: %v", nc)
 	}
 
-	return &c, nil
+	return c, nil
 }
 
-// Update modifies data about a Column. It will error if the specified ID is
-// invalid or does not reference an existing Column.
-func Update(ctx context.Context, repo *database.Repository, pid, cid string, uc UpdateColumn) error {
-	c, err := Retrieve(ctx, repo, pid, cid)
+func Update(ctx context.Context, repo *database.Repository, cid string, uc UpdateColumn) error {
+
+	if _, err := uuid.Parse(cid); err != nil {
+		return ErrInvalidID
+	}
+
+	c, err := Retrieve(ctx, repo, cid)
 	if err != nil {
 		return err
 	}
@@ -128,14 +125,16 @@ func Update(ctx context.Context, repo *database.Repository, pid, cid string, uc 
 		c.Title = *uc.Title
 	}
 
-	c.TaskIDS = uc.TaskIDS
+	if uc.TaskIDS != nil {
+		c.TaskIDS = *uc.TaskIDS
+	}
 
 	stmt := repo.SQ.Update(
 		"columns",
 	).SetMap(map[string]interface{}{
 		"title":    c.Title,
 		"task_ids": pq.Array(c.TaskIDS),
-	}).Where(sq.Eq{"column_id": cid, "project_id": c.ProjectID})
+	}).Where(sq.Eq{"column_id": cid})
 
 	_, err = stmt.ExecContext(ctx)
 	if err != nil {
@@ -145,12 +144,10 @@ func Update(ctx context.Context, repo *database.Repository, pid, cid string, uc 
 	return nil
 }
 
-// Delete removes the column identified by a given ID.
 func Delete(ctx context.Context, repo *database.Repository, cid string) error {
 	if _, err := uuid.Parse(cid); err != nil {
 		return ErrInvalidID
 	}
-
 	stmt := repo.SQ.Delete(
 		"columns",
 	).Where(sq.Eq{"column_id": cid})
@@ -162,7 +159,6 @@ func Delete(ctx context.Context, repo *database.Repository, cid string) error {
 	return nil
 }
 
-// Delete removes all columns identified by pid
 func DeleteAll(ctx context.Context, repo *database.Repository, pid string) error {
 	if _, err := uuid.Parse(pid); err != nil {
 		return ErrInvalidID

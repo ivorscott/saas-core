@@ -10,24 +10,24 @@ import (
 )
 
 var (
-	ErrNotFound       = errors.New("user not found")
+	ErrNotFound = errors.New("user not found")
 )
 
 func Create(repo *database.Repository, nu NewUser, now time.Time) (User, error) {
 	u := User{
-		ID:            uuid.New().String(),
-		Auth0ID:       nu.Auth0ID,
-		Email:         nu.Email,
-		Created:       now.UTC(),
+		ID:      uuid.New().String(),
+		Auth0ID: nu.Auth0ID,
+		Email:   nu.Email,
+		Created: now.UTC(),
 	}
 
 	stmt := repo.SQ.Insert(
 		"users",
 	).SetMap(map[string]interface{}{
-		"user_id":        u.ID,
-		"auth0_id":       u.Auth0ID,
-		"email":          u.Email,
-		"created":        u.Created,
+		"user_id":  u.ID,
+		"auth0_id": u.Auth0ID,
+		"email":    u.Email,
+		"created":  u.Created,
 	})
 
 	if _, err := stmt.Exec(); err != nil {
@@ -63,7 +63,6 @@ func Retrieve(repo *database.Repository, aid string) (User, error) {
 
 	return u, nil
 }
-
 
 func RetrieveByEmail(repo *database.Repository, email string) (User, error) {
 	var u User

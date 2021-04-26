@@ -12,7 +12,7 @@ import (
 
 const changePasswordEndpoint = "/api/v2/tickets/password-change"
 
-func ChangePasswordTicket(token *Token, AuthDomain string, member InvitedUser, ttl time.Duration, resultUrl string) (string, error) {
+func ChangePasswordTicket(token *Token, AuthDomain string, member User, ttl time.Duration, resultUrl string) (string, error) {
 	var passTicket struct{ Ticket string }
 
 	baseUrl := "https://" + AuthDomain

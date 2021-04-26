@@ -12,11 +12,10 @@ import (
 )
 
 var (
-	ErrNotFound  = errors.New("membership not found")
+	ErrNotFound = errors.New("membership not found")
 )
 
-// Create adds a new Team
-func CreateMember(ctx context.Context, repo *database.Repository, nm NewMembership, now time.Time) (Membership, error) {
+func Create(ctx context.Context, repo *database.Repository, nm NewMembership, now time.Time) (Membership, error) {
 	m := Membership{
 		ID:      uuid.New().String(),
 		UserID:  nm.UserID,
@@ -26,13 +25,13 @@ func CreateMember(ctx context.Context, repo *database.Repository, nm NewMembersh
 	}
 
 	stmt := repo.SQ.Insert(
-		"membership",
+		"memberships",
 	).SetMap(map[string]interface{}{
 		"membership_id": m.ID,
-		"user_id":   m.UserID,
-		"team_id":   m.TeamID,
-		"role":      m.Role,
-		"created":   now.UTC(),
+		"user_id":       m.UserID,
+		"team_id":       m.TeamID,
+		"role":          m.Role,
+		"created":       now.UTC(),
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {

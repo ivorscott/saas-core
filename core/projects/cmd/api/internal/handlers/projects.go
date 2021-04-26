@@ -16,14 +16,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Project holds the application state needed by the handler methods.
 type Projects struct {
 	repo  *database.Repository
 	log   *log.Logger
 	auth0 *mid.Auth0
 }
 
-// List gets all Project
 func (p *Projects) List(w http.ResponseWriter, r *http.Request) error {
 	uid := p.auth0.GetUserBySubject(r)
 
@@ -35,7 +33,6 @@ func (p *Projects) List(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, list, http.StatusOK)
 }
 
-// Retrieve a single Project
 func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 	uid := p.auth0.GetUserBySubject(r)
@@ -55,7 +52,6 @@ func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, pr, http.StatusOK)
 }
 
-// Create a new Project
 func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
 	uid := p.auth0.GetUserBySubject(r)
 
@@ -69,9 +65,9 @@ func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-
-	// create default columns for project
+	p.log.Print(pr)
 	titles := [4]string{"To Do", "In Progress", "Review", "Done"}
+
 	for i, title := range titles {
 		nt := column.NewColumn{
 			ProjectID:  pr.ID,
@@ -87,8 +83,6 @@ func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, pr, http.StatusCreated)
 }
 
-// Update decodes the body of a request to update an existing project. The ID
-// of the project is part of the request URL.
 func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 	uid := p.auth0.GetUserBySubject(r)
@@ -98,7 +92,7 @@ func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(err, "decoding project update")
 	}
 
-	if err := project.Update(r.Context(), p.repo, pid, update, uid); err != nil {
+	if _, err := project.Update(r.Context(), p.repo, pid, update, uid); err != nil {
 		switch err {
 		case project.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
@@ -112,32 +106,27 @@ func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, nil, http.StatusNoContent)
 }
 
-// Delete removes a single Project identified by an ID in the request URL.
 func (p *Projects) Delete(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 	uid := p.auth0.GetUserBySubject(r)
 
-	pr, err := project.Retrieve(r.Context(), p.repo, pid, uid)
-	if err != nil {
+	if _, err := project.Retrieve(r.Context(), p.repo, pid, uid); err != nil {
 		return err
 	}
-	if pr != nil {
-		if err := task.DeleteAll(r.Context(), p.repo, pid); err != nil {
-			return err
-		}
-		if err := column.DeleteAll(r.Context(), p.repo, pid); err != nil {
-			return err
-		}
-		if err := project.Delete(r.Context(), p.repo, pid, uid); err != nil {
-			switch err {
-			case project.ErrInvalidID:
-				return web.NewRequestError(err, http.StatusBadRequest)
-			default:
-				return errors.Wrapf(err, "deleting project %q", pid)
-			}
+	if err := task.DeleteAll(r.Context(), p.repo, pid); err != nil {
+		return err
+	}
+	if err := column.DeleteAll(r.Context(), p.repo, pid); err != nil {
+		return err
+	}
+	if err := project.Delete(r.Context(), p.repo, pid, uid); err != nil {
+		switch err {
+		case project.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusBadRequest)
+		default:
+			return errors.Wrapf(err, "deleting project %q", pid)
 		}
 	}
-
 
 	return web.Respond(r.Context(), w, nil, http.StatusNoContent)
 }

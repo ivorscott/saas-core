@@ -10,18 +10,16 @@ import (
 	"time"
 )
 
-// The Task package shouldn't know anything about http
-// While it may identify common know errors, how to respond is left to the handlers
 var (
 	ErrNotFound  = errors.New("task not found")
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-func Retrieve(ctx context.Context, repo *database.Repository, tid string) (*Task, error) {
+func Retrieve(ctx context.Context, repo *database.Repository, tid string) (Task, error) {
 	var t Task
 
 	if _, err := uuid.Parse(tid); err != nil {
-		return nil, ErrInvalidID
+		return t, ErrInvalidID
 	}
 
 	stmt := repo.SQ.Select(
@@ -36,17 +34,17 @@ func Retrieve(ctx context.Context, repo *database.Repository, tid string) (*Task
 
 	q, args, err := stmt.ToSql()
 	if err != nil {
-		return nil, errors.Wrapf(err, "building query: %v", args)
+		return t, errors.Wrapf(err, "building query: %v", args)
 	}
 
 	if err := repo.DB.GetContext(ctx, &t, q, tid); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrNotFound
+			return t, ErrNotFound
 		}
-		return nil, err
+		return t, err
 	}
 
-	return &t, nil
+	return t, nil
 }
 
 func List(ctx context.Context, repo *database.Repository, pid string) ([]Task, error) {
@@ -71,8 +69,7 @@ func List(ctx context.Context, repo *database.Repository, pid string) ([]Task, e
 	return t, nil
 }
 
-// Create adds a new Task
-func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid string, now time.Time) (*Task, error) {
+func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid string, now time.Time) (Task, error) {
 
 	t := Task{
 		ID:        uuid.New().String(),
@@ -93,15 +90,13 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid stri
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
-		return nil, errors.Wrapf(err, "inserting tasks: %v", nt)
+		return t, errors.Wrapf(err, "inserting tasks: %v", nt)
 	}
 
-	return &t, nil
+	return t, nil
 }
 
-// Update modifies data about a Task. It will error if the specified ID is
-// invalid or does not reference an existing Task.
-func Update(ctx context.Context, repo *database.Repository, pid, tid string, update UpdateTask) error {
+func Update(ctx context.Context, repo *database.Repository, tid string, update UpdateTask) error {
 	t, err := Retrieve(ctx, repo, tid)
 	if err != nil {
 		return err
@@ -119,18 +114,16 @@ func Update(ctx context.Context, repo *database.Repository, pid, tid string, upd
 	).SetMap(map[string]interface{}{
 		"title":   t.Title,
 		"content": t.Content,
-	}).Where(sq.Eq{"task_id": tid, "project_id": pid})
+	}).Where(sq.Eq{"task_id": tid})
 
-	_, err = stmt.ExecContext(ctx)
-	if err != nil {
-		return errors.Wrap(err, "updating task")
+	if _, err := stmt.ExecContext(ctx); err != nil {
+		return errors.Wrapf(err, "updating task: %s", tid)
 	}
 
 	return nil
 }
 
-// Delete removes the task identified by a given ID.
-func Delete(ctx context.Context, repo *database.Repository, pid, tid string) error {
+func Delete(ctx context.Context, repo *database.Repository, tid string) error {
 
 	if _, err := uuid.Parse(tid); err != nil {
 		return ErrInvalidID
@@ -138,7 +131,7 @@ func Delete(ctx context.Context, repo *database.Repository, pid, tid string) err
 
 	stmt := repo.SQ.Delete(
 		"tasks",
-	).Where(sq.Eq{"task_id": tid, "project_id": pid})
+	).Where(sq.Eq{"task_id": tid})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
 		return errors.Wrapf(err, "deleting task %s", tid)
@@ -147,7 +140,6 @@ func Delete(ctx context.Context, repo *database.Repository, pid, tid string) err
 	return nil
 }
 
-// Delete removes all tasks identified by pid
 func DeleteAll(ctx context.Context, repo *database.Repository, pid string) error {
 
 	if _, err := uuid.Parse(pid); err != nil {
