@@ -2,17 +2,17 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/ivorscott/devpie-client-backend-go/internal/column"
-	"github.com/ivorscott/devpie-client-backend-go/internal/mid"
-	"github.com/ivorscott/devpie-client-backend-go/internal/project"
-	"github.com/ivorscott/devpie-client-backend-go/internal/task"
+	"github.com/go-chi/chi"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/database"
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/web"
+	"github.com/devpies/devpie-client-core/projects/internal/columns"
+	"github.com/devpies/devpie-client-core/projects/internal/mid"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/database"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/web"
+	"github.com/devpies/devpie-client-core/projects/internal/projects"
+	"github.com/devpies/devpie-client-core/projects/internal/tasks"
 	"github.com/pkg/errors"
 )
 
@@ -25,7 +25,7 @@ type Projects struct {
 func (p *Projects) List(w http.ResponseWriter, r *http.Request) error {
 	uid := p.auth0.GetUserBySubject(r)
 
-	list, err := project.List(r.Context(), p.repo, uid)
+	list, err := projects.List(r.Context(), p.repo, uid)
 	if err != nil {
 		return err
 	}
@@ -35,14 +35,13 @@ func (p *Projects) List(w http.ResponseWriter, r *http.Request) error {
 
 func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
-	uid := p.auth0.GetUserBySubject(r)
 
-	pr, err := project.Retrieve(r.Context(), p.repo, pid, uid)
+	pr, err := projects.Retrieve(r.Context(), p.repo, pid)
 	if err != nil {
 		switch err {
-		case project.ErrNotFound:
+		case projects.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case project.ErrInvalidID:
+		case projects.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "looking for projects %q", pid)
@@ -55,13 +54,13 @@ func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
 func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
 	uid := p.auth0.GetUserBySubject(r)
 
-	var np project.NewProject
+	var np projects.NewProject
 	if err := web.Decode(r, &np); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 
-	pr, err := project.Create(r.Context(), p.repo, np, uid, time.Now())
+	pr, err := projects.Create(r.Context(), p.repo, np, uid, time.Now())
 	if err != nil {
 		return err
 	}
@@ -69,12 +68,12 @@ func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
 	titles := [4]string{"To Do", "In Progress", "Review", "Done"}
 
 	for i, title := range titles {
-		nt := column.NewColumn{
+		nt := columns.NewColumn{
 			ProjectID:  pr.ID,
 			Title:      title,
 			ColumnName: fmt.Sprintf(`column-%d`, i+1),
 		}
-		_, err := column.Create(r.Context(), p.repo, nt, time.Now())
+		_, err := columns.Create(r.Context(), p.repo, nt, time.Now())
 		if err != nil {
 			return err
 		}
@@ -85,18 +84,17 @@ func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
 
 func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
-	uid := p.auth0.GetUserBySubject(r)
 
-	var update project.UpdateProject
+	var update projects.UpdateProject
 	if err := web.Decode(r, &update); err != nil {
 		return errors.Wrap(err, "decoding project update")
 	}
 
-	if _, err := project.Update(r.Context(), p.repo, pid, update, uid); err != nil {
+	if _, err := projects.Update(r.Context(), p.repo, pid, update, time.Now()); err != nil {
 		switch err {
-		case project.ErrNotFound:
+		case projects.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case project.ErrInvalidID:
+		case projects.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "updating project %q", pid)
@@ -110,18 +108,18 @@ func (p *Projects) Delete(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 	uid := p.auth0.GetUserBySubject(r)
 
-	if _, err := project.Retrieve(r.Context(), p.repo, pid, uid); err != nil {
+	if _, err := projects.Retrieve(r.Context(), p.repo, pid); err != nil {
 		return err
 	}
-	if err := task.DeleteAll(r.Context(), p.repo, pid); err != nil {
+	if err := tasks.DeleteAll(r.Context(), p.repo, pid); err != nil {
 		return err
 	}
-	if err := column.DeleteAll(r.Context(), p.repo, pid); err != nil {
+	if err := columns.DeleteAll(r.Context(), p.repo, pid); err != nil {
 		return err
 	}
-	if err := project.Delete(r.Context(), p.repo, pid, uid); err != nil {
+	if err := projects.Delete(r.Context(), p.repo, pid, uid); err != nil {
 		switch err {
-		case project.ErrInvalidID:
+		case projects.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "deleting project %q", pid)

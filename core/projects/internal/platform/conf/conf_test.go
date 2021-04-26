@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/devpies/devpie-client-core/projects/internal/platform/conf"
 	"github.com/google/go-cmp/cmp"
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/conf"
 )
 
 const (

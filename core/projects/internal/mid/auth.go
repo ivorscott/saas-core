@@ -6,7 +6,7 @@ import (
 	"fmt"
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/web"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/web"
 	"net/http"
 	"strings"
 )

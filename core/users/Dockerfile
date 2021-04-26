@@ -1,0 +1,49 @@
+ARG GITHUB_USER
+ARG GITHUB_TOKEN
+
+FROM golang:1.15-alpine as base
+
+LABEL org.opencontainers.image.authors="devpie"
+
+ENV CGO_ENABLED=0
+
+WORKDIR /projects
+
+FROM base as dev
+
+ARG GITHUB_USER
+ARG GITHUB_TOKEN
+
+EXPOSE 4000
+
+RUN apk add --no-cache git \
+&& echo "machine github.com login $GITHUB_USER password $GITHUB_TOKEN" > ~/.netrc
+
+COPY go.* ./
+RUN go mod download && go mod verify
+COPY . .
+
+RUN go env && go build -o main ./cmd/api
+
+CMD ["./main"]
+
+FROM dev as build-stage
+
+RUN go build -o main ./cmd/api
+
+FROM aquasec/trivy:0.4.4 as trivy
+
+RUN trivy alpine:3.13.4 && \
+    echo "No image vulnerabilities" > result
+
+FROM alpine:3.13.4 as prod
+
+EXPOSE 4000
+
+COPY --from=trivy result secure
+COPY --from=build-stage /projects/main main
+
+
+HEALTHCHECK --interval=3s --timeout=3s CMD wget --spider -q http://localhost:4000/v1/health || exit 1
+    
+CMD ["./main"]

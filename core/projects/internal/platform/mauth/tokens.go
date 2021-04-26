@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/database"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/database"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"

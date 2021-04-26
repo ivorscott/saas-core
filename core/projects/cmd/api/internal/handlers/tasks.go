@@ -1,16 +1,16 @@
 package handlers
 
 import (
-	"github.com/ivorscott/devpie-client-backend-go/internal/column"
-	"github.com/ivorscott/devpie-client-backend-go/internal/mid"
+	"github.com/devpies/devpie-client-core/projects/internal/columns"
+	"github.com/devpies/devpie-client-core/projects/internal/mid"
+	"github.com/devpies/devpie-client-core/projects/internal/tasks"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/devpies/devpie-client-core/projects/internal/platform/database"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/web"
 	"github.com/go-chi/chi"
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/database"
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/web"
-	"github.com/ivorscott/devpie-client-backend-go/internal/task"
 	"github.com/pkg/errors"
 )
 
@@ -23,13 +23,13 @@ type Tasks struct {
 func (t *Tasks) List(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 
-	list, err := task.List(r.Context(), t.repo, pid)
+	list, err := tasks.List(r.Context(), t.repo, pid)
 	if err != nil {
 		return err
 	}
 
 	if list == nil {
-		list = []task.Task{}
+		list = []tasks.Task{}
 	}
 
 	return web.Respond(r.Context(), w, list, http.StatusOK)
@@ -39,12 +39,12 @@ func (t *Tasks) Retrieve(w http.ResponseWriter, r *http.Request) error {
 
 	tid := chi.URLParam(r, "tid")
 
-	ts, err := task.Retrieve(r.Context(), t.repo, tid)
+	ts, err := tasks.Retrieve(r.Context(), t.repo, tid)
 	if err != nil {
 		switch err {
-		case task.ErrNotFound:
+		case tasks.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case task.ErrInvalidID:
+		case tasks.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "looking for tasks %q", tid)
@@ -58,29 +58,29 @@ func (t *Tasks) Create(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 	cid := chi.URLParam(r, "cid")
 
-	var nt task.NewTask
+	var nt tasks.NewTask
 	if err := web.Decode(r, &nt); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 
-	ts, err := task.Create(r.Context(), t.repo, nt, pid, time.Now())
+	ts, err := tasks.Create(r.Context(), t.repo, nt, pid, time.Now())
 	if err != nil {
 		return err
 	}
 
-	c, err := column.Retrieve(r.Context(), t.repo, cid)
+	c, err := columns.Retrieve(r.Context(), t.repo, cid)
 	if err != nil {
 		return err
 	}
 
 	ids := append(c.TaskIDS, ts.ID)
 
-	uc := column.UpdateColumn{
+	uc := columns.UpdateColumn{
 		TaskIDS: &ids,
 	}
 
-	if err := column.Update(r.Context(), t.repo, cid, uc); err != nil {
+	if err := columns.Update(r.Context(), t.repo, cid, uc, time.Now()); err != nil {
 		return err
 	}
 
@@ -90,16 +90,16 @@ func (t *Tasks) Create(w http.ResponseWriter, r *http.Request) error {
 func (t *Tasks) Update(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 
-	var ut task.UpdateTask
+	var ut tasks.UpdateTask
 	if err := web.Decode(r, &ut); err != nil {
 		return errors.Wrap(err, "decoding task update")
 	}
 
-	if err := task.Update(r.Context(), t.repo, tid, ut); err != nil {
+	if err := tasks.Update(r.Context(), t.repo, tid, ut, time.Now()); err != nil {
 		switch err {
-		case task.ErrNotFound:
+		case tasks.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case task.ErrInvalidID:
+		case tasks.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "updating task %v", ut)
@@ -113,7 +113,7 @@ func (t *Tasks) Delete(w http.ResponseWriter, r *http.Request) error {
 	cid := chi.URLParam(r, "cid")
 	tid := chi.URLParam(r, "tid")
 
-	c, err := column.Retrieve(r.Context(), t.repo, cid)
+	c, err := columns.Retrieve(r.Context(), t.repo, cid)
 	if err != nil {
 		return err
 	}
@@ -121,15 +121,15 @@ func (t *Tasks) Delete(w http.ResponseWriter, r *http.Request) error {
 	i := SliceIndex(len(c.TaskIDS), func(i int) bool { return c.TaskIDS[i] == tid })
 
 	newTaskIds := append(c.TaskIDS[:i], c.TaskIDS[i+1:]...)
-	uc := column.UpdateColumn{TaskIDS: &newTaskIds}
+	uc := columns.UpdateColumn{TaskIDS: &newTaskIds}
 
-	if err := column.Update(r.Context(), t.repo, cid, uc); err != nil {
+	if err := columns.Update(r.Context(), t.repo, cid, uc, time.Now()); err != nil {
 		return err
 	}
 
-	if err := task.Delete(r.Context(), t.repo, tid); err != nil {
+	if err := tasks.Delete(r.Context(), t.repo, tid); err != nil {
 		switch err {
-		case task.ErrInvalidID:
+		case tasks.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "deleting task %q", tid)
@@ -142,17 +142,17 @@ func (t *Tasks) Delete(w http.ResponseWriter, r *http.Request) error {
 func (t *Tasks) Move(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 
-	var mt task.MoveTask
+	var mt tasks.MoveTask
 	if err := web.Decode(r, &mt); err != nil {
 		return errors.Wrap(err, "decoding task move")
 	}
 
-	cF, err := column.Retrieve(r.Context(), t.repo, mt.From)
+	cF, err := columns.Retrieve(r.Context(), t.repo, mt.From)
 	if err != nil {
 		return err
 	}
 
-	cT, err := column.Retrieve(r.Context(), t.repo, mt.To)
+	cT, err := columns.Retrieve(r.Context(), t.repo, mt.To)
 	if err != nil {
 		return err
 	}
@@ -160,18 +160,18 @@ func (t *Tasks) Move(w http.ResponseWriter, r *http.Request) error {
 	i := SliceIndex(len(cF.TaskIDS), func(i int) bool { return cF.TaskIDS[i] == tid })
 
 	newFromTaskIds := append(cF.TaskIDS[:i], cF.TaskIDS[i+1:]...)
-	foc := column.UpdateColumn{TaskIDS: &newFromTaskIds}
+	foc := columns.UpdateColumn{TaskIDS: &newFromTaskIds}
 
 	newToTaskIds := append(cT.TaskIDS, tid)
-	toc := column.UpdateColumn{TaskIDS: &newToTaskIds}
+	toc := columns.UpdateColumn{TaskIDS: &newToTaskIds}
 
-	err = column.Update(r.Context(), t.repo, mt.From, foc)
-	err = column.Update(r.Context(), t.repo, mt.To, toc)
+	err = columns.Update(r.Context(), t.repo, mt.From, foc, time.Now())
+	err = columns.Update(r.Context(), t.repo, mt.To, toc, time.Now())
 	if err != nil {
 		switch err {
-		case task.ErrNotFound:
+		case tasks.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case task.ErrInvalidID:
+		case tasks.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "updating column taskIds from:%q, to:%q", mt.From, mt.To)

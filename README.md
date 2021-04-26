@@ -38,21 +38,24 @@ message interfaces across multiple programming languages, but the Typescript def
 
 Two architectural models are adopted: _a traditional microservices model_ and
 _an event sourcing model_ driven by CQRS.
-[CQRS allows you to scale your writes and reads separately](https://medium.com/@hugo.oliveira.rocha/what-they-dont-tell-you-about-event-sourcing-6afc23c69e9a). For example, the `identity` feature makes strict use CQRS to write data in one shape and read it in one or more other shapes. This introduces eventual consistency and requires the frontend's support in handling eventual consistent data intelligently.
+[CQRS allows you to scale your writes and reads separately](https://medium.com/@hugo.oliveira.rocha/what-they-dont-tell-you-about-event-sourcing-6afc23c69e9a). For example, the `accounting` integration will make use CQRS to write data to Freshbooks and read data from a cache. This introduces eventual consistency and requires the frontend's support in handling eventual consistent data intelligently.
 
 In the traditional microservices model every microservice has its own database. Within
 the event sourcing model the authoritative source of truth is stored in a single message store (NATS).
 
-In both models, all events are persisted in a message store. In the traditional microservices model,
+In both models, messages are persisted in a message store. In the traditional microservices model,
 the message store serves to promote a fault tolerant system. Microservices can have temporary downtime and return without
-the loss of messages. In the event sourcing model, the current state of an entity is achieved through
-projections on an event stream.
+the loss of messages. In the event sourcing model, the current state of an entity is achieved through folding or replaying the events and running projections on an event stream. Commands exist in their own stream and we do not apply projections on them.
 
 ![two models](docs/images/arch.png)
 
 ### The Event Sourcing Model
 
-Devpie Client will need to display all kinds of screens to its users. End users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Components pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use at a later time (eventual consistency) to send responses to users.
+Devpie Client will use event sourcing and CQRS sparingly. Event sourcing is useful when we want the primary source of truth to be a stream of events. This allows you to rebuild the system to match any earlier point in time. Additional benefits are increased auditing and performance but the cost is extra complexity.
+
+Under this model, end users send requests to Applications. Applications write messages (commands or events) to the Messaging System in response to those requests. Message Handlers pick up those messages, perform their work, and write new messages to the Messaging System. Aggregators observe all this activity and transform these messages into View Data that Applications use at a later time (eventual consistency) to send responses to users.
+
+![two models](docs/images/cqrs.png)
 
 <details>
 <summary>Read more</summary>
@@ -105,15 +108,6 @@ npm start
 make up
 ```
 
-### Testing
-
-Navigate to the feature folder to run tests.
-
-```bash
-cd core/identity/application
-npm run tests
-```
-
 ### Debugging local databases
 
 If you want autocompletion in the terminal, use `pgcli`:
@@ -141,7 +135,7 @@ Migrations exist under the following paths:
 
 - `./databases/nats/migrations`
 - `./databases/projects/migrations`
-- `./databases/viewdata/migrations`
+- `./databases/users/migrations`
 
 #### Migration Flow
 

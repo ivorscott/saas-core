@@ -19,8 +19,8 @@ jobs:
 
       - name: Build and Push Image
         env:
-          OWNER: ${{ github.repository_owner }}
           IMAGE: app-accounting
+          OWNER: ${{ github.repository_owner }}
         run: |
           export SHA=$(git rev-parse --short HEAD)
 

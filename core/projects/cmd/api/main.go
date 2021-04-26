@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"log"
 	"net/http"
 	_ "net/http/pprof" // Register the pprof handlers
@@ -11,11 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ivorscott/devpie-client-backend-go/cmd/api/internal/handlers"
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/database"
-
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/conf"
-	"github.com/pkg/errors"
+	"github.com/devpies/devpie-client-core/projects/cmd/api/internal/handlers"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/conf"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/database"
 )
 
 func main() {
@@ -122,7 +121,7 @@ func run() error {
 		Addr: cfg.Web.Port,
 		Handler: handlers.API(shutdown, repo, infolog, cfg.Web.CorsOrigins, cfg.Web.AuthAudience,
 			cfg.Web.AuthDomain, cfg.Web.AuthMAPIAudience, cfg.Web.AuthM2MClient, cfg.Web.AuthM2MSecret,
-			cfg.Web.SendgridAPIKey, cfg.Nats.Url, cfg.Nats.ClientId, cfg.Nats.ClusterId),
+			cfg.Nats.Url, cfg.Nats.ClientId, cfg.Nats.ClusterId),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}

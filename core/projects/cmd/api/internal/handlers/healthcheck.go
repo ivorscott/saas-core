@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/database"
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/web"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/database"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/web"
 )
 
 type HealthCheck struct {

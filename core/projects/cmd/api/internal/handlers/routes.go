@@ -3,23 +3,23 @@ package handlers
 import (
 	"fmt"
 	"github.com/devpies/devpie-client-events/go/events"
-	"github.com/ivorscott/devpie-client-backend-go/cmd/api/internal/listeners"
+	"github.com/devpies/devpie-client-core/projects/cmd/api/internal/listeners"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/ivorscott/devpie-client-backend-go/internal/mid"
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/database"
-	"github.com/ivorscott/devpie-client-backend-go/internal/platform/web"
+	"github.com/devpies/devpie-client-core/projects/internal/mid"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/database"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/web"
 )
 
 var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))
 
 func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, origins string,
-	Auth0Audience, Auth0Domain, Auth0MAPIAudience, Auth0M2MClient, Auth0M2MSecret, SendgridAPIKey, NatsURL,
+	Auth0Audience, Auth0Domain, Auth0MAPIAudience, Auth0M2MClient, Auth0M2MSecret, NatsURL,
 	NatsClientId, NatsClusterId string) http.Handler {
 
 	clusterId := fmt.Sprintf("%s-%d", NatsClientId, rand.Int())
@@ -47,7 +47,6 @@ func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, or
 	t := Tasks{repo: repo, log: log, auth0: auth0}
 	c := Columns{repo: repo, log: log, auth0: auth0}
 	p := Projects{repo: repo, log: log, auth0: auth0}
-	tm := Team{repo: repo, log: log, auth0: auth0, origins: origins, sendgridAPIKey: SendgridAPIKey}
 
 	app.Handle(http.MethodGet, "/api/v1/projects", p.List)
 	app.Handle(http.MethodPost, "/api/v1/projects", p.Create)
@@ -60,9 +59,6 @@ func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, or
 	app.Handle(http.MethodPatch, "/api/v1/projects/tasks/{tid}", t.Update)
 	app.Handle(http.MethodPatch, "/api/v1/projects/tasks/{tid}/move", t.Move)
 	app.Handle(http.MethodDelete, "/api/v1/projects/columns/{cid}/tasks/{tid}", t.Delete)
-	app.Handle(http.MethodPost, "/api/v1/projects/{pid}/team", tm.Create)
-	app.Handle(http.MethodGet, "/api/v1/projects/{pid}/team", tm.Retrieve)
-	app.Handle(http.MethodPost, "/api/v1/projects/team/{tid}/invite", tm.Invite)
 
 	l.RegisterAll(nats, queueGroup)
 

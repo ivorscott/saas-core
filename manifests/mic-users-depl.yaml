@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mic-users-depl
+spec:
+  selector:
+    matchLabels:
+      app: mic-users
+  template:
+    metadata:
+      labels:
+        app: mic-users
+    spec:
+      containers:
+        - image: devpies/mic-users:latest
+          name: mic-users
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "250m"
+              memory: "250Mi"
+          env:
+            - name: API_WEB_PORT
+              value: ":4000"
+            - name: API_WEB_CORS_ORIGINS
+              value: "https://localhost:3000, https://devpie.local"
+            - name: API_WEB_AUTH_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-domain
+            - name: API_WEB_AUTH_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-audience
+            - name: API_DB_USER
+              value: postgres
+            - name: API_DB_NAME
+              value: postgres
+            - name: API_DB_PASSWORD
+              value: postgres
+            - name: API_DB_HOST
+              value: mic-db-users-svc
+            - name: API_DB_DISABLE_TLS
+              value: "true"
+            - name: API_NATS_URL
+              value: "nats://nats-svc:4222"
+            - name: API_NATS_CLIENT_ID
+              value: "mic-users"
+            - name: API_NATS_CLUSTER_ID
+              value: "devpie-client"
+            - name: API_WEB_AUTH_M_2_M_CLIENT
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-m2m-client
+            - name: API_WEB_AUTH_M_2_M_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-m2m-secret
+            - name: API_WEB_AUTH_MAPI_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: auth0-mapi-audience
+            - name: API_WEB_SENDGRID_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: sendgrid-api-key
+      initContainers:
+        - name: schema-migration
+          image: devpies/mic-db-users-migration:v000001
+          env:
+            - name: DB_URL
+              value: postgresql://postgres:postgres@mic-db-users-svc:5432/postgres?sslmode=disable
+          command: ["migrate"]
+          args:
+            ["-path", "/migrations", "-verbose", "-database", "$(DB_URL)", "up"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mic-users-svc
+spec:
+  selector:
+    app: mic-users
+  ports:
+    - port: 4000
+      targetPort: 4000
