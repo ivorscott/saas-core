@@ -13,12 +13,6 @@ github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0/go.mod h1:4Zcju
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/devpies/devpie-client-events v0.0.37 h1:fFBvuGqKgDs35MwG9m9kwfWKs/mfiiVHzjc6sKtaEVs=
-github.com/devpies/devpie-client-events v0.0.37/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
-github.com/devpies/devpie-client-events v0.0.38 h1:s9T+enowo8OHMCf1q3s7iIKZ40o1ZJjlDZ0X3ZXeil0=
-github.com/devpies/devpie-client-events v0.0.38/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
-github.com/devpies/devpie-client-events v0.0.39 h1:+FYImnkCTfqmS6dE1RI5BElm4BbmDT84ayMqhC2KLRg=
-github.com/devpies/devpie-client-events v0.0.39/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
 github.com/devpies/devpie-client-events v0.0.40 h1:ndDDUejxQvoX7go9EVxmT75RXQhY+u43W7Q9qYmfFVQ=
 github.com/devpies/devpie-client-events v0.0.40/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=

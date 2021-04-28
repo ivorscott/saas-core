@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/database"
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/web"
+	"github.com/devpies/devpie-client-core/users/internal/platform/database"
+	"github.com/devpies/devpie-client-core/users/internal/platform/web"
 )
 
 type HealthCheck struct {

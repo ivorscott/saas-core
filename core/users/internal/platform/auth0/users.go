@@ -1,7 +1,8 @@
-package mauth
+package auth0
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
@@ -17,13 +18,15 @@ type User struct{
 	Email string
 }
 
-func CreateUser(token *Token, AuthDomain, email string) (User, error) {
+var ErrInvalidID = errors.New("id provided was not a valid UUID")
+
+func (a0 *Auth0) CreateUser(token Token, email string) (User, error) {
 	var u User
 
 	connectionType := DatabaseConnection
 	defaultPassword := uuid.New().String()
 
-	baseUrl := "https://" + AuthDomain
+	baseUrl := "https://" + a0.Domain
 	resource := usersEndpoint
 
 	uri, err := url.ParseRequestURI(baseUrl)
@@ -56,4 +59,40 @@ func CreateUser(token *Token, AuthDomain, email string) (User, error) {
 	}
 
 	return u, nil
+}
+
+// Update auth0 user account with user_id from internal database
+func (a0 *Auth0) UpdateUserAppMetaData(token Token, userId string) error {
+	if _, err := uuid.Parse(userId); err != nil {
+		return ErrInvalidID
+	}
+
+	baseUrl := "https://" + a0.Domain
+	resource := "/api/v2/users/" + a0.Auth0User
+
+	uri, err := url.ParseRequestURI(baseUrl)
+	if err != nil {
+		return err
+	}
+
+	uri.Path = resource
+	urlStr := uri.String()
+
+	jsonStr := fmt.Sprintf("{\"app_metadata\": { \"id\": \"%s\" }}", userId)
+
+	req, err := http.NewRequest(http.MethodPatch, urlStr, strings.NewReader(jsonStr))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	return nil
 }

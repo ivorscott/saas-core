@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/devpies/devpie-client-core/projects/internal/columns"
-	"github.com/devpies/devpie-client-core/projects/internal/mid"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/auth0"
 	"github.com/devpies/devpie-client-core/projects/internal/tasks"
 	"log"
 	"net/http"
@@ -17,7 +17,7 @@ import (
 type Tasks struct {
 	repo  *database.Repository
 	log   *log.Logger
-	auth0 *mid.Auth0
+	auth0 *auth0.Auth0
 }
 
 func (t *Tasks) List(w http.ResponseWriter, r *http.Request) error {

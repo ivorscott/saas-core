@@ -1,13 +1,13 @@
 package handlers
 
 import (
+	"github.com/devpies/devpie-client-core/projects/internal/platform/auth0"
 	"github.com/go-chi/chi"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/devpies/devpie-client-core/projects/internal/columns"
-	"github.com/devpies/devpie-client-core/projects/internal/mid"
 	"github.com/devpies/devpie-client-core/projects/internal/platform/database"
 	"github.com/devpies/devpie-client-core/projects/internal/platform/web"
 	"github.com/pkg/errors"
@@ -16,7 +16,7 @@ import (
 type Columns struct {
 	repo *database.Repository
 	log  *log.Logger
-	auth0 *mid.Auth0
+	auth0 *auth0.Auth0
 }
 
 func (c *Columns) List(w http.ResponseWriter, r *http.Request) error {

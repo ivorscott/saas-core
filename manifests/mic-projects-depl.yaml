@@ -74,7 +74,7 @@ spec:
                   key: sendgrid-api-key
       initContainers:
         - name: schema-migration
-          image: devpies/mic-db-projects-migration:v000023
+          image: devpies/mic-db-projects-migration:v000024
           env:
             - name: DB_URL
               value: postgresql://postgres:postgres@mic-db-projects-svc:5432/postgres?sslmode=disable

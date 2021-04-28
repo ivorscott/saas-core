@@ -1,4 +1,4 @@
-package mauth
+package auth0
 
 import (
 	"encoding/json"
@@ -8,14 +8,15 @@ import (
 )
 
 const connectionEndpoint = "/api/v2/connections"
+const DatabaseConnection = "Username-Password-Authentication"
 
-func GetConnectionId(token *Token, AuthDomain string) (string, error) {
+func (a0 *Auth0) GetConnectionId(token Token) (string, error) {
 	var conn []struct {
 		ID   string
 		Name string
 	}
 
-	urlStr := "https://" + AuthDomain + connectionEndpoint
+	urlStr := "https://" + a0.Domain + connectionEndpoint
 
 	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
 	if err != nil {

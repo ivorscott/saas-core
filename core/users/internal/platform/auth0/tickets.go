@@ -1,4 +1,4 @@
-package mauth
+package auth0
 
 import (
 	"encoding/json"
@@ -12,12 +12,12 @@ import (
 
 const changePasswordEndpoint = "/api/v2/tickets/password-change"
 
-func ChangePasswordTicket(token *Token, AuthDomain string, member User, ttl time.Duration, resultUrl string) (string, error) {
+func (a0 *Auth0) ChangePasswordTicket(token Token, member User, ttl time.Duration, resultUrl string) (string, error) {
 	var passTicket struct{ Ticket string }
 
-	baseUrl := "https://" + AuthDomain
+	baseUrl := "https://" + a0.Domain
 
-	connId, err := GetConnectionId(token, AuthDomain)
+	connId, err := a0.GetConnectionId(token)
 	if err != nil {
 		return "", err
 	}

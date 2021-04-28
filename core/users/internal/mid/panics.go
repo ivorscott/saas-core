@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/web"
+	"github.com/devpies/devpie-client-core/users/internal/platform/web"
 	"github.com/pkg/errors"
 )
 

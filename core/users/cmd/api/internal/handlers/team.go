@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/go-chi/chi"
+	"github.com/devpies/devpie-client-core/users/internal/platform/auth0"
 	"github.com/pkg/errors"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
@@ -11,23 +12,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ivorscott/devpie-client-core/users/internal/invites"
-	"github.com/ivorscott/devpie-client-core/users/internal/memberships"
-	"github.com/ivorscott/devpie-client-core/users/internal/mid"
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/database"
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/mauth"
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/web"
-	"github.com/ivorscott/devpie-client-core/users/internal/projects"
-	"github.com/ivorscott/devpie-client-core/users/internal/teams"
-	"github.com/ivorscott/devpie-client-core/users/internal/users"
+	"github.com/devpies/devpie-client-core/users/internal/invites"
+	"github.com/devpies/devpie-client-core/users/internal/memberships"
+	"github.com/devpies/devpie-client-core/users/internal/platform/database"
+	"github.com/devpies/devpie-client-core/users/internal/platform/web"
+	"github.com/devpies/devpie-client-core/users/internal/projects"
+	"github.com/devpies/devpie-client-core/users/internal/teams"
+	"github.com/devpies/devpie-client-core/users/internal/users"
 )
 
 type Team struct {
-	repo           *database.Repository
-	log            *log.Logger
-	auth0          *mid.Auth0
-	origins        string
-	sendgridAPIKey string
+	repo        *database.Repository
+	log         *log.Logger
+	auth0       *auth0.Auth0
+	origins     string
+	sendgridKey string
 }
 
 func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
@@ -86,7 +85,7 @@ func (t *Team) Retrieve(w http.ResponseWriter, r *http.Request) error {
 func (t *Team) Invite(w http.ResponseWriter, r *http.Request) error {
 	var day = 24 * 60 * 60 * time.Second
 	var link string
-	var token *mauth.Token
+	var token auth0.Token
 	var list invites.NewList
 
 	if err := web.Decode(r, &list); err != nil {
@@ -95,18 +94,18 @@ func (t *Team) Invite(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// Get valid token
-	token, err := mauth.Retrieve(r.Context(), t.repo)
-	if err == mauth.ErrNotFound || mauth.IsExpired(token, t.auth0.GetPemCert) {
-		token, err = mauth.NewManagementToken(t.auth0.Domain, t.auth0.M2MClient, t.auth0.M2MSecret, t.auth0.MAPIAudience)
+	token, err := t.auth0.Retrieve()
+	if err == auth0.ErrNotFound || t.auth0.IsExpired(token) {
+		token, err = t.auth0.NewManagementToken()
 		if err != nil {
 			return err
 		}
 		// clean table before persisting
-		if err := mauth.Delete(r.Context(), t.repo); err != nil {
+		if err := t.auth0.Delete(); err != nil {
 			return err
 		}
 		// persist management api token
-		if err := mauth.Persist(r.Context(), t.repo, token, time.Now()); err != nil {
+		if err := t.auth0.Persist(token, time.Now()); err != nil {
 			return err
 		}
 	}
@@ -128,14 +127,14 @@ func (t *Team) Invite(w http.ResponseWriter, r *http.Request) error {
 		u, err := users.RetrieveByEmail(t.repo, email)
 		if err != nil {
 			// new user
-			nu, err := mauth.CreateUser(token, t.auth0.Domain, email)
+			nu, err := t.auth0.CreateUser(token, email)
 			if err != nil {
 				return err
 			}
 
 			ni.UserID = nu.ID
 
-			link, err = mauth.ChangePasswordTicket(token, t.auth0.Domain, nu, ttl, link)
+			link, err = t.auth0.ChangePasswordTicket(token, nu, ttl, link)
 			if err != nil {
 				return err
 			}
@@ -155,7 +154,6 @@ func (t *Team) Invite(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, nil, http.StatusCreated)
 }
 
-
 func (t *Team) RetrieveInvites(w http.ResponseWriter, r *http.Request) error {
 	uid := t.auth0.GetUserById(r)
 
@@ -173,7 +171,6 @@ func (t *Team) RetrieveInvites(w http.ResponseWriter, r *http.Request) error {
 
 	return web.Respond(r.Context(), w, is, http.StatusCreated)
 }
-
 
 func (t *Team) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
 	var ui invites.UpdateInvite
@@ -218,7 +215,7 @@ func (t *Team) SendMail(email, link string) error {
 	plainTextContent := fmt.Sprintf("You've been invited to a Team on DevPie! %s ", link)
 
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
-	client := sendgrid.NewSendClient(t.sendgridAPIKey)
+	client := sendgrid.NewSendClient(t.sendgridKey)
 
 	response, err := client.Send(message)
 	if err != nil {

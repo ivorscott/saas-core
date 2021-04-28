@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/devpies/devpie-client-core/projects/internal/mid"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/auth0"
 	"github.com/devpies/devpie-client-core/projects/internal/platform/database"
 	"github.com/devpies/devpie-client-core/projects/internal/platform/web"
 	"log"
@@ -10,26 +11,26 @@ import (
 )
 
 func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, origins string,
-	Auth0Audience, Auth0Domain, Auth0MAPIAudience, Auth0M2MClient, Auth0M2MSecret string) http.Handler {
+	auth0Audience, auth0Domain, auth0MAPIAudience, auth0M2MClient, auth0M2MSecret string) http.Handler {
 
-
-	auth0 := &mid.Auth0{
-		Audience:     Auth0Audience,
-		Domain:       Auth0Domain,
-		MAPIAudience: Auth0MAPIAudience,
-		M2MClient:    Auth0M2MClient,
-		M2MSecret:    Auth0M2MSecret,
+	a0 := &auth0.Auth0{
+		Repo:         repo,
+		Domain:       auth0Domain,
+		Audience:     auth0Audience,
+		M2MSecret:    auth0M2MSecret,
+		M2MClient:    auth0M2MClient,
+		MAPIAudience: auth0MAPIAudience,
 	}
 
-	app := web.NewApp(shutdown, log, mid.Logger(log), auth0.Authenticate(), mid.Errors(log), mid.Panics(log))
+	app := web.NewApp(shutdown, log, mid.Logger(log), a0.Authenticate(), mid.Errors(log), mid.Panics(log))
 
 	h := HealthCheck{repo: repo}
 
 	app.Handle(http.MethodGet, "/api/v1/health", h.Health)
 
-	t := Tasks{repo: repo, log: log, auth0: auth0}
-	c := Columns{repo: repo, log: log, auth0: auth0}
-	p := Projects{repo: repo, log: log, auth0: auth0}
+	t := Tasks{repo: repo, log: log, auth0: a0}
+	c := Columns{repo: repo, log: log, auth0: a0}
+	p := Projects{repo: repo, log: log, auth0: a0}
 
 	app.Handle(http.MethodGet, "/api/v1/projects", p.List)
 	app.Handle(http.MethodPost, "/api/v1/projects", p.Create)

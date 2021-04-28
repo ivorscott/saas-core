@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/devpies/devpie-client-core/projects/internal/platform/auth0"
 	"github.com/go-chi/chi"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/devpies/devpie-client-core/projects/internal/columns"
-	"github.com/devpies/devpie-client-core/projects/internal/mid"
 	"github.com/devpies/devpie-client-core/projects/internal/platform/database"
 	"github.com/devpies/devpie-client-core/projects/internal/platform/web"
 	"github.com/devpies/devpie-client-core/projects/internal/projects"
@@ -19,7 +19,7 @@ import (
 type Projects struct {
 	repo  *database.Repository
 	log   *log.Logger
-	auth0 *mid.Auth0
+	auth0 *auth0.Auth0
 }
 
 func (p *Projects) List(w http.ResponseWriter, r *http.Request) error {

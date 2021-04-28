@@ -1,41 +1,15 @@
-package mid
+package auth0
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
+	"github.com/devpies/devpie-client-core/users/internal/platform/web"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/web"
 	"net/http"
 	"strings"
 )
-
-type Auth0 struct {
-	Audience     string
-	Domain       string
-	M2MClient    string
-	M2MSecret    string
-	MAPIAudience string
-}
-
-type Jwks struct {
-	Keys []JSONWebKeys `json:"keys"`
-}
-
-type JSONWebKeys struct {
-	Kty string   `json:"kty"`
-	Kid string   `json:"kid"`
-	Use string   `json:"use"`
-	N   string   `json:"n"`
-	E   string   `json:"e"`
-	X5c []string `json:"x5c"`
-}
-
-type CustomClaims struct {
-	Scope string `json:"scope"`
-	jwt.StandardClaims
-}
 
 // Authenticate middleware verifies the access token sent from auth0
 func (a0 *Auth0) Authenticate() web.Middleware {
@@ -149,4 +123,3 @@ func (a0 *Auth0) GetUserById(r *http.Request) string {
 	}
 	return fmt.Sprintf("%v", claims["https://client.devpie.io/claims/user_id"])
 }
-

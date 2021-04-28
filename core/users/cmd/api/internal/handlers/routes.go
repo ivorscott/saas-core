@@ -1,33 +1,36 @@
 package handlers
 
 import (
-	"github.com/ivorscott/devpie-client-core/users/internal/mid"
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/database"
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/web"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/devpies/devpie-client-core/users/internal/mid"
+	"github.com/devpies/devpie-client-core/users/internal/platform/auth0"
+	"github.com/devpies/devpie-client-core/users/internal/platform/database"
+	"github.com/devpies/devpie-client-core/users/internal/platform/web"
 )
 
 func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, origins string,
-	Auth0Audience, Auth0Domain, Auth0MAPIAudience, Auth0M2MClient, Auth0M2MSecret, SendgridAPIKey string) http.Handler {
+	auth0Audience, auth0Domain, auth0MAPIAudience, auth0M2MClient, auth0M2MSecret, sendgridKey string) http.Handler {
 
-	auth0 := &mid.Auth0{
-		Audience:     Auth0Audience,
-		Domain:       Auth0Domain,
-		MAPIAudience: Auth0MAPIAudience,
-		M2MClient:    Auth0M2MClient,
-		M2MSecret:    Auth0M2MSecret,
+	a0 := &auth0.Auth0{
+		Repo:         repo,
+		Domain:       auth0Domain,
+		Audience:     auth0Audience,
+		M2MSecret:    auth0M2MSecret,
+		M2MClient:    auth0M2MClient,
+		MAPIAudience: auth0MAPIAudience,
 	}
 
-	app := web.NewApp(shutdown, log, mid.Logger(log), auth0.Authenticate(), mid.Errors(log), mid.Panics(log))
+	app := web.NewApp(shutdown, log, mid.Logger(log), a0.Authenticate(), mid.Errors(log), mid.Panics(log))
 
 	h := HealthCheck{repo: repo}
 
 	app.Handle(http.MethodGet, "/api/v1/health", h.Health)
 
-	u := Users{repo: repo, log: log, auth0: auth0, origins: origins, sendgridAPIKey: SendgridAPIKey}
-	tm := Team{repo: repo, log: log, auth0: auth0, origins: origins, sendgridAPIKey: SendgridAPIKey}
+	u := Users{repo, log, a0, origins}
+	tm := Team{repo, log, a0, origins, sendgridKey}
 
 	app.Handle(http.MethodPost, "/api/v1/users", u.Create)
 	app.Handle(http.MethodGet, "/api/v1/users/me", u.RetrieveMe)

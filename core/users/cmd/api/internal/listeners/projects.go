@@ -3,7 +3,7 @@ package listeners
 import (
 	"context"
 	"github.com/devpies/devpie-client-events/go/events"
-	"github.com/ivorscott/devpie-client-core/users/internal/projects"
+	"github.com/devpies/devpie-client-core/users/internal/projects"
 	"github.com/nats-io/stan.go"
 	"time"
 )

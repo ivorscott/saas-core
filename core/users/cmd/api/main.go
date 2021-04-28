@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/devpies/devpie-client-events/go/events"
-	"github.com/ivorscott/devpie-client-core/users/cmd/api/internal/listeners"
+	"github.com/devpies/devpie-client-core/users/cmd/api/internal/listeners"
 	"github.com/pkg/errors"
 	"log"
 	"math/rand"
@@ -15,9 +15,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ivorscott/devpie-client-core/users/cmd/api/internal/handlers"
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/conf"
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/database"
+	"github.com/devpies/devpie-client-core/users/cmd/api/internal/handlers"
+	"github.com/devpies/devpie-client-core/users/internal/platform/conf"
+	"github.com/devpies/devpie-client-core/users/internal/platform/database"
 )
 
 func main() {

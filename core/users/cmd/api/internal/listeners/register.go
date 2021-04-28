@@ -2,7 +2,7 @@ package listeners
 
 import (
 	"github.com/devpies/devpie-client-events/go/events"
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/database"
+	"github.com/devpies/devpie-client-core/users/internal/platform/database"
 	"github.com/nats-io/stan.go"
 	"log"
 	"time"

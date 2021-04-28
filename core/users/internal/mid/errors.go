@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/web"
+	"github.com/devpies/devpie-client-core/users/internal/platform/web"
 )
 
 // Errors handles errors coming out of the call chain. It detects normal

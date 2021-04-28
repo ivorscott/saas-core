@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/web"
+	"github.com/devpies/devpie-client-core/users/internal/platform/web"
 )
 
 // Logger writes some information about the request to the logs in the

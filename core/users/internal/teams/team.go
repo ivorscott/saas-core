@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/ivorscott/devpie-client-core/users/internal/platform/database"
+	"github.com/devpies/devpie-client-core/users/internal/platform/database"
 	"github.com/pkg/errors"
 	"log"
 	"time"
