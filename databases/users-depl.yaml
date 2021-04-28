@@ -45,7 +45,7 @@ metadata:
   name: mic-db-users-svc
 spec:
   selector:
-    app: mic-db-users-svc
+    app: mic-db-users
   ports:
     - port: 5432
       targetPort: 5432

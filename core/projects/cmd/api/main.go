@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/devpies/devpie-client-core/projects/cmd/api/internal/listeners"
+	"github.com/devpies/devpie-client-events/go/events"
 	"github.com/pkg/errors"
 	"log"
+	"math/rand"
 	"net/http"
 	_ "net/http/pprof" // Register the pprof handlers
 	"os"
@@ -22,6 +25,9 @@ func main() {
 		log.Fatal(err)
 	}
 }
+
+var seededRand *rand.Rand = rand.New(
+	rand.NewSource(time.Now().UnixNano()))
 
 func run() error {
 
@@ -112,6 +118,23 @@ func run() error {
 	defer repo.Close()
 
 	// =========================================================================
+	// Start Listeners
+
+	go func() {
+		clusterId := fmt.Sprintf("%s-%d", cfg.Nats.ClientId, rand.Int())
+		queueGroup := fmt.Sprintf("%s-queue", cfg.Nats.ClientId)
+
+		nats, close := events.NewClient(cfg.Nats.ClusterId, clusterId, cfg.Nats.Url)
+		defer close()
+
+		fmt.Print(nats)
+
+		l := listeners.NewListeners(infolog, repo)
+		l.RegisterAll(nats, queueGroup)
+	}()
+
+
+	// =========================================================================
 	// Start API Service
 
 	// Make a channel to listen for shutdown signal from the OS.
@@ -120,8 +143,7 @@ func run() error {
 	api := http.Server{
 		Addr: cfg.Web.Port,
 		Handler: handlers.API(shutdown, repo, infolog, cfg.Web.CorsOrigins, cfg.Web.AuthAudience,
-			cfg.Web.AuthDomain, cfg.Web.AuthMAPIAudience, cfg.Web.AuthM2MClient, cfg.Web.AuthM2MSecret,
-			cfg.Nats.Url, cfg.Nats.ClientId, cfg.Nats.ClusterId),
+			cfg.Web.AuthDomain, cfg.Web.AuthMAPIAudience, cfg.Web.AuthM2MClient, cfg.Web.AuthM2MSecret),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}
