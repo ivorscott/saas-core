@@ -21,7 +21,7 @@ spec:
         paths:
           - path: /api/v1/users
             backend:
-              serviceName: app-identity-svc
+              serviceName: mic-users-svc
               servicePort: 4000
           - path: /api/v1/accounting
             backend:

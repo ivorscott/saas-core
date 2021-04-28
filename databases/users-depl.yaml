@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: users-depl
+  name: mic-db-users-depl
 spec:
   selector:
     matchLabels:
-      app: users
+      app: mic-db-users
   template:
     metadata:
       labels:
-        app: users
+        app: mic-db-users
     spec:
       volumes:
-        - name: users-volume
+        - name: mic-db-users-volume
           hostPath:
             path: "/Users/ivorscott/databases/users"
       containers:
-        - name: users
+        - name: mic-db-users
           image: postgres:11.6
           imagePullPolicy: "IfNotPresent"
           ports:
@@ -37,15 +37,15 @@ spec:
               value: postgres
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
-              name: users-volume
+              name: mic-db-users-volume
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: users-svc
+  name: mic-db-users-svc
 spec:
   selector:
-    app: users
+    app: mic-db-users-svc
   ports:
     - port: 5432
       targetPort: 5432
