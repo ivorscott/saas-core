@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/publish-mic-projects.yml"
       - "core/projects/**"
+  workflow_dispatch:
 
 jobs:
   publish:
