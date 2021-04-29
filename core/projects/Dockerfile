@@ -23,13 +23,13 @@ COPY go.* ./
 RUN go mod download && go mod verify
 COPY . .
 
-RUN go env && go build -o main ./cmd/api
+RUN go env && go build -o main .
 
 CMD ["./main"]
 
 FROM dev as build-stage
 
-RUN go build -o main ./cmd/api
+RUN go build -o main .
 
 FROM aquasec/trivy:0.4.4 as trivy
 

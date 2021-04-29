@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/devpies/devpie-client-core/users/api/listeners"
+	"github.com/devpies/devpie-client-events/go/events"
 	"github.com/pkg/errors"
 	"log"
 	"math/rand"
@@ -13,11 +15,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/devpies/devpie-client-core/projects/cmd/api/handlers"
-	"github.com/devpies/devpie-client-core/projects/cmd/api/listeners"
-	"github.com/devpies/devpie-client-core/projects/platform/conf"
-	"github.com/devpies/devpie-client-core/projects/platform/database"
-	"github.com/devpies/devpie-client-events/go/events"
+	"github.com/devpies/devpie-client-core/users/api/handlers"
+	"github.com/devpies/devpie-client-core/users/platform/conf"
+	"github.com/devpies/devpie-client-core/users/platform/database"
 )
 
 func main() {
@@ -124,15 +124,14 @@ func run() error {
 		clusterId := fmt.Sprintf("%s-%d", cfg.Nats.ClientId, rand.Int())
 		queueGroup := fmt.Sprintf("%s-queue", cfg.Nats.ClientId)
 
-		nats, close := events.NewClient(cfg.Nats.ClusterId, clusterId, cfg.Nats.Url)
-		defer close()
+		nats, Close := events.NewClient(cfg.Nats.ClusterId, clusterId, cfg.Nats.Url)
+		defer Close()
 
 		fmt.Print(nats)
 
 		l := listeners.NewListeners(infolog, repo)
 		l.RegisterAll(nats, queueGroup)
 	}()
-
 
 	// =========================================================================
 	// Start API Service
@@ -143,7 +142,8 @@ func run() error {
 	api := http.Server{
 		Addr: cfg.Web.Port,
 		Handler: handlers.API(shutdown, repo, infolog, cfg.Web.CorsOrigins, cfg.Web.AuthAudience,
-			cfg.Web.AuthDomain, cfg.Web.AuthMAPIAudience, cfg.Web.AuthM2MClient, cfg.Web.AuthM2MSecret),
+			cfg.Web.AuthDomain, cfg.Web.AuthMAPIAudience, cfg.Web.AuthM2MClient, cfg.Web.AuthM2MSecret,
+			cfg.Web.SendgridAPIKey),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}

@@ -7,7 +7,7 @@ LABEL org.opencontainers.image.authors="devpie"
 
 ENV CGO_ENABLED=0
 
-WORKDIR /projects
+WORKDIR /users
 
 FROM base as dev
 
@@ -24,13 +24,13 @@ RUN go mod download && go mod verify
 COPY . .
 
 # -gcflags "-m -m"
-RUN go env && go build -o main ./cmd/api
+RUN go env && go build -o main .
 
 CMD ["./main"]
 
 FROM dev as build-stage
 
-RUN go build -o main ./cmd/api
+RUN go build -o main .
 
 FROM aquasec/trivy:0.4.4 as trivy
 
@@ -42,7 +42,7 @@ FROM alpine:3.13.4 as prod
 EXPOSE 4000
 
 COPY --from=trivy result secure
-COPY --from=build-stage /projects/main main
+COPY --from=build-stage /users/main main
 
 
 HEALTHCHECK --interval=3s --timeout=3s CMD wget --spider -q http://localhost:4000/v1/health || exit 1

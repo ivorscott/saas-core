@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/devpies/devpie-client-core/users/cmd/api/middleware"
+	"github.com/devpies/devpie-client-core/users/api/middleware"
 	"github.com/devpies/devpie-client-core/users/platform/auth0"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/devpies/devpie-client-core/users/platform/web"
