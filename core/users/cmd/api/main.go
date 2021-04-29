@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/devpies/devpie-client-core/users/cmd/api/listeners"
 	"github.com/devpies/devpie-client-events/go/events"
-	"github.com/devpies/devpie-client-core/users/cmd/api/internal/listeners"
 	"github.com/pkg/errors"
 	"log"
 	"math/rand"
@@ -15,9 +15,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/devpies/devpie-client-core/users/cmd/api/internal/handlers"
-	"github.com/devpies/devpie-client-core/users/internal/platform/conf"
-	"github.com/devpies/devpie-client-core/users/internal/platform/database"
+	"github.com/devpies/devpie-client-core/users/cmd/api/handlers"
+	"github.com/devpies/devpie-client-core/users/platform/conf"
+	"github.com/devpies/devpie-client-core/users/platform/database"
 )
 
 func main() {
@@ -30,14 +30,6 @@ var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))
 
 func run() error {
-
-	infolog := log.New(os.Stdout, "mic-projects: ", log.Lmicroseconds|log.Lshortfile)
-
-	// =========================================================================
-	// App Starting
-
-	infolog.Printf("main : Started")
-	defer infolog.Println("main : Completed")
 
 	// =========================================================================
 	// Configuration
@@ -84,6 +76,14 @@ func run() error {
 		return errors.Wrap(err, "parsing config")
 	}
 
+	// =========================================================================
+	// App Starting
+
+	infolog := log.New(os.Stdout, fmt.Sprintf("%s:", cfg.Nats.ClientId),  log.Lmsgprefix|log.Lmicroseconds|log.Lshortfile)
+
+	infolog.Printf("main : Started")
+	defer infolog.Println("main : Completed")
+
 	out, err := conf.String(&cfg)
 	if err != nil {
 		return errors.Wrap(err, "generating config for output")
@@ -124,15 +124,14 @@ func run() error {
 		clusterId := fmt.Sprintf("%s-%d", cfg.Nats.ClientId, rand.Int())
 		queueGroup := fmt.Sprintf("%s-queue", cfg.Nats.ClientId)
 
-		nats, close := events.NewClient(cfg.Nats.ClusterId, clusterId, cfg.Nats.Url)
-		defer close()
+		nats, Close := events.NewClient(cfg.Nats.ClusterId, clusterId, cfg.Nats.Url)
+		defer Close()
 
 		fmt.Print(nats)
 
 		l := listeners.NewListeners(infolog, repo)
 		l.RegisterAll(nats, queueGroup)
 	}()
-
 
 	// =========================================================================
 	// Start API Service

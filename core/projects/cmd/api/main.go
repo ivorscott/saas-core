@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/devpies/devpie-client-core/projects/cmd/api/internal/listeners"
-	"github.com/devpies/devpie-client-events/go/events"
 	"github.com/pkg/errors"
 	"log"
 	"math/rand"
@@ -15,9 +13,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/devpies/devpie-client-core/projects/cmd/api/internal/handlers"
-	"github.com/devpies/devpie-client-core/projects/internal/platform/conf"
-	"github.com/devpies/devpie-client-core/projects/internal/platform/database"
+	"github.com/devpies/devpie-client-core/projects/cmd/api/handlers"
+	"github.com/devpies/devpie-client-core/projects/cmd/api/listeners"
+	"github.com/devpies/devpie-client-core/projects/platform/conf"
+	"github.com/devpies/devpie-client-core/projects/platform/database"
+	"github.com/devpies/devpie-client-events/go/events"
 )
 
 func main() {
@@ -30,14 +30,6 @@ var seededRand *rand.Rand = rand.New(
 	rand.NewSource(time.Now().UnixNano()))
 
 func run() error {
-
-	infolog := log.New(os.Stdout, "mic-projects: ", log.Lmicroseconds|log.Lshortfile)
-
-	// =========================================================================
-	// App Starting
-
-	infolog.Printf("main : Started")
-	defer infolog.Println("main : Completed")
 
 	// =========================================================================
 	// Configuration
@@ -83,6 +75,14 @@ func run() error {
 		}
 		return errors.Wrap(err, "parsing config")
 	}
+
+	// =========================================================================
+	// App Starting
+
+	infolog := log.New(os.Stdout, fmt.Sprintf("%s:", cfg.Nats.ClientId),  log.Lmsgprefix|log.Lmicroseconds|log.Lshortfile)
+
+	infolog.Printf("main : Started")
+	defer infolog.Println("main : Completed")
 
 	out, err := conf.String(&cfg)
 	if err != nil {

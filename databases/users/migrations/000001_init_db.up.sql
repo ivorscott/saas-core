@@ -51,7 +51,10 @@ FOREIGN KEY (team_id) REFERENCES teams (team_id)
 
 CREATE TABLE ma_token (
 ma_token_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-token TEXT NOT NULL,
+access_token TEXT NOT NULL,
+scope TEXT NOT NULL,
+expires_in INT NOT NULL,
+token_type VARCHAR(16),
 created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 

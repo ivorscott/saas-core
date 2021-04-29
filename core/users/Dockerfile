@@ -23,6 +23,7 @@ COPY go.* ./
 RUN go mod download && go mod verify
 COPY . .
 
+# -gcflags "-m -m"
 RUN go env && go build -o main ./cmd/api
 
 CMD ["./main"]

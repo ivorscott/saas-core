@@ -1,0 +1,23 @@
+ALTER TABLE projects
+ADD COLUMN updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc');
+
+ALTER TABLE projects
+RENAME created TO created_at;
+
+ALTER TABLE columns
+ADD COLUMN updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc');
+
+ALTER TABLE columns
+RENAME created TO created_at;
+
+ALTER TABLE tasks
+ADD COLUMN updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc');
+
+ALTER TABLE tasks
+RENAME created TO created_at;
+
+ALTER TABLE memberships
+ADD COLUMN updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc');
+
+ALTER TABLE memberships
+RENAME created TO created_at;
