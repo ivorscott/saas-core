@@ -87,7 +87,7 @@ func (a0 *Auth0) NewManagementToken() (NewToken, error) {
 
 func (a0 *Auth0) IsExpired(token Token) bool {
 	parsedToken, err := jwt.ParseWithClaims(token.AccessToken, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		cert, err := a0.CertHandler(token)
+		cert, err := a0.GetPemCert(token)
 		if err != nil {
 			return true, err
 		}

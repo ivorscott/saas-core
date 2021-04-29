@@ -8,13 +8,11 @@ import (
 
 type Auth0 struct {
 	Repo         *database.Repository
-	Auth0User    string
 	Domain       string
 	Audience     string
 	M2MClient    string
 	M2MSecret    string
 	MAPIAudience string
-	CertHandler  PemHandler
 }
 
 type Token struct {
@@ -50,5 +48,3 @@ type CustomClaims struct {
 	Scope string `json:"scope"`
 	jwt.StandardClaims
 }
-
-type PemHandler func(token *jwt.Token) (string, error)

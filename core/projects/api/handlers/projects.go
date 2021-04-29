@@ -23,7 +23,7 @@ type Projects struct {
 }
 
 func (p *Projects) List(w http.ResponseWriter, r *http.Request) error {
-	uid := p.auth0.GetUserBySubject(r)
+	uid := p.auth0.GetUserById(r)
 
 	list, err := projects.List(r.Context(), p.repo, uid)
 	if err != nil {
@@ -52,7 +52,7 @@ func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
-	uid := p.auth0.GetUserBySubject(r)
+	uid := p.auth0.GetUserById(r)
 
 	var np projects.NewProject
 	if err := web.Decode(r, &np); err != nil {
@@ -64,7 +64,7 @@ func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	p.log.Print(pr)
+
 	titles := [4]string{"To Do", "In Progress", "Review", "Done"}
 
 	for i, title := range titles {
@@ -106,7 +106,7 @@ func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 
 func (p *Projects) Delete(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
-	uid := p.auth0.GetUserBySubject(r)
+	uid := p.auth0.GetUserById(r)
 
 	if _, err := projects.Retrieve(r.Context(), p.repo, pid); err != nil {
 		return err

@@ -21,16 +21,10 @@ type Users struct {
 
 func (u *Users) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 	var us users.User
-	var err error
 
 	id := u.auth0.GetUserById(r)
 
-	if id == "" {
-		us, err = users.RetrieveMeByAuthID(r.Context(), u.repo, u.auth0.GetUserBySubject(r))
-	} else {
-		us, err = users.RetrieveMe(r.Context(), u.repo, id)
-	}
-
+	us, err := users.RetrieveMe(r.Context(), u.repo, id)
 	if err != nil {
 		switch err {
 		case users.ErrNotFound:
@@ -46,7 +40,6 @@ func (u *Users) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) error {
-	var t auth0.Token
 	var nu users.NewUser
 
 	sub := u.auth0.GetUserBySubject(r)
@@ -62,14 +55,14 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// try getting existing auth0 management api token
-	t, err = u.auth0.GetOrCreateToken()
+	t, err := u.auth0.GetOrCreateToken()
 	if err != nil {
 		return err
 	}
 
-	if err := u.auth0.UpdateUserAppMetaData(t, user.ID); err != nil {
+	if err := u.auth0.UpdateUserAppMetaData(t, sub, user.ID); err != nil {
 		return err
 	}
 
-	return web.Respond(r.Context(), w, user, http.StatusCreated)
+	return web.Respond(r.Context(), w, nil, http.StatusCreated)
 }

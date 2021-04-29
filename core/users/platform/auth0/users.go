@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -62,13 +63,13 @@ func (a0 *Auth0) CreateUser(token Token, email string) (User, error) {
 }
 
 // Update auth0 user account with user_id from internal database
-func (a0 *Auth0) UpdateUserAppMetaData(token Token, userId string) error {
+func (a0 *Auth0) UpdateUserAppMetaData(token Token, subject, userId string) error {
 	if _, err := uuid.Parse(userId); err != nil {
 		return ErrInvalidID
 	}
 
 	baseUrl := "https://" + a0.Domain
-	resource := "/api/v2/users/" + a0.Auth0User
+	resource := "/api/v2/users/" + subject
 
 	uri, err := url.ParseRequestURI(baseUrl)
 	if err != nil {
@@ -87,11 +88,13 @@ func (a0 *Auth0) UpdateUserAppMetaData(token Token, userId string) error {
 
 	req.Header.Add("content-type", "application/json")
 	req.Header.Add("authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+	log.Println("------------------",token , subject, userId)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
+	log.Println("------------------",res)
 	defer res.Body.Close()
 
 	return nil

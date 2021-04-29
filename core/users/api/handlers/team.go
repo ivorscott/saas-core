@@ -33,7 +33,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 	var nt teams.NewTeam
 	var role memberships.Role = memberships.Administrator
 
-	uid := t.auth0.GetUserBySubject(r)
+	uid := t.auth0.GetUserById(r)
 
 	if err := web.Decode(r, &nt); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
