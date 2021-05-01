@@ -8,7 +8,7 @@ type Membership struct {
 	TeamID    string    `db:"team_id" json:"teamId"`
 	Role      string    `db:"role" json:"role"`
 	UpdatedAt time.Time `db:"updated_at" json:"updatedAt"`
-	Created   time.Time `db:"created_at" json:"createdAt"`
+	CreatedAt time.Time `db:"created_at" json:"createdAt"`
 }
 
 type NewMembership struct {

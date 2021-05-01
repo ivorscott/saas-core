@@ -32,4 +32,7 @@ func (l *Listeners) RegisterAll(nats *events.Client, queueGrp string) {
 
 	nats.Listen(string(events.EventsMembershipDeleted), queueGrp, l.handleMembershipDeleted, stan.DeliverAllAvailable(),
 		stan.SetManualAckMode(), stan.AckWait(l.dur), stan.DurableName(queueGrp))
+
+	nats.Listen(string(events.EventsMembershipCreatedForProject), queueGrp, l.handleMembershipCreatedForProject, stan.DeliverAllAvailable(),
+		stan.SetManualAckMode(), stan.AckWait(l.dur), stan.DurableName(queueGrp))
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -88,13 +87,11 @@ func (a0 *Auth0) UpdateUserAppMetaData(token Token, subject, userId string) erro
 
 	req.Header.Add("content-type", "application/json")
 	req.Header.Add("authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
-	log.Println("------------------",token , subject, userId)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
-	log.Println("------------------",res)
 	defer res.Body.Close()
 
 	return nil

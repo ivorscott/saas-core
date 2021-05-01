@@ -5,7 +5,7 @@ import (
 )
 
 type ProjectCopy struct {
-	ID          string    `db:"project_id" json:"id"`
+	ID          string    `db:"project_id" json:"projectId"`
 	Name        string    `db:"name" json:"name"`
 	TeamID      string    `db:"team_id" json:"teamId"`
 	UserID      string    `db:"user_id" json:"userId"`
@@ -22,5 +22,5 @@ type UpdateProjectCopy struct {
 	Public      *bool     `json:"public"`
 	TeamID      *string   `json:"teamId"`
 	ColumnOrder []string `json:"columnOrder"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }

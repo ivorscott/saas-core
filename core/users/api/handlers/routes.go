@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/devpies/devpie-client-events/go/events"
 	"log"
 	"net/http"
 	"os"
@@ -12,7 +13,7 @@ import (
 )
 
 func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, origins string,
-	auth0Audience, auth0Domain, auth0MAPIAudience, auth0M2MClient, auth0M2MSecret, sendgridKey string) http.Handler {
+	auth0Audience, auth0Domain, auth0MAPIAudience, auth0M2MClient, auth0M2MSecret, sendgridKey string, nats *events.Client) http.Handler {
 
 	a0 := &auth0.Auth0{
 		Repo:         repo,
@@ -30,7 +31,7 @@ func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, or
 	app.Handle(http.MethodGet, "/api/v1/health", h.Health)
 
 	u := Users{repo, log, a0, origins}
-	tm := Team{repo, log, a0, origins, sendgridKey}
+	tm := Team{repo, log, a0, nats, origins, sendgridKey}
 
 	app.Handle(http.MethodPost, "/api/v1/users", u.Create)
 	app.Handle(http.MethodGet, "/api/v1/users/me", u.RetrieveMe)

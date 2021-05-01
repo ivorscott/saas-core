@@ -120,19 +120,16 @@ func run() error {
 	// =========================================================================
 	// Start Listeners
 
-	go func() {
-		clusterId := fmt.Sprintf("%s-%d", cfg.Nats.ClientId, rand.Int())
-		queueGroup := fmt.Sprintf("%s-queue", cfg.Nats.ClientId)
+	clusterId := fmt.Sprintf("%s-%d", cfg.Nats.ClientId, rand.Int())
+	queueGroup := fmt.Sprintf("%s-queue", cfg.Nats.ClientId)
 
-		nats, close := events.NewClient(cfg.Nats.ClusterId, clusterId, cfg.Nats.Url)
-		defer close()
+	nats, Close := events.NewClient(cfg.Nats.ClusterId, clusterId, cfg.Nats.Url)
+	defer Close()
 
-		fmt.Print(nats)
-
+	go func(repo *database.Repository, nats *events.Client, infolog *log.Logger, queueGroup string ) {
 		l := listeners.NewListeners(infolog, repo)
 		l.RegisterAll(nats, queueGroup)
-	}()
-
+	}(repo, nats, infolog, queueGroup)
 
 	// =========================================================================
 	// Start API Service
@@ -143,7 +140,7 @@ func run() error {
 	api := http.Server{
 		Addr: cfg.Web.Port,
 		Handler: handlers.API(shutdown, repo, infolog, cfg.Web.CorsOrigins, cfg.Web.AuthAudience,
-			cfg.Web.AuthDomain, cfg.Web.AuthMAPIAudience, cfg.Web.AuthM2MClient, cfg.Web.AuthM2MSecret),
+			cfg.Web.AuthDomain, cfg.Web.AuthMAPIAudience, cfg.Web.AuthM2MClient, cfg.Web.AuthM2MSecret, nats),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}

@@ -123,7 +123,7 @@ func Create(ctx context.Context, repo *database.Repository, np NewProject, uid s
 	return p, nil
 }
 
-func Update(ctx context.Context, repo *database.Repository, pid string, update UpdateProject, now time.Time) (Project, error) {
+func Update(ctx context.Context, repo *database.Repository, pid string, update UpdateProject) (Project, error) {
 	p, err := Retrieve(ctx, repo, pid)
 	if err != nil {
 		return p, err
@@ -153,7 +153,7 @@ func Update(ctx context.Context, repo *database.Repository, pid string, update U
 		"public":       p.Public,
 		"column_order": pq.Array(p.ColumnOrder),
 		"team_id":      p.TeamID,
-		"updated_at":   now.UTC(),
+		"updated_at":   update.UpdatedAt,
 	}).Where(sq.Eq{"project_id": pid})
 
 	_, err = stmt.ExecContext(ctx)

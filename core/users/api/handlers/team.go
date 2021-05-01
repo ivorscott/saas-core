@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/devpies/devpie-client-core/users/platform/auth0"
+	"github.com/devpies/devpie-client-events/go/events"
 	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
@@ -25,6 +28,7 @@ type Team struct {
 	repo        *database.Repository
 	log         *log.Logger
 	auth0       *auth0.Auth0
+	nats        *events.Client
 	origins     string
 	sendgridKey string
 }
@@ -51,9 +55,62 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 		Role:   role.String(),
 	}
 
-	_, err = memberships.Create(r.Context(), t.repo, nm, time.Now())
+	m, err := memberships.Create(r.Context(), t.repo, nm, time.Now())
 	if err != nil {
 		return err
+	}
+
+	if nt.ProjectID == "" {
+		e := events.MembershipCreatedEvent{
+			ID: uuid.New().String(),
+			Type: events.TypeMembershipCreated,
+			Data: events.MembershipCreatedEventData{
+				MembershipID: m.ID,
+				TeamID: m.TeamID,
+				Role: m.Role,
+				UserID: m.UserID,
+				UpdatedAt: m.UpdatedAt.String(),
+				CreatedAt: m.CreatedAt.String(),
+			},
+			Metadata: events.Metadata{
+				TraceID: uuid.New().String(),
+				UserID: uid,
+			},
+		}
+
+		bytes, err := json.Marshal(e)
+		if err != nil {
+			return err
+		}
+
+		t.nats.Publish(string(events.EventsMembershipCreated), bytes)
+
+	} else {
+		e := events.MembershipCreatedForProjectEvent{
+			ID: uuid.New().String(),
+			Type: events.TypeMembershipCreatedForProject,
+			Data: events.MembershipCreatedForProjectEventData{
+				MembershipID: m.ID,
+				TeamID: m.TeamID,
+				Role: m.Role,
+				UserID: m.UserID,
+				ProjectID: nt.ProjectID,
+				UpdatedAt: m.UpdatedAt.String(),
+				CreatedAt: m.CreatedAt.String(),
+			},
+			Metadata: events.Metadata{
+				TraceID: uuid.New().String(),
+				UserID: uid,
+			},
+		}
+
+		bytes, err := json.Marshal(e)
+		if err != nil {
+			return err
+		}
+
+		t.nats.Publish(string(events.EventsMembershipCreatedForProject), bytes)
+
 	}
 
 	return web.Respond(r.Context(), w, nil, http.StatusCreated)

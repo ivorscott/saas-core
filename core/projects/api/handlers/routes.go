@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/devpies/devpie-client-events/go/events"
+
 	mid "github.com/devpies/devpie-client-core/projects/api/middleware"
 	"github.com/devpies/devpie-client-core/projects/platform/auth0"
 	"github.com/devpies/devpie-client-core/projects/platform/database"
@@ -12,7 +14,7 @@ import (
 )
 
 func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, origins string,
-	auth0Audience, auth0Domain, auth0MAPIAudience, auth0M2MClient, auth0M2MSecret string) http.Handler {
+	auth0Audience, auth0Domain, auth0MAPIAudience, auth0M2MClient, auth0M2MSecret string, nats *events.Client) http.Handler {
 
 	a0 := &auth0.Auth0{
 		Repo:         repo,
@@ -31,12 +33,12 @@ func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, or
 
 	t := Tasks{repo: repo, log: log, auth0: a0}
 	c := Columns{repo: repo, log: log, auth0: a0}
-	p := Projects{repo: repo, log: log, auth0: a0}
+	p := Projects{repo: repo, log: log, auth0: a0, nats: nats}
 
 	app.Handle(http.MethodGet, "/api/v1/projects", p.List)
 	app.Handle(http.MethodPost, "/api/v1/projects", p.Create)
 	app.Handle(http.MethodGet, "/api/v1/projects/{pid}", p.Retrieve)
-	app.Handle(http.MethodPut, "/api/v1/projects/{pid}", p.Update)
+	app.Handle(http.MethodPatch, "/api/v1/projects/{pid}", p.Update)
 	app.Handle(http.MethodDelete, "/api/v1/projects/{pid}", p.Delete)
 	app.Handle(http.MethodGet, "/api/v1/projects/{pid}/columns", c.List)
 	app.Handle(http.MethodGet, "/api/v1/projects/{pid}/tasks", t.List)

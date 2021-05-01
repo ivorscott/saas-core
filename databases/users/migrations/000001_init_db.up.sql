@@ -60,15 +60,14 @@ created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
 
 CREATE TABLE projects (
 project_id UUID PRIMARY KEY,
-name VARCHAR(32) NOT NULL,
+name VARCHAR(36) NOT NULL,
 user_id UUID NOT NULL,
-team_id UUID NOT NULL,
+team_id VARCHAR(36),
 active BOOLEAN DEFAULT TRUE,
 public BOOLEAN DEFAULT FALSE,
 column_order TEXT ARRAY[10],
 updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
 created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
-FOREIGN KEY (user_id) REFERENCES users (user_id),
-FOREIGN KEY (team_id) REFERENCES teams (team_id)
+FOREIGN KEY (user_id) REFERENCES users (user_id)
 );
 

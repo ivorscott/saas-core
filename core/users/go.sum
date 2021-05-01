@@ -15,6 +15,12 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/devpies/devpie-client-events v0.0.40 h1:ndDDUejxQvoX7go9EVxmT75RXQhY+u43W7Q9qYmfFVQ=
 github.com/devpies/devpie-client-events v0.0.40/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
+github.com/devpies/devpie-client-events v0.0.41 h1:G3ag9SXoLC2+WL+N28ZqoT4NqJYltQcYXwmwTQnppm0=
+github.com/devpies/devpie-client-events v0.0.41/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
+github.com/devpies/devpie-client-events v0.0.42 h1:/MRCAZupPoNJXwceOnBsX+FaGPf9uBax+DliJhMbCH0=
+github.com/devpies/devpie-client-events v0.0.42/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
+github.com/devpies/devpie-client-events v0.0.43 h1:9KRwykp26Go0UigpP+//z23/j6r5fk1lp0wcgRHdFIE=
+github.com/devpies/devpie-client-events v0.0.43/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/fatih/color v1.7.0 h1:DkWD4oS2D8LGGgTQ6IvwJJXSL5Vp2ffcQg58nFV38Ys=

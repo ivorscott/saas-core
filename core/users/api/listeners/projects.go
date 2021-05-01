@@ -5,7 +5,6 @@ import (
 	"github.com/devpies/devpie-client-core/users/domain/projects"
 	"github.com/devpies/devpie-client-events/go/events"
 	"github.com/nats-io/stan.go"
-	"time"
 )
 
 func (l *Listeners) handleProjectCreated(m *stan.Msg) {
@@ -16,26 +15,25 @@ func (l *Listeners) handleProjectCreated(m *stan.Msg) {
 
 	event := msg.Data
 
-	layout := "2006-01-02 15:04:05.999999999 -0700 MST"
-
-	ut, err := time.Parse(layout, event.UpdatedAt)
+	updatedtime, err := events.ParseTime(event.UpdatedAt)
 	if err != nil {
 		l.log.Printf("failed to parse time")
 	}
-	ct, err := time.Parse(layout, event.CreatedAt)
+	createdtime, err := events.ParseTime(event.CreatedAt)
 	if err != nil {
 		l.log.Printf("failed to parse time")
 	}
 
 	update := projects.ProjectCopy{
-		ID:        event.ProjectID,
-		Name:      event.Name,
-		UserID:    event.UserID,
-		TeamID:    event.TeamID,
-		Active:    event.Active,
-		Public:    event.Public,
-		UpdatedAt: ut,
-		CreatedAt: ct,
+		ID:          event.ProjectID,
+		Name:        event.Name,
+		UserID:      event.UserID,
+		TeamID:      event.TeamID,
+		Active:      event.Active,
+		Public:      event.Public,
+		ColumnOrder: event.ColumnOrder,
+		UpdatedAt:   updatedtime,
+		CreatedAt:   createdtime,
 	}
 
 	if err = projects.Create(context.Background(), l.repo, update); err != nil {
@@ -56,9 +54,7 @@ func (l *Listeners) handleProjectUpdated(m *stan.Msg) {
 
 	event := msg.Data
 
-	layout := "2006-01-02 15:04:05.999999999 -0700 MST"
-
-	ut, err := time.Parse(layout, event.UpdatedAt)
+	updatedtime, err := events.ParseTime(event.UpdatedAt)
 	if err != nil {
 		l.log.Printf("failed to parse time")
 	}
@@ -69,7 +65,7 @@ func (l *Listeners) handleProjectUpdated(m *stan.Msg) {
 		Public:      event.Public,
 		TeamID:      event.TeamID,
 		ColumnOrder: event.ColumnOrder,
-		UpdatedAt:   ut,
+		UpdatedAt:   updatedtime,
 	}
 
 	if err = projects.Update(context.Background(), l.repo, event.ProjectID, update); err != nil {

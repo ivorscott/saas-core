@@ -1,0 +1,5 @@
+ALTER TABLE projects
+DROP COLUMN team_id,
+DROP COLUMN user_id,
+ADD COLUMN team_id VARCHAR(36),
+ADD COLUMN user_id UUID NOT NULL;

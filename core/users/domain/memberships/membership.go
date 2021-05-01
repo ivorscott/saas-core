@@ -21,6 +21,8 @@ func Create(ctx context.Context, repo *database.Repository, nm NewMembership, no
 		UserID:  nm.UserID,
 		TeamID:  nm.TeamID,
 		Role:    nm.Role,
+		UpdatedAt: now.UTC(),
+		CreatedAt: now.UTC(),
 	}
 
 	stmt := repo.SQ.Insert(
@@ -30,8 +32,8 @@ func Create(ctx context.Context, repo *database.Repository, nm NewMembership, no
 		"user_id":       m.UserID,
 		"team_id":       m.TeamID,
 		"role":          m.Role,
-		"updated_at":    now.UTC(),
-		"created_at":    now.UTC(),
+		"updated_at":    m.UpdatedAt,
+		"created_at":    m.CreatedAt,
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
