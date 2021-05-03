@@ -22,6 +22,8 @@ func Create(ctx context.Context, repo *database.Repository, ni NewInvite, now ti
 		Read:       false,
 		Accepted:   false,
 		Expiration: now.AddDate(0, 0, 5),
+		UpdatedAt: now.UTC(),
+		CreatedAt: now.UTC(),
 	}
 
 	stmt := repo.SQ.Insert(
@@ -33,8 +35,8 @@ func Create(ctx context.Context, repo *database.Repository, ni NewInvite, now ti
 		"read":       i.Read,
 		"accepted":   i.Accepted,
 		"expiration": i.Expiration,
-		"updated_at": now.UTC(),
-		"created_at": now.UTC(),
+		"updated_at": i.UpdatedAt,
+		"created_at": i.CreatedAt,
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
@@ -83,7 +85,7 @@ func RetrieveInvites(ctx context.Context, repo *database.Repository, uid string,
 		"user_id",
 		"team_id",
 		"read",
-		"activated",
+		"accepted",
 		"expiration",
 		"updated_at",
 		"created_at",
@@ -107,31 +109,15 @@ func RetrieveInvites(ctx context.Context, repo *database.Repository, uid string,
 }
 
 func Update(ctx context.Context, repo *database.Repository, update UpdateInvite, uid, iid string, now time.Time) error {
-	i, err := RetrieveInvite(ctx, repo, uid, iid)
-	if err != nil {
-		return err
-	}
-
-	if update.Read != nil {
-		i.Read = *update.Read
-	}
-	if update.Accepted != nil {
-		i.Accepted = *update.Accepted
-	}
-	if update.Expiration != nil {
-		i.Expiration = *update.Expiration
-	}
-
 	stmt := repo.SQ.Update(
 		"invites",
 	).SetMap(map[string]interface{}{
-		"read":       i.Read,
-		"accepted":   i.Accepted,
-		"expiration": i.Expiration,
-		"updated_at": now.UTC,
+		"read":       true,
+		"accepted":   update.Accepted,
+		"updated_at": now.UTC(),
 	}).Where(sq.Eq{"user_id": uid, "invite_id": iid})
 
-	_, err = stmt.ExecContext(ctx)
+	_, err := stmt.ExecContext(ctx)
 	if err != nil {
 		return errors.Wrap(err, "updating invite")
 	}

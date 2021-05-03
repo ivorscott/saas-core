@@ -75,6 +75,8 @@ func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
 		Data: events.ProjectCreatedEventData{
 			ProjectID: pr.ID,
 			Name: pr.Name,
+			Prefix: pr.Prefix,
+			Description: pr.Description,
 			TeamID: pr.TeamID,
 			UserID: pr.UserID,
 			Active: pr.Active,
@@ -142,6 +144,7 @@ func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 		Type: events.TypeProjectUpdated,
 		Data: events.ProjectUpdatedEventData{
 			Name: &up.Name,
+			Description: &up.Description,
 			Active: &up.Active,
 			Public: &up.Public,
 			TeamID: &up.TeamID,

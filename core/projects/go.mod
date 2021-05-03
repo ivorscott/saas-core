@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/Masterminds/squirrel v1.2.0
 	github.com/auth0/go-jwt-middleware v0.0.0-20200810150920-a32d7af194d1
-	github.com/devpies/devpie-client-events v0.0.43
+	github.com/devpies/devpie-client-events v0.0.44
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-playground/locales v0.13.0

@@ -10,7 +10,7 @@ type Invite struct {
 	Accepted   bool      `db:"accepted" json:"accepted"`
 	Expiration time.Time `db:"expiration" json:"expiration"`
 	UpdatedAt  time.Time `db:"updated_at" json:"updatedAt"`
-	CreatedAt    time.Time `db:"created_at" json:"createdAt"`
+	CreatedAt  time.Time `db:"created_at" json:"createdAt"`
 }
 
 type NewInvite struct {
@@ -23,8 +23,5 @@ type NewList struct {
 }
 
 type UpdateInvite struct {
-	Read       *bool      `json:"read"`
-	Accepted   *bool      `json:"accepted"`
-	Expiration *time.Time `json:"expiration"`
-	UpdatedAt  time.Time  `json:"updatedAt"`
+	Accepted bool `json:"accepted" validate:"required"`
 }

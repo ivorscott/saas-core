@@ -25,21 +25,23 @@ func Create(ctx context.Context, repo *database.Repository, nu NewUser, aid stri
 		LastName:      nu.LastName,
 		Picture:       nu.Picture,
 		Locale:        nu.Locale,
+		UpdatedAt: now.UTC(),
+		CreatedAt: now.UTC(),
 	}
 
 	stmt := repo.SQ.Insert(
 		"users",
 	).SetMap(map[string]interface{}{
 		"user_id":        u.ID,
-		"auth0_id":       u.Auth0ID,
+		"auth0_id":       u.Auth0ID, // unique
 		"email":          u.Email,
 		"email_verified": u.EmailVerified,
 		"first_name":     u.FirstName,
 		"last_name":      u.LastName,
 		"picture":        u.Picture,
 		"locale":         u.Locale,
-		"updated_at":     now.UTC(),
-		"created_at":     now.UTC(),
+		"updated_at":     u.UpdatedAt,
+		"created_at":     u.CreatedAt,
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {

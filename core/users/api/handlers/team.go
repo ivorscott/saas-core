@@ -17,7 +17,6 @@ import (
 
 	"github.com/devpies/devpie-client-core/users/domain/invites"
 	"github.com/devpies/devpie-client-core/users/domain/memberships"
-	"github.com/devpies/devpie-client-core/users/domain/projects"
 	"github.com/devpies/devpie-client-core/users/domain/teams"
 	"github.com/devpies/devpie-client-core/users/domain/users"
 	"github.com/devpies/devpie-client-core/users/platform/database"
@@ -117,14 +116,9 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (t *Team) Retrieve(w http.ResponseWriter, r *http.Request) error {
-	pid := chi.URLParam(r, "pid")
+	tid := chi.URLParam(r, "tid")
 
-	p, err := projects.Retrieve(r.Context(), t.repo, pid)
-	if err != nil {
-		return err
-	}
-
-	tm, err := teams.Retrieve(r.Context(), t.repo, p.TeamID)
+	tm, err := teams.Retrieve(r.Context(), t.repo, tid)
 	if err != nil {
 		switch err {
 		case teams.ErrNotFound:
@@ -132,18 +126,18 @@ func (t *Team) Retrieve(w http.ResponseWriter, r *http.Request) error {
 		case teams.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return errors.Wrapf(err, "looking for team connected to project %q", pid)
+			return errors.Wrapf(err, "looking for team %q", tid)
 		}
 	}
 
 	return web.Respond(r.Context(), w, tm, http.StatusOK)
 }
 
-func (t *Team) Invite(w http.ResponseWriter, r *http.Request) error {
-	var day = 24 * 60 * 60 * time.Second
-	var link string
+func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 	var token auth0.Token
 	var list invites.NewList
+
+	link := strings.Split(t.origins, ",")[0]
 
 	if err := web.Decode(r, &list); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -168,8 +162,6 @@ func (t *Team) Invite(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	tid := chi.URLParam(r, "tid")
-	link = strings.Split(t.origins, ",")[0]
-	ttl, err := time.ParseDuration(fmt.Sprintf("%s", 5*day))
 	if err != nil {
 		return err
 	}
@@ -184,17 +176,36 @@ func (t *Team) Invite(w http.ResponseWriter, r *http.Request) error {
 		u, err := users.RetrieveByEmail(t.repo, email)
 		if err != nil {
 			// new user
-			nu, err := t.auth0.CreateUser(token, email)
+			au, err := t.auth0.CreateUser(token, email)
 			if err != nil {
 				return err
 			}
 
-			ni.UserID = nu.ID
+			nu := users.NewUser{
+				Auth0ID: au.Auth0ID,
+				Email: au.Email,
+				EmailVerified: au.EmailVerified,
+				FirstName: au.FirstName,
+				Picture: au.Picture,
 
-			link, err = t.auth0.ChangePasswordTicket(token, nu, ttl, link)
+			}
+
+			user, err := users.Create(r.Context(),t.repo,nu, au.Auth0ID,time.Now())
 			if err != nil {
 				return err
 			}
+
+			ni.UserID = user.ID
+
+			if err := t.auth0.UpdateUserAppMetaData(token, au.Auth0ID, user.ID); err != nil {
+				return err
+			}
+
+			link, err = t.auth0.ChangePasswordTicket(token, au, link)
+			if err != nil {
+				return err
+			}
+
 		} else {
 			ni.UserID = u.ID
 		}
@@ -230,24 +241,23 @@ func (t *Team) RetrieveInvites(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (t *Team) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
-	var ui invites.UpdateInvite
+	var update invites.UpdateInvite
 	var role memberships.Role = memberships.Editor
-	var accepted bool
 
+	uid := t.auth0.GetUserById(r)
 	tid := chi.URLParam(r, "tid")
+	iid := chi.URLParam(r, "iid")
 
-	if err := web.Decode(r, &ui); err != nil {
+	if err := web.Decode(r, &update); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 
-	if ui.Accepted != nil {
-		accepted = *ui.Accepted
+	if err := invites.Update(r.Context(), t.repo,  update, uid, iid, time.Now());err != nil {
+		return err
 	}
 
-	// update invite resource
-
-	if accepted {
+	if update.Accepted {
 		nm := memberships.NewMembership{
 			TeamID: tid,
 			Role:   role.String(),

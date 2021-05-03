@@ -27,6 +27,8 @@ func (l *Listeners) handleProjectCreated(m *stan.Msg) {
 	update := projects.ProjectCopy{
 		ID:          event.ProjectID,
 		Name:        event.Name,
+		Prefix:      event.Prefix,
+		Description: event.Description,
 		UserID:      event.UserID,
 		TeamID:      event.TeamID,
 		Active:      event.Active,
@@ -61,6 +63,7 @@ func (l *Listeners) handleProjectUpdated(m *stan.Msg) {
 
 	update := projects.UpdateProjectCopy{
 		Name:        event.Name,
+		Description: event.Description,
 		Active:      event.Active,
 		Public:      event.Public,
 		TeamID:      event.TeamID,

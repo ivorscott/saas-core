@@ -3,6 +3,7 @@ package projects
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -30,6 +31,8 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid string) (Proje
 	stmt := repo.SQ.Select(
 		"project_id",
 		"name",
+		"prefix",
+		"description",
 		"team_id",
 		"user_id",
 		"active",
@@ -47,7 +50,7 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid string) (Proje
 	}
 
 	row := repo.DB.QueryRowContext(ctx, q, pid)
-	err = row.Scan(&p.ID, &p.Name, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
+	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return p, ErrNotFound
@@ -65,6 +68,8 @@ func List(ctx context.Context, repo *database.Repository, uid string) ([]Project
 	stmt := repo.SQ.Select(
 		"project_id",
 		"name",
+		"prefix",
+		"description",
 		"team_id",
 		"user_id",
 		"active",
@@ -83,7 +88,7 @@ func List(ctx context.Context, repo *database.Repository, uid string) ([]Project
 		return nil, errors.Wrap(err, "selecting projects")
 	}
 	for rows.Next() {
-		err = rows.Scan(&p.ID, &p.Name, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
+		err = rows.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 		if err != nil {
 			return nil, errors.Wrap(err, "scanning row into Struct")
 		}
@@ -97,9 +102,13 @@ func Create(ctx context.Context, repo *database.Repository, np NewProject, uid s
 	p := Project{
 		ID:          uuid.New().String(),
 		Name:        np.Name,
+		Prefix:      fmt.Sprintf("%s-", np.Name[:3]),
+		Active:      true,
 		UserID:      uid,
 		TeamID:      np.TeamID,
 		ColumnOrder: []string{"column-1", "column-2", "column-3", "column-4"},
+		UpdatedAt: now.UTC(),
+		CreatedAt: now.UTC(),
 	}
 
 	stmt := repo.SQ.Insert(
@@ -107,13 +116,13 @@ func Create(ctx context.Context, repo *database.Repository, np NewProject, uid s
 	).SetMap(map[string]interface{}{
 		"project_id":   p.ID,
 		"name":         p.Name,
+		"prefix":       p.Prefix,
 		"team_id":      p.TeamID,
+		"description":  "",
 		"user_id":      p.UserID,
-		"active":       p.Active,
-		"public":       p.Public,
 		"column_order": pq.Array(p.ColumnOrder),
-		"updated_at":      now.UTC(),
-		"created_at":      now.UTC(),
+		"updated_at":   p.UpdatedAt,
+		"created_at":   p.CreatedAt,
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
@@ -132,6 +141,9 @@ func Update(ctx context.Context, repo *database.Repository, pid string, update U
 	if update.Name != nil {
 		p.Name = *update.Name
 	}
+	if update.Description != nil {
+		p.Description = *update.Description
+	}
 	if update.Active != nil {
 		p.Active = *update.Active
 	}
@@ -149,6 +161,7 @@ func Update(ctx context.Context, repo *database.Repository, pid string, update U
 		"projects",
 	).SetMap(map[string]interface{}{
 		"name":         p.Name,
+		"description":  p.Description,
 		"active":       p.Active,
 		"public":       p.Public,
 		"column_order": pq.Array(p.ColumnOrder),

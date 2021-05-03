@@ -15,6 +15,14 @@ type Auth0 struct {
 	MAPIAudience string
 }
 
+type AuthUser struct {
+	Auth0ID       string  `json:"user_id" `
+	Email         string  `json:"email"`
+	EmailVerified bool    `json:"email_verified"`
+	FirstName     *string `json:"nickname"`
+	Picture       *string `json:"picture"`
+}
+
 type Token struct {
 	ID          string    `db:"ma_token_id"`
 	AccessToken string    `db:"access_token"`

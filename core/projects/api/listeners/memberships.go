@@ -38,7 +38,6 @@ func (l *Listeners) handleMembershipCreated(m *stan.Msg) {
 		l.log.Printf("failed to create membership: %s \n %v", event.MembershipID, err)
 	}
 
-
 	if err := m.Ack(); err != nil {
 		l.log.Printf("failed to Acknowledge message \n %v", err)
 	}
@@ -56,9 +55,6 @@ func (l *Listeners) handleMembershipCreatedForProject(m *stan.Msg) {
 	if err != nil {
 		l.log.Printf("failed to parse time")
 	}
-
-	l.log.Println(updatedtime.String(), event.UpdatedAt)
-
 	createdtime, err := events.ParseTime(event.CreatedAt)
 	if err != nil {
 		l.log.Printf("failed to parse time")
@@ -81,7 +77,6 @@ func (l *Listeners) handleMembershipCreatedForProject(m *stan.Msg) {
 		TeamID: &event.TeamID,
 		UpdatedAt: updatedtime,
 	}
-	l.log.Println(updatedtime.String(), update)
 
 	if _, err := projects.Update(context.Background(), l.repo, event.ProjectID, update); err != nil {
 		l.log.Printf("failed to update projects: %s \n %v", event.ProjectID, err)

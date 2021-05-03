@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,15 +14,10 @@ import (
 
 const usersEndpoint = "/api/v2/users"
 
-type User struct{
-	ID string
-	Email string
-}
-
 var ErrInvalidID = errors.New("id provided was not a valid UUID")
 
-func (a0 *Auth0) CreateUser(token Token, email string) (User, error) {
-	var u User
+func (a0 *Auth0) CreateUser(token Token, email string) (AuthUser, error) {
+	var u AuthUser
 
 	connectionType := DatabaseConnection
 	defaultPassword := uuid.New().String()
@@ -49,11 +45,13 @@ func (a0 *Auth0) CreateUser(token Token, email string) (User, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
+		log.Println(err)
 		return u, err
 	}
 	defer res.Body.Close()
 
 	body, _ := ioutil.ReadAll(res.Body)
+	log.Println(string(body))
 	if err := json.Unmarshal(body, &u); err != nil {
 		return u, err
 	}

@@ -28,6 +28,8 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid string) (Proje
 	stmt := repo.SQ.Select(
 		"project_id",
 		"name",
+		"prefix",
+		"description",
 		"team_id",
 		"user_id",
 		"active",
@@ -45,7 +47,7 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid string) (Proje
 	}
 
 	row := repo.DB.QueryRowContext(ctx, q, pid)
-	err = row.Scan(&p.ID, &p.Name, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
+	err = row.Scan(&p.ID, &p.Name, &p.Prefix,&p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return p, ErrNotFound
@@ -62,6 +64,8 @@ func Create(ctx context.Context, repo *database.Repository, p ProjectCopy) error
 	).SetMap(map[string]interface{}{
 		"project_id":   p.ID,
 		"name":         p.Name,
+		"prefix":       p.Prefix,
+		"description":  p.Description,
 		"team_id":      p.TeamID,
 		"user_id":      p.UserID,
 		"active":       p.Active,
@@ -78,7 +82,7 @@ func Create(ctx context.Context, repo *database.Repository, p ProjectCopy) error
 	return nil
 }
 
-func Update(ctx context.Context, repo *database.Repository, pid string, update UpdateProjectCopy)  error {
+func Update(ctx context.Context, repo *database.Repository, pid string, update UpdateProjectCopy) error {
 	p, err := Retrieve(ctx, repo, pid)
 	if err != nil {
 		return err
@@ -86,6 +90,9 @@ func Update(ctx context.Context, repo *database.Repository, pid string, update U
 
 	if update.Name != nil {
 		p.Name = *update.Name
+	}
+	if update.Description != nil {
+		p.Description = *update.Description
 	}
 	if update.Active != nil {
 		p.Active = *update.Active
@@ -104,6 +111,7 @@ func Update(ctx context.Context, repo *database.Repository, pid string, update U
 		"projects",
 	).SetMap(map[string]interface{}{
 		"name":         p.Name,
+		"description":  p.Description,
 		"active":       p.Active,
 		"public":       p.Public,
 		"column_order": pq.Array(p.ColumnOrder),

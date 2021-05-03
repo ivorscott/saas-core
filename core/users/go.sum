@@ -21,6 +21,8 @@ github.com/devpies/devpie-client-events v0.0.42 h1:/MRCAZupPoNJXwceOnBsX+FaGPf9u
 github.com/devpies/devpie-client-events v0.0.42/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
 github.com/devpies/devpie-client-events v0.0.43 h1:9KRwykp26Go0UigpP+//z23/j6r5fk1lp0wcgRHdFIE=
 github.com/devpies/devpie-client-events v0.0.43/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
+github.com/devpies/devpie-client-events v0.0.44 h1:IDUyq2wuBUgc3wuhCmloBf82kj5qtYq0HLdbwqVaZ8o=
+github.com/devpies/devpie-client-events v0.0.44/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/fatih/color v1.7.0 h1:DkWD4oS2D8LGGgTQ6IvwJJXSL5Vp2ffcQg58nFV38Ys=

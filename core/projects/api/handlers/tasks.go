@@ -95,7 +95,8 @@ func (t *Tasks) Update(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(err, "decoding task update")
 	}
 
-	if err := tasks.Update(r.Context(), t.repo, tid, ut, time.Now()); err != nil {
+	update, err := tasks.Update(r.Context(), t.repo, tid, ut, time.Now());
+	if err != nil {
 		switch err {
 		case tasks.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
@@ -106,7 +107,7 @@ func (t *Tasks) Update(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	return web.Respond(r.Context(), w, nil, http.StatusNoContent)
+	return web.Respond(r.Context(), w, update, http.StatusNoContent)
 }
 
 func (t *Tasks) Delete(w http.ResponseWriter, r *http.Request) error {

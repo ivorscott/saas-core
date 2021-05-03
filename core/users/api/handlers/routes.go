@@ -37,9 +37,11 @@ func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, or
 	app.Handle(http.MethodGet, "/api/v1/users/me", u.RetrieveMe)
 
 	app.Handle(http.MethodPost, "/api/v1/users/teams", tm.Create)
+	//app.Handle(http.MethodGet, "/api/v1/users/teams", tm.List)
 	app.Handle(http.MethodGet, "/api/v1/users/teams/{tid}", tm.Retrieve)
-	app.Handle(http.MethodGet, "/api/v1/users/teams/invites", tm.RetrieveInvites)
-	app.Handle(http.MethodPost, "/api/v1/users/teams/{tid}/invite", tm.Invite)
+	app.Handle(http.MethodPost, "/api/v1/users/teams/{tid}/invites", tm.CreateInvite) // todo
+	app.Handle(http.MethodGet, "/api/v1/users/teams/invites", tm.RetrieveInvites) // todo
+	app.Handle(http.MethodPatch, "/api/v1/users/teams/{tid}/invites/{iid}", tm.UpdateInvite)
 
 	return Cors(origins).Handler(app)
 }

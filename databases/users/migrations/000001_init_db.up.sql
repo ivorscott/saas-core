@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS users (
 user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-auth0_id VARCHAR(128) NOT NULL,
+auth0_id VARCHAR(128) NOT NULL UNIQUE,
 email VARCHAR(64) NOT NULL,
 email_verified BOOLEAN DEFAULT FALSE,
 first_name VARCHAR(255),
@@ -16,7 +16,7 @@ updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
 
 CREATE TABLE IF NOT EXISTS teams (
 team_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-user_id UUID NOT NULL,
+user_id UUID,
 name VARCHAR(32) NOT NULL,
 created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
 updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
@@ -27,8 +27,8 @@ CREATE TYPE ROLE AS ENUM ('administrator', 'editor', 'commenter','viewer');
 
 CREATE TABLE IF NOT EXISTS memberships (
 membership_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-user_id UUID NOT NULL,
-team_id UUID NOT NULL,
+user_id UUID,
+team_id UUID,
 role ROLE DEFAULT 'editor',
 created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
 updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
@@ -38,8 +38,8 @@ FOREIGN KEY (team_id) REFERENCES teams (team_id)
 
 CREATE TABLE IF NOT EXISTS invites(
 invite_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-user_id UUID NOT NULL,
-team_id UUID NOT NULL,
+user_id UUID,
+team_id UUID,
 read BOOLEAN DEFAULT FALSE,
 accepted BOOLEAN DEFAULT FALSE,
 expiration TIMESTAMP WITHOUT TIME ZONE DEFAULT ((NOW() + '5 days') AT TIME ZONE 'utc'),
@@ -61,7 +61,9 @@ created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
 CREATE TABLE projects (
 project_id UUID PRIMARY KEY,
 name VARCHAR(36) NOT NULL,
-user_id UUID NOT NULL,
+prefix VARCHAR(4) NOT NULL,
+description TEXT,
+user_id UUID,
 team_id VARCHAR(36),
 active BOOLEAN DEFAULT TRUE,
 public BOOLEAN DEFAULT FALSE,

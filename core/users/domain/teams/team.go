@@ -7,7 +7,6 @@ import (
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"log"
 	"time"
 )
 
@@ -42,7 +41,7 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTeam, uid stri
 
 func Retrieve(ctx context.Context, repo *database.Repository, tid string) (Team, error) {
 	var t Team
-log.Println(tid)
+
 	if _, err := uuid.Parse(tid); err != nil {
 		return t, ErrInvalidID
 	}
