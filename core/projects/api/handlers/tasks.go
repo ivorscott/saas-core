@@ -57,6 +57,7 @@ func (t *Tasks) Retrieve(w http.ResponseWriter, r *http.Request) error {
 func (t *Tasks) Create(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 	cid := chi.URLParam(r, "cid")
+	uid := t.auth0.GetUserById(r)
 
 	var nt tasks.NewTask
 	if err := web.Decode(r, &nt); err != nil {
@@ -64,7 +65,7 @@ func (t *Tasks) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	ts, err := tasks.Create(r.Context(), t.repo, nt, pid, time.Now())
+	ts, err := tasks.Create(r.Context(), t.repo, nt, pid, uid, time.Now())
 	if err != nil {
 		return err
 	}
@@ -121,19 +122,21 @@ func (t *Tasks) Delete(w http.ResponseWriter, r *http.Request) error {
 
 	i := SliceIndex(len(c.TaskIDS), func(i int) bool { return c.TaskIDS[i] == tid })
 
-	newTaskIds := append(c.TaskIDS[:i], c.TaskIDS[i+1:]...)
-	uc := columns.UpdateColumn{TaskIDS: &newTaskIds}
+	if i >=0 {
+		newTaskIds := append(c.TaskIDS[:i], c.TaskIDS[i+1:]...)
+		uc := columns.UpdateColumn{TaskIDS: &newTaskIds}
 
-	if err := columns.Update(r.Context(), t.repo, cid, uc, time.Now()); err != nil {
-		return err
-	}
+		if err := columns.Update(r.Context(), t.repo, cid, uc, time.Now()); err != nil {
+			return err
+		}
 
-	if err := tasks.Delete(r.Context(), t.repo, tid); err != nil {
-		switch err {
-		case tasks.ErrInvalidID:
-			return web.NewRequestError(err, http.StatusBadRequest)
-		default:
-			return errors.Wrapf(err, "deleting task %q", tid)
+		if err := tasks.Delete(r.Context(), t.repo, tid); err != nil {
+			switch err {
+			case tasks.ErrInvalidID:
+				return web.NewRequestError(err, http.StatusBadRequest)
+			default:
+				return errors.Wrapf(err, "deleting task %q", tid)
+			}
 		}
 	}
 
@@ -160,22 +163,24 @@ func (t *Tasks) Move(w http.ResponseWriter, r *http.Request) error {
 
 	i := SliceIndex(len(cF.TaskIDS), func(i int) bool { return cF.TaskIDS[i] == tid })
 
-	newFromTaskIds := append(cF.TaskIDS[:i], cF.TaskIDS[i+1:]...)
-	foc := columns.UpdateColumn{TaskIDS: &newFromTaskIds}
+	if i >=0 {
+		newFromTaskIds := append(cF.TaskIDS[:i], cF.TaskIDS[i+1:]...)
+		foc := columns.UpdateColumn{TaskIDS: &newFromTaskIds}
 
-	newToTaskIds := append(cT.TaskIDS, tid)
-	toc := columns.UpdateColumn{TaskIDS: &newToTaskIds}
+		newToTaskIds := append(cT.TaskIDS, tid)
+		toc := columns.UpdateColumn{TaskIDS: &newToTaskIds}
 
-	err = columns.Update(r.Context(), t.repo, mt.From, foc, time.Now())
-	err = columns.Update(r.Context(), t.repo, mt.To, toc, time.Now())
-	if err != nil {
-		switch err {
-		case tasks.ErrNotFound:
-			return web.NewRequestError(err, http.StatusNotFound)
-		case tasks.ErrInvalidID:
-			return web.NewRequestError(err, http.StatusBadRequest)
-		default:
-			return errors.Wrapf(err, "updating column taskIds from:%q, to:%q", mt.From, mt.To)
+		err = columns.Update(r.Context(), t.repo, mt.From, foc, time.Now())
+		err = columns.Update(r.Context(), t.repo, mt.To, toc, time.Now())
+		if err != nil {
+			switch err {
+			case tasks.ErrNotFound:
+				return web.NewRequestError(err, http.StatusNotFound)
+			case tasks.ErrInvalidID:
+				return web.NewRequestError(err, http.StatusBadRequest)
+			default:
+				return errors.Wrapf(err, "updating column taskIds from:%q, to:%q", mt.From, mt.To)
+			}
 		}
 	}
 

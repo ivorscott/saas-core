@@ -24,6 +24,11 @@ func (u *Users) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 
 	id := u.auth0.GetUserById(r)
 
+	if id == "" {
+		err := errors.New("users error: missing user id")
+		return web.NewRequestError(err, http.StatusNotFound)
+	}
+
 	us, err := users.RetrieveMe(r.Context(), u.repo, id)
 	if err != nil {
 		switch err {
@@ -44,6 +49,20 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) error {
 
 	sub := u.auth0.GetUserBySubject(r)
 
+	// get auth0 management api token
+	t, err := u.auth0.GetOrCreateToken()
+	if err != nil {
+		return err
+	}
+
+	// if user already exists update app metadata only
+	if us, err := users.RetrieveMeByAuthID(r.Context(), u.repo, sub); err == nil {
+		if err := u.auth0.UpdateUserAppMetaData(t, sub, us.ID); err != nil {
+			return err
+		}
+		return web.Respond(r.Context(), w, us, http.StatusAccepted)
+	}
+
 	if err := web.Decode(r, &nu); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
@@ -54,15 +73,9 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// try getting existing auth0 management api token
-	t, err := u.auth0.GetOrCreateToken()
-	if err != nil {
-		return err
-	}
-
 	if err := u.auth0.UpdateUserAppMetaData(t, sub, user.ID); err != nil {
 		return err
 	}
 
-	return web.Respond(r.Context(), w, nil, http.StatusCreated)
+	return web.Respond(r.Context(), w, user, http.StatusCreated)
 }

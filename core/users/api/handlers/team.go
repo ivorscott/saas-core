@@ -3,8 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/devpies/devpie-client-core/users/platform/auth0"
-	"github.com/devpies/devpie-client-events/go/events"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -17,10 +15,13 @@ import (
 
 	"github.com/devpies/devpie-client-core/users/domain/invites"
 	"github.com/devpies/devpie-client-core/users/domain/memberships"
+	"github.com/devpies/devpie-client-core/users/domain/projects"
 	"github.com/devpies/devpie-client-core/users/domain/teams"
 	"github.com/devpies/devpie-client-core/users/domain/users"
+	"github.com/devpies/devpie-client-core/users/platform/auth0"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/devpies/devpie-client-core/users/platform/web"
+	"github.com/devpies/devpie-client-events/go/events"
 )
 
 type Team struct {
@@ -101,6 +102,14 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 				TraceID: uuid.New().String(),
 				UserID: uid,
 			},
+		}
+
+		up := projects.UpdateProjectCopy{
+			TeamID: &tm.ID,
+		}
+
+		if err := projects.Update(r.Context(), t.repo, nt.ProjectID, up); err !=nil {
+			return err
 		}
 
 		bytes, err := json.Marshal(e)
@@ -225,7 +234,7 @@ func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 func (t *Team) RetrieveInvites(w http.ResponseWriter, r *http.Request) error {
 	uid := t.auth0.GetUserById(r)
 
-	is, err := invites.RetrieveInvites(r.Context(), t.repo, uid, time.Now())
+	is, err := invites.RetrieveInvites(r.Context(), t.repo, uid)
 	if err != nil {
 		switch err {
 		case teams.ErrNotFound:
@@ -237,7 +246,27 @@ func (t *Team) RetrieveInvites(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	return web.Respond(r.Context(), w, is, http.StatusCreated)
+	var res []invites.InviteEnhanced
+	for _,invite := range is {
+		team, err := teams.Retrieve(r.Context(),t.repo,invite.TeamID);
+		if err !=nil {
+			return err
+		}
+		ie := invites.InviteEnhanced{
+			ID: invite.ID,
+			UserID: invite.UserID,
+			TeamID: invite.TeamID,
+			TeamName: team.Name,
+			Read: invite.Read,
+			Accepted: invite.Accepted,
+			Expiration: invite.Expiration,
+			UpdatedAt: invite.UpdatedAt,
+			CreatedAt: invite.CreatedAt,
+		}
+		res = append(res, ie)
+	}
+
+	return web.Respond(r.Context(), w, res, http.StatusOK)
 }
 
 func (t *Team) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
@@ -253,21 +282,48 @@ func (t *Team) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if err := invites.Update(r.Context(), t.repo,  update, uid, iid, time.Now());err != nil {
+	 iv, err := invites.Update(r.Context(), t.repo,  update, uid, iid, time.Now());
+	 if err != nil {
 		return err
 	}
 
 	if update.Accepted {
 		nm := memberships.NewMembership{
+			UserID: uid,
 			TeamID: tid,
 			Role:   role.String(),
 		}
-		if _, err := memberships.Create(r.Context(), t.repo, nm, time.Now()); err != nil {
+		m, err := memberships.Create(r.Context(), t.repo, nm, time.Now());
+		if err != nil {
 			return err
 		}
+
+		e := events.MembershipCreatedEvent{
+			ID: uuid.New().String(),
+			Type: events.TypeMembershipCreated,
+			Data: events.MembershipCreatedEventData{
+				MembershipID: m.ID,
+				TeamID: m.TeamID,
+				Role: m.Role,
+				UserID: m.UserID,
+				UpdatedAt: m.UpdatedAt.String(),
+				CreatedAt: m.CreatedAt.String(),
+			},
+			Metadata: events.Metadata{
+				TraceID: uuid.New().String(),
+				UserID: uid,
+			},
+		}
+
+		bytes, err := json.Marshal(e)
+		if err != nil {
+			return err
+		}
+
+		t.nats.Publish(string(events.EventsMembershipCreated), bytes)
 	}
 
-	return web.Respond(r.Context(), w, nil, http.StatusCreated)
+	return web.Respond(r.Context(), w, iv, http.StatusOK)
 }
 
 func (t *Team) SendMail(email, link string) error {

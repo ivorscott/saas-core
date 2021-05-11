@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
-	"github.com/devpies/devpie-client-core/users/platform/web"
 	"github.com/dgrijalva/jwt-go"
 	"net/http"
 	"strings"
+
+	"github.com/devpies/devpie-client-core/users/platform/web"
 )
 
 // Authenticate middleware verifies the access token sent from auth0

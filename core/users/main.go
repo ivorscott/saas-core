@@ -43,11 +43,11 @@ func run() error {
 			WriteTimeout     time.Duration `conf:"default:5s"`
 			ShutdownTimeout  time.Duration `conf:"default:5s"`
 			CorsOrigins      string        `conf:"default:https://localhost:3000"`
-			AuthDomain       string        `conf:"default:none,noprint"`
-			AuthAudience     string        `conf:"default:none,noprint"`
-			AuthM2MClient    string        `conf:"default:none,noprint"`
-			AuthM2MSecret    string        `conf:"default:none,noprint"`
-			AuthMAPIAudience string        `conf:"default:none,noprint"`
+			AuthDomain       string        `conf:"default:none"`
+			AuthAudience     string        `conf:"default:none"`
+			AuthM2MClient    string        `conf:"default:none"`
+			AuthM2MSecret    string        `conf:"default:none"`
+			AuthMAPIAudience string        `conf:"default:none"`
 			SendgridAPIKey   string        `conf:"default:none,noprint"`
 		}
 		DB struct {

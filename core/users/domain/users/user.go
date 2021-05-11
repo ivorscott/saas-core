@@ -3,11 +3,13 @@ package users
 import (
 	"context"
 	"database/sql"
+	"log"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"time"
 )
 
 var (
@@ -86,8 +88,11 @@ func RetrieveByEmail(repo *database.Repository, email string) (User, error) {
 
 func RetrieveMe(ctx context.Context, repo *database.Repository, uid string) (User, error) {
 	var u User
+	log.Println("the user",uid)
 
 	if _, err := uuid.Parse(uid); err != nil {
+	log.Println("the invalid user", uid)
+
 		return u, ErrInvalidID
 	}
 

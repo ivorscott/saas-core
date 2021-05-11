@@ -77,9 +77,9 @@ func RetrieveInvite(ctx context.Context, repo *database.Repository, uid, iid str
 	return i, nil
 }
 
-func RetrieveInvites(ctx context.Context, repo *database.Repository, uid string, now time.Time) ([]Invite, error) {
+func RetrieveInvites(ctx context.Context, repo *database.Repository, uid string) ([]Invite, error) {
 	var is []Invite
-	// TODO: return invites that have not expired
+
 	stmt := repo.SQ.Select(
 		"invite_id",
 		"user_id",
@@ -91,14 +91,14 @@ func RetrieveInvites(ctx context.Context, repo *database.Repository, uid string,
 		"created_at",
 	).From(
 		"invites",
-	).Where(sq.Eq{"user_id": "?"}).Where("expiration > ?")
+	).Where(sq.Eq{"user_id": "?"}).Where("expiration > NOW()")
 
 	q, args, err := stmt.ToSql()
 	if err != nil {
 		return nil, errors.Wrapf(err, "building query: %v", args)
 	}
 
-	if err := repo.DB.SelectContext(ctx, &is, q, uid, now.UTC()); err != nil {
+	if err := repo.DB.SelectContext(ctx, &is, q, uid); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
 		}
@@ -108,19 +108,29 @@ func RetrieveInvites(ctx context.Context, repo *database.Repository, uid string,
 	return is, nil
 }
 
-func Update(ctx context.Context, repo *database.Repository, update UpdateInvite, uid, iid string, now time.Time) error {
+func Update(ctx context.Context, repo *database.Repository, update UpdateInvite, uid, iid string, now time.Time) (Invite, error) {
+	var iv Invite
+
+	i, err := RetrieveInvite(ctx, repo, uid, iid)
+	if err != nil {
+		return iv, err
+	}
+
+	i.Accepted = update.Accepted
+	i.UpdatedAt = now.UTC()
+
 	stmt := repo.SQ.Update(
 		"invites",
 	).SetMap(map[string]interface{}{
 		"read":       true,
-		"accepted":   update.Accepted,
-		"updated_at": now.UTC(),
+		"accepted":   i.Accepted,
+		"updated_at": i.UpdatedAt,
 	}).Where(sq.Eq{"user_id": uid, "invite_id": iid})
 
-	_, err := stmt.ExecContext(ctx)
+	_, err = stmt.ExecContext(ctx)
 	if err != nil {
-		return errors.Wrap(err, "updating invite")
+		return i, errors.Wrap(err, "updating invite")
 	}
 
-	return nil
+	return i, nil
 }

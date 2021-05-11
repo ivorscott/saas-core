@@ -5,12 +5,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/devpies/devpie-client-events/go/events"
-
 	mid "github.com/devpies/devpie-client-core/projects/api/middleware"
 	"github.com/devpies/devpie-client-core/projects/platform/auth0"
 	"github.com/devpies/devpie-client-core/projects/platform/database"
 	"github.com/devpies/devpie-client-core/projects/platform/web"
+	"github.com/devpies/devpie-client-events/go/events"
 )
 
 func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, origins string,

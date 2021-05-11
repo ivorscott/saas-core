@@ -78,7 +78,7 @@ func (l *Listeners) handleMembershipCreatedForProject(m *stan.Msg) {
 		UpdatedAt: updatedtime,
 	}
 
-	if _, err := projects.Update(context.Background(), l.repo, event.ProjectID, update); err != nil {
+	if _, err := projects.Update(context.Background(), l.repo, event.ProjectID, event.UserID, update); err != nil {
 		l.log.Printf("failed to update projects: %s \n %v", event.ProjectID, err)
 	}
 

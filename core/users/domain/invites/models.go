@@ -13,6 +13,18 @@ type Invite struct {
 	CreatedAt  time.Time `db:"created_at" json:"createdAt"`
 }
 
+type InviteEnhanced struct {
+	ID         string    `json:"id"`
+	UserID     string    `json:"userId"`
+	TeamID     string    `json:"teamId"`
+	TeamName   string    `json:"teamName"`
+	Read       bool      `json:"read"`
+	Accepted   bool      `json:"accepted"`
+	Expiration time.Time `json:"expiration"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
 type NewInvite struct {
 	UserID string `json:"userId"`
 	TeamID string `json:"teamId"`

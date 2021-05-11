@@ -3,12 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/devpies/devpie-client-events/go/events"
-	"github.com/go-chi/chi"
-	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/devpies/devpie-client-events/go/events"
+	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 
 	"github.com/devpies/devpie-client-core/projects/domain/columns"
 	"github.com/devpies/devpie-client-core/projects/domain/projects"
@@ -38,9 +39,10 @@ func (p *Projects) List(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
+	uid := p.auth0.GetUserById(r)
 	pid := chi.URLParam(r, "pid")
 
-	pr, err := projects.Retrieve(r.Context(), p.repo, pid)
+	tid, err := projects.RetrieveTeam(r.Context(),p.repo, pid)
 	if err != nil {
 		switch err {
 		case projects.ErrNotFound:
@@ -51,8 +53,16 @@ func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
 			return errors.Wrapf(err, "looking for projects %q", pid)
 		}
 	}
+	
+	if opr, err := projects.Retrieve(r.Context(), p.repo, pid, uid); err == nil {
+		return web.Respond(r.Context(), w, opr, http.StatusOK)
+	}
+	spr, err := projects.RetrieveShared(r.Context(), p.repo, pid, uid, tid)
+	if err != nil {
+		return err
+	}
 
-	return web.Respond(r.Context(), w, pr, http.StatusOK)
+	return web.Respond(r.Context(), w, spr, http.StatusOK)
 }
 
 func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
@@ -73,27 +83,26 @@ func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
 	e := events.ProjectCreatedEvent{
 		ID: uuid.New().String(),
 		Data: events.ProjectCreatedEventData{
-			ProjectID: pr.ID,
-			Name: pr.Name,
-			Prefix: pr.Prefix,
+			ProjectID:   pr.ID,
+			Name:        pr.Name,
+			Prefix:      pr.Prefix,
 			Description: pr.Description,
-			TeamID: pr.TeamID,
-			UserID: pr.UserID,
-			Active: pr.Active,
-			Public: pr.Public,
+			TeamID:      pr.TeamID,
+			UserID:      pr.UserID,
+			Active:      pr.Active,
+			Public:      pr.Public,
 			ColumnOrder: pr.ColumnOrder,
-			UpdatedAt: pr.UpdatedAt.String(),
-			CreatedAt: pr.CreatedAt.String(),
+			UpdatedAt:   pr.UpdatedAt.String(),
+			CreatedAt:   pr.CreatedAt.String(),
 		},
-		Type: events.TypeProjectCreated,
-		Metadata: events.Metadata{UserID: uid,TraceID: uuid.New().String()},
+		Type:     events.TypeProjectCreated,
+		Metadata: events.Metadata{UserID: uid, TraceID: uuid.New().String()},
 	}
 
 	bytes, err := json.Marshal(e)
 	if err != nil {
 		return err
 	}
-
 
 	titles := [4]string{"To Do", "In Progress", "Review", "Done"}
 
@@ -127,7 +136,7 @@ func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 
 	update.UpdatedAt = time.Now()
 
-	up, err := projects.Update(r.Context(), p.repo, pid, update)
+	up, err := projects.Update(r.Context(), p.repo, pid, uid, update)
 	if err != nil {
 		switch err {
 		case projects.ErrNotFound:
@@ -140,20 +149,20 @@ func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	e := events.ProjectUpdatedEvent{
-		ID: uuid.New().String(),
+		ID:   uuid.New().String(),
 		Type: events.TypeProjectUpdated,
 		Data: events.ProjectUpdatedEventData{
-			Name: &up.Name,
+			Name:        &up.Name,
 			Description: &up.Description,
-			Active: &up.Active,
-			Public: &up.Public,
-			TeamID: &up.TeamID,
-			ProjectID: up.ID,
+			Active:      &up.Active,
+			Public:      &up.Public,
+			TeamID:      &up.TeamID,
+			ProjectID:   up.ID,
 			ColumnOrder: up.ColumnOrder,
-			UpdatedAt: up.UpdatedAt.String(),
+			UpdatedAt:   up.UpdatedAt.String(),
 		},
 		Metadata: events.Metadata{
-			UserID: uid,
+			UserID:  uid,
 			TraceID: uuid.New().String(),
 		},
 	}
@@ -172,7 +181,7 @@ func (p *Projects) Delete(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 	uid := p.auth0.GetUserById(r)
 
-	if _, err := projects.Retrieve(r.Context(), p.repo, pid); err != nil {
+	if _, err := projects.Retrieve(r.Context(), p.repo, pid, uid); err != nil {
 		return err
 	}
 	if err := tasks.DeleteAll(r.Context(), p.repo, pid); err != nil {
@@ -191,11 +200,11 @@ func (p *Projects) Delete(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	e := events.ProjectDeletedEvent{
-		ID: uuid.New().String(),
+		ID:   uuid.New().String(),
 		Type: events.TypeProjectDeleted,
 		Metadata: events.Metadata{
 			TraceID: uuid.New().String(),
-			UserID: uid,
+			UserID:  uid,
 		},
 		Data: events.ProjectDeletedEventData{
 			ProjectID: pid,

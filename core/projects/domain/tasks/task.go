@@ -97,7 +97,7 @@ func List(ctx context.Context, repo *database.Repository, pid string) ([]Task, e
 	return ts, nil
 }
 
-func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid string, now time.Time) (Task, error) {
+func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid string, now time.Time) (Task, error) {
 	t := Task{
 		ID:          uuid.New().String(),
 		Title:       nt.Title,
@@ -127,7 +127,7 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid stri
 
 	// Update Task with Project Prefix and Sequence Number
 
-	p, err := projects.Retrieve(ctx, repo, pid)
+	p, err := projects.Retrieve(ctx, repo, pid, uid)
 	if err != nil {
 		return t, err
 	}

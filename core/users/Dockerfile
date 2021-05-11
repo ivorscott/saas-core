@@ -9,7 +9,7 @@ ENV CGO_ENABLED=0
 
 WORKDIR /users
 
-FROM base as dev
+FROM base as reload
 
 ARG GITHUB_USER
 ARG GITHUB_TOKEN
@@ -21,16 +21,25 @@ RUN apk add --no-cache git \
 
 COPY go.* ./
 RUN go mod download && go mod verify
+
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+
+RUN go get github.com/githubnemo/CompileDaemon
+
 COPY . .
 
-# -gcflags "-m -m"
-RUN go env && go build -o main .
+RUN go env
+
+FROM reload as dev
+
+RUN go build -o main .
 
 CMD ["./main"]
 
 FROM dev as build-stage
 
-RUN go build -o main .
+RUN go build -o main . && go test ./...
 
 FROM aquasec/trivy:0.4.4 as trivy
 
@@ -43,7 +52,6 @@ EXPOSE 4000
 
 COPY --from=trivy result secure
 COPY --from=build-stage /users/main main
-
 
 HEALTHCHECK --interval=3s --timeout=3s CMD wget --spider -q http://localhost:4000/v1/health || exit 1
     

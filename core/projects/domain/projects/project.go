@@ -4,29 +4,34 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
-	"time"
 
+	"github.com/devpies/devpie-client-core/projects/domain/memberships"
 	"github.com/devpies/devpie-client-core/projects/platform/database"
 )
+
+ type PartialTeam struct {
+	TeamID string `db:"team_id"`
+ }
 
 var (
 	ErrNotFound  = errors.New("project not found")
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
+	ErrNotAuthorized = errors.New("user does not have correct membership")
 )
 
-func Retrieve(ctx context.Context, repo *database.Repository, pid string) (Project, error) {
+func RetrieveTeam(ctx context.Context, repo *database.Repository, pid string) (	string, error) {
 	var p Project
 
 	if _, err := uuid.Parse(pid); err != nil {
-		return p, ErrInvalidID
+		return "", ErrInvalidID
 	}
-
-	// TODO: Check ownership at Team and User level before granting access
-	// TODO: Also allow site Admins (where role==admin in Auth0)
 
 	stmt := repo.SQ.Select(
 		"project_id",
@@ -40,16 +45,95 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid string) (Proje
 		"column_order",
 		"updated_at",
 		"created_at",
-	).From(
-		"projects",
-	).Where(sq.Eq{"project_id": "?"})
+	).From("projects").Where(sq.Eq{"project_id": "?"})
+
+	q, args, err := stmt.ToSql()
+	if err != nil {
+		return "", errors.Wrapf(err, "building query: %v", args)
+	}
+	
+	row := repo.DB.QueryRowContext(ctx, q, pid)
+	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", ErrNotFound
+		}
+		return "", err
+	}
+
+	return p.TeamID, nil
+}
+
+func Retrieve(ctx context.Context, repo *database.Repository, pid, uid string) (Project, error) {
+	var p Project
+	if _, err := uuid.Parse(pid); err != nil {
+		return p, ErrInvalidID
+	}
+
+	stmt := repo.SQ.Select(
+		"project_id",
+		"name",
+		"prefix",
+		"description",
+		"team_id",
+		"user_id",
+		"active",
+		"public",
+		"column_order",
+		"updated_at",
+		"created_at",
+	).From("projects").Where(sq.Eq{"project_id": "?", "user_id": "?"})
 
 	q, args, err := stmt.ToSql()
 	if err != nil {
 		return p, errors.Wrapf(err, "building query: %v", args)
 	}
 
-	row := repo.DB.QueryRowContext(ctx, q, pid)
+	row := repo.DB.QueryRowContext(ctx, q, pid,uid)
+	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return p, ErrNotFound
+		}
+		return p, err
+	}
+
+	return p, nil
+}
+
+func RetrieveShared(ctx context.Context, repo *database.Repository, pid, uid, tid string) (Project, error) {
+	var p Project
+	if _, err := uuid.Parse(pid); err != nil {
+		return p, ErrInvalidID
+	}
+
+	m, err := memberships.Retrieve(ctx, repo, uid, tid)
+	if err != nil {
+		log.Println(err)
+		return p, ErrNotAuthorized
+	}
+
+	stmt := repo.SQ.Select(
+		"project_id",
+		"name",
+		"prefix",
+		"description",
+		"team_id",
+		"user_id",
+		"active",
+		"public",
+		"column_order",
+		"updated_at",
+		"created_at",
+	).From("projects").Where(sq.Eq{"project_id": "?", "team_id": "?"})
+
+	q, args, err := stmt.ToSql()
+	
+	if err != nil {
+		return p, errors.Wrapf(err, "building query: %v", args)
+	}
+
+	row := repo.DB.QueryRowContext(ctx, q, pid, m.TeamID)
 	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -65,23 +149,12 @@ func List(ctx context.Context, repo *database.Repository, uid string) ([]Project
 	var p Project
 	var ps = make([]Project, 0)
 
-	stmt := repo.SQ.Select(
-		"project_id",
-		"name",
-		"prefix",
-		"description",
-		"team_id",
-		"user_id",
-		"active",
-		"public",
-		"column_order",
-		"updated_at",
-		"created_at",
-	).From("projects").Where(sq.Eq{"user_id": "?"})
-	q, args, err := stmt.ToSql()
-	if err != nil {
-		return nil, errors.Wrapf(err, "building query: %v", args)
-	}
+	q := `SELECT * FROM projects
+		  WHERE team_id IN (SELECT team_id FROM memberships WHERE user_id = $1)
+		  UNION 
+		  SELECT * FROM projects 
+		  WHERE user_id = $1
+		  GROUP BY project_id`
 
 	rows, err := repo.DB.QueryContext(ctx, q, uid)
 	if err != nil {
@@ -107,8 +180,8 @@ func Create(ctx context.Context, repo *database.Repository, np NewProject, uid s
 		UserID:      uid,
 		TeamID:      np.TeamID,
 		ColumnOrder: []string{"column-1", "column-2", "column-3", "column-4"},
-		UpdatedAt: now.UTC(),
-		CreatedAt: now.UTC(),
+		UpdatedAt:   now.UTC(),
+		CreatedAt:   now.UTC(),
 	}
 
 	stmt := repo.SQ.Insert(
@@ -132,8 +205,8 @@ func Create(ctx context.Context, repo *database.Repository, np NewProject, uid s
 	return p, nil
 }
 
-func Update(ctx context.Context, repo *database.Repository, pid string, update UpdateProject) (Project, error) {
-	p, err := Retrieve(ctx, repo, pid)
+func Update(ctx context.Context, repo *database.Repository, pid, uid string, update UpdateProject) (Project, error) {
+	p, err := Retrieve(ctx, repo, pid, uid)
 	if err != nil {
 		return p, err
 	}
