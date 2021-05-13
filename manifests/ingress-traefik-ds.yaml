@@ -31,8 +31,8 @@ spec:
           ports:
             - name: http
               containerPort: 80
-            - name: websecure
-              containerPort: 443
+#            - name: websecure
+#              containerPort: 443
             - name: admin
               containerPort: 8080
           securityContext:
@@ -49,9 +49,9 @@ spec:
             - --api.insecure=true
             - --entrypoints.web.address=:80
             # permanent redirecting of all requests on http (80) to https (443)
-            - --entrypoints.web.http.redirections.entryPoint.to=websecure
-            - --entrypoints.web.http.redirections.entryPoint.scheme=https
-            - --entrypoints.websecure.address=:443
+#            - --entrypoints.web.http.redirections.entryPoint.to=websecure
+#            - --entrypoints.web.http.redirections.entryPoint.scheme=https
+#            - --entrypoints.websecure.address=:443
 ---
 kind: Service
 apiVersion: v1
@@ -65,9 +65,9 @@ spec:
     - protocol: TCP
       port: 80
       name: web
-    - protocol: TCP
-      port: 443
-      name: websecure
+#    - protocol: TCP
+#      port: 443
+#      name: websecure
     - protocol: TCP
       port: 8080
       name: admin

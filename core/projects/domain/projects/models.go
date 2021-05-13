@@ -28,7 +28,6 @@ type UpdateProject struct {
 	Active      *bool     `json:"active"`
 	Public      *bool     `json:"public"`
 	TeamID      *string   `json:"teamId"`
-	ColumnOrder []string  `json:"columnOrder"`
 	Description *string   `json:"description"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ColumnOrder []string  `json:"columnOrder"`
 }

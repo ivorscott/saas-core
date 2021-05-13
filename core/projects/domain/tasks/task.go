@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/devpies/devpie-client-core/projects/domain/projects"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
-	"time"
 
 	"github.com/devpies/devpie-client-core/projects/platform/database"
 )
@@ -98,6 +99,7 @@ func List(ctx context.Context, repo *database.Repository, pid string) ([]Task, e
 }
 
 func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid string, now time.Time) (Task, error) {
+
 	t := Task{
 		ID:          uuid.New().String(),
 		Title:       nt.Title,
@@ -126,10 +128,14 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid
 	}
 
 	// Update Task with Project Prefix and Sequence Number
+	var p projects.Project
 
 	p, err := projects.Retrieve(ctx, repo, pid, uid)
 	if err != nil {
-		return t, err
+		p, err = projects.RetrieveShared(ctx, repo, pid, uid)
+		if err != nil {
+			return t, err
+		}
 	}
 
 	task, err := Retrieve(ctx, repo, t.ID)

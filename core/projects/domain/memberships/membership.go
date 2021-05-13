@@ -3,10 +3,11 @@ package memberships
 import (
 	"context"
 	"database/sql"
+	"log"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"log"
 
 	"github.com/devpies/devpie-client-core/projects/platform/database"
 )
@@ -93,7 +94,7 @@ func Retrieve(ctx context.Context, repo *database.Repository, uid, tid string) (
 	if err != nil {
 		return m, errors.Wrapf(err, "building query: %v", args)
 	}
-	log.Println(uid, tid)
+
 	err = repo.DB.QueryRowxContext(ctx, q, uid, tid).StructScan(&m)
 	if err != nil {
 		if err == sql.ErrNoRows {

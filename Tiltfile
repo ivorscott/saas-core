@@ -2,9 +2,8 @@ k8s_yaml([
     'manifests/mic-users-depl.yaml',
     'manifests/mic-projects-depl.yaml',
     'manifests/msg-nats-depl.yaml',
-    'manifests/ingress-rules.yaml',
-    'manifests/ingress-tls-secrets.yaml',
     'manifests/ingress-traefik-ds.yaml',
+    'manifests/ingress-rules.yaml',
     'manifests/secrets.yaml',
 ])
 

@@ -14,5 +14,10 @@
         "var",
         "viewdata",
         "workdir"
+    ],
+    "cSpell.words": [
+        "devpie",
+        "kubernetes",
+        "websecure"
     ]
 }

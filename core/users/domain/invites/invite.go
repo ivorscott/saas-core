@@ -3,11 +3,12 @@ package invites
 import (
 	"context"
 	"database/sql"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"time"
 )
 
 var (
@@ -46,7 +47,7 @@ func Create(ctx context.Context, repo *database.Repository, ni NewInvite, now ti
 	return i, nil
 }
 
-func RetrieveInvite(ctx context.Context, repo *database.Repository, uid, iid string) (Invite, error) {
+func RetrieveInvite(ctx context.Context, repo *database.Repository, uid string, iid string) (Invite, error) {
 	var i Invite
 
 	stmt := repo.SQ.Select(
@@ -54,20 +55,21 @@ func RetrieveInvite(ctx context.Context, repo *database.Repository, uid, iid str
 		"user_id",
 		"team_id",
 		"read",
-		"activated",
+		"accepted",
 		"expiration",
 		"updated_at",
 		"created_at",
 	).From(
 		"invites",
-	).Where(sq.Eq{"user_id": "?", "invite_id": "?"})
+	).Where("user_id = ? AND invite_id = ?")
 
 	q, args, err := stmt.ToSql()
 	if err != nil {
 		return i, errors.Wrapf(err, "building query: %v", args)
 	}
 
-	if err := repo.DB.SelectContext(ctx, &i, q, uid, iid); err != nil {
+	err = repo.DB.QueryRowxContext(ctx, q, uid, iid).StructScan(&i)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return i, ErrNotFound
 		}
@@ -115,7 +117,7 @@ func Update(ctx context.Context, repo *database.Repository, update UpdateInvite,
 	if err != nil {
 		return iv, err
 	}
-
+	
 	i.Accepted = update.Accepted
 	i.UpdatedAt = now.UTC()
 
@@ -125,7 +127,7 @@ func Update(ctx context.Context, repo *database.Repository, update UpdateInvite,
 		"read":       true,
 		"accepted":   i.Accepted,
 		"updated_at": i.UpdatedAt,
-	}).Where(sq.Eq{"user_id": uid, "invite_id": iid})
+	}).Where(sq.Eq{"user_id": uid, "invite_id": i.ID})
 
 	_, err = stmt.ExecContext(ctx)
 	if err != nil {

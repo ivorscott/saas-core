@@ -14,6 +14,9 @@ spec:
       containers:
         - image: devpies/mic-users:latest
           name: mic-users
+          ports:
+            - containerPort: 6060
+            - containerPort: 4000
           resources:
             requests:
               cpu: "100m"
@@ -25,7 +28,7 @@ spec:
             - name: API_WEB_PORT
               value: ":4000"
             - name: API_WEB_CORS_ORIGINS
-              value: "https://localhost:3000, https://devpie.local"
+              value: "http://localhost:3000, https://devpie.local:3000"
             - name: API_WEB_AUTH_DOMAIN
               valueFrom:
                 secretKeyRef:
@@ -92,3 +95,14 @@ spec:
   ports:
     - port: 4000
       targetPort: 4000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: debug-mic-users-svc
+spec:
+  selector:
+    app: mic-users
+  ports:
+    - port: 6060
+      targetPort: 6060

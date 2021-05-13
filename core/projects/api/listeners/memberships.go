@@ -2,6 +2,7 @@ package listeners
 
 import (
 	"context"
+
 	"github.com/devpies/devpie-client-core/projects/domain/memberships"
 	"github.com/devpies/devpie-client-core/projects/domain/projects"
 	"github.com/devpies/devpie-client-events/go/events"
@@ -75,10 +76,9 @@ func (l *Listeners) handleMembershipCreatedForProject(m *stan.Msg) {
 
 	update := projects.UpdateProject{
 		TeamID: &event.TeamID,
-		UpdatedAt: updatedtime,
 	}
 
-	if _, err := projects.Update(context.Background(), l.repo, event.ProjectID, event.UserID, update); err != nil {
+	if _, err := projects.Update(context.Background(), l.repo, event.ProjectID, event.UserID, update, updatedtime); err != nil {
 		l.log.Printf("failed to update projects: %s \n %v", event.ProjectID, err)
 	}
 

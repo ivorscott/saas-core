@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -16,17 +15,13 @@ import (
 	"github.com/devpies/devpie-client-core/projects/platform/database"
 )
 
- type PartialTeam struct {
-	TeamID string `db:"team_id"`
- }
-
 var (
 	ErrNotFound  = errors.New("project not found")
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 	ErrNotAuthorized = errors.New("user does not have correct membership")
 )
 
-func RetrieveTeam(ctx context.Context, repo *database.Repository, pid string) (	string, error) {
+func RetrieveTeamID(ctx context.Context, repo *database.Repository, pid string) (	string, error) {
 	var p Project
 
 	if _, err := uuid.Parse(pid); err != nil {
@@ -101,15 +96,20 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid, uid string) (
 	return p, nil
 }
 
-func RetrieveShared(ctx context.Context, repo *database.Repository, pid, uid, tid string) (Project, error) {
+func RetrieveShared(ctx context.Context, repo *database.Repository, pid, uid string) (Project, error) {
 	var p Project
+
+	tid, err := RetrieveTeamID(ctx, repo, pid)
+	if err != nil {
+		return p, err
+	}
+
 	if _, err := uuid.Parse(pid); err != nil {
 		return p, ErrInvalidID
 	}
 
 	m, err := memberships.Retrieve(ctx, repo, uid, tid)
 	if err != nil {
-		log.Println(err)
 		return p, ErrNotAuthorized
 	}
 
@@ -161,7 +161,7 @@ func List(ctx context.Context, repo *database.Repository, uid string) ([]Project
 		return nil, errors.Wrap(err, "selecting projects")
 	}
 	for rows.Next() {
-		err = rows.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
+		err = rows.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.UserID, &p.TeamID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 		if err != nil {
 			return nil, errors.Wrap(err, "scanning row into Struct")
 		}
@@ -205,10 +205,15 @@ func Create(ctx context.Context, repo *database.Repository, np NewProject, uid s
 	return p, nil
 }
 
-func Update(ctx context.Context, repo *database.Repository, pid, uid string, update UpdateProject) (Project, error) {
+func Update(ctx context.Context, repo *database.Repository, pid, uid string, update UpdateProject, now time.Time) (Project, error) {
+	var p Project
+	
 	p, err := Retrieve(ctx, repo, pid, uid)
 	if err != nil {
-		return p, err
+		p, err = RetrieveShared(ctx, repo, pid, uid)
+		if err != nil {
+				return p, err
+			}
 	}
 
 	if update.Name != nil {
@@ -239,7 +244,7 @@ func Update(ctx context.Context, repo *database.Repository, pid, uid string, upd
 		"public":       p.Public,
 		"column_order": pq.Array(p.ColumnOrder),
 		"team_id":      p.TeamID,
-		"updated_at":   update.UpdatedAt,
+		"updated_at":   now.UTC(),
 	}).Where(sq.Eq{"project_id": pid})
 
 	_, err = stmt.ExecContext(ctx)

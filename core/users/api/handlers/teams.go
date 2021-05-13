@@ -3,15 +3,16 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
-	"log"
-	"net/http"
-	"strings"
-	"time"
 
 	"github.com/devpies/devpie-client-core/users/domain/invites"
 	"github.com/devpies/devpie-client-core/users/domain/memberships"
@@ -141,6 +142,26 @@ func (t *Team) Retrieve(w http.ResponseWriter, r *http.Request) error {
 
 	return web.Respond(r.Context(), w, tm, http.StatusOK)
 }
+
+
+func (t *Team) List(w http.ResponseWriter, r *http.Request) error {
+	uid := t.auth0.GetUserById(r)
+
+	tms, err := teams.List(r.Context(), t.repo, uid)
+	if err != nil {
+		switch err {
+		case teams.ErrNotFound:
+			return web.NewRequestError(err, http.StatusNotFound)
+		case teams.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusBadRequest)
+		default:
+			return errors.Wrapf(err, "looking for user's teams")
+		}
+	}
+
+	return web.Respond(r.Context(), w, tms, http.StatusOK)
+}
+
 
 func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 	var token auth0.Token

@@ -25,7 +25,7 @@ spec:
             - name: API_WEB_PORT
               value: ":4000"
             - name: API_WEB_CORS_ORIGINS
-              value: "https://localhost:3000, https://devpie.local"
+              value: "http://localhost:3000, https://devpie.local:3000"
             - name: API_WEB_AUTH_DOMAIN
               valueFrom:
                 secretKeyRef:

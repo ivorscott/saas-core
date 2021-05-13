@@ -42,22 +42,10 @@ func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	uid := p.auth0.GetUserById(r)
 	pid := chi.URLParam(r, "pid")
 
-	tid, err := projects.RetrieveTeam(r.Context(),p.repo, pid)
-	if err != nil {
-		switch err {
-		case projects.ErrNotFound:
-			return web.NewRequestError(err, http.StatusNotFound)
-		case projects.ErrInvalidID:
-			return web.NewRequestError(err, http.StatusBadRequest)
-		default:
-			return errors.Wrapf(err, "looking for projects %q", pid)
-		}
-	}
-	
 	if opr, err := projects.Retrieve(r.Context(), p.repo, pid, uid); err == nil {
 		return web.Respond(r.Context(), w, opr, http.StatusOK)
 	}
-	spr, err := projects.RetrieveShared(r.Context(), p.repo, pid, uid, tid)
+	spr, err := projects.RetrieveShared(r.Context(), p.repo, pid, uid)
 	if err != nil {
 		return err
 	}
@@ -134,9 +122,7 @@ func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(err, "decoding project update")
 	}
 
-	update.UpdatedAt = time.Now()
-
-	up, err := projects.Update(r.Context(), p.repo, pid, uid, update)
+	up, err := projects.Update(r.Context(), p.repo, pid, uid, update, time.Now())
 	if err != nil {
 		switch err {
 		case projects.ErrNotFound:
@@ -174,7 +160,7 @@ func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 
 	p.nats.Publish(string(events.EventsProjectUpdated), bytes)
 
-	return web.Respond(r.Context(), w, nil, http.StatusNoContent)
+	return web.Respond(r.Context(), w, up, http.StatusOK)
 }
 
 func (p *Projects) Delete(w http.ResponseWriter, r *http.Request) error {

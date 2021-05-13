@@ -1,8 +1,5 @@
---- Enable uuid extension v9.1 and newer ( uuid_generate_v4() )
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 CREATE TABLE IF NOT EXISTS users (
-user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+user_id VARCHAR(36) PRIMARY KEY,
 auth0_id VARCHAR(128) NOT NULL UNIQUE,
 email VARCHAR(64) NOT NULL,
 email_verified BOOLEAN DEFAULT FALSE,
@@ -15,8 +12,8 @@ updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 
 CREATE TABLE IF NOT EXISTS teams (
-team_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-user_id UUID,
+team_id VARCHAR(36) PRIMARY KEY,
+user_id VARCHAR(36) NOT NULL,
 name VARCHAR(32) NOT NULL,
 created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
 updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
@@ -26,9 +23,9 @@ FOREIGN KEY (user_id) REFERENCES users (user_id)
 CREATE TYPE ROLE AS ENUM ('administrator', 'editor', 'commenter','viewer');
 
 CREATE TABLE IF NOT EXISTS memberships (
-membership_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-user_id UUID,
-team_id UUID,
+membership_id VARCHAR(36) PRIMARY KEY,
+user_id VARCHAR(36) NOT NULL,
+team_id VARCHAR(36) NOT NULL,
 role ROLE DEFAULT 'editor',
 created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
 updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
@@ -37,9 +34,9 @@ FOREIGN KEY (team_id) REFERENCES teams (team_id)
 );
 
 CREATE TABLE IF NOT EXISTS invites(
-invite_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-user_id UUID,
-team_id UUID,
+invite_id VARCHAR(36) PRIMARY KEY,
+user_id VARCHAR(36) NOT NULL,
+team_id VARCHAR(36) NOT NULL,
 read BOOLEAN DEFAULT FALSE,
 accepted BOOLEAN DEFAULT FALSE,
 expiration TIMESTAMP WITHOUT TIME ZONE DEFAULT ((NOW() + '5 days') AT TIME ZONE 'utc'),
@@ -50,7 +47,7 @@ FOREIGN KEY (team_id) REFERENCES teams (team_id)
 );
 
 CREATE TABLE ma_token (
-ma_token_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+ma_token_id VARCHAR(36) PRIMARY KEY,
 access_token TEXT NOT NULL,
 scope TEXT NOT NULL,
 expires_in INT NOT NULL,
@@ -59,11 +56,11 @@ created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 
 CREATE TABLE projects (
-project_id UUID PRIMARY KEY,
+project_id VARCHAR(36) PRIMARY KEY,
 name VARCHAR(36) NOT NULL,
 prefix VARCHAR(4) NOT NULL,
 description TEXT,
-user_id UUID,
+user_id VARCHAR(36) NOT NULL,
 team_id VARCHAR(36),
 active BOOLEAN DEFAULT TRUE,
 public BOOLEAN DEFAULT FALSE,
