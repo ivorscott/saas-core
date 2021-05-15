@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/go-chi/chi"
-	"github.com/pkg/errors"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi"
+	"github.com/pkg/errors"
 
 	"github.com/devpies/devpie-client-core/projects/domain/columns"
 	"github.com/devpies/devpie-client-core/projects/domain/tasks"
@@ -108,7 +109,7 @@ func (t *Tasks) Update(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	return web.Respond(r.Context(), w, update, http.StatusNoContent)
+	return web.Respond(r.Context(), w, update, http.StatusOK)
 }
 
 func (t *Tasks) Delete(w http.ResponseWriter, r *http.Request) error {
@@ -140,7 +141,7 @@ func (t *Tasks) Delete(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	return web.Respond(r.Context(), w, nil, http.StatusNoContent)
+	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
 func (t *Tasks) Move(w http.ResponseWriter, r *http.Request) error {
@@ -171,6 +172,17 @@ func (t *Tasks) Move(w http.ResponseWriter, r *http.Request) error {
 		toc := columns.UpdateColumn{TaskIDS: &newToTaskIds}
 
 		err = columns.Update(r.Context(), t.repo, mt.From, foc, time.Now())
+		if err != nil {
+			switch err {
+			case tasks.ErrNotFound:
+				return web.NewRequestError(err, http.StatusNotFound)
+			case tasks.ErrInvalidID:
+				return web.NewRequestError(err, http.StatusBadRequest)
+			default:
+				return errors.Wrapf(err, "updating column taskIds from:%q, to:%q", mt.From, mt.To)
+			}
+		}
+		
 		err = columns.Update(r.Context(), t.repo, mt.To, toc, time.Now())
 		if err != nil {
 			switch err {
@@ -184,7 +196,7 @@ func (t *Tasks) Move(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	return web.Respond(r.Context(), w, nil, http.StatusNoContent)
+	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
 func SliceIndex(limit int, predicate func(i int) bool) int {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -100,15 +102,65 @@ func List(ctx context.Context, repo *database.Repository, pid string) ([]Task, e
 
 func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid string, now time.Time) (Task, error) {
 
-	t := Task{
+	var t Task
+	var ltk Task 
+	var p projects.Project
+
+	p, err := projects.Retrieve(ctx, repo, pid, uid)
+	if err != nil {
+		p, err = projects.RetrieveShared(ctx, repo, pid, uid)
+		if err != nil {
+			return t, err
+		}
+	}
+
+	// get key from last task created in project
+	stmt1 := repo.SQ.Select(
+	"key",
+	).From(
+		"tasks",
+	).Where(sq.Eq{"project_id": pid},
+	).OrderBy(
+		"created_at DESC",
+	).Limit(1)
+
+	q, args, err := stmt1.ToSql()
+	if err != nil {
+		return t, errors.Wrapf(err, "building query: %v", args)
+	}
+
+	err = repo.DB.QueryRowContext(ctx, q, pid).Scan(&ltk.Key)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return t, err
+		}
+	}
+	 
+	// generate sequence number
+	// if no tasks exists than begin with 1 eg., (APP-1)	
+	// otherwise increment last number
+	seq := 1
+	if ltk.Key != "" {
+		ss := strings.Split(ltk.Key,"-")
+		lastKeyNumber, err := strconv.Atoi(ss[1])
+		if err != nil {
+			return t, nil
+		}
+		seq = lastKeyNumber + 1
+	}
+
+	k := fmt.Sprintf("%s%d", p.Prefix, seq)
+
+	t = Task{
 		ID:          uuid.New().String(),
+		Key: 		 k,
 		Title:       nt.Title,
 		ProjectID:   pid,
 		Comments:    make([]string, 0),
 		Attachments: make([]string, 0),
 	}
 
-	stmt := repo.SQ.Insert(
+	stmt2 := repo.SQ.Insert(
 		"tasks",
 	).SetMap(map[string]interface{}{
 		"task_id":     t.ID,
@@ -123,43 +175,11 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid
 		"created_at":  now.UTC(),
 	})
 
-	if _, err := stmt.ExecContext(ctx); err != nil {
+	if _, err := stmt2.ExecContext(ctx); err != nil {
 		return t, errors.Wrapf(err, "inserting tasks: %v", nt)
 	}
 
-	// Update Task with Project Prefix and Sequence Number
-	var p projects.Project
-
-	p, err := projects.Retrieve(ctx, repo, pid, uid)
-	if err != nil {
-		p, err = projects.RetrieveShared(ctx, repo, pid, uid)
-		if err != nil {
-			return t, err
-		}
-	}
-
-	task, err := Retrieve(ctx, repo, t.ID)
-	if err != nil {
-		return t, err
-	}
-
-	k := fmt.Sprintf("%s%d", p.Prefix, task.Seq)
-
-	updateStmt := repo.SQ.Update(
-		"tasks",
-	).SetMap(map[string]interface{}{
-		"title":      t.Title,
-		"key":        k,
-		"updated_at": now.UTC(),
-	}).Where(sq.Eq{"task_id": t.ID})
-
-	if _, err := updateStmt.ExecContext(ctx); err != nil {
-		return t, errors.Wrapf(err, "updating task %s with key %s", t.ID, k)
-	}
-
-	task.Key = k
-
-	return task, nil
+	return t, nil
 }
 
 func Update(ctx context.Context, repo *database.Repository, tid string, update UpdateTask, now time.Time) (Task, error) {
@@ -174,6 +194,9 @@ func Update(ctx context.Context, repo *database.Repository, tid string, update U
 	if update.Content != nil {
 		t.Content = *update.Content
 	}
+	if update.AssignedTo != nil {
+		t.AssignedTo = *update.AssignedTo
+	}
 	if update.Attachments != nil {
 		t.Attachments = update.Attachments
 	}
@@ -186,6 +209,7 @@ func Update(ctx context.Context, repo *database.Repository, tid string, update U
 	).SetMap(map[string]interface{}{
 		"title":       t.Title,
 		"content":     t.Content,
+		"assigned_to": t.AssignedTo,
 		"comments":    pq.Array(t.Comments),
 		"attachments": pq.Array(t.Attachments),
 		"updated_at":  now.UTC(),
