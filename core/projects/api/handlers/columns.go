@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"github.com/go-chi/chi"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi"
 
 	"github.com/devpies/devpie-client-core/projects/domain/columns"
 	"github.com/devpies/devpie-client-core/projects/platform/auth0"
@@ -81,7 +82,7 @@ func (c *Columns) Update(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	return web.Respond(r.Context(), w, nil, http.StatusNoContent)
+	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
 func (c *Columns) Delete(w http.ResponseWriter, r *http.Request) error {
@@ -96,5 +97,5 @@ func (c *Columns) Delete(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	return web.Respond(r.Context(), w, nil, http.StatusNoContent)
+	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }

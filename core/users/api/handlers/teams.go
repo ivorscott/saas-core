@@ -244,7 +244,8 @@ func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 
-		if _, err := invites.Create(r.Context(), t.repo, ni, time.Now()); err != nil {
+		_, err = invites.Create(r.Context(), t.repo, ni, time.Now()); 
+		if err != nil {
 			return err
 		}
 	}
