@@ -42,12 +42,21 @@ func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	uid := p.auth0.GetUserById(r)
 	pid := chi.URLParam(r, "pid")
 
-	if opr, err := projects.Retrieve(r.Context(), p.repo, pid, uid); err == nil {
+	opr, err := projects.Retrieve(r.Context(), p.repo, pid, uid);
+	if err == nil {
 		return web.Respond(r.Context(), w, opr, http.StatusOK)
 	}
+	
 	spr, err := projects.RetrieveShared(r.Context(), p.repo, pid, uid)
 	if err != nil {
-		return err
+		switch err {
+		case projects.ErrNotFound:
+			return web.NewRequestError(err, http.StatusNotFound)
+		case projects.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusBadRequest)
+		default:
+			return errors.Wrapf(err, "updating project %q", pid)
+		}
 	}
 
 	return web.Respond(r.Context(), w, spr, http.StatusOK)
@@ -168,7 +177,10 @@ func (p *Projects) Delete(w http.ResponseWriter, r *http.Request) error {
 	uid := p.auth0.GetUserById(r)
 
 	if _, err := projects.Retrieve(r.Context(), p.repo, pid, uid); err != nil {
-		return err
+		_, err := projects.RetrieveShared(r.Context(), p.repo, pid, uid)
+		if err == nil {
+			return web.NewRequestError(err, http.StatusUnauthorized)
+		}
 	}
 	if err := tasks.DeleteAll(r.Context(), p.repo, pid); err != nil {
 		return err
@@ -204,5 +216,5 @@ func (p *Projects) Delete(w http.ResponseWriter, r *http.Request) error {
 
 	p.nats.Publish(string(events.EventsProjectDeleted), bytes)
 
-	return web.Respond(r.Context(), w, nil, http.StatusNoContent)
+	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
