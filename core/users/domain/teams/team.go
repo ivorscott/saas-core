@@ -18,19 +18,21 @@ var (
 
 func Create(ctx context.Context, repo *database.Repository, nt NewTeam, uid string, now time.Time) (Team, error) {
 	t := Team{
-		ID:      uuid.New().String(),
-		Name:    nt.Name,
-		UserId:  uid,
+		ID:        uuid.New().String(),
+		Name:      nt.Name,
+		UserId:    uid,
+		UpdatedAt: now.UTC(),
+		CreateAt:  now.UTC(),
 	}
 
 	stmt := repo.SQ.Insert(
 		"teams",
 	).SetMap(map[string]interface{}{
-		"team_id": t.ID,
-		"name":    t.Name,
-		"user_id": t.UserId,
-		"updated_at": now.UTC(),
-		"created_at": now.UTC(),
+		"team_id":    t.ID,
+		"name":       t.Name,
+		"user_id":    t.UserId,
+		"updated_at": t.UpdatedAt,
+		"created_at": t.CreateAt,
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
@@ -71,7 +73,6 @@ func Retrieve(ctx context.Context, repo *database.Repository, tid string) (Team,
 
 	return t, nil
 }
-
 
 func List(ctx context.Context, repo *database.Repository, uid string) ([]Team, error) {
 	var ts []Team

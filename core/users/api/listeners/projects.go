@@ -2,6 +2,7 @@ package listeners
 
 import (
 	"context"
+
 	"github.com/devpies/devpie-client-core/users/domain/projects"
 	"github.com/devpies/devpie-client-events/go/events"
 	"github.com/nats-io/stan.go"

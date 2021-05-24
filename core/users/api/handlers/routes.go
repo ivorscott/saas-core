@@ -38,6 +38,8 @@ func API(shutdown chan os.Signal, repo *database.Repository, log *log.Logger, or
 	app.Handle(http.MethodGet, "/api/v1/users/me", u.RetrieveMe)
 
 	app.Handle(http.MethodPost, "/api/v1/users/teams", tm.Create)
+	app.Handle(http.MethodPost, "/api/v1/users/teams/{tid}/project/{pid}", tm.AssignExisting)
+	app.Handle(http.MethodPost, "/api/v1/users/teams/{tid}/leave", tm.LeaveTeam)
 	app.Handle(http.MethodGet, "/api/v1/users/teams", tm.List)
 	app.Handle(http.MethodGet, "/api/v1/users/teams/{tid}", tm.Retrieve)
 	app.Handle(http.MethodPost, "/api/v1/users/teams/{tid}/invites", tm.CreateInvite)

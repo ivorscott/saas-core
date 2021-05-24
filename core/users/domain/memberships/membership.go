@@ -14,6 +14,7 @@ import (
 
 var (
 	ErrNotFound = errors.New("membership not found")
+	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
 func Create(ctx context.Context, repo *database.Repository, nm NewMembership, now time.Time) (Membership, error) {
@@ -137,4 +138,33 @@ func Update(ctx context.Context, repo *database.Repository, tid string, update U
 	}
 
 	return nil
+}
+
+
+func Delete(ctx context.Context, repo *database.Repository, tid, uid string) (string, error ){
+	if _, err := uuid.Parse(tid); err != nil {
+		return "", ErrInvalidID
+	}
+
+	stmt := repo.SQ.Delete(
+		"memberships",
+	).Where(
+		sq.Eq{"team_id": "?", "user_id": "?"},
+	).Suffix(
+		"RETURNING membership_id",
+	)
+
+	q,_,err := stmt.ToSql()
+	if err != nil {
+		return "", err
+	}
+	
+	row := repo.DB.QueryRowContext(ctx,q, tid, uid)
+	var membershipId string
+
+	if err :=row.Scan(&membershipId); err != nil {
+		return "",errors.Wrapf(err, "deleting membership")
+	}
+
+	return membershipId, nil
 }

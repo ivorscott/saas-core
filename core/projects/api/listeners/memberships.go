@@ -130,3 +130,34 @@ func (l *Listeners) handleMembershipDeleted(m *stan.Msg) {
 		l.log.Printf("failed to Acknowledge message \n %v", err)
 	}
 }
+
+func (l *Listeners) handleProjectUpdated(m *stan.Msg) {
+	msg, err := events.UnmarshalProjectUpdatedEvent(m.Data)
+	if err != nil {
+		l.log.Printf("warning: failed to unmarshal Command \n %v", err)
+	}
+
+	event := msg.Data
+	updatedtime, err := events.ParseTime(event.UpdatedAt)
+	if err != nil {
+		l.log.Printf("failed to parse time")
+	}
+
+	update := projects.UpdateProject{
+		Name:        event.Name,
+		Description: event.Description,
+		Active:      event.Active,
+		Public:      event.Public,
+		TeamID:      event.TeamID,
+		ColumnOrder: event.ColumnOrder,
+	}
+
+	if _, err = projects.Update(context.Background(), l.repo, event.ProjectID, msg.Metadata.UserID, update, updatedtime); err != nil {
+		l.log.Printf("failed to update project: %s \n %v", event.ProjectID, err)
+	}
+
+	err = m.Ack()
+	if err != nil {
+		l.log.Printf("failed to Acknowledge message \n %v", err)
+	}
+}

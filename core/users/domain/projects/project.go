@@ -22,9 +22,6 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid string) (Proje
 		return p, ErrInvalidID
 	}
 
-	// TODO: Check ownership at Team and User level before granting access
-	// TODO: Also allow site Admins (where role==admin in Auth0)
-
 	stmt := repo.SQ.Select(
 		"project_id",
 		"name",

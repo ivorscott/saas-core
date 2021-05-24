@@ -1,9 +1,10 @@
 package listeners
 
 import (
-	"github.com/nats-io/stan.go"
 	"log"
 	"time"
+
+	"github.com/nats-io/stan.go"
 
 	"github.com/devpies/devpie-client-core/projects/platform/database"
 	"github.com/devpies/devpie-client-events/go/events"
@@ -34,5 +35,8 @@ func (l *Listeners) RegisterAll(nats *events.Client, queueGrp string) {
 		stan.SetManualAckMode(), stan.AckWait(l.dur), stan.DurableName(queueGrp))
 
 	nats.Listen(string(events.EventsMembershipCreatedForProject), queueGrp, l.handleMembershipCreatedForProject, stan.DeliverAllAvailable(),
+		stan.SetManualAckMode(), stan.AckWait(l.dur), stan.DurableName(queueGrp))
+
+	nats.Listen(string(events.EventsProjectUpdated), queueGrp, l.handleProjectUpdated, stan.DeliverAllAvailable(),
 		stan.SetManualAckMode(), stan.AckWait(l.dur), stan.DurableName(queueGrp))
 }

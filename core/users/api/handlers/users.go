@@ -25,8 +25,10 @@ func (u *Users) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 	id := u.auth0.GetUserById(r)
 
 	if id == "" {
-		err := errors.New("users error: missing user id")
-		return web.NewRequestError(err, http.StatusNotFound)
+		if _, err := users.RetrieveMeByAuthID(r.Context(), u.repo, id); err == nil {
+			e := errors.New("users error: missing user id")
+			return web.NewRequestError(e, http.StatusNotFound)
+		}
 	}
 
 	us, err := users.RetrieveMe(r.Context(), u.repo, id)

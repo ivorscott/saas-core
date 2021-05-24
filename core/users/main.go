@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/devpies/devpie-client-core/users/api/listeners"
-	"github.com/devpies/devpie-client-events/go/events"
-	"github.com/pkg/errors"
+
 	"log"
 	"math/rand"
 	"net/http"
@@ -15,9 +13,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ardanlabs/conf"
 	"github.com/devpies/devpie-client-core/users/api/handlers"
-	"github.com/devpies/devpie-client-core/users/platform/conf"
+	"github.com/devpies/devpie-client-core/users/api/listeners"
 	"github.com/devpies/devpie-client-core/users/platform/database"
+	"github.com/devpies/devpie-client-events/go/events"
+	"github.com/pkg/errors"
 )
 
 func main() {
