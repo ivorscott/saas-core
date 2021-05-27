@@ -39,7 +39,7 @@ CMD ["./main"]
 
 FROM dev as build-stage
 
-RUN go build -o main . && go test ./...
+RUN go build -o main .
 
 FROM aquasec/trivy:0.4.4 as trivy
 
