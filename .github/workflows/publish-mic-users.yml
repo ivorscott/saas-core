@@ -1,4 +1,4 @@
-   name: publish-mic-users
+name: publish-mic-users
 
 on:
   push:
