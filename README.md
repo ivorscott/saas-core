@@ -237,22 +237,3 @@ spec:
 </details>
 
 Learn more about migrate cli [here](https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md).
-
-## Development with Docker Compose
-
-```
-# create migration
-docker-compose run -v ./core/databases/projects/migrations:/migrations migration <migration_name>
-
-# print current migration version
-docker-compose run -v ./core/databases/projects/migrations:/migrations version 
-
-# migrate up a number (optional number, defaults to latest migration)
-docker-compose run -v ./core/databases/projects/migrations:/migrations up <number> 
-
-# migrate down a number (optional number, defaults to 1)
-docker-compose run -v ./core/databases/projects/migrations:/migrations down <number>
-
-# Set version but don't run migration (ignores dirty state)
-docker-compose run -v ./core/databases/projects/migrations:/migrations force <version> 
-```
