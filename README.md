@@ -133,9 +133,9 @@ kubectl port-forward pod/pgadmin 8888:80
 
 Migrations exist under the following paths:
 
-- `./databases/nats/migrations`
-- `./databases/projects/migrations`
-- `./databases/users/migrations`
+- `./nats/migrations`
+- `./core/projects/schema/migrations`
+- `./core/users/schema/migrations`
 
 #### Migration Flow
 
@@ -149,7 +149,7 @@ Migrations exist under the following paths:
 <br>
 
 ```bash
-cd databases/projects
+cd core/projects/schema
 
 migrate create -ext sql -dir migrations -seq create_table
 
