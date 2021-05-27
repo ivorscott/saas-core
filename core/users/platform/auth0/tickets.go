@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -53,7 +52,6 @@ func (a0 *Auth0) ChangePasswordTicket(token Token, user AuthUser, resultUrl stri
 	}
 
 	ticket := passTicket.Ticket + "invite"
-	log.Println("==========jsonStr",ticket)
 
 	return ticket, err
 }

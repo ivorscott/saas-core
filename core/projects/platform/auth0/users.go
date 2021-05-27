@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,15 +14,10 @@ import (
 
 const usersEndpoint = "/api/v2/users"
 
-type User struct{
-	ID string
-	Email string
-}
-
 var ErrInvalidID = errors.New("id provided was not a valid UUID")
 
-func (a0 *Auth0) CreateUser(token Token, email string) (User, error) {
-	var u User
+func (a0 *Auth0) CreateUser(token Token, email string) (AuthUser, error) {
+	var u AuthUser
 
 	connectionType := DatabaseConnection
 	defaultPassword := uuid.New().String()
@@ -49,11 +45,13 @@ func (a0 *Auth0) CreateUser(token Token, email string) (User, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
+		log.Println(err)
 		return u, err
 	}
 	defer res.Body.Close()
 
 	body, _ := ioutil.ReadAll(res.Body)
+	log.Println(string(body))
 	if err := json.Unmarshal(body, &u); err != nil {
 		return u, err
 	}
@@ -62,13 +60,13 @@ func (a0 *Auth0) CreateUser(token Token, email string) (User, error) {
 }
 
 // Update auth0 user account with user_id from internal database
-func (a0 *Auth0) UpdateUserAppMetaData(token Token, userId string) error {
+func (a0 *Auth0) UpdateUserAppMetaData(token Token, subject, userId string) error {
 	if _, err := uuid.Parse(userId); err != nil {
 		return ErrInvalidID
 	}
 
 	baseUrl := "https://" + a0.Domain
-	resource := "/api/v2/users/" + a0.Auth0User
+	resource := "/api/v2/users/" + subject
 
 	uri, err := url.ParseRequestURI(baseUrl)
 	if err != nil {

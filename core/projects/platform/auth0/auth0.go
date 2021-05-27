@@ -1,28 +1,42 @@
 package auth0
 
 import (
-	"github.com/dgrijalva/jwt-go"
-	"github.com/pkg/errors"
-	"time"
-
 	"github.com/devpies/devpie-client-core/projects/platform/database"
+	"github.com/dgrijalva/jwt-go"
+	"time"
 )
 
 type Auth0 struct {
 	Repo         *database.Repository
-	Auth0User    string
 	Domain       string
 	Audience     string
 	M2MClient    string
 	M2MSecret    string
 	MAPIAudience string
-	CertHandler  PemHandler
+}
+
+type AuthUser struct {
+	Auth0ID       string  `json:"user_id" `
+	Email         string  `json:"email"`
+	EmailVerified bool    `json:"email_verified"`
+	FirstName     *string `json:"nickname"`
+	Picture       *string `json:"picture"`
 }
 
 type Token struct {
-	ID          string    `db:"ma_token_id" json:"id"`
-	AccessToken string    `db:"token" json:"accessToken"`
-	CreatedAt   time.Time `db:"created_at" json:"createdAt"`
+	ID          string    `db:"ma_token_id"`
+	AccessToken string    `db:"access_token"`
+	Scope       string    `db:"scope"`
+	ExpiresIn   int       `db:"expires_in"`
+	TokenType   string    `db:"token_type"`
+	CreatedAt   time.Time `db:"created_at"`
+}
+
+type NewToken struct {
+	AccessToken string `db:"access_token" json:"access_token"`
+	Scope       string `db:"scope" json:"scope"`
+	ExpiresIn   int    `db:"expires_in" json:"expires_in"`
+	TokenType   string `db:"token_type" json:"token_type"`
 }
 
 type Jwks struct {
@@ -38,14 +52,7 @@ type JSONWebKeys struct {
 	X5c []string `json:"x5c"`
 }
 
-
 type CustomClaims struct {
 	Scope string `json:"scope"`
 	jwt.StandardClaims
 }
-
-type PemHandler func(token *jwt.Token) (string, error)
-
-var (
-	ErrNotFound = errors.New("token not found")
-)

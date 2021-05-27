@@ -3,7 +3,6 @@ package auth0
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -16,29 +15,32 @@ import (
 
 const oauthEndpoint = "/oauth/token"
 
-func (a0 *Auth0) GetToken() (Token, error) {
+var (
+	ErrNotFound = errors.New("token not found")
+)
+
+func (a0 *Auth0) GetOrCreateToken() (Token, error) {
 	var t Token
-	t, err := a0.Retrieve()
+
+	t, err := a0.RetrieveToken()
 	if err == ErrNotFound || a0.IsExpired(t) {
-		// create new token
-		t, err = a0.NewManagementToken()
+		nt, err := a0.NewManagementToken()
 		if err != nil {
 			return t, err
 		}
 		// clean table before persisting
-		if err := a0.Delete(); err != nil {
+		if err := a0.DeleteToken(); err != nil {
 			return t, err
 		}
-		if err := a0.Persist(t, time.Now()); err != nil {
+		if err := a0.PersistToken(nt, time.Now()); err != nil {
 			return t, err
 		}
 	}
 	return t, nil
 }
 
-func (a0 *Auth0) NewManagementToken() (Token, error) {
-	var t Token
-	fmt.Print("creating new token===============", t)
+func (a0 *Auth0) NewManagementToken() (NewToken, error) {
+	var t NewToken
 
 	baseUrl := "https://" + a0.Domain
 	resource := oauthEndpoint
@@ -74,19 +76,18 @@ func (a0 *Auth0) NewManagementToken() (Token, error) {
 	if err != nil {
 		return t, err
 	}
-	fmt.Print("token===============", string(body))
 
 	err = json.Unmarshal(body, &t)
 	if err != nil {
 		return t, err
 	}
-	fmt.Print("token===============", t)
+
 	return t, nil
 }
 
 func (a0 *Auth0) IsExpired(token Token) bool {
 	parsedToken, err := jwt.ParseWithClaims(token.AccessToken, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		cert, err := a0.CertHandler(token)
+		cert, err := a0.GetPemCert(token)
 		if err != nil {
 			return true, err
 		}
@@ -112,12 +113,15 @@ func (a0 *Auth0) IsExpired(token Token) bool {
 	return false
 }
 
-func (a0 *Auth0) Retrieve() (Token, error) {
+func (a0 *Auth0) RetrieveToken() (Token, error) {
 	var t Token
 
 	stmt := a0.Repo.SQ.Select(
 		"ma_token_id",
-		"token",
+		"scope",
+		"expires_in",
+		"access_token",
+		"token_type",
 		"created_at",
 	).From(
 		"ma_token",
@@ -138,25 +142,25 @@ func (a0 *Auth0) Retrieve() (Token, error) {
 	return t, nil
 }
 
-func (a0 *Auth0) Persist(nt Token, now time.Time) error {
-	t := Token{
-		ID:          uuid.New().String(),
-		AccessToken: nt.AccessToken,
-	}
+func (a0 *Auth0) PersistToken(t NewToken, now time.Time) error {
+
 	stmt := a0.Repo.SQ.Insert(
 		"ma_token",
 	).SetMap(map[string]interface{}{
-		"ma_token_id": t.ID,
-		"token":       t.AccessToken,
-		"created_at":  now.UTC(),
+		"ma_token_id":  uuid.New().String(),
+		"scope":        t.Scope,
+		"expires_in":   t.ExpiresIn,
+		"access_token": t.AccessToken,
+		"token_type":   t.TokenType,
+		"created_at":   now.UTC(),
 	})
 	if _, err := stmt.Exec(); err != nil {
-		return errors.Wrapf(err, "inserting token: %v", nt)
+		return errors.Wrapf(err, "inserting token: %v", t)
 	}
 	return nil
 }
 
-func (a0 *Auth0) Delete() error {
+func (a0 *Auth0) DeleteToken() error {
 	stmt := a0.Repo.SQ.Delete("ma_token")
 	if _, err := stmt.Exec(); err != nil {
 		return errors.Wrapf(err, "deleting previous token")
