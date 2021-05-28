@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -45,13 +44,11 @@ func (a0 *Auth0) CreateUser(token Token, email string) (AuthUser, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Println(err)
 		return u, err
 	}
 	defer res.Body.Close()
 
 	body, _ := ioutil.ReadAll(res.Body)
-	log.Println(string(body))
 	if err := json.Unmarshal(body, &u); err != nil {
 		return u, err
 	}
@@ -83,8 +80,9 @@ func (a0 *Auth0) UpdateUserAppMetaData(token Token, subject, userId string) erro
 		return err
 	}
 
+	bearer := fmt.Sprintf("Bearer %s", token.AccessToken)
 	req.Header.Add("content-type", "application/json")
-	req.Header.Add("authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+	req.Header.Add("authorization", bearer)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {

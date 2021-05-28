@@ -22,16 +22,13 @@ type Users struct {
 func (u *Users) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 	var us users.User
 
-	id := u.auth0.GetUserById(r)
+	uid := u.auth0.GetUser(r, users.RetrieveMeByAuthID)
 
-	if id == "" {
-		if _, err := users.RetrieveMeByAuthID(r.Context(), u.repo, id); err == nil {
-			e := errors.New("users error: missing user id")
-			return web.NewRequestError(e, http.StatusNotFound)
-		}
+	if uid == "" {
+		return web.NewRequestError(users.ErrNotFound, http.StatusNotFound)
 	}
 
-	us, err := users.RetrieveMe(r.Context(), u.repo, id)
+	us, err := users.RetrieveMe(r.Context(), u.repo, uid)
 	if err != nil {
 		switch err {
 		case users.ErrNotFound:
@@ -39,7 +36,7 @@ func (u *Users) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 		case users.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return errors.Wrapf(err, "looking for user %q", id)
+			return errors.Wrapf(err, "looking for user %q", uid)
 		}
 	}
 

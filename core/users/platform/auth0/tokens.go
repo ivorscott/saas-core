@@ -32,10 +32,12 @@ func (a0 *Auth0) GetOrCreateToken() (Token, error) {
 		if err := a0.DeleteToken(); err != nil {
 			return t, err
 		}
-		if err := a0.PersistToken(nt, time.Now()); err != nil {
+		t, err = a0.PersistToken(nt, time.Now())
+		if err != nil {
 			return t, err
 		}
 	}
+
 	return t, nil
 }
 
@@ -142,7 +144,15 @@ func (a0 *Auth0) RetrieveToken() (Token, error) {
 	return t, nil
 }
 
-func (a0 *Auth0) PersistToken(t NewToken, now time.Time) error {
+func (a0 *Auth0) PersistToken(nt NewToken, now time.Time) (Token,error) {
+	t := Token{
+		ID: uuid.New().String(),
+		Scope: nt.Scope,
+		ExpiresIn: nt.ExpiresIn,
+		AccessToken: nt.AccessToken,
+		TokenType: nt.TokenType,
+		CreatedAt: now.UTC(),
+	}
 
 	stmt := a0.Repo.SQ.Insert(
 		"ma_token",
@@ -152,12 +162,13 @@ func (a0 *Auth0) PersistToken(t NewToken, now time.Time) error {
 		"expires_in":   t.ExpiresIn,
 		"access_token": t.AccessToken,
 		"token_type":   t.TokenType,
-		"created_at":   now.UTC(),
+		"created_at":   t.CreatedAt,
 	})
 	if _, err := stmt.Exec(); err != nil {
-		return errors.Wrapf(err, "inserting token: %v", t)
+		return t, errors.Wrapf(err, "inserting token: %v", t)
 	}
-	return nil
+
+	return t, nil
 }
 
 func (a0 *Auth0) DeleteToken() error {
