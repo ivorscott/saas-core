@@ -22,7 +22,7 @@ type Users struct {
 func (u *Users) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 	var us users.User
 
-	uid := u.auth0.GetUser(r, users.RetrieveMeByAuthID)
+	uid := u.auth0.GetUserById(r)
 
 	if uid == "" {
 		return web.NewRequestError(users.ErrNotFound, http.StatusNotFound)

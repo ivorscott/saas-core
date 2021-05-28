@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/devpies/devpie-client-core/users/domain/users"
 	"log"
 	"net/http"
 
@@ -24,7 +23,7 @@ type Memberships struct {
 
 
 func (m *Memberships) RetrieveMembers(w http.ResponseWriter, r *http.Request) error {
-	uid := m.auth0.GetUser(r, users.RetrieveMeByAuthID)
+	uid := m.auth0.GetUserById(r)
 
 	tid := chi.URLParam(r, "tid")
 

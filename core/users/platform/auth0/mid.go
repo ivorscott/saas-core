@@ -1,13 +1,10 @@
 package auth0
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
-	"github.com/devpies/devpie-client-core/users/domain/users"
-	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/dgrijalva/jwt-go"
 	"net/http"
 	"strings"
@@ -113,20 +110,6 @@ func (a0 *Auth0) GetPemCert(token *jwt.Token) (string, error) {
 		return cert, err
 	}
 	return cert, nil
-}
-
-type Lookup func(ctx context.Context, repo *database.Repository, aid string)  (users.User,error)
-
-func (a0 *Auth0) GetUser(r *http.Request, cb Lookup) string {
-	uid := a0.GetUserById(r)
-	if uid == "" {
-		user, err := cb(r.Context(), a0.Repo, a0.GetUserBySubject(r))
-		if err != nil {
-			return ""
-		}
-		return user.ID
-	}
-	return uid
 }
 
 func (a0 *Auth0) GetUserBySubject(r *http.Request) string {

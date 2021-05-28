@@ -38,7 +38,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 	var nt teams.NewTeam
 	var role memberships.Role = memberships.Administrator
 
-	uid := t.auth0.GetUser(r, users.RetrieveMeByAuthID)
+	uid := t.auth0.GetUserById(r)
 
 	if err := web.Decode(r, &nt); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -143,7 +143,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 func (t *Team) AssignExisting(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 	pid := chi.URLParam(r, "pid")
-	uid := t.auth0.GetUser(r, users.RetrieveMeByAuthID)
+	uid := t.auth0.GetUserById(r)
 
 	tm, err := teams.Retrieve(r.Context(), t.repo, tid)
 	if err != nil {
@@ -194,7 +194,7 @@ func (t *Team) AssignExisting(w http.ResponseWriter, r *http.Request) error {
 func (t *Team) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 
-	uid := t.auth0.GetUser(r, users.RetrieveMeByAuthID)
+	uid := t.auth0.GetUserById(r)
 
 	// if user is the administrator
 	// and is the last to leave
@@ -257,7 +257,7 @@ func (t *Team) Retrieve(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (t *Team) List(w http.ResponseWriter, r *http.Request) error {
-	uid := t.auth0.GetUser(r, users.RetrieveMeByAuthID)
+	uid := t.auth0.GetUserById(r)
 
 	tms, err := teams.List(r.Context(), t.repo, uid)
 	if err != nil {
@@ -366,7 +366,7 @@ func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (t *Team) RetrieveInvites(w http.ResponseWriter, r *http.Request) error {
-	uid := t.auth0.GetUser(r, users.RetrieveMeByAuthID)
+	uid := t.auth0.GetUserById(r)
 
 	is, err := invites.RetrieveInvites(r.Context(), t.repo, uid)
 	if err != nil {
@@ -407,7 +407,7 @@ func (t *Team) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
 	var update invites.UpdateInvite
 	var role memberships.Role = memberships.Editor
 
-	uid := t.auth0.GetUser(r, users.RetrieveMeByAuthID)
+	uid := t.auth0.GetUserById(r)
 	tid := chi.URLParam(r, "tid")
 	iid := chi.URLParam(r, "iid")
 

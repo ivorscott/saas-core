@@ -12,6 +12,7 @@ import (
 	"github.com/devpies/devpie-client-core/projects/platform/web"
 )
 
+
 // Authenticate middleware verifies the access token sent from auth0
 func (a0 *Auth0) Authenticate() web.Middleware {
 	// this is the actual middleware function to be executed.
@@ -106,7 +107,7 @@ func (a0 *Auth0) GetPemCert(token *jwt.Token) (string, error) {
 	}
 
 	if cert == "" {
-		err := errors.New("Unable to find appropriate key.")
+		err := errors.New("unable to find appropriate key")
 		return cert, err
 	}
 	return cert, nil
