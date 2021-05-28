@@ -68,6 +68,12 @@ func SetupTests(t *testing.T) (Cfg, *database.Repository, *log.Logger) {
 		infolog.Fatal(err, "error: parsing config")
 	}
 
+	repo := NewIntegration(t, cfg)
+
+	return cfg, repo, infolog
+}
+
+func NewIntegration(t *testing.T, cfg Cfg) *database.Repository {
 	ctx := context.Background()
 
 	postgresPort := nat.Port("5432/tcp")
@@ -126,8 +132,7 @@ func SetupTests(t *testing.T) (Cfg, *database.Repository, *log.Logger) {
 	if err := schema.Seed(repo.DB, "projects"); err != nil {
 		t.Fatal(err)
 	}
-
-	return cfg, repo, infolog
+	return repo
 }
 
 type Test struct {

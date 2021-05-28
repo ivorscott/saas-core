@@ -15,6 +15,10 @@ import (
 )
 
 func TestTeams(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	cfg, repo, logger := SetupTests(t)
 	defer repo.Close()
 
