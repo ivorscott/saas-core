@@ -29,7 +29,7 @@ func (a0 *Auth0) GetOrCreateToken() (Token, error) {
 			return t, err
 		}
 		// clean table before persisting
-		if err := a0.DeleteToken(); err != nil {
+		if err = a0.DeleteToken(); err != nil {
 			return t, err
 		}
 		t, err = a0.PersistToken(nt, time.Now())
@@ -144,14 +144,14 @@ func (a0 *Auth0) RetrieveToken() (Token, error) {
 	return t, nil
 }
 
-func (a0 *Auth0) PersistToken(nt NewToken, now time.Time) (Token,error) {
+func (a0 *Auth0) PersistToken(nt NewToken, now time.Time) (Token, error) {
 	t := Token{
-		ID: uuid.New().String(),
-		Scope: nt.Scope,
-		ExpiresIn: nt.ExpiresIn,
+		ID:          uuid.New().String(),
+		Scope:       nt.Scope,
+		ExpiresIn:   nt.ExpiresIn,
 		AccessToken: nt.AccessToken,
-		TokenType: nt.TokenType,
-		CreatedAt: now.UTC(),
+		TokenType:   nt.TokenType,
+		CreatedAt:   now.UTC(),
 	}
 
 	stmt := a0.Repo.SQ.Insert(

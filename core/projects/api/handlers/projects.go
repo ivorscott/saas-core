@@ -42,11 +42,11 @@ func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	uid := p.auth0.GetUserById(r)
 	pid := chi.URLParam(r, "pid")
 
-	opr, err := projects.Retrieve(r.Context(), p.repo, pid, uid);
+	opr, err := projects.Retrieve(r.Context(), p.repo, pid, uid)
 	if err == nil {
 		return web.Respond(r.Context(), w, opr, http.StatusOK)
 	}
-	
+
 	spr, err := projects.RetrieveShared(r.Context(), p.repo, pid, uid)
 	if err != nil {
 		switch err {

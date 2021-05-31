@@ -90,7 +90,7 @@ func (l *Listeners) handleProjectDeleted(m *stan.Msg) {
 
 	event := msg.Data
 
-	if err := projects.Delete(context.Background(), l.repo, event.ProjectID); err != nil {
+	if err = projects.Delete(context.Background(), l.repo, event.ProjectID); err != nil {
 		l.log.Printf("failed to delete project: %s \n %v", event.ProjectID, err)
 	}
 

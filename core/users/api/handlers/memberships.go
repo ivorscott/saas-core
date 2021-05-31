@@ -15,12 +15,11 @@ import (
 )
 
 type Memberships struct {
-	repo        *database.Repository
-	log         *log.Logger
-	auth0       *auth0.Auth0
-	nats        *events.Client
+	repo  *database.Repository
+	log   *log.Logger
+	auth0 *auth0.Auth0
+	nats  *events.Client
 }
-
 
 func (m *Memberships) RetrieveMembers(w http.ResponseWriter, r *http.Request) error {
 	uid := m.auth0.GetUserById(r)

@@ -36,7 +36,7 @@ func (a0 *Auth0) GetConnectionId(token Token) (string, error) {
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)
 
-	if err := json.Unmarshal(body, &conn); err != nil {
+	if err = json.Unmarshal(body, &conn); err != nil {
 		return "", err
 	}
 

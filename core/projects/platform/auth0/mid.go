@@ -12,7 +12,6 @@ import (
 	"github.com/devpies/devpie-client-core/projects/platform/web"
 )
 
-
 // Authenticate middleware verifies the access token sent from auth0
 func (a0 *Auth0) Authenticate() web.Middleware {
 	// this is the actual middleware function to be executed.

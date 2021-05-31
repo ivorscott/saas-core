@@ -27,10 +27,10 @@ func (l *Listeners) handleMembershipCreated(m *stan.Msg) {
 	}
 
 	mem := memberships.MembershipCopy{
-		ID: event.MembershipID,
-		UserID: event.UserID,
-		TeamID: event.TeamID,
-		Role: event.Role,
+		ID:        event.MembershipID,
+		UserID:    event.UserID,
+		TeamID:    event.TeamID,
+		Role:      event.Role,
 		UpdatedAt: updatedtime,
 		CreatedAt: createdtime,
 	}
@@ -62,10 +62,10 @@ func (l *Listeners) handleMembershipCreatedForProject(m *stan.Msg) {
 	}
 
 	mem := memberships.MembershipCopy{
-		ID: event.MembershipID,
-		UserID: event.UserID,
-		TeamID: event.TeamID,
-		Role: event.Role,
+		ID:        event.MembershipID,
+		UserID:    event.UserID,
+		TeamID:    event.TeamID,
+		Role:      event.Role,
 		UpdatedAt: updatedtime,
 		CreatedAt: createdtime,
 	}
@@ -101,7 +101,7 @@ func (l *Listeners) handleMembershipUpdated(m *stan.Msg) {
 	}
 
 	mem := memberships.UpdateMembershipCopy{
-		Role: event.Role,
+		Role:      event.Role,
 		UpdatedAt: updatedtime,
 	}
 	if err := memberships.Update(context.Background(), l.repo, event.MembershipID, mem); err != nil {
@@ -112,7 +112,6 @@ func (l *Listeners) handleMembershipUpdated(m *stan.Msg) {
 		l.log.Printf("failed to Acknowledge message \n %v", err)
 	}
 }
-
 
 func (l *Listeners) handleMembershipDeleted(m *stan.Msg) {
 	msg, err := events.UnmarshalMembershipDeletedEvent(m.Data)

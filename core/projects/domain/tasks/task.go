@@ -103,7 +103,7 @@ func List(ctx context.Context, repo *database.Repository, pid string) ([]Task, e
 func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid string, now time.Time) (Task, error) {
 
 	var t Task
-	var ltk Task 
+	var ltk Task
 	var p projects.Project
 
 	p, err := projects.Retrieve(ctx, repo, pid, uid)
@@ -116,11 +116,10 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid
 
 	// get key from last task created in project
 	stmt1 := repo.SQ.Select(
-	"key",
+		"key",
 	).From(
 		"tasks",
-	).Where(sq.Eq{"project_id": pid},
-	).OrderBy(
+	).Where(sq.Eq{"project_id": pid}).OrderBy(
 		"created_at DESC",
 	).Limit(1)
 
@@ -135,13 +134,13 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid
 			return t, err
 		}
 	}
-	 
+
 	// generate sequence number
-	// if no tasks exists than begin with 1 eg., (APP-1)	
+	// if no tasks exists than begin with 1 eg., (APP-1)
 	// otherwise increment last number
 	seq := 1
 	if ltk.Key != "" {
-		ss := strings.Split(ltk.Key,"-")
+		ss := strings.Split(ltk.Key, "-")
 		lastKeyNumber, err := strconv.Atoi(ss[1])
 		if err != nil {
 			return t, nil
@@ -153,7 +152,7 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid
 
 	t = Task{
 		ID:          uuid.New().String(),
-		Key: 		 k,
+		Key:         k,
 		Title:       nt.Title,
 		ProjectID:   pid,
 		Comments:    make([]string, 0),

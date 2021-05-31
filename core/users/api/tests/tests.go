@@ -59,11 +59,12 @@ func SetupTests(t *testing.T) (Cfg, *database.Repository, *log.Logger) {
 
 	if err := conf.Parse(os.Args[1:], "API", &cfg); err != nil {
 		if err == conf.ErrHelpWanted {
-			usage, err := conf.Usage("API", &cfg)
+			var help string
+			help, err = conf.Usage("API", &cfg)
 			if err != nil {
 				infolog.Fatal(err, "generating usage")
 			}
-			fmt.Println(usage)
+			fmt.Println(help)
 		}
 		infolog.Fatal(err, "error: parsing config")
 	}

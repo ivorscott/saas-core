@@ -13,16 +13,16 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("membership not found")
+	ErrNotFound  = errors.New("membership not found")
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
 func Create(ctx context.Context, repo *database.Repository, nm NewMembership, now time.Time) (Membership, error) {
 	m := Membership{
-		ID:      uuid.New().String(),
-		UserID:  nm.UserID,
-		TeamID:  nm.TeamID,
-		Role:    nm.Role,
+		ID:        uuid.New().String(),
+		UserID:    nm.UserID,
+		TeamID:    nm.TeamID,
+		Role:      nm.Role,
 		UpdatedAt: now.UTC(),
 		CreatedAt: now.UTC(),
 	}
@@ -45,7 +45,7 @@ func Create(ctx context.Context, repo *database.Repository, nm NewMembership, no
 	return m, nil
 }
 
-func RetrieveMemberships(ctx context.Context, repo *database.Repository, uid,tid string) ([]MembershipEnhanced, error) {
+func RetrieveMemberships(ctx context.Context, repo *database.Repository, uid, tid string) ([]MembershipEnhanced, error) {
 	var m []MembershipEnhanced
 
 	if _, err := RetrieveMembership(ctx, repo, uid, tid); err != nil {
@@ -71,7 +71,7 @@ func RetrieveMemberships(ctx context.Context, repo *database.Repository, uid,tid
 	if err != nil {
 		return nil, errors.Wrapf(err, "building query: %v", args)
 	}
-	
+
 	if err := repo.DB.SelectContext(ctx, &m, q, tid); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
@@ -140,8 +140,7 @@ func Update(ctx context.Context, repo *database.Repository, tid string, update U
 	return nil
 }
 
-
-func Delete(ctx context.Context, repo *database.Repository, tid, uid string) (string, error ){
+func Delete(ctx context.Context, repo *database.Repository, tid, uid string) (string, error) {
 	if _, err := uuid.Parse(tid); err != nil {
 		return "", ErrInvalidID
 	}
@@ -154,16 +153,16 @@ func Delete(ctx context.Context, repo *database.Repository, tid, uid string) (st
 		"RETURNING membership_id",
 	)
 
-	q,_,err := stmt.ToSql()
+	q, _, err := stmt.ToSql()
 	if err != nil {
 		return "", err
 	}
-	
-	row := repo.DB.QueryRowContext(ctx,q, tid, uid)
+
+	row := repo.DB.QueryRowContext(ctx, q, tid, uid)
 	var membershipId string
 
-	if err :=row.Scan(&membershipId); err != nil {
-		return "",errors.Wrapf(err, "deleting membership")
+	if err := row.Scan(&membershipId); err != nil {
+		return "", errors.Wrapf(err, "deleting membership")
 	}
 
 	return membershipId, nil

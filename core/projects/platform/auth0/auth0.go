@@ -1,7 +1,7 @@
 package auth0
 
 import (
-	"github.com/devpies/devpie-client-core/users/platform/database"
+	"github.com/devpies/devpie-client-core/projects/platform/database"
 	"github.com/dgrijalva/jwt-go"
 	"time"
 )

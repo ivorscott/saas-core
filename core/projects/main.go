@@ -26,9 +26,6 @@ func main() {
 	}
 }
 
-var seededRand *rand.Rand = rand.New(
-	rand.NewSource(time.Now().UnixNano()))
-
 func run() error {
 
 	// =========================================================================
@@ -66,11 +63,12 @@ func run() error {
 
 	if err := conf.Parse(os.Args[1:], "API", &cfg); err != nil {
 		if err == conf.ErrHelpWanted {
-			usage, err := conf.Usage("API", &cfg)
+			var help string
+			help, err = conf.Usage("API", &cfg)
 			if err != nil {
 				return errors.Wrap(err, "generating config usage")
 			}
-			fmt.Println(usage)
+			fmt.Println(help)
 			return nil
 		}
 		return errors.Wrap(err, "parsing config")
@@ -79,7 +77,7 @@ func run() error {
 	// =========================================================================
 	// App Starting
 
-	infolog := log.New(os.Stdout, fmt.Sprintf("%s:", cfg.Nats.ClientId),  log.Lmsgprefix|log.Lmicroseconds|log.Lshortfile)
+	infolog := log.New(os.Stdout, fmt.Sprintf("%s:", cfg.Nats.ClientId), log.Lmsgprefix|log.Lmicroseconds|log.Lshortfile)
 
 	infolog.Printf("main : Started")
 	defer infolog.Println("main : Completed")
@@ -96,7 +94,7 @@ func run() error {
 
 	go func() {
 		log.Printf("main: Debug service listening on %s", cfg.Web.Debug)
-		err := http.ListenAndServe(cfg.Web.Debug, nil)
+		err = http.ListenAndServe(cfg.Web.Debug, nil)
 		if err != nil {
 			log.Printf("main: Debug service listening on %s", cfg.Web.Debug)
 		}
@@ -119,6 +117,7 @@ func run() error {
 
 	// =========================================================================
 	// Start Listeners
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	clusterId := fmt.Sprintf("%s-%d", cfg.Nats.ClientId, rand.Int())
 	queueGroup := fmt.Sprintf("%s-queue", cfg.Nats.ClientId)
@@ -126,7 +125,7 @@ func run() error {
 	nats, Close := events.NewClient(cfg.Nats.ClusterId, clusterId, cfg.Nats.Url)
 	defer Close()
 
-	go func(repo *database.Repository, nats *events.Client, infolog *log.Logger, queueGroup string ) {
+	go func(repo *database.Repository, nats *events.Client, infolog *log.Logger, queueGroup string) {
 		l := listeners.NewListeners(infolog, repo)
 		l.RegisterAll(nats, queueGroup)
 	}(repo, nats, infolog, queueGroup)

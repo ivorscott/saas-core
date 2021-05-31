@@ -97,7 +97,7 @@ func (t *Tasks) Update(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(err, "decoding task update")
 	}
 
-	update, err := tasks.Update(r.Context(), t.repo, tid, ut, time.Now());
+	update, err := tasks.Update(r.Context(), t.repo, tid, ut, time.Now())
 	if err != nil {
 		switch err {
 		case tasks.ErrNotFound:
@@ -123,7 +123,7 @@ func (t *Tasks) Delete(w http.ResponseWriter, r *http.Request) error {
 
 	i := SliceIndex(len(c.TaskIDS), func(i int) bool { return c.TaskIDS[i] == tid })
 
-	if i >=0 {
+	if i >= 0 {
 		newTaskIds := append(c.TaskIDS[:i], c.TaskIDS[i+1:]...)
 		uc := columns.UpdateColumn{TaskIDS: &newTaskIds}
 
@@ -164,7 +164,7 @@ func (t *Tasks) Move(w http.ResponseWriter, r *http.Request) error {
 
 	i := SliceIndex(len(cF.TaskIDS), func(i int) bool { return cF.TaskIDS[i] == tid })
 
-	if i >=0 {
+	if i >= 0 {
 		newFromTaskIds := append(cF.TaskIDS[:i], cF.TaskIDS[i+1:]...)
 		foc := columns.UpdateColumn{TaskIDS: &newFromTaskIds}
 
@@ -182,7 +182,7 @@ func (t *Tasks) Move(w http.ResponseWriter, r *http.Request) error {
 				return errors.Wrapf(err, "updating column taskIds from:%q, to:%q", mt.From, mt.To)
 			}
 		}
-		
+
 		err = columns.Update(r.Context(), t.repo, mt.To, toc, time.Now())
 		if err != nil {
 			switch err {

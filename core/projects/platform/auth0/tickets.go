@@ -14,7 +14,7 @@ const changePasswordEndpoint = "/api/v2/tickets/password-change"
 func (a0 *Auth0) ChangePasswordTicket(token Token, user AuthUser, resultUrl string) (string, error) {
 	var baseUrl = "https://" + a0.Domain
 	var fiveDays = 432000 // 5 days in seconds
-	var passTicket struct{
+	var passTicket struct {
 		Ticket string
 	}
 
@@ -47,7 +47,7 @@ func (a0 *Auth0) ChangePasswordTicket(token Token, user AuthUser, resultUrl stri
 
 	body, _ := ioutil.ReadAll(res.Body)
 
-	if err := json.Unmarshal(body, &passTicket); err != nil {
+	if err = json.Unmarshal(body, &passTicket); err != nil {
 		return "", err
 	}
 
@@ -55,4 +55,3 @@ func (a0 *Auth0) ChangePasswordTicket(token Token, user AuthUser, resultUrl stri
 
 	return ticket, err
 }
-

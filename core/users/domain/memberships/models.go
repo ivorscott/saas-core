@@ -14,10 +14,10 @@ type Membership struct {
 type MembershipEnhanced struct {
 	ID        string    `db:"membership_id" json:"id"`
 	UserID    string    `db:"user_id" json:"userId"`
-	FirstName *string 	`db:"first_name" json:"firstName"`
-	LastName  *string 	`db:"last_name" json:"lastName"`
-	Picture   *string 	`db:"picture" json:"picture"`
-	Email 	  string 	`db:"email" json:"email"`
+	FirstName *string   `db:"first_name" json:"firstName"`
+	LastName  *string   `db:"last_name" json:"lastName"`
+	Picture   *string   `db:"picture" json:"picture"`
+	Email     string    `db:"email" json:"email"`
 	TeamID    string    `db:"team_id" json:"teamId"`
 	Role      string    `db:"role" json:"role"`
 	UpdatedAt time.Time `db:"updated_at" json:"updatedAt"`

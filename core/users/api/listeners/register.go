@@ -9,9 +9,9 @@ import (
 )
 
 type Listeners struct {
-	log *log.Logger
+	log  *log.Logger
 	repo *database.Repository
-	dur time.Duration
+	dur  time.Duration
 }
 
 func NewListeners(log *log.Logger, repo *database.Repository) *Listeners {
@@ -22,7 +22,7 @@ func NewListeners(log *log.Logger, repo *database.Repository) *Listeners {
 	return &Listeners{log, repo, dur}
 }
 
-func(l *Listeners) RegisterAll(nats *events.Client, queueGrp string) {
+func (l *Listeners) RegisterAll(nats *events.Client, queueGrp string) {
 	nats.Listen(string(events.EventsProjectCreated), queueGrp, l.handleProjectCreated, stan.DeliverAllAvailable(),
 		stan.SetManualAckMode(), stan.AckWait(l.dur), stan.DurableName(queueGrp))
 	nats.Listen(string(events.EventsProjectUpdated), queueGrp, l.handleProjectUpdated, stan.DeliverAllAvailable(),

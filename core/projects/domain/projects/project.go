@@ -16,12 +16,12 @@ import (
 )
 
 var (
-	ErrNotFound  = errors.New("project not found")
-	ErrInvalidID = errors.New("id provided was not a valid UUID")
+	ErrNotFound      = errors.New("project not found")
+	ErrInvalidID     = errors.New("id provided was not a valid UUID")
 	ErrNotAuthorized = errors.New("user does not have correct membership")
 )
 
-func RetrieveTeamID(ctx context.Context, repo *database.Repository, pid string) (	string, error) {
+func RetrieveTeamID(ctx context.Context, repo *database.Repository, pid string) (string, error) {
 	var p Project
 
 	if _, err := uuid.Parse(pid); err != nil {
@@ -46,7 +46,7 @@ func RetrieveTeamID(ctx context.Context, repo *database.Repository, pid string) 
 	if err != nil {
 		return "", errors.Wrapf(err, "building query: %v", args)
 	}
-	
+
 	row := repo.DB.QueryRowContext(ctx, q, pid)
 	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
@@ -84,7 +84,7 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid, uid string) (
 		return p, errors.Wrapf(err, "building query: %v", args)
 	}
 
-	row := repo.DB.QueryRowContext(ctx, q, pid,uid)
+	row := repo.DB.QueryRowContext(ctx, q, pid, uid)
 	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -104,7 +104,7 @@ func RetrieveShared(ctx context.Context, repo *database.Repository, pid, uid str
 		return p, err
 	}
 
-	if _, err := uuid.Parse(pid); err != nil {
+	if _, err = uuid.Parse(pid); err != nil {
 		return p, ErrInvalidID
 	}
 
@@ -128,7 +128,7 @@ func RetrieveShared(ctx context.Context, repo *database.Repository, pid, uid str
 	).From("projects").Where(sq.Eq{"project_id": "?", "team_id": "?"})
 
 	q, args, err := stmt.ToSql()
-	
+
 	if err != nil {
 		return p, errors.Wrapf(err, "building query: %v", args)
 	}
@@ -207,13 +207,13 @@ func Create(ctx context.Context, repo *database.Repository, np NewProject, uid s
 
 func Update(ctx context.Context, repo *database.Repository, pid, uid string, update UpdateProject, now time.Time) (Project, error) {
 	var p Project
-	
+
 	p, err := Retrieve(ctx, repo, pid, uid)
 	if err != nil {
 		p, err = RetrieveShared(ctx, repo, pid, uid)
 		if err != nil {
-				return p, err
-			}
+			return p, err
+		}
 	}
 
 	if update.Name != nil {

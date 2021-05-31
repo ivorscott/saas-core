@@ -55,14 +55,17 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// if user already exists update app metadata only
-	if us, err := users.RetrieveMeByAuthID(r.Context(), u.repo, sub); err == nil {
-		if err := u.auth0.UpdateUserAppMetaData(t, sub, us.ID); err != nil {
+	var us users.User
+
+	us, err = users.RetrieveMeByAuthID(r.Context(), u.repo, sub)
+	if err == nil {
+		if err = u.auth0.UpdateUserAppMetaData(t, sub, us.ID); err != nil {
 			return err
 		}
 		return web.Respond(r.Context(), w, us, http.StatusAccepted)
 	}
 
-	if err := web.Decode(r, &nu); err != nil {
+	if err = web.Decode(r, &nu); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}

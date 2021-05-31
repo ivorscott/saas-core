@@ -27,8 +27,8 @@ func Create(ctx context.Context, repo *database.Repository, nu NewUser, aid stri
 		LastName:      nu.LastName,
 		Picture:       nu.Picture,
 		Locale:        nu.Locale,
-		UpdatedAt: now.UTC(),
-		CreatedAt: now.UTC(),
+		UpdatedAt:     now.UTC(),
+		CreatedAt:     now.UTC(),
 	}
 
 	stmt := repo.SQ.Insert(
@@ -88,10 +88,10 @@ func RetrieveByEmail(repo *database.Repository, email string) (User, error) {
 
 func RetrieveMe(ctx context.Context, repo *database.Repository, uid string) (User, error) {
 	var u User
-	log.Println("the user",uid)
+	log.Println("the user", uid)
 
 	if _, err := uuid.Parse(uid); err != nil {
-	log.Println("the invalid user", uid)
+		log.Println("the invalid user", uid)
 
 		return u, ErrInvalidID
 	}

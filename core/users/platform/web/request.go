@@ -3,7 +3,9 @@ package web
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"reflect"
 	"strings"
 
@@ -30,7 +32,11 @@ func init() {
 
 	// Register the english error messages for validation errors.
 	lang, _ := translator.GetTranslator("en")
-	en_translations.RegisterDefaultTranslations(validate, lang)
+	err := en_translations.RegisterDefaultTranslations(validate, lang)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	// Use JSON tag names for errors instead of Go struct names.
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {

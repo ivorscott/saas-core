@@ -23,8 +23,8 @@ func Create(ctx context.Context, repo *database.Repository, ni NewInvite, now ti
 		Read:       false,
 		Accepted:   false,
 		Expiration: now.AddDate(0, 0, 5),
-		UpdatedAt: now.UTC(),
-		CreatedAt: now.UTC(),
+		UpdatedAt:  now.UTC(),
+		CreatedAt:  now.UTC(),
 	}
 
 	stmt := repo.SQ.Insert(
@@ -117,7 +117,7 @@ func Update(ctx context.Context, repo *database.Repository, update UpdateInvite,
 	if err != nil {
 		return iv, err
 	}
-	
+
 	i.Accepted = update.Accepted
 	i.UpdatedAt = now.UTC()
 

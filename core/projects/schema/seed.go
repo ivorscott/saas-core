@@ -22,7 +22,7 @@ func Seed(db *sqlx.DB, filename string) error {
 	}
 
 	if _, err := tx.Exec(string(dat)); err != nil {
-		if err := tx.Rollback(); err != nil {
+		if err = tx.Rollback(); err != nil {
 			return err
 		}
 		return err

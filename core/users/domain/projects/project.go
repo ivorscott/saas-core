@@ -44,7 +44,7 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid string) (Proje
 	}
 
 	row := repo.DB.QueryRowContext(ctx, q, pid)
-	err = row.Scan(&p.ID, &p.Name, &p.Prefix,&p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
+	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return p, ErrNotFound

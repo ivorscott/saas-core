@@ -30,6 +30,7 @@ require (
 	github.com/sendgrid/rest v2.6.3+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.9.0+incompatible
 	github.com/testcontainers/testcontainers-go v0.10.1-0.20210331130832-54854fb15ccb
+	golang.org/x/tools v0.0.0-20210106214847-113979e3529a
 	google.golang.org/protobuf v1.26.0 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0

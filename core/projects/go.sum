@@ -78,6 +78,7 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/denisenkom/go-mssqldb v0.0.0-20200620013148-b91950f658ec/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
+github.com/devpies/devpie-client-core v0.0.0-20210415031821-1502d62d9a1f h1:WdnucSEm1ewS+I0nDp++kdQu8GLtKW8QPIXJot9v8WQ=
 github.com/devpies/devpie-client-events v0.0.44 h1:IDUyq2wuBUgc3wuhCmloBf82kj5qtYq0HLdbwqVaZ8o=
 github.com/devpies/devpie-client-events v0.0.44/go.mod h1:Jb0Jl4dRE4gfgXx2nfaw3jVrVerXVtVRc4hXZoPoWRQ=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=

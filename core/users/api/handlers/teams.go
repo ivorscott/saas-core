@@ -56,7 +56,6 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-
 	tm, err := teams.Create(r.Context(), t.repo, nt, uid, time.Now())
 	if err != nil {
 		return err
@@ -275,9 +274,8 @@ func (t *Team) List(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
-	var token auth0.Token
 	var list invites.NewList
-
+	tid := chi.URLParam(r, "tid")
 	link := strings.Split(t.origins, ",")[0]
 
 	if err := web.Decode(r, &list); err != nil {
@@ -285,41 +283,37 @@ func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// Get valid token
 	token, err := t.auth0.RetrieveToken()
 	if err == auth0.ErrNotFound || t.auth0.IsExpired(token) {
-		nt, err := t.auth0.NewManagementToken()
+		var nt auth0.NewToken
+		var tk auth0.Token
+
+		nt, err = t.auth0.NewManagementToken()
 		if err != nil {
 			return err
 		}
 		// clean table before persisting
-		if err := t.auth0.DeleteToken(); err != nil {
+		if err = t.auth0.DeleteToken(); err != nil {
 			return err
 		}
-		// persist management api token
-		tk, err := t.auth0.PersistToken(nt, time.Now())
+
+		tk, err = t.auth0.PersistToken(nt, time.Now())
 		if err != nil {
 			return err
 		}
 		token = tk
 	}
 
-	tid := chi.URLParam(r, "tid")
-	if err != nil {
-		return err
-	}
-
 	for _, email := range list.Emails {
-
 		ni := invites.NewInvite{
 			TeamID: tid,
 		}
-
-		// existing user
+		// when user exists
 		u, err := users.RetrieveByEmail(t.repo, email)
 		if err != nil {
-			// new user
-			au, err := t.auth0.CreateUser(token, email)
+			var au auth0.AuthUser
+
+			au, err = t.auth0.CreateUser(token, email)
 			if err != nil {
 				return err
 			}
@@ -332,14 +326,16 @@ func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 				Picture:       au.Picture,
 			}
 
-			user, err := users.Create(r.Context(), t.repo, nu, au.Auth0ID, time.Now())
+			var us users.User
+
+			us, err = users.Create(r.Context(), t.repo, nu, au.Auth0ID, time.Now())
 			if err != nil {
 				return err
 			}
 
-			ni.UserID = user.ID
+			ni.UserID = us.ID
 
-			if err := t.auth0.UpdateUserAppMetaData(token, au.Auth0ID, user.ID); err != nil {
+			if err = t.auth0.UpdateUserAppMetaData(token, au.Auth0ID, us.ID); err != nil {
 				return err
 			}
 
@@ -352,7 +348,7 @@ func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 			ni.UserID = u.ID
 		}
 
-		if err := t.SendMail(email, link); err != nil {
+		if err = t.SendMail(email, link); err != nil {
 			return err
 		}
 

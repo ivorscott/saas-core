@@ -24,10 +24,10 @@ type NewProject struct {
 }
 
 type UpdateProject struct {
-	Name        *string   `json:"name"`
-	Active      *bool     `json:"active"`
-	Public      *bool     `json:"public"`
-	TeamID      *string   `json:"teamId"`
-	Description *string   `json:"description"`
-	ColumnOrder []string  `json:"columnOrder"`
+	Name        *string  `json:"name"`
+	Active      *bool    `json:"active"`
+	Public      *bool    `json:"public"`
+	TeamID      *string  `json:"teamId"`
+	Description *string  `json:"description"`
+	ColumnOrder []string `json:"columnOrder"`
 }

@@ -15,8 +15,8 @@ import (
 )
 
 type Columns struct {
-	repo *database.Repository
-	log  *log.Logger
+	repo  *database.Repository
+	log   *log.Logger
 	auth0 *auth0.Auth0
 }
 
