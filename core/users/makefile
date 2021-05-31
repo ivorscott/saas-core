@@ -7,6 +7,10 @@ test:
 	go test ./... -v
 .PHONY: test
 
+unit:
+	go test ./... -v -short
+.PHONY: unit
+
 fmt:
 	go fmt ./...
 .PHONY: fmt
@@ -19,10 +23,6 @@ vet: fmt
 	go vet ./...
  	$(shell shadow ./...)
 .PHONY: vet
-
-unit:
-	go test ./... -v -short
-.PHONY: unit
 
 build: lint vet
 	go build -o main .

@@ -10,7 +10,7 @@ import (
 const connectionEndpoint = "/api/v2/connections"
 const DatabaseConnection = "Username-Password-Authentication"
 
-func (a0 *Auth0) GetConnectionId(token Token) (string, error) {
+func (a0 *Auth0) GetConnectionID(token Token) (string, error) {
 	var conn []struct {
 		ID   string
 		Name string

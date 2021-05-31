@@ -82,7 +82,7 @@ func (tm *TeamsTests) getTeams200(t *testing.T) {
 func (tm *TeamsTests) postTeam201(t *testing.T) {
 	teamName := "My Team"
 	projectIDSeed := "8695a94f-7e0a-4198-8c0a-d3e12727a5ba"
-	userId := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	userID := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 
 	jsonStr := strings.NewReader(fmt.Sprintf(`{ "name":"%s", "projectId":"%s"}`, teamName, projectIDSeed))
 	req := httptest.NewRequest("POST", "/api/v1/users/teams", jsonStr)
@@ -99,7 +99,7 @@ func (tm *TeamsTests) postTeam201(t *testing.T) {
 
 	exp := got
 	exp.Name = teamName
-	exp.UserId = userId
+	exp.UserID = userID
 
 	if diff := cmp.Diff(got, exp); diff != "" {
 		t.Fatalf("Should get the expected result. Diff %s", diff)

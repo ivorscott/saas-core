@@ -13,6 +13,7 @@ import (
 
 const usersEndpoint = "/api/v2/users"
 
+// ErrInvalidID represents an error when a user id is not a valid uuid.
 var ErrInvalidID = errors.New("id provided was not a valid UUID")
 
 func (a0 *Auth0) CreateUser(token Token, email string) (AuthUser, error) {
@@ -21,10 +22,10 @@ func (a0 *Auth0) CreateUser(token Token, email string) (AuthUser, error) {
 	connectionType := DatabaseConnection
 	defaultPassword := uuid.New().String()
 
-	baseUrl := "https://" + a0.Domain
+	baseURL := "https://" + a0.Domain
 	resource := usersEndpoint
 
-	uri, err := url.ParseRequestURI(baseUrl)
+	uri, err := url.ParseRequestURI(baseURL)
 	if err != nil {
 		return u, err
 	}
@@ -56,16 +57,16 @@ func (a0 *Auth0) CreateUser(token Token, email string) (AuthUser, error) {
 	return u, nil
 }
 
-// Update auth0 user account with user_id from internal database
-func (a0 *Auth0) UpdateUserAppMetaData(token Token, subject, userId string) error {
-	if _, err := uuid.Parse(userId); err != nil {
+// UpdateUserAppMetaData updates the auth0 user account with user_id from internal database
+func (a0 *Auth0) UpdateUserAppMetaData(token Token, subject, userID string) error {
+	if _, err := uuid.Parse(userID); err != nil {
 		return ErrInvalidID
 	}
 
-	baseUrl := "https://" + a0.Domain
+	baseURL := "https://" + a0.Domain
 	resource := "/api/v2/users/" + subject
 
-	uri, err := url.ParseRequestURI(baseUrl)
+	uri, err := url.ParseRequestURI(baseURL)
 	if err != nil {
 		return err
 	}
@@ -73,7 +74,7 @@ func (a0 *Auth0) UpdateUserAppMetaData(token Token, subject, userId string) erro
 	uri.Path = resource
 	urlStr := uri.String()
 
-	jsonStr := fmt.Sprintf("{\"app_metadata\": { \"id\": \"%s\" }}", userId)
+	jsonStr := fmt.Sprintf("{\"app_metadata\": { \"id\": \"%s\" }}", userID)
 
 	req, err := http.NewRequest(http.MethodPatch, urlStr, strings.NewReader(jsonStr))
 	if err != nil {

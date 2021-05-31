@@ -2,7 +2,9 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"net/url"
+	"os"
 
 	"github.com/pkg/errors"
 
@@ -27,8 +29,7 @@ type Repository struct {
 }
 
 // NewRepository creates a new Directory, connecting it to the postgres server
-func NewRepository(cfg Config) (*Repository, error) {
-
+func NewRepository(cfg Config) (*Repository, func(), error) {
 	// Define SSL mode.
 	sslMode := "require"
 	if cfg.DisableTLS {
@@ -51,19 +52,24 @@ func NewRepository(cfg Config) (*Repository, error) {
 
 	db, err := sqlx.Open("postgres", u.String())
 	if err != nil {
-		return nil, errors.Wrap(err, "connecting to database")
+		return nil, nil, errors.Wrap(err, "connecting to database")
 	}
 
-	return &Repository{
+	r := &Repository{
 		DB:  db,
 		SQ:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar).RunWith(db),
 		URL: u,
-	}, nil
+	}
 
+	return r, r.Close, nil
 }
 
-func (d Repository) Close() {
-	d.DB.Close()
+func (d *Repository) Close() {
+	err := d.DB.Close()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 // StatusCheck returns nil if it can successfully talk to the database. It

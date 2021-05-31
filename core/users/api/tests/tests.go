@@ -46,9 +46,9 @@ type Cfg struct {
 		DisableTLS bool   `conf:"default:true"`
 	}
 	Nats struct {
-		Url       string `conf:"default:nats://"`
-		ClientId  string `conf:"default:client-id"`
-		ClusterId string `conf:"default:cluster-id"`
+		URL       string `conf:"default:nats://"`
+		ClientID  string `conf:"default:client-id"`
+		ClusterID string `conf:"default:cluster-id"`
 	}
 }
 
@@ -104,7 +104,7 @@ func NewIntegration(t *testing.T, cfg Cfg) *database.Repository {
 		log.Fatal("map:", err)
 	}
 
-	repo, err := database.NewRepository(database.Config{
+	repo, rClose, err := database.NewRepository(database.Config{
 		User:       cfg.DB.User,
 		Host:       cfg.DB.Host + ":" + hostPort.Port(),
 		Name:       cfg.DB.Name,
@@ -114,6 +114,7 @@ func NewIntegration(t *testing.T, cfg Cfg) *database.Repository {
 	if err != nil {
 		t.Fatal(err, "connecting to db")
 	}
+	defer rClose()
 
 	log.Printf("Postgres container started, running at:  %s\n", repo.URL.String())
 

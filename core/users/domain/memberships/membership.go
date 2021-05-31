@@ -159,11 +159,11 @@ func Delete(ctx context.Context, repo *database.Repository, tid, uid string) (st
 	}
 
 	row := repo.DB.QueryRowContext(ctx, q, tid, uid)
-	var membershipId string
+	var membershipID string
 
-	if err := row.Scan(&membershipId); err != nil {
+	if err := row.Scan(&membershipID); err != nil {
 		return "", errors.Wrapf(err, "deleting membership")
 	}
 
-	return membershipId, nil
+	return membershipID, nil
 }

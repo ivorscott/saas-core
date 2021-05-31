@@ -22,7 +22,7 @@ type Memberships struct {
 }
 
 func (m *Memberships) RetrieveMembers(w http.ResponseWriter, r *http.Request) error {
-	uid := m.auth0.GetUserById(r)
+	uid := m.auth0.GetUserByID(r)
 
 	tid := chi.URLParam(r, "tid")
 

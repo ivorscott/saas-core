@@ -44,7 +44,7 @@ func (a0 *Auth0) GetOrCreateToken() (Token, error) {
 func (a0 *Auth0) NewManagementToken() (NewToken, error) {
 	var t NewToken
 
-	baseUrl := "https://" + a0.Domain
+	baseURL := "https://" + a0.Domain
 	resource := oauthEndpoint
 
 	data := url.Values{}
@@ -53,7 +53,7 @@ func (a0 *Auth0) NewManagementToken() (NewToken, error) {
 	data.Set("client_secret", a0.M2MSecret)
 	data.Set("audience", a0.MAPIAudience)
 
-	uri, err := url.ParseRequestURI(baseUrl)
+	uri, err := url.ParseRequestURI(baseURL)
 	if err != nil {
 		return t, err
 	}

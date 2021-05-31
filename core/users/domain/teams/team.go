@@ -20,7 +20,7 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTeam, uid stri
 	t := Team{
 		ID:        uuid.New().String(),
 		Name:      nt.Name,
-		UserId:    uid,
+		UserID:    uid,
 		UpdatedAt: now.UTC(),
 		CreateAt:  now.UTC(),
 	}
@@ -30,7 +30,7 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTeam, uid stri
 	).SetMap(map[string]interface{}{
 		"team_id":    t.ID,
 		"name":       t.Name,
-		"user_id":    t.UserId,
+		"user_id":    t.UserID,
 		"updated_at": t.UpdatedAt,
 		"created_at": t.CreateAt,
 	})

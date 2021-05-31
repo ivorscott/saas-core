@@ -33,7 +33,7 @@ type App struct {
 	shutdown chan os.Signal
 }
 
-// New App constructs internal state for a new  app
+// NewApp constructs internal state for a new app
 func NewApp(shutdown chan os.Signal, logger *log.Logger, mw ...Middleware) *App {
 	return &App{
 		mux:      chi.NewRouter(),

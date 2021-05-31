@@ -24,12 +24,12 @@ func (a0 *Auth0) Authenticate() web.Middleware {
 				ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
 					checkAud := token.Claims.(jwt.MapClaims).VerifyAudience(a0.Audience, false)
 					if !checkAud {
-						return token, errors.New("invalid audience.")
+						return token, errors.New("invalid audience")
 					}
 					iss := "https://" + a0.Domain + "/"
 					checkIss := token.Claims.(jwt.MapClaims).VerifyIssuer(iss, false)
 					if !checkIss {
-						return token, errors.New("invalid issuer.")
+						return token, errors.New("invalid issuer")
 					}
 					cert, err := a0.GetPemCert(token)
 					if err != nil {
@@ -82,8 +82,8 @@ func (a0 *Auth0) CheckScope(scope, tokenString string) (bool, error) {
 	return hasScope, nil
 }
 
-// You need to create a function that grabs the json web key set and returns the public key certificate.
 // GetPemCert takes a token and returns the associated certificate in pem format so it can be parsed.
+// It works by grabbing the json web key set and returning the public key certificate.
 func (a0 *Auth0) GetPemCert(token *jwt.Token) (string, error) {
 	cert := ""
 	resp, err := http.Get("https://" + a0.Domain + "/.well-known/jwks.json")
@@ -117,7 +117,7 @@ func (a0 *Auth0) GetUserBySubject(r *http.Request) string {
 	return fmt.Sprintf("%v", claims["sub"])
 }
 
-func (a0 *Auth0) GetUserById(r *http.Request) string {
+func (a0 *Auth0) GetUserByID(r *http.Request) string {
 	claims := r.Context().Value("user").(*jwt.Token).Claims.(jwt.MapClaims)
 	if _, ok := claims["https://client.devpie.io/claims/user_id"]; !ok {
 		return ""

@@ -1,8 +1,9 @@
 package memberships
 
-// Enums
+// Role type for enumerated values
 type Role int
 
+// Roles
 const (
 	Administrator = iota
 	Editor

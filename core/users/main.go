@@ -56,9 +56,9 @@ func run() error {
 			DisableTLS bool   `conf:"default:false"`
 		}
 		Nats struct {
-			Url       string `conf:"default:nats://"`
-			ClientId  string `conf:"default:client-id"`
-			ClusterId string `conf:"default:cluster-id"`
+			URL       string `conf:"default:nats://"`
+			ClientID  string `conf:"default:client-id"`
+			ClusterID string `conf:"default:cluster-id"`
 		}
 	}
 
@@ -78,7 +78,7 @@ func run() error {
 	// =========================================================================
 	// App Starting
 
-	infolog := log.New(os.Stdout, fmt.Sprintf("%s:", cfg.Nats.ClientId), log.Lmsgprefix|log.Lmicroseconds|log.Lshortfile)
+	infolog := log.New(os.Stdout, fmt.Sprintf("%s:", cfg.Nats.ClientID), log.Lmsgprefix|log.Lmicroseconds|log.Lshortfile)
 
 	infolog.Printf("main : Started")
 	defer infolog.Println("main : Completed")
@@ -104,7 +104,7 @@ func run() error {
 	// =========================================================================
 	// Start Database
 
-	repo, err := database.NewRepository(database.Config{
+	repo, rClose, err := database.NewRepository(database.Config{
 		User:       cfg.DB.User,
 		Host:       cfg.DB.Host,
 		Name:       cfg.DB.Name,
@@ -114,16 +114,21 @@ func run() error {
 	if err != nil {
 		return errors.Wrap(err, "connecting to db")
 	}
-	defer repo.Close()
+	defer rClose()
 
 	// =========================================================================
 	// Start Listeners
 	rand.New(rand.NewSource(time.Now().UnixNano()))
-	clusterId := fmt.Sprintf("%s-%d", cfg.Nats.ClientId, rand.Int())
-	queueGroup := fmt.Sprintf("%s-queue", cfg.Nats.ClientId)
+	clusterID := fmt.Sprintf("%s-%d", cfg.Nats.ClientID, rand.Int())
+	queueGroup := fmt.Sprintf("%s-queue", cfg.Nats.ClientID)
 
-	nats, Close := events.NewClient(cfg.Nats.ClusterId, clusterId, cfg.Nats.Url)
-	defer Close()
+	nats, eClose := events.NewClient(cfg.Nats.ClusterID, clusterID, cfg.Nats.URL)
+	defer func() {
+		cerr := eClose()
+		if err != nil {
+			err = cerr
+		}
+	}()
 
 	go func(repo *database.Repository, nats *events.Client, infolog *log.Logger, queueGroup string) {
 		l := listeners.NewListeners(infolog, repo)

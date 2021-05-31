@@ -21,7 +21,10 @@ require (
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/lib/pq v1.9.0
+	github.com/mattn/go-isatty v0.0.13 // indirect
+	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0 // indirect
+	github.com/mgechev/revive v1.0.7 // indirect
 	github.com/nats-io/nats-server/v2 v2.2.2 // indirect
 	github.com/nats-io/nats-streaming-server v0.21.2 // indirect
 	github.com/nats-io/stan.go v0.8.3
@@ -30,7 +33,8 @@ require (
 	github.com/sendgrid/rest v2.6.3+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.9.0+incompatible
 	github.com/testcontainers/testcontainers-go v0.10.1-0.20210331130832-54854fb15ccb
-	golang.org/x/tools v0.0.0-20210106214847-113979e3529a
+	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea // indirect
+	golang.org/x/tools v0.1.2
 	google.golang.org/protobuf v1.26.0 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
