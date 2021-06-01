@@ -118,7 +118,7 @@ func NewIntegration(t *testing.T, cfg Cfg) *database.Repository {
 
 	log.Printf("Postgres container started, running at:  %s\n", repo.URL.String())
 
-	if err := schema.Migrate("postgres", repo.URL.String()); err != nil {
+	if err := schema.Migrate(repo.URL.String()); err != nil {
 		t.Fatal(err)
 	}
 

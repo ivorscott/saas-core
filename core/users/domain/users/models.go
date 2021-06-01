@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Users represent user data from the database
+// User represent user data from the database.
 type User struct {
 	ID            string    `db:"user_id" json:"id" `
 	Auth0ID       string    `db:"auth0_id" json:"auth0Id" `

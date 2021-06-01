@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Error codes returned by failures to handle invites.
 var (
 	ErrNotFound = errors.New("invite not found")
 )

@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Error codes returned by failures to handle users.
 var (
 	ErrNotFound  = errors.New("user not found")
 	ErrInvalidID = errors.New("id provided was not a valid UUID")

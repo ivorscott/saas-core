@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Error codes returned by failures to handle projects.
 var (
 	ErrNotFound  = errors.New("project not found")
 	ErrInvalidID = errors.New("id provided was not a valid UUID")

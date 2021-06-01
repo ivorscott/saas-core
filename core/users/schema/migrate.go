@@ -13,7 +13,7 @@ import (
 
 const dest = "/migrations"
 
-func Migrate(dbname string, url string) error {
+func Migrate(url string) error {
 	src := fmt.Sprintf("file://%s%s", RootDir(), dest)
 	m, err := migrate.New(src, url)
 	if err != nil {

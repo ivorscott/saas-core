@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Error codes returned by failures to handle teams.
 var (
 	ErrNotFound  = errors.New("team not found")
 	ErrInvalidID = errors.New("id provided was not a valid UUID")

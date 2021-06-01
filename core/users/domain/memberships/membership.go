@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Error codes returned by failures to handle memberships.
 var (
 	ErrNotFound  = errors.New("membership not found")
 	ErrInvalidID = errors.New("id provided was not a valid UUID")

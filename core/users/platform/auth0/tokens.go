@@ -15,10 +15,12 @@ import (
 
 const oauthEndpoint = "/oauth/token"
 
+// Error codes returned by failures to handle tokens.
 var (
 	ErrNotFound = errors.New("token not found")
 )
 
+// GetOrCreateToken creates a new Token if one does not exist or it returns an existing one.
 func (a0 *Auth0) GetOrCreateToken() (Token, error) {
 	var t Token
 
@@ -41,6 +43,7 @@ func (a0 *Auth0) GetOrCreateToken() (Token, error) {
 	return t, nil
 }
 
+// NewManagementToken generates a new Auth0 management token and returns it.
 func (a0 *Auth0) NewManagementToken() (NewToken, error) {
 	var t NewToken
 
@@ -87,6 +90,7 @@ func (a0 *Auth0) NewManagementToken() (NewToken, error) {
 	return t, nil
 }
 
+// IsExpired determines whether or not a Token is expired.
 func (a0 *Auth0) IsExpired(token Token) bool {
 	parsedToken, err := jwt.ParseWithClaims(token.AccessToken, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		cert, err := a0.GetPemCert(token)
@@ -115,6 +119,7 @@ func (a0 *Auth0) IsExpired(token Token) bool {
 	return false
 }
 
+// RetrieveToken returns the persisted Token if any exists.
 func (a0 *Auth0) RetrieveToken() (Token, error) {
 	var t Token
 
@@ -144,6 +149,7 @@ func (a0 *Auth0) RetrieveToken() (Token, error) {
 	return t, nil
 }
 
+// PersistToken persists a new Token and returns it.
 func (a0 *Auth0) PersistToken(nt NewToken, now time.Time) (Token, error) {
 	t := Token{
 		ID:          uuid.New().String(),
@@ -171,6 +177,7 @@ func (a0 *Auth0) PersistToken(nt NewToken, now time.Time) (Token, error) {
 	return t, nil
 }
 
+// DeleteToken deletes a persisted Token.
 func (a0 *Auth0) DeleteToken() error {
 	stmt := a0.Repo.SQ.Delete("ma_token")
 	if _, err := stmt.Exec(); err != nil {
