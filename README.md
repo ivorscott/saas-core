@@ -14,9 +14,10 @@ kanaban or agile style board management and auxiliary services like cost estimat
 - [Docker Desktop](https://docs.docker.com/desktop/) (Kubernetes enabled)
 - [Tilt](https://tilt.dev/)
 
-#### Accounts Being Used (no setup required)
+#### Integrations
 
 - AWS
+- Sengrid
 - Freshbooks
 - [Auth0](http://auth0.com/) with [Github Deployments](https://auth0.com/docs/extensions/github-deployments) enabled
 
@@ -24,6 +25,32 @@ kanaban or agile style board management and auxiliary services like cost estimat
 
 `manifests/secrets.yaml` is required. Rename `manifests/secrets.sample.yaml`
 and provide base64 encoded credentials for all postgres databases properties (_username, password, host etc_.).
+
+Integration tests need plaintext secrets. See `core/{service}/.env.sample`. 
+```.env
+# credentials for integration tests
+# clone this file and rename it .env
+
+API_WEB_AUTH_DOMAIN=
+API_WEB_AUTH_AUDIENCE=
+API_WEB_AUTH_TEST_CLIENT_ID=
+API_WEB_AUTH_TEST_CLIENT_SECRET=
+API_WEB_AUTH_M_2_M_CLIENT=
+API_WEB_AUTH_M_2_M_SECRET=
+API_WEB_AUTH_MAPI_AUDIENCE=
+API_WEB_SENDGRID_API_KEY=
+```
+There's a Makefile in each service `core/{service}/Makefile`. Each Makefile includes the secrets and exports them. 
+```makefile
+include .env
+export $(shell sed 's/=.*//' .env)
+
+.DEFAULT_GOAL := build
+
+test:
+	go test ./... -v
+.PHONY: test
+```
 
 ## Architecture
 
@@ -106,6 +133,17 @@ npm start
 
 # devpie-client-core
 make up
+```
+
+Build, Test, Formating and Linting commands exist in each service. See `core/{service}/Makefile`
+
+```bash
+make test
+make unit # short tests
+make fmt
+make lint
+make vet
+make build
 ```
 
 ### Debugging local databases
