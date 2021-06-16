@@ -1,4 +1,6 @@
-# Core Event-driven Architecture for Devpie Client
+# Devpie Client Backend
+
+![frontend preview](docs/images/demo.png)
 
 ## Goal
 
@@ -6,6 +8,11 @@ This is an experimental project for learning.
 
 Devpie Client is a business management tool for performing software development with clients. Features will include
 kanaban or agile style board management and auxiliary services like cost estimation, payments and more.
+
+- [See Figma design](https://www.figma.com/file/M0FVvRZWGUPWgJlby4UPjm/Devpie-Client?node-id=237%3A16)
+- [See Frontend repository](https://github.com/devpies/devpie-client-app)
+- [See Events repository](https://github.com/devpies/devpie-client-events)
+- [See Infrastructure repository](https://github.com/devpies/devpie-client-infra)
 
 ### Setup
 
@@ -250,3 +257,10 @@ Under this model, end users send requests to Applications. Applications write me
 - View Data are not authoritative state, but derived from authoritative state.
 - View Data can be stored in any format or database that makes sense for the Application.
 </details>
+
+## Contribute
+
+Reach out on twitter or email me if you have any questions about contributing. 
+
+- [ivorsco77](https://twitter.com/ivorsco77)
+- ivor@devpie.io
