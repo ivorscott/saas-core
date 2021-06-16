@@ -32,14 +32,14 @@ kanban or agile style board management and auxiliary services like cost estimati
 
 `core/{service}/.env` is required for integration tests.  Rename `core/{service}/.env.sample` and provide plaintext secrets.
 
-`.gitpass` is required for private go modules but currently all repositories are public. Rename `core/.gitpass.sample` 
+`.gitpass` is required for private go modules but currently all repositories are public. Rename `core/.gitpass.sample`
 and provide a github username and access token.
 
 There's a `secrets.zip` for the team. Just Ask.
 
 ## Developement
 
-Run front and back ends simultaneously. For faster development we don't run the [devpie-client-app](https://github.com/ivorscott/devpie-client-app) 
+Run front and back ends simultaneously. For faster development we don't run the [devpie-client-app](https://github.com/ivorscott/devpie-client-app)
 in a container/pod. However, we use [tilt.dev](https://tilt.dev) to manage kubernetes development in the backend.
 
 ```bash
@@ -265,7 +265,7 @@ Under this model, end users send requests to Applications. Applications write me
 
 ## Contribute
 
-Reach out on twitter or email me if you have any questions about contributing. 
+Reach out on twitter or email me if you have any questions about contributing.
 
 - [ivorsco77](https://twitter.com/ivorsco77)
 - ivor@devpie.io
