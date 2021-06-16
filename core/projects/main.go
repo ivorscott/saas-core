@@ -13,9 +13,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ardanlabs/conf"
 	"github.com/devpies/devpie-client-core/projects/api/handlers"
 	"github.com/devpies/devpie-client-core/projects/api/listeners"
-	"github.com/devpies/devpie-client-core/projects/platform/conf"
 	"github.com/devpies/devpie-client-core/projects/platform/database"
 	"github.com/devpies/devpie-client-events/go/events"
 )
