@@ -21,8 +21,7 @@ kanaban or agile style board management and auxiliary services like cost estimat
 
 #### Configuration
 
-`manifests/secrets.yaml` is required. Rename `manifests/secrets.sample.yaml`
-and provide base64 encoded credentials for all postgres databases properties (_username, password, host etc_.).
+`manifests/secrets.yaml` is required. Rename `manifests/secrets.sample.yaml` and provide base64 encoded credentials for all secrets.
 
 `core/{service}/.env` is required for integration tests.  Rename `core/{service}/.env.sample` and provide plaintext secrets.
 
