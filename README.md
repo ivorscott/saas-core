@@ -32,6 +32,11 @@ kanaban or agile style board management and auxiliary services like cost estimat
 
 `core/{service}/.env` is required for integration tests.  Rename `core/{service}/.env.sample` and provide plaintext secrets.
 
+`.gitpass` is required for private go modules but currently all repositories are public. Rename `core/.gitpass.sample` 
+and provide a github username and access token.
+
+There's a `secrets.zip` for the team. Just Ask.
+
 ## Developement
 
 Run front and back ends simultaneously. For faster development we don't run the [devpie-client-app](https://github.com/ivorscott/devpie-client-app) 

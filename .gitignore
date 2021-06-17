@@ -4,4 +4,5 @@ manifests/secrets.yaml
 .env
 .DS_Store
 .gitpass
+secrets.zip
 main
