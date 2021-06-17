@@ -39,7 +39,7 @@ in a container/pod. However, we use [tilt.dev](https://tilt.dev) to manage kuber
 
 ```bash
 # devpie-client-app
-npm start
+npm run dev
 
 # devpie-client-core
 make up
