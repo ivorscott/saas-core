@@ -4,7 +4,7 @@ export $(shell sed 's/=.*//' .env)
 .DEFAULT_GOAL := build
 
 test:
-	go test -v --short --cover ./...
+	go test -v --short ./...
 .PHONY: test
 
 e2e:

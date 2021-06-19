@@ -53,7 +53,7 @@ type config struct {
 	}
 }
 
-func setupTests(t *testing.T) (config, *database.Repository, func(), *log.Logger) {
+func setupTests(t *testing.T) (Cfg, *database.Repository, func(), *log.Logger) {
 	infolog := log.New(os.Stderr, "E2E TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	var cfg config
@@ -75,7 +75,7 @@ func setupTests(t *testing.T) (config, *database.Repository, func(), *log.Logger
 	return cfg, repo, rClose, infolog
 }
 
-func newTestRepository(t *testing.T, cfg config) (*database.Repository, func()) {
+func newTestRepository(t *testing.T, cfg Cfg) (*database.Repository, func()) {
 	ctx := context.Background()
 
 	postgresPort := nat.Port("5432/tcp")

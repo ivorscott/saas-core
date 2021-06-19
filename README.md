@@ -14,6 +14,11 @@ kanban or agile style board management and auxiliary services like cost estimati
 - [See Events repository](https://github.com/devpies/devpie-client-events)
 - [See Infrastructure repository](https://github.com/devpies/devpie-client-infra)
 
+- [See Figma design](https://www.figma.com/file/M0FVvRZWGUPWgJlby4UPjm/Devpie-Client?node-id=237%3A16)
+- [See Frontend repository](https://github.com/devpies/devpie-client-app)
+- [See Events repository](https://github.com/devpies/devpie-client-events)
+- [See Infrastructure repository](https://github.com/devpies/devpie-client-infra)
+
 ### Setup
 
 #### Requirements
@@ -25,21 +30,21 @@ kanban or agile style board management and auxiliary services like cost estimati
 - [shadow linter ](golang.org/x/tools/go/analysis/passes/shadow) `go get golang.org/x/tools/go/analysis/passes/shadow  `
 - Secrets
 
-#### ***Note For Windows Users***
-
-<details>
-<summary> Please Enable WSL </summary>
-<br>sha
-
-![frontend preview](docs/images/windows.png)
-</details>
+- [Docker and Kubernetes](https://docs.docker.com/desktop/)
+- [Tilt](https://tilt.dev/)
+- AWS
+- Sengrid
+- Freshbooks
+- [Auth0](http://auth0.com/) with [Github Deployments](https://auth0.com/docs/extensions/github-deployments) enabled
 
 
 #### Secrets
 
 `manifests/secrets.yaml` is required for deployments.
 
-`core/{service}/.env` is required for end to end testing of each service.
+`.gitpass` is required for private go modules but currently all repositories are public. Rename `core/.gitpass.sample` 
+
+and provide a github username and access token.
 
 `.gitpass` is read in the [Tiltfile](https://github.com/devpies/devpie-client-core/blob/2ddeab2eace966283f55cac58aa945a62c0c8aad/Tiltfile#L11) and passed to [Dockerfiles as build args](https://github.com/devpies/devpie-client-core/blob/2ddeab2eace966283f55cac58aa945a62c0c8aad/core/users/Dockerfile#L20). This allows services to pull private go modules but currently all repositories are public.
 
