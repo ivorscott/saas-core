@@ -14,11 +14,6 @@ kanban or agile style board management and auxiliary services like cost estimati
 - [See Events repository](https://github.com/devpies/devpie-client-events)
 - [See Infrastructure repository](https://github.com/devpies/devpie-client-infra)
 
-- [See Figma design](https://www.figma.com/file/M0FVvRZWGUPWgJlby4UPjm/Devpie-Client?node-id=237%3A16)
-- [See Frontend repository](https://github.com/devpies/devpie-client-app)
-- [See Events repository](https://github.com/devpies/devpie-client-events)
-- [See Infrastructure repository](https://github.com/devpies/devpie-client-infra)
-
 ### Setup
 
 #### Requirements
