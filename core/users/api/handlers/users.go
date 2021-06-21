@@ -1,23 +1,23 @@
 package handlers
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-	"time"
-
 	"github.com/devpies/devpie-client-core/users/domain/users"
 	"github.com/devpies/devpie-client-core/users/platform/auth0"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/devpies/devpie-client-core/users/platform/web"
+	"github.com/pkg/errors"
+
+	//"github.com/pkg/errors"
+	"log"
+	"net/http"
+	"time"
 )
 
-// User defines user handlers and their dependencies
-type User struct {
-	repo  database.Storer
-	log   *log.Logger
-	auth0 auth0.Auther
-	query UserQueries
+type Users struct {
+	repo    database.DataStorer
+	log     *log.Logger
+	auth0   auth0.Auther
+	origins string
 }
 
 // UserQueries defines queries required by user handlers
@@ -28,13 +28,14 @@ type UserQueries struct {
 // RetrieveMe retrieves the authenticated user
 func (u *User) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 	var us users.User
+	var query users.UserQueries
 
-	uid := u.auth0.UserByID(r.Context())
+	uid := u.auth0.GetUserByID(r.Context())
 
 	if uid == "" {
 		return web.NewRequestError(users.ErrNotFound, http.StatusNotFound)
 	}
-	us, err := u.query.user.RetrieveMe(r.Context(), u.repo, uid)
+	us, err := query.RetrieveMe(r.Context(), u.repo, uid)
 	if err != nil {
 		switch err {
 		case users.ErrInvalidID:
@@ -52,21 +53,33 @@ func (u *User) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 // Create adds a new user to the internal system and updates the existing Auth0 user
 func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 	var nu users.NewUser
+	var query users.UserQueries
 
-	if err := web.Decode(r, &nu); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
+	sub := u.auth0.GetUserBySubject(r.Context())
 
-	t, err := u.auth0.GenerateToken()
+	// get auth0 management api token
+	t, err := u.auth0.GetOrCreateToken()
 	if err != nil {
 		return err
 	}
 
-	var user users.User
-	status := http.StatusAccepted
+	// if user already exists update app metadata only
+	var us users.User
 
-	user, err = u.query.user.RetrieveMeByAuthID(r.Context(), u.repo, nu.Auth0ID)
+	us, err = query.RetrieveMeByAuthID(r.Context(), u.repo, sub)
+	if err == nil {
+		if err = u.auth0.UpdateUserAppMetaData(t, sub, us.ID); err != nil {
+			return err
+		}
+		return web.Respond(r.Context(), w, us, http.StatusAccepted)
+	}
+
+	if err = web.Decode(r, &nu); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return err
+	}
+
+	user, err := query.Create(r.Context(), u.repo, nu, sub, time.Now())
 	if err != nil {
 		status = http.StatusCreated
 		user, err = u.query.user.Create(r.Context(), u.repo, nu, time.Now())

@@ -18,20 +18,7 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-// MembershipQuerier describes behavior required for executing membership related queries
-type MembershipQuerier interface {
-	Create(ctx context.Context, repo database.Storer, nm NewMembership, now time.Time) (Membership, error)
-	RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid string) ([]MembershipEnhanced, error)
-	RetrieveMembership(ctx context.Context, repo database.Storer, uid, tid string) (Membership, error)
-	Update(ctx context.Context, repo database.Storer, tid string, update UpdateMembership, uid string, now time.Time) error
-	Delete(ctx context.Context, repo database.Storer, tid, uid string) (string, error)
-}
-
-// Queries defines method implementations for interacting with the memberships table
-type Queries struct{}
-
-// Create inserts a new Membership into the database
-func (q *Queries) Create(ctx context.Context, repo database.Storer, nm NewMembership, now time.Time) (Membership, error) {
+func Create(ctx context.Context, repo database.DataStorer, nm NewMembership, now time.Time) (Membership, error) {
 	m := Membership{
 		ID:        uuid.New().String(),
 		UserID:    nm.UserID,
@@ -59,8 +46,7 @@ func (q *Queries) Create(ctx context.Context, repo database.Storer, nm NewMember
 	return m, nil
 }
 
-// RetrieveMemberships retrieves a set of memberships from the database
-func (q *Queries) RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid string) ([]MembershipEnhanced, error) {
+func RetrieveMemberships(ctx context.Context, repo database.DataStorer, uid, tid string) ([]MembershipEnhanced, error) {
 	var m []MembershipEnhanced
 
 	if _, err := q.RetrieveMembership(ctx, repo, uid, tid); err != nil {
@@ -87,7 +73,7 @@ func (q *Queries) RetrieveMemberships(ctx context.Context, repo database.Storer,
 		return nil, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	if err := repo.SelectContext(ctx, &m, query, tid); err != nil {
+	if err := repo.SelectContext(ctx, &m, q, tid); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
 		}
@@ -97,8 +83,7 @@ func (q *Queries) RetrieveMemberships(ctx context.Context, repo database.Storer,
 	return m, nil
 }
 
-// RetrieveMembership retrieves a single membership from the database
-func (q *Queries) RetrieveMembership(ctx context.Context, repo database.Storer, uid, tid string) (Membership, error) {
+func RetrieveMembership(ctx context.Context, repo database.DataStorer, uid, tid string) (Membership, error) {
 	var m Membership
 
 	if _, err := uuid.Parse(tid); err != nil {
@@ -124,7 +109,7 @@ func (q *Queries) RetrieveMembership(ctx context.Context, repo database.Storer, 
 	if err != nil {
 		return m, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
-	err = repo.QueryRowxContext(ctx, query, tid, uid).StructScan(&m)
+	err = repo.QueryRowxContext(ctx, q, tid, uid).StructScan(&m)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return m, ErrNotFound
@@ -135,9 +120,8 @@ func (q *Queries) RetrieveMembership(ctx context.Context, repo database.Storer, 
 	return m, nil
 }
 
-// Update modifies a membership in the database
-func (q *Queries) Update(ctx context.Context, repo database.Storer, tid string, update UpdateMembership, uid string, now time.Time) error {
-	m, err := q.RetrieveMembership(ctx, repo, tid, uid)
+func Update(ctx context.Context, repo database.DataStorer, tid string, update UpdateMembership, uid string, now time.Time) error {
+	m, err := RetrieveMembership(ctx, repo, tid, uid)
 	if err != nil {
 		return err
 	}
@@ -161,13 +145,9 @@ func (q *Queries) Update(ctx context.Context, repo database.Storer, tid string, 
 	return nil
 }
 
-// Delete removes a membership from the database
-func (q *Queries) Delete(ctx context.Context, repo database.Storer, tid, uid string) (string, error) {
-	var id string
-
-	_, err := q.RetrieveMembership(ctx, repo, tid, uid)
-	if err != nil {
-		return id, err
+func Delete(ctx context.Context, repo database.DataStorer, tid, uid string) (string, error) {
+	if _, err := uuid.Parse(tid); err != nil {
+		return "", ErrInvalidID
 	}
 
 	stmt := repo.Delete(
@@ -183,7 +163,8 @@ func (q *Queries) Delete(ctx context.Context, repo database.Storer, tid, uid str
 		return id, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	row := repo.QueryRowxContext(ctx, query, tid, uid)
+	row := repo.QueryRowxContext(ctx, q, tid, uid)
+	var membershipID string
 
 	if err = row.Scan(&id); err != nil {
 		return id, err

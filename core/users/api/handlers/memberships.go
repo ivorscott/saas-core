@@ -13,19 +13,16 @@ import (
 	"github.com/go-chi/chi"
 )
 
-// Membership defines membership handlers and their dependencies
-type Membership struct {
-	repo  database.Storer
+type Memberships struct {
+	repo  database.DataStorer
 	log   *log.Logger
 	auth0 auth0.Auther
 	nats  *events.Client
 	query MembershipQueries
 }
 
-// MembershipQueries defines queries required by membership handlers
-type MembershipQueries struct {
-	membership memberships.MembershipQuerier
-}
+func (m *Memberships) RetrieveMembers(w http.ResponseWriter, r *http.Request) error {
+	uid := m.auth0.GetUserByID(r.Context())
 
 // RetrieveMemberships retrieves all memberships for the authenticated user
 func (m *Membership) RetrieveMemberships(w http.ResponseWriter, r *http.Request) error {

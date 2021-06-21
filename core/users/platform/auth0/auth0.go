@@ -5,24 +5,23 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"strings"
-	"time"
-
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/devpies/devpie-client-core/users/platform/web"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
 )
 
 // Auth0 represents the configuration required for any service to use Auth0.
 type Auth0 struct {
-	Repo         database.Storer
+	Repo         database.DataStorer
 	Domain       string
 	Audience     string
 	M2MClient    string
@@ -30,13 +29,12 @@ type Auth0 struct {
 	MAPIAudience string
 }
 
-// Auther describes the behavior required when interacting with auth0
 type Auther interface {
-	PemCert(token *jwt.Token) (string, error)
-	UserByID(r context.Context) string
-	UserBySubject(ctx context.Context) string
-	GenerateToken() (Token, error)
-	ConnectionID(token Token) (string, error)
+	GetPemCert(token *jwt.Token) (string, error)
+	GetUserByID(r context.Context) string
+	GetUserBySubject(ctx context.Context) string
+	GetOrCreateToken() (Token, error)
+	GetConnectionID(token Token) (string, error)
 	CheckScope(scope, tokenString string) (bool, error)
 	ChangePasswordTicket(token Token, user AuthUser, resultURL string) (string, error)
 	NewManagementToken() (NewToken, error)
@@ -98,17 +96,16 @@ type CustomClaims struct {
 }
 
 const (
-	oauthEndpoint          = "/oauth/token"
-	usersEndpoint          = "/api/v2/users"
+	oauthEndpoint = "/oauth/token"
+	usersEndpoint = "/api/v2/users"
 	changePasswordEndpoint = "/api/v2/tickets/password-change"
-	connectionEndpoint     = "/api/v2/connections"
-	databaseConnection     = "Username-Password-Authentication"
+	connectionEndpoint = "/api/v2/connections"
+	databaseConnection = "Username-Password-Authentication"
 )
 
 // Error codes returned by failures to handle tokens.
 var (
-	ErrNotFound  = errors.New("token not found")
-	ErrInvalidID = errors.New("id provided was not a valid UUID")
+	ErrNotFound = errors.New("token not found")
 )
 
 // Authenticate middleware verifies the access token sent from auth0
@@ -130,7 +127,7 @@ func (a0 *Auth0) Authenticate() web.Middleware {
 					if !checkIss {
 						return token, errors.New("invalid issuer")
 					}
-					cert, err := a0.PemCert(token)
+					cert, err := a0.GetPemCert(token)
 					if err != nil {
 						return nil, err
 					}
@@ -155,7 +152,7 @@ func (a0 *Auth0) Authenticate() web.Middleware {
 // CheckScope middleware verifies the access token has the correct scope before returning a successful response
 func (a0 *Auth0) CheckScope(scope, tokenString string) (bool, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		cert, err := a0.PemCert(token)
+		cert, err := a0.GetPemCert(token)
 		if err != nil {
 			return nil, err
 		}
@@ -181,9 +178,9 @@ func (a0 *Auth0) CheckScope(scope, tokenString string) (bool, error) {
 	return hasScope, nil
 }
 
-// PemCert takes a token and returns the associated certificate in pem format so it can be parsed.
+// GetPemCert takes a token and returns the associated certificate in pem format so it can be parsed.
 // It works by grabbing the json web key set and returning the public key certificate.
-func (a0 *Auth0) PemCert(token *jwt.Token) (string, error) {
+func (a0 *Auth0) GetPemCert(token *jwt.Token) (string, error) {
 	cert := ""
 	resp, err := http.Get("https://" + a0.Domain + "/.well-known/jwks.json")
 	if err != nil {
@@ -211,14 +208,12 @@ func (a0 *Auth0) PemCert(token *jwt.Token) (string, error) {
 	return cert, nil
 }
 
-// UserBySubject returns the token subject aka the auth0 id
-func (a0 *Auth0) UserBySubject(ctx context.Context) string {
+func (a0 *Auth0) GetUserBySubject(ctx context.Context) string {
 	claims := ctx.Value("user").(*jwt.Token).Claims.(jwt.MapClaims)
 	return fmt.Sprintf("%v", claims["sub"])
 }
 
-// UserByID returns the internal user id for the application
-func (a0 *Auth0) UserByID(ctx context.Context) string {
+func (a0 *Auth0) GetUserByID(ctx context.Context) string {
 	claims := ctx.Value("user").(*jwt.Token).Claims.(jwt.MapClaims)
 	if _, ok := claims["https://client.devpie.io/claims/user_id"]; !ok {
 		return ""
@@ -226,8 +221,9 @@ func (a0 *Auth0) UserByID(ctx context.Context) string {
 	return fmt.Sprintf("%v", claims["https://client.devpie.io/claims/user_id"])
 }
 
-// GenerateToken generates a new management Token if one does not exist otherwise it returns an existing one.
-func (a0 *Auth0) GenerateToken() (Token, error) {
+
+// GetOrCreateToken creates a new Token if one does not exist or it returns an existing one.
+func (a0 *Auth0) GetOrCreateToken() (Token, error) {
 	var t Token
 
 	t, err := a0.RetrieveToken()
@@ -299,7 +295,7 @@ func (a0 *Auth0) NewManagementToken() (NewToken, error) {
 // IsExpired determines whether or not a Token is expired.
 func (a0 *Auth0) IsExpired(token Token) bool {
 	parsedToken, err := jwt.ParseWithClaims(token.AccessToken, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		cert, err := a0.PemCert(token)
+		cert, err := a0.GetPemCert(token)
 		if err != nil {
 			return true, err
 		}
@@ -342,7 +338,7 @@ func (a0 *Auth0) RetrieveToken() (Token, error) {
 
 	q, args, err := stmt.ToSql()
 	if err != nil {
-		return t, fmt.Errorf("%w: arguments (%v)", err, args)
+		return t, errors.Wrapf(err, "building query: %v", args)
 	}
 
 	if err := a0.Repo.Get(&t, q); err != nil {
@@ -377,7 +373,7 @@ func (a0 *Auth0) PersistToken(nt NewToken, now time.Time) (Token, error) {
 		"created_at":   t.CreatedAt,
 	})
 	if _, err := stmt.Exec(); err != nil {
-		return t, fmt.Errorf("failed to persist token: %w", err)
+		return t, errors.Wrapf(err, "inserting token: %v", t)
 	}
 
 	return t, nil
@@ -387,12 +383,14 @@ func (a0 *Auth0) PersistToken(nt NewToken, now time.Time) (Token, error) {
 func (a0 *Auth0) DeleteToken() error {
 	stmt := a0.Repo.Delete("ma_token")
 	if _, err := stmt.Exec(); err != nil {
-		return fmt.Errorf("failed to delete previous token: %w", err)
+		return errors.Wrapf(err, "deleting previous token")
 	}
 	return nil
 }
 
-// CreateUser creates an auth0 user
+// ErrInvalidID represents an error when a user id is not a valid uuid.
+var ErrInvalidID = errors.New("id provided was not a valid UUID")
+
 func (a0 *Auth0) CreateUser(token Token, email string) (AuthUser, error) {
 	var u AuthUser
 
@@ -471,7 +469,6 @@ func (a0 *Auth0) UpdateUserAppMetaData(token Token, subject, userID string) erro
 	return nil
 }
 
-// ChangePasswordTicket creates a change password ticket and notifies the recipient via email to set a password
 func (a0 *Auth0) ChangePasswordTicket(token Token, user AuthUser, resultURL string) (string, error) {
 	var baseURL = "https://" + a0.Domain
 	var fiveDays = 432000 // 5 days in seconds
@@ -479,7 +476,7 @@ func (a0 *Auth0) ChangePasswordTicket(token Token, user AuthUser, resultURL stri
 		Ticket string
 	}
 
-	connID, err := a0.ConnectionID(token)
+	connID, err := a0.GetConnectionID(token)
 	if err != nil {
 		return "", err
 	}
@@ -517,8 +514,7 @@ func (a0 *Auth0) ChangePasswordTicket(token Token, user AuthUser, resultURL stri
 	return ticket, err
 }
 
-// ConnectionID returns the connection id in order to create a change password ticket
-func (a0 *Auth0) ConnectionID(token Token) (string, error) {
+func (a0 *Auth0) GetConnectionID(token Token) (string, error) {
 	var conn []struct {
 		ID   string
 		Name string

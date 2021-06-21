@@ -122,16 +122,16 @@ func newTestRepository(t *testing.T, cfg Cfg) (*database.Repository, func()) {
 		t.Fatal(err)
 	}
 
-	if err := schema.Seed(repo.SqlxStorer, "users"); err != nil {
+	if err := schema.Seed(repo.Storer, "users"); err != nil {
 		t.Fatal(err)
 	}
-	if err := schema.Seed(repo.SqlxStorer, "teams"); err != nil {
+	if err := schema.Seed(repo.Storer, "teams"); err != nil {
 		t.Fatal(err)
 	}
-	if err := schema.Seed(repo.SqlxStorer, "memberships"); err != nil {
+	if err := schema.Seed(repo.Storer, "memberships"); err != nil {
 		t.Fatal(err)
 	}
-	if err := schema.Seed(repo.SqlxStorer, "projects"); err != nil {
+	if err := schema.Seed(repo.Storer, "projects"); err != nil {
 		t.Fatal(err)
 	}
 	return repo, rClose

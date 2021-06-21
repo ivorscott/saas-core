@@ -9,7 +9,7 @@ import (
 
 // HealthCheck defines the service's health check mechanism
 type HealthCheck struct {
-	repo database.Storer
+	repo database.DataStorer
 }
 
 // Health returns the service's health status

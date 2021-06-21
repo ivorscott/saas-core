@@ -19,10 +19,8 @@ import (
 	"github.com/sendgrid/sendgrid-go"
 )
 
-// API setups a new application with routes
-func API(shutdown chan os.Signal, repo database.Storer, log *log.Logger, origins string,
-	auth0Audience, auth0Domain, auth0MAPIAudience, auth0M2MClient, auth0M2MSecret,
-	sendgridKey string, nats *events.Client) http.Handler {
+func API(shutdown chan os.Signal, repo database.DataStorer, log *log.Logger, origins string,
+	auth0Audience, auth0Domain, auth0MAPIAudience, auth0M2MClient, auth0M2MSecret, sendgridKey string, nats *events.Client) http.Handler {
 
 	a0 := &auth0.Auth0{
 		Repo:         repo,

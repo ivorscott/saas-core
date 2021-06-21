@@ -9,8 +9,7 @@ import (
 const folder = "/seeds/"
 const ext = ".sql"
 
-// Seed seeds the database using the provided sql file
-func Seed(db database.SqlxStorer, filename string) error {
+func Seed(db database.Storer, filename string) error {
 	tx, err := db.Beginx()
 	if err != nil {
 		return err

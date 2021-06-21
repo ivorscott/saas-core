@@ -25,12 +25,20 @@ type Config struct {
 
 // Repository represents the database and query builder methods
 type Repository struct {
-	SqlxStorer
-	SquirrelBuilder
+	Storer
+	Squirrler
 	URL url.URL
 }
 
-// NewRepository creates a new repository, connecting it to the postgres server
+type Data struct {
+	*sqlx.DB
+}
+
+type SQ struct {
+	squirrel.StatementBuilderType
+}
+
+// NewRepository creates a new Directory, connecting it to the postgres server
 func NewRepository(cfg Config) (*Repository, func(), error) {
 	// Define SSL mode.
 	sslMode := "require"
@@ -58,17 +66,16 @@ func NewRepository(cfg Config) (*Repository, func(), error) {
 	}
 
 	r := &Repository{
-		SqlxStorer:      db,
-		SquirrelBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar).RunWith(db),
-		URL:             u,
+		Storer: db,
+		Squirrler: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar).RunWith(db),
+		URL: u,
 	}
 
 	return r, r.CloseFunc, nil
 }
 
-// CloseFunc proxies the internal close method and handles the error
 func (d *Repository) CloseFunc() {
-	err := d.SqlxStorer.Close()
+	err := d.Storer.Close()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -77,7 +84,7 @@ func (d *Repository) CloseFunc() {
 
 // StatusCheck returns nil if it can successfully talk to the database. It
 // returns a non-nil error otherwise.
-func StatusCheck(ctx context.Context, db Storer) error {
+func StatusCheck(ctx context.Context, db DataStorer) error {
 
 	// Run a simple query to determine connectivity. The db has a "Ping" method
 	// but it can false-positive when it was previously able to talk to the
@@ -88,14 +95,12 @@ func StatusCheck(ctx context.Context, db Storer) error {
 	return db.QueryRowxContext(ctx, q).Scan(&tmp)
 }
 
-// Storer represents a repository
-type Storer interface {
-	SqlxStorer
-	SquirrelBuilder
+type DataStorer interface {
+	Storer
+	Squirrler
 }
 
-// SquirrelBuilder represents the fluent sql generation query builder
-type SquirrelBuilder interface {
+type Squirrler interface {
 	Select(columns ...string) squirrel.SelectBuilder
 	Insert(into string) squirrel.InsertBuilder
 	Replace(into string) squirrel.InsertBuilder
@@ -105,8 +110,7 @@ type SquirrelBuilder interface {
 	RunWith(runner squirrel.BaseRunner) squirrel.StatementBuilderType
 }
 
-// SqlxStorer represents the database extension sqlx
-type SqlxStorer interface {
+type Storer interface {
 	DriverName() string
 	MapperFunc(mf func(string) string)
 	Rebind(query string) string

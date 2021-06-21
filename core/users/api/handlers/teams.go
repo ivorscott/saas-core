@@ -24,14 +24,12 @@ import (
 
 // Team defines team handlers and their dependencies
 type Team struct {
-	repo    database.Storer
-	log     *log.Logger
-	auth0   auth0.Auther
-	nats    *events.Client
-	origins string
-	sender  sendgrid.Sender
-	query   TeamQueries
-	publish publishers.Publisher
+	repo        database.DataStorer
+	log         *log.Logger
+	auth0       *auth0.Auth0
+	nats        *events.Client
+	origins     string
+	sendgridKey string
 }
 
 // TeamQueries defines queries required by team handlers
@@ -47,6 +45,8 @@ type TeamQueries struct {
 func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 	var nt teams.NewTeam
 	var role memberships.Role = memberships.Administrator
+
+	uid := t.auth0.GetUserByID(r.Context())
 
 	if err := web.Decode(r, &nt); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -104,7 +104,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 func (t *Team) AssignExistingTeam(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 	pid := chi.URLParam(r, "pid")
-	uid := t.auth0.UserByID(r.Context())
+	uid := t.auth0.GetUserByID(r.Context())
 
 	tm, err := t.query.team.Retrieve(r.Context(), t.repo, tid)
 	if err != nil {
@@ -148,7 +148,11 @@ func (t *Team) AssignExistingTeam(w http.ResponseWriter, r *http.Request) error 
 func (t *Team) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 
-	uid := t.auth0.UserByID(r.Context())
+	uid := t.auth0.GetUserByID(r.Context())
+
+	// if user is the administrator
+	// and is the last to leave
+	// delete the team
 
 	mid, err := t.query.membership.Delete(r.Context(), t.repo, tid, uid)
 	if err != nil {
@@ -192,7 +196,7 @@ func (t *Team) Retrieve(w http.ResponseWriter, r *http.Request) error {
 
 // List returns all teams associated with the authenticated user
 func (t *Team) List(w http.ResponseWriter, r *http.Request) error {
-	uid := t.auth0.UserByID(r.Context())
+	uid := t.auth0.GetUserByID(r.Context())
 
 	tms, err := t.query.team.List(r.Context(), t.repo, uid)
 	if err != nil {
@@ -212,6 +216,7 @@ func (t *Team) List(w http.ResponseWriter, r *http.Request) error {
 // CreateInvite sends new team invitations
 func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 	var list invites.NewList
+	var query users.UserQueries
 
 	tid := chi.URLParam(r, "tid")
 	link := strings.Split(t.origins, ",")[0]
@@ -231,7 +236,7 @@ func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 			TeamID: tid,
 		}
 		// when user exists
-		u, err := t.query.user.RetrieveByEmail(t.repo, email)
+		u, err := query.RetrieveByEmail(t.repo, email)
 		if err != nil {
 			var au auth0.AuthUser
 
@@ -250,7 +255,7 @@ func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 
 			var us users.User
 
-			us, err = t.query.user.Create(r.Context(), t.repo, nu, time.Now())
+			us, err = query.Create(r.Context(), t.repo, nu, au.Auth0ID, time.Now())
 			if err != nil {
 				return err
 			}
@@ -300,7 +305,7 @@ func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 
 // RetrieveInvites returns invitations for the authenticated user
 func (t *Team) RetrieveInvites(w http.ResponseWriter, r *http.Request) error {
-	uid := t.auth0.UserByID(r.Context())
+	uid := t.auth0.GetUserByID(r.Context())
 
 	is, err := t.query.invite.RetrieveInvites(r.Context(), t.repo, uid)
 	if err != nil {
@@ -350,6 +355,10 @@ func (t *Team) RetrieveInvites(w http.ResponseWriter, r *http.Request) error {
 func (t *Team) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
 	var update invites.UpdateInvite
 	var role memberships.Role = memberships.Editor
+
+	uid := t.auth0.GetUserByID(r.Context())
+	tid := chi.URLParam(r, "tid")
+	iid := chi.URLParam(r, "iid")
 
 	if err := web.Decode(r, &update); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
