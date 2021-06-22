@@ -30,14 +30,6 @@ type Repository struct {
 	URL url.URL
 }
 
-type Data struct {
-	*sqlx.DB
-}
-
-type SQ struct {
-	squirrel.StatementBuilderType
-}
-
 // NewRepository creates a new Directory, connecting it to the postgres server
 func NewRepository(cfg Config) (*Repository, func(), error) {
 	// Define SSL mode.
