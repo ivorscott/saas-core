@@ -6,6 +6,8 @@ import (
 	mockQueries "github.com/devpies/devpie-client-core/users/domain/users/mocks"
 	"github.com/devpies/devpie-client-core/users/platform/auth0/mocks"
 	mockRepo "github.com/devpies/devpie-client-core/users/platform/database/mocks"
+	th "github.com/devpies/devpie-client-core/users/platform/testhelpers"
+
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,10 +22,10 @@ func TestUsers_RetrieveMe_200(t *testing.T) {
 		Auth0ID: "auth0|60a666916089a00069b2a773",
 		Email: "testuser@devpie.io",
 		EmailVerified: false,
-		FirstName: StringPointer("testuser"),
-		LastName: StringPointer(""),
-		Picture: StringPointer("https://s.gravatar.com/avatar/xxxxxxxxxxxx.png"),
-		Locale: StringPointer(""),
+		FirstName: th.StringPointer("testuser"),
+		LastName: th.StringPointer(""),
+		Picture: th.StringPointer("https://s.gravatar.com/avatar/xxxxxxxxxxxx.png"),
+		Locale: th.StringPointer(""),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
