@@ -106,6 +106,7 @@ const (
 // Error codes returned by failures to handle tokens.
 var (
 	ErrNotFound = errors.New("token not found")
+	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
 // Authenticate middleware verifies the access token sent from auth0
@@ -372,7 +373,7 @@ func (a0 *Auth0) PersistToken(nt NewToken, now time.Time) (Token, error) {
 		"created_at":   t.CreatedAt,
 	})
 	if _, err := stmt.Exec(); err != nil {
-		return t, errors.Wrapf(err, "inserting token: %v", t)
+		return t, errors.Wrapf(err, "inserting token")
 	}
 
 	return t, nil
@@ -386,9 +387,6 @@ func (a0 *Auth0) DeleteToken() error {
 	}
 	return nil
 }
-
-// ErrInvalidID represents an error when a user id is not a valid uuid.
-var ErrInvalidID = errors.New("id provided was not a valid UUID")
 
 func (a0 *Auth0) CreateUser(token Token, email string) (AuthUser, error) {
 	var u AuthUser

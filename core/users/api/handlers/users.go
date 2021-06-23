@@ -54,7 +54,10 @@ func (u *User) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 	var nu users.NewUser
 
-	sub := u.auth0.GetUserBySubject(r.Context())
+	if err := web.Decode(r, &nu); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return err
+	}
 
 	// get auth0 management api token
 	t, err := u.auth0.GetOrCreateToken()
@@ -63,22 +66,21 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	// if user already exists update app metadata only
-	var us users.User
-
-	us, err = u.query.RetrieveMeByAuthID(r.Context(), u.repo, sub)
+	us, err := u.query.RetrieveMeByAuthID(r.Context(), u.repo, nu.Auth0ID)
 	if err == nil {
-		if err = u.auth0.UpdateUserAppMetaData(t, sub, us.ID); err != nil {
-			return err
-		}
+		// update app metadata for existing user
+		if err = u.auth0.UpdateUserAppMetaData(t, nu.Auth0ID, us.ID); err != nil {
+			switch err {
+			case auth0.ErrInvalidID:
+				return web.NewRequestError(err, http.StatusBadRequest)
+			default:
+				return errors.Wrapf(err,"failed to update user app metadata")
+			}
+		} // mock
 		return web.Respond(r.Context(), w, us, http.StatusAccepted)
 	}
 
-	if err = web.Decode(r, &nu); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	user, err := u.query.Create(r.Context(), u.repo, nu, sub, time.Now())
+	user, err := u.query.Create(r.Context(), u.repo, nu, time.Now())
 	if err != nil {
 		status = http.StatusCreated
 		user, err = u.query.user.Create(r.Context(), u.repo, nu, time.Now())
@@ -87,12 +89,13 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	if err = u.auth0.UpdateUserAppMetaData(t, nu.Auth0ID, user.ID); err != nil {
+	// update app metadata for new user
+	if err := u.auth0.UpdateUserAppMetaData(t, user.Auth0ID, user.ID); err != nil {
 		switch err {
 		case auth0.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return fmt.Errorf("failed to update app metadata: %w", err)
+			return errors.Wrapf(err,"failed to update user app metadata")
 		}
 	}
 
