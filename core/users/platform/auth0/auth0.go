@@ -96,11 +96,11 @@ type CustomClaims struct {
 }
 
 const (
-	oauthEndpoint = "/oauth/token"
-	usersEndpoint = "/api/v2/users"
+	oauthEndpoint          = "/oauth/token"
+	usersEndpoint          = "/api/v2/users"
 	changePasswordEndpoint = "/api/v2/tickets/password-change"
-	connectionEndpoint = "/api/v2/connections"
-	databaseConnection = "Username-Password-Authentication"
+	connectionEndpoint     = "/api/v2/connections"
+	databaseConnection     = "Username-Password-Authentication"
 )
 
 // Error codes returned by failures to handle tokens.
@@ -220,7 +220,6 @@ func (a0 *Auth0) GetUserByID(ctx context.Context) string {
 	}
 	return fmt.Sprintf("%v", claims["https://client.devpie.io/claims/user_id"])
 }
-
 
 // GetOrCreateToken creates a new Token if one does not exist or it returns an existing one.
 func (a0 *Auth0) GetOrCreateToken() (Token, error) {

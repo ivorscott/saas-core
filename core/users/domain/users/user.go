@@ -20,16 +20,16 @@ var (
 	ErrInvalidEmail = errors.New("address provided was not a valid email")
 )
 
-type UserQuerier interface {
-	Create(ctx context.Context, repo *database.Repository, nu NewUser, aid string, now time.Time) (User, error)
-	RetrieveByEmail(repo *database.Repository, email string) (User, error)
-	RetrieveMe(ctx context.Context, repo *database.Repository, uid string) (User, error)
-	RetrieveMeByAuthID(ctx context.Context, repo *database.Repository, aid string) (User, error)
+type Querier interface {
+	Create(ctx context.Context, repo database.DataStorer, nu NewUser, aid string, now time.Time) (User, error)
+	RetrieveByEmail(repo database.DataStorer, email string) (User, error)
+	RetrieveMe(ctx context.Context, repo database.DataStorer, uid string) (User, error)
+	RetrieveMeByAuthID(ctx context.Context, repo database.DataStorer, aid string) (User, error)
 }
 
-type UserQueries struct {}
+type Queries struct{}
 
-func(q UserQueries) Create(ctx context.Context, repo database.DataStorer, nu NewUser, aid string, now time.Time) (User, error) {
+func (q *Queries) Create(ctx context.Context, repo database.DataStorer, nu NewUser, aid string, now time.Time) (User, error) {
 	u := User{
 		ID:            uuid.New().String(),
 		Auth0ID:       nu.Auth0ID,
@@ -65,7 +65,7 @@ func(q UserQueries) Create(ctx context.Context, repo database.DataStorer, nu New
 	return u, nil
 }
 
-func (q UserQueries) RetrieveByEmail(repo database.DataStorer, email string) (User, error) {
+func (q *Queries) RetrieveByEmail(repo database.DataStorer, email string) (User, error) {
 	var u User
 
 	stmt := repo.Select(
@@ -98,13 +98,12 @@ func (q UserQueries) RetrieveByEmail(repo database.DataStorer, email string) (Us
 	return u, nil
 }
 
-func (q UserQueries) RetrieveMe(ctx context.Context, repo database.DataStorer, uid string) (User, error) {
+func (q *Queries) RetrieveMe(ctx context.Context, repo database.DataStorer, uid string) (User, error) {
 	var u User
 
 	if _, err := uuid.Parse(uid); err != nil {
 		return u, ErrInvalidID
 	}
-	//log.Println("testing===========",repo)
 	stmt := repo.Select(
 		"user_id",
 		"auth0_id",
@@ -135,7 +134,7 @@ func (q UserQueries) RetrieveMe(ctx context.Context, repo database.DataStorer, u
 	return u, nil
 }
 
-func (q UserQueries) RetrieveMeByAuthID(ctx context.Context, repo database.DataStorer, aid string) (User, error) {
+func (q *Queries) RetrieveMeByAuthID(ctx context.Context, repo database.DataStorer, aid string) (User, error) {
 	var u User
 
 	stmt := repo.Select(

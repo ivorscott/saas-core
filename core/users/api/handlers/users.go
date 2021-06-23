@@ -18,6 +18,7 @@ type Users struct {
 	log     *log.Logger
 	auth0   auth0.Auther
 	origins string
+	query   users.Querier
 }
 
 // UserQueries defines queries required by user handlers
@@ -28,14 +29,13 @@ type UserQueries struct {
 // RetrieveMe retrieves the authenticated user
 func (u *User) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 	var us users.User
-	var query users.UserQueries
 
 	uid := u.auth0.GetUserByID(r.Context())
 
 	if uid == "" {
 		return web.NewRequestError(users.ErrNotFound, http.StatusNotFound)
 	}
-	us, err := query.RetrieveMe(r.Context(), u.repo, uid)
+	us, err := u.query.RetrieveMe(r.Context(), u.repo, uid)
 	if err != nil {
 		switch err {
 		case users.ErrInvalidID:
@@ -53,7 +53,6 @@ func (u *User) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 // Create adds a new user to the internal system and updates the existing Auth0 user
 func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 	var nu users.NewUser
-	var query users.UserQueries
 
 	sub := u.auth0.GetUserBySubject(r.Context())
 
@@ -66,7 +65,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 	// if user already exists update app metadata only
 	var us users.User
 
-	us, err = query.RetrieveMeByAuthID(r.Context(), u.repo, sub)
+	us, err = u.query.RetrieveMeByAuthID(r.Context(), u.repo, sub)
 	if err == nil {
 		if err = u.auth0.UpdateUserAppMetaData(t, sub, us.ID); err != nil {
 			return err
@@ -79,7 +78,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	user, err := query.Create(r.Context(), u.repo, nu, sub, time.Now())
+	user, err := u.query.Create(r.Context(), u.repo, nu, sub, time.Now())
 	if err != nil {
 		status = http.StatusCreated
 		user, err = u.query.user.Create(r.Context(), u.repo, nu, time.Now())

@@ -30,6 +30,7 @@ type Team struct {
 	nats        *events.Client
 	origins     string
 	sendgridKey string
+	query       users.Querier
 }
 
 // TeamQueries defines queries required by team handlers
@@ -216,7 +217,6 @@ func (t *Team) List(w http.ResponseWriter, r *http.Request) error {
 // CreateInvite sends new team invitations
 func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 	var list invites.NewList
-	var query users.UserQueries
 
 	tid := chi.URLParam(r, "tid")
 	link := strings.Split(t.origins, ",")[0]
@@ -236,7 +236,7 @@ func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 			TeamID: tid,
 		}
 		// when user exists
-		u, err := query.RetrieveByEmail(t.repo, email)
+		u, err := t.query.RetrieveByEmail(t.repo, email)
 		if err != nil {
 			var au auth0.AuthUser
 
@@ -255,7 +255,7 @@ func (t *Team) CreateInvite(w http.ResponseWriter, r *http.Request) error {
 
 			var us users.User
 
-			us, err = query.Create(r.Context(), t.repo, nu, au.Auth0ID, time.Now())
+			us, err = t.query.Create(r.Context(), t.repo, nu, au.Auth0ID, time.Now())
 			if err != nil {
 				return err
 			}

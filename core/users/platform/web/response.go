@@ -10,10 +10,9 @@ import (
 
 // Respond send a response back to the client
 func Respond(ctx context.Context, w http.ResponseWriter, val interface{}, statusCode int) error {
-	// TODO: fix failure during short tests. e2e still work after refactor
-
-	v := ctx.Value(KeyValues).(*Values)
-	v.StatusCode = statusCode
+	if v, ok := ctx.Value(KeyValues).(*Values); ok {
+		v.StatusCode = statusCode
+	}
 
 	if statusCode == http.StatusNoContent {
 		w.WriteHeader(statusCode)
