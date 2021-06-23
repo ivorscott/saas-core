@@ -21,7 +21,7 @@ import (
 
 // Auth0 represents the configuration required for any service to use Auth0.
 type Auth0 struct {
-	Repo         database.DataStorer
+	Repo         database.Storer
 	Domain       string
 	Audience     string
 	M2MClient    string

@@ -14,7 +14,7 @@ import (
 )
 
 type Users struct {
-	repo    database.DataStorer
+	repo    database.Storer
 	log     *log.Logger
 	auth0   auth0.Auther
 	origins string

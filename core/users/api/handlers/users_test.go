@@ -21,22 +21,22 @@ type QueryMock struct {
 	mock.Mock
 }
 
-func (m *QueryMock) Create(ctx context.Context, repo database.DataStorer, nu users.NewUser, aid string, now time.Time) (users.User, error) {
+func (m *QueryMock) Create(ctx context.Context, repo database.Storer, nu users.NewUser, aid string, now time.Time) (users.User, error) {
 	args := m.Called(ctx, repo, nu, aid, now)
 	return args.Get(0).(users.User), args.Error(1)
 }
 
-func (m *QueryMock) RetrieveByEmail(repo database.DataStorer, email string) (users.User, error) {
+func (m *QueryMock) RetrieveByEmail(repo database.Storer, email string) (users.User, error) {
 	args := m.Called(repo, email)
 	return args.Get(0).(users.User), args.Error(1)
 }
 
-func (m *QueryMock) RetrieveMe(ctx context.Context, repo database.DataStorer, uid string) (users.User, error) {
+func (m *QueryMock) RetrieveMe(ctx context.Context, repo database.Storer, uid string) (users.User, error) {
 	args := m.Called(ctx, repo, uid)
 	return args.Get(0).(users.User), args.Error(1)
 }
 
-func (m *QueryMock) RetrieveMeByAuthID(ctx context.Context, repo database.DataStorer, aid string) (users.User, error) {
+func (m *QueryMock) RetrieveMeByAuthID(ctx context.Context, repo database.Storer, aid string) (users.User, error) {
 	args := m.Called(ctx, repo, aid)
 	return args.Get(0).(users.User), args.Error(1)
 }

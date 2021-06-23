@@ -18,7 +18,7 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-func Create(ctx context.Context, repo database.DataStorer, ni NewInvite, now time.Time) (Invite, error) {
+func Create(ctx context.Context, repo database.Storer, ni NewInvite, now time.Time) (Invite, error) {
 	i := Invite{
 		ID:         uuid.New().String(),
 		UserID:     ni.UserID,
@@ -50,7 +50,7 @@ func Create(ctx context.Context, repo database.DataStorer, ni NewInvite, now tim
 	return i, nil
 }
 
-func RetrieveInvite(ctx context.Context, repo database.DataStorer, uid string, iid string) (Invite, error) {
+func RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (Invite, error) {
 	var i Invite
 
 	stmt := repo.Select(
@@ -82,7 +82,7 @@ func RetrieveInvite(ctx context.Context, repo database.DataStorer, uid string, i
 	return i, nil
 }
 
-func RetrieveInvites(ctx context.Context, repo database.DataStorer, uid string) ([]Invite, error) {
+func RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]Invite, error) {
 	var is []Invite
 
 	stmt := repo.Select(
@@ -113,7 +113,7 @@ func RetrieveInvites(ctx context.Context, repo database.DataStorer, uid string) 
 	return is, nil
 }
 
-func Update(ctx context.Context, repo database.DataStorer, update UpdateInvite, uid, iid string, now time.Time) (Invite, error) {
+func Update(ctx context.Context, repo database.Storer, update UpdateInvite, uid, iid string, now time.Time) (Invite, error) {
 	var iv Invite
 
 	i, err := RetrieveInvite(ctx, repo, uid, iid)

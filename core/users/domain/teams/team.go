@@ -18,7 +18,7 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-func Create(ctx context.Context, repo database.DataStorer, nt NewTeam, uid string, now time.Time) (Team, error) {
+func Create(ctx context.Context, repo database.Storer, nt NewTeam, uid string, now time.Time) (Team, error) {
 	t := Team{
 		ID:        uuid.New().String(),
 		Name:      nt.Name,
@@ -44,7 +44,7 @@ func Create(ctx context.Context, repo database.DataStorer, nt NewTeam, uid strin
 	return t, nil
 }
 
-func Retrieve(ctx context.Context, repo database.DataStorer, tid string) (Team, error) {
+func Retrieve(ctx context.Context, repo database.Storer, tid string) (Team, error) {
 	var t Team
 
 	if _, err := uuid.Parse(tid); err != nil {
@@ -76,7 +76,7 @@ func Retrieve(ctx context.Context, repo database.DataStorer, tid string) (Team, 
 	return t, nil
 }
 
-func List(ctx context.Context, repo database.DataStorer, uid string) ([]Team, error) {
+func List(ctx context.Context, repo database.Storer, uid string) ([]Team, error) {
 	var ts []Team
 
 	if _, err := uuid.Parse(uid); err != nil {

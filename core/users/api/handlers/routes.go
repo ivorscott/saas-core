@@ -14,7 +14,7 @@ import (
 	"github.com/sendgrid/sendgrid-go"
 )
 
-func API(shutdown chan os.Signal, repo database.DataStorer, log *log.Logger, origins string,
+func API(shutdown chan os.Signal, repo database.Storer, log *log.Logger, origins string,
 	auth0Audience, auth0Domain, auth0MAPIAudience, auth0M2MClient, auth0M2MSecret, sendgridKey string, nats *events.Client) http.Handler {
 
 	a0 := &auth0.Auth0{
