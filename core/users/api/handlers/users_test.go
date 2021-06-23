@@ -1,15 +1,17 @@
 package handlers
 
 import (
+	"context"
+	"fmt"
 	"github.com/devpies/devpie-client-core/users/domain/users"
 	mockAuth "github.com/devpies/devpie-client-core/users/platform/auth0/mocks"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	mockDB "github.com/devpies/devpie-client-core/users/platform/database/mocks"
 	th "github.com/devpies/devpie-client-core/users/platform/testhelpers"
+	"github.com/devpies/devpie-client-core/users/platform/web"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -81,8 +83,173 @@ func TestUsers_RetrieveMe_200(t *testing.T) {
 	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
 	mux.ServeHTTP(writer, request)
 
-	mockAuth0.AssertExpectations(t)
-	mockQueries.AssertExpectations(t)
+	t.Run("Assert Handler Response", func(t *testing.T) {
+		assert.Equal(t, http.StatusOK, writer.Code)
+	})
 
-	assert.Equal(t, writer.Code, http.StatusOK)
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		mockAuth0.AssertExpectations(t)
+		mockQueries.AssertExpectations(t)
+	})
+}
+
+func TestUsers_RetrieveMe_404_Missing_ID(t *testing.T) {
+	// setup mocks
+	mockAuth0 := &mockAuth.Auther{}
+	mockAuth0.On("GetUserByID", context.Background()).Return("")
+
+	// setup server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
+		u := &Users{
+			auth0: mockAuth0,
+		}
+		var webErr *web.Error
+		err := u.RetrieveMe(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, users.ErrNotFound))
+			assert.Equal(t, http.StatusNotFound, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		mockAuth0.AssertExpectations(t)
+	})
+}
+
+func TestUsers_RetrieveMe_404_Missing_Record(t *testing.T) {
+	// setup mocks
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	mockAuth0 := &mockAuth.Auther{}
+	mockAuth0.On("GetUserByID", context.Background()).Return(uid)
+	mockRepo := &database.Repository{
+		SqlxStorer: &mockDB.SqlxStorer{},
+		Squirreler: &mockDB.Squirreler{},
+		URL:        url.URL{},
+	}
+	mockQueries := &QueryMock{}
+	mockQueries.
+		On("RetrieveMe", context.Background(), mockRepo, uid).
+		Return(users.User{}, users.ErrNotFound)
+
+	// setup server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
+		u := &Users{
+			repo:  mockRepo,
+			auth0: mockAuth0,
+			query: mockQueries,
+		}
+		var webErr *web.Error
+		err := u.RetrieveMe(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, users.ErrNotFound))
+			assert.Equal(t, http.StatusNotFound, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		mockAuth0.AssertExpectations(t)
+	})
+}
+
+
+func TestUsers_RetrieveMe_404_Invalid_ID(t *testing.T) {
+	// setup mocks
+	uid := "123"
+	mockAuth0 := &mockAuth.Auther{}
+	mockAuth0.On("GetUserByID", context.Background()).Return(uid)
+	mockRepo := &database.Repository{
+		SqlxStorer: &mockDB.SqlxStorer{},
+		Squirreler: &mockDB.Squirreler{},
+		URL:        url.URL{},
+	}
+	mockQueries := &QueryMock{}
+	mockQueries.
+		On("RetrieveMe", context.Background(), mockRepo, uid).
+		Return(users.User{}, users.ErrInvalidID)
+
+	// setup server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
+		u := &Users{
+			repo:  mockRepo,
+			auth0: mockAuth0,
+			query: mockQueries,
+		}
+		var webErr *web.Error
+		err := u.RetrieveMe(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, users.ErrInvalidID))
+			assert.Equal(t, http.StatusBadRequest, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		mockAuth0.AssertExpectations(t)
+	})
+}
+
+func TestUsers_RetrieveMe_500_Uncaught_Error(t *testing.T) {
+	cause := errors.New("Something went wrong")
+
+	// setup mocks
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	mockAuth0 := &mockAuth.Auther{}
+	mockAuth0.On("GetUserByID", context.Background()).Return(uid)
+	mockRepo := &database.Repository{
+		SqlxStorer: &mockDB.SqlxStorer{},
+		Squirreler: &mockDB.Squirreler{},
+		URL:        url.URL{},
+	}
+	mockQueries := &QueryMock{}
+	mockQueries.
+		On("RetrieveMe", context.Background(), mockRepo, uid).
+		Return(users.User{}, cause)
+
+	// setup server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
+		u := &Users{
+			repo:  mockRepo,
+			auth0: mockAuth0,
+			query: mockQueries,
+		}
+		err := u.RetrieveMe(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, err.Error(), fmt.Sprintf(`looking for user "%s": %s`, uid, cause))
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		mockAuth0.AssertExpectations(t)
+	})
 }
