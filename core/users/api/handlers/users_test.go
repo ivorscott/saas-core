@@ -306,7 +306,7 @@ func TestUsers_Create_201(t *testing.T) {
 		newUser.Auth0ID, newUser.Email, *newUser.FirstName, *newUser.Picture)
 
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/users", strings.NewReader(json))
+	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(json))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Handler Response", func(t *testing.T) {
