@@ -61,6 +61,27 @@ func (_m *Auther) CheckScope(scope string, tokenString string) (bool, error) {
 	return r0, r1
 }
 
+// ConnectionID provides a mock function with given fields: token
+func (_m *Auther) ConnectionID(token auth0.Token) (string, error) {
+	ret := _m.Called(token)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(auth0.Token) string); ok {
+		r0 = rf(token)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(auth0.Token) error); ok {
+		r1 = rf(token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateUser provides a mock function with given fields: token, email
 func (_m *Auther) CreateUser(token auth0.Token, email string) (auth0.AuthUser, error) {
 	ret := _m.Called(token, email)
@@ -96,29 +117,8 @@ func (_m *Auther) DeleteToken() error {
 	return r0
 }
 
-// GetConnectionID provides a mock function with given fields: token
-func (_m *Auther) GetConnectionID(token auth0.Token) (string, error) {
-	ret := _m.Called(token)
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func(auth0.Token) string); ok {
-		r0 = rf(token)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(auth0.Token) error); ok {
-		r1 = rf(token)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetOrCreateToken provides a mock function with given fields:
-func (_m *Auther) GetOrCreateToken() (auth0.Token, error) {
+// GenerateToken provides a mock function with given fields:
+func (_m *Auther) GenerateToken() (auth0.Token, error) {
 	ret := _m.Called()
 
 	var r0 auth0.Token
@@ -136,55 +136,6 @@ func (_m *Auther) GetOrCreateToken() (auth0.Token, error) {
 	}
 
 	return r0, r1
-}
-
-// GetPemCert provides a mock function with given fields: token
-func (_m *Auther) GetPemCert(token *jwt.Token) (string, error) {
-	ret := _m.Called(token)
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func(*jwt.Token) string); ok {
-		r0 = rf(token)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*jwt.Token) error); ok {
-		r1 = rf(token)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetUserByID provides a mock function with given fields: r
-func (_m *Auther) GetUserByID(r context.Context) string {
-	ret := _m.Called(r)
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
-		r0 = rf(r)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// GetUserBySubject provides a mock function with given fields: ctx
-func (_m *Auther) GetUserBySubject(ctx context.Context) string {
-	ret := _m.Called(ctx)
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
 }
 
 // IsExpired provides a mock function with given fields: token
@@ -215,6 +166,27 @@ func (_m *Auther) NewManagementToken() (auth0.NewToken, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// PemCert provides a mock function with given fields: token
+func (_m *Auther) PemCert(token *jwt.Token) (string, error) {
+	ret := _m.Called(token)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(*jwt.Token) string); ok {
+		r0 = rf(token)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*jwt.Token) error); ok {
+		r1 = rf(token)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -273,6 +245,34 @@ func (_m *Auther) UpdateUserAppMetaData(token auth0.Token, subject string, userI
 		r0 = rf(token, subject, userID)
 	} else {
 		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UserByID provides a mock function with given fields: r
+func (_m *Auther) UserByID(r context.Context) string {
+	ret := _m.Called(r)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
+		r0 = rf(r)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// UserBySubject provides a mock function with given fields: ctx
+func (_m *Auther) UserBySubject(ctx context.Context) string {
+	ret := _m.Called(ctx)
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(string)
 	}
 
 	return r0

@@ -30,7 +30,7 @@ type UserQueries struct {
 func (u *User) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 	var us users.User
 
-	uid := u.auth0.GetUserByID(r.Context())
+	uid := u.auth0.UserByID(r.Context())
 
 	if uid == "" {
 		return web.NewRequestError(users.ErrNotFound, http.StatusNotFound)
@@ -59,7 +59,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	t, err := u.auth0.GetOrCreateToken()
+	t, err := u.auth0.GenerateToken()
 	if err != nil {
 		return err
 	}

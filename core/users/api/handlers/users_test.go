@@ -49,7 +49,7 @@ func TestUsers_RetrieveMe_200(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	mockAuth0 := &mockAuth.Auther{}
-	mockAuth0.On("GetUserByID", context.Background()).Return(uid)
+	mockAuth0.On("UserByID", context.Background()).Return(uid)
 	mockRepo := &database.Repository{
 		SqlxStorer: &mockDB.SqlxStorer{},
 		Squirreler: &mockDB.Squirreler{},
@@ -98,7 +98,7 @@ func TestUsers_RetrieveMe_200(t *testing.T) {
 func TestUsers_RetrieveMe_404_Missing_ID(t *testing.T) {
 	// setup mocks
 	mockAuth0 := &mockAuth.Auther{}
-	mockAuth0.On("GetUserByID", context.Background()).Return("")
+	mockAuth0.On("UserByID", context.Background()).Return("")
 
 	// setup server
 	mux := http.NewServeMux()
@@ -130,7 +130,7 @@ func TestUsers_RetrieveMe_404_Missing_Record(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	mockAuth0 := &mockAuth.Auther{}
-	mockAuth0.On("GetUserByID", context.Background()).Return(uid)
+	mockAuth0.On("UserByID", context.Background()).Return(uid)
 	mockRepo := &database.Repository{
 		SqlxStorer: &mockDB.SqlxStorer{},
 		Squirreler: &mockDB.Squirreler{},
@@ -172,7 +172,7 @@ func TestUsers_RetrieveMe_404_Invalid_ID(t *testing.T) {
 	// setup mocks
 	uid := "123"
 	mockAuth0 := &mockAuth.Auther{}
-	mockAuth0.On("GetUserByID", context.Background()).Return(uid)
+	mockAuth0.On("UserByID", context.Background()).Return(uid)
 	mockRepo := &database.Repository{
 		SqlxStorer: &mockDB.SqlxStorer{},
 		Squirreler: &mockDB.Squirreler{},
@@ -216,7 +216,7 @@ func TestUsers_RetrieveMe_500_Uncaught_Error(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	mockAuth0 := &mockAuth.Auther{}
-	mockAuth0.On("GetUserByID", context.Background()).Return(uid)
+	mockAuth0.On("UserByID", context.Background()).Return(uid)
 	mockRepo := &database.Repository{
 		SqlxStorer: &mockDB.SqlxStorer{},
 		Squirreler: &mockDB.Squirreler{},
@@ -264,7 +264,7 @@ func TestUsers_Create_201(t *testing.T) {
 	mockToken := auth0.Token{}
 	mockAuth0 := &mockAuth.Auther{}
 	mockAuth0.
-		On("GetOrCreateToken").Return(mockToken, nil).
+		On("GenerateToken").Return(mockToken, nil).
 		On("UpdateUserAppMetaData", mockToken, newUser.Auth0ID, uid).Return(nil).Once()
 
 	mockRepo := &database.Repository{

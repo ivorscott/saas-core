@@ -30,11 +30,11 @@ type Auth0 struct {
 }
 
 type Auther interface {
-	GetPemCert(token *jwt.Token) (string, error)
-	GetUserByID(r context.Context) string
-	GetUserBySubject(ctx context.Context) string
-	GetOrCreateToken() (Token, error)
-	GetConnectionID(token Token) (string, error)
+	PemCert(token *jwt.Token) (string, error)
+	UserByID(r context.Context) string
+	UserBySubject(ctx context.Context) string
+	GenerateToken() (Token, error)
+	ConnectionID(token Token) (string, error)
 	CheckScope(scope, tokenString string) (bool, error)
 	ChangePasswordTicket(token Token, user AuthUser, resultURL string) (string, error)
 	NewManagementToken() (NewToken, error)
@@ -128,7 +128,7 @@ func (a0 *Auth0) Authenticate() web.Middleware {
 					if !checkIss {
 						return token, errors.New("invalid issuer")
 					}
-					cert, err := a0.GetPemCert(token)
+					cert, err := a0.PemCert(token)
 					if err != nil {
 						return nil, err
 					}
@@ -153,7 +153,7 @@ func (a0 *Auth0) Authenticate() web.Middleware {
 // CheckScope middleware verifies the access token has the correct scope before returning a successful response
 func (a0 *Auth0) CheckScope(scope, tokenString string) (bool, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		cert, err := a0.GetPemCert(token)
+		cert, err := a0.PemCert(token)
 		if err != nil {
 			return nil, err
 		}
@@ -179,9 +179,9 @@ func (a0 *Auth0) CheckScope(scope, tokenString string) (bool, error) {
 	return hasScope, nil
 }
 
-// GetPemCert takes a token and returns the associated certificate in pem format so it can be parsed.
+// PemCert takes a token and returns the associated certificate in pem format so it can be parsed.
 // It works by grabbing the json web key set and returning the public key certificate.
-func (a0 *Auth0) GetPemCert(token *jwt.Token) (string, error) {
+func (a0 *Auth0) PemCert(token *jwt.Token) (string, error) {
 	cert := ""
 	resp, err := http.Get("https://" + a0.Domain + "/.well-known/jwks.json")
 	if err != nil {
@@ -209,12 +209,12 @@ func (a0 *Auth0) GetPemCert(token *jwt.Token) (string, error) {
 	return cert, nil
 }
 
-func (a0 *Auth0) GetUserBySubject(ctx context.Context) string {
+func (a0 *Auth0) UserBySubject(ctx context.Context) string {
 	claims := ctx.Value("user").(*jwt.Token).Claims.(jwt.MapClaims)
 	return fmt.Sprintf("%v", claims["sub"])
 }
 
-func (a0 *Auth0) GetUserByID(ctx context.Context) string {
+func (a0 *Auth0) UserByID(ctx context.Context) string {
 	claims := ctx.Value("user").(*jwt.Token).Claims.(jwt.MapClaims)
 	if _, ok := claims["https://client.devpie.io/claims/user_id"]; !ok {
 		return ""
@@ -222,8 +222,8 @@ func (a0 *Auth0) GetUserByID(ctx context.Context) string {
 	return fmt.Sprintf("%v", claims["https://client.devpie.io/claims/user_id"])
 }
 
-// GetOrCreateToken creates a new management Token if one does not exist otherwise it returns an existing one.
-func (a0 *Auth0) GetOrCreateToken() (Token, error) {
+// GenerateToken generates a new management Token if one does not exist otherwise it returns an existing one.
+func (a0 *Auth0) GenerateToken() (Token, error) {
 	var t Token
 
 	t, err := a0.RetrieveToken()
@@ -295,7 +295,7 @@ func (a0 *Auth0) NewManagementToken() (NewToken, error) {
 // IsExpired determines whether or not a Token is expired.
 func (a0 *Auth0) IsExpired(token Token) bool {
 	parsedToken, err := jwt.ParseWithClaims(token.AccessToken, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		cert, err := a0.GetPemCert(token)
+		cert, err := a0.PemCert(token)
 		if err != nil {
 			return true, err
 		}
@@ -473,7 +473,7 @@ func (a0 *Auth0) ChangePasswordTicket(token Token, user AuthUser, resultURL stri
 		Ticket string
 	}
 
-	connID, err := a0.GetConnectionID(token)
+	connID, err := a0.ConnectionID(token)
 	if err != nil {
 		return "", err
 	}
@@ -511,7 +511,7 @@ func (a0 *Auth0) ChangePasswordTicket(token Token, user AuthUser, resultURL stri
 	return ticket, err
 }
 
-func (a0 *Auth0) GetConnectionID(token Token) (string, error) {
+func (a0 *Auth0) ConnectionID(token Token) (string, error) {
 	var conn []struct {
 		ID   string
 		Name string

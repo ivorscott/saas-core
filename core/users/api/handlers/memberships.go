@@ -22,7 +22,7 @@ type Memberships struct {
 }
 
 func (m *Memberships) RetrieveMembers(w http.ResponseWriter, r *http.Request) error {
-	uid := m.auth0.GetUserByID(r.Context())
+	uid := m.auth0.UserByID(r.Context())
 
 // RetrieveMemberships retrieves all memberships for the authenticated user
 func (m *Membership) RetrieveMemberships(w http.ResponseWriter, r *http.Request) error {
