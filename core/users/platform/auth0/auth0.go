@@ -222,7 +222,7 @@ func (a0 *Auth0) GetUserByID(ctx context.Context) string {
 	return fmt.Sprintf("%v", claims["https://client.devpie.io/claims/user_id"])
 }
 
-// GetOrCreateToken creates a new Token if one does not exist or it returns an existing one.
+// GetOrCreateToken creates a new management Token if one does not exist otherwise it returns an existing one.
 func (a0 *Auth0) GetOrCreateToken() (Token, error) {
 	var t Token
 
