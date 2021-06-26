@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/devpies/devpie-client-core/users/domain/memberships"
 	"github.com/devpies/devpie-client-core/users/platform/auth0"
@@ -19,6 +20,18 @@ type Membership struct {
 	auth0 auth0.Auther
 	nats  *events.Client
 	query MembershipQueries
+}
+
+type MembershipQueries struct {
+	membership MembershipQuerier
+}
+
+type MembershipQuerier interface {
+	Create(ctx context.Context, repo database.Storer, nm memberships.NewMembership, now time.Time) (memberships.Membership, error)
+	RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid string) ([]memberships.MembershipEnhanced, error)
+	RetrieveMembership(ctx context.Context, repo database.Storer, uid, tid string) (memberships.Membership, error)
+	Update(ctx context.Context, repo database.Storer, tid string, update memberships.UpdateMembership, uid string, now time.Time) error
+	Delete(ctx context.Context, repo database.Storer, tid, uid string) (string, error)
 }
 
 func (m *Membership) RetrieveMembers(w http.ResponseWriter, r *http.Request) error {

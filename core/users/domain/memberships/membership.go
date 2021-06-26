@@ -18,7 +18,9 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-func Create(ctx context.Context, repo database.Storer, nm NewMembership, now time.Time) (Membership, error) {
+type Queries struct{}
+
+func (q *Queries) Create(ctx context.Context, repo database.Storer, nm NewMembership, now time.Time) (Membership, error) {
 	m := Membership{
 		ID:        uuid.New().String(),
 		UserID:    nm.UserID,
@@ -46,7 +48,7 @@ func Create(ctx context.Context, repo database.Storer, nm NewMembership, now tim
 	return m, nil
 }
 
-func RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid string) ([]MembershipEnhanced, error) {
+func (q *Queries) RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid string) ([]MembershipEnhanced, error) {
 	var m []MembershipEnhanced
 
 	if _, err := q.RetrieveMembership(ctx, repo, uid, tid); err != nil {
@@ -73,7 +75,7 @@ func RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid str
 		return nil, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	if err := repo.SelectContext(ctx, &m, q, tid); err != nil {
+	if err := repo.SelectContext(ctx, &m, query, tid); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
 		}
@@ -83,7 +85,7 @@ func RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid str
 	return m, nil
 }
 
-func RetrieveMembership(ctx context.Context, repo database.Storer, uid, tid string) (Membership, error) {
+func (q *Queries) RetrieveMembership(ctx context.Context, repo database.Storer, uid, tid string) (Membership, error) {
 	var m Membership
 
 	if _, err := uuid.Parse(tid); err != nil {
@@ -109,7 +111,7 @@ func RetrieveMembership(ctx context.Context, repo database.Storer, uid, tid stri
 	if err != nil {
 		return m, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
-	err = repo.QueryRowxContext(ctx, q, tid, uid).StructScan(&m)
+	err = repo.QueryRowxContext(ctx, query, tid, uid).StructScan(&m)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return m, ErrNotFound
@@ -120,8 +122,8 @@ func RetrieveMembership(ctx context.Context, repo database.Storer, uid, tid stri
 	return m, nil
 }
 
-func Update(ctx context.Context, repo database.Storer, tid string, update UpdateMembership, uid string, now time.Time) error {
-	m, err := RetrieveMembership(ctx, repo, tid, uid)
+func (q *Queries) Update(ctx context.Context, repo database.Storer, tid string, update UpdateMembership, uid string, now time.Time) error {
+	m, err := q.RetrieveMembership(ctx, repo, tid, uid)
 	if err != nil {
 		return err
 	}
@@ -145,7 +147,7 @@ func Update(ctx context.Context, repo database.Storer, tid string, update Update
 	return nil
 }
 
-func Delete(ctx context.Context, repo database.Storer, tid, uid string) (string, error) {
+func (q *Queries) Delete(ctx context.Context, repo database.Storer, tid, uid string) (string, error) {
 	if _, err := uuid.Parse(tid); err != nil {
 		return "", ErrInvalidID
 	}
@@ -158,12 +160,12 @@ func Delete(ctx context.Context, repo database.Storer, tid, uid string) (string,
 		"RETURNING membership_id",
 	)
 
-	query, args, err := stmt.ToSql()
+	query, _, err := stmt.ToSql()
 	if err != nil {
 		return id, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	row := repo.QueryRowxContext(ctx, q, tid, uid)
+	row := repo.QueryRowxContext(ctx, query, tid, uid)
 	var membershipID string
 
 	if err = row.Scan(&id); err != nil {

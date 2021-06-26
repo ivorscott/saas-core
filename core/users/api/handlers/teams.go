@@ -36,8 +36,9 @@ type Team struct {
 }
 
 type TeamQueries struct {
-	team    TeamQuerier
-	project ProjectQuerier
+	team       TeamQuerier
+	project    ProjectQuerier
+	membership MembershipQuerier
 }
 
 type TeamQuerier interface {
@@ -162,6 +163,10 @@ func (t *Team) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 	// if user is the administrator
 	// and is the last to leave
 	// delete the team
+
+	// if the user is the administrator
+	// and is not the last to leave
+	// ownership must be passed to another member
 
 	mid, err := t.query.membership.Delete(r.Context(), t.repo, tid, uid)
 	if err != nil {

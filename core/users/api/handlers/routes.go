@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/devpies/devpie-client-core/users/domain/memberships"
 	"github.com/devpies/devpie-client-core/users/domain/projects"
 	"github.com/devpies/devpie-client-core/users/domain/teams"
 	"github.com/devpies/devpie-client-core/users/domain/users"
@@ -17,7 +18,8 @@ import (
 )
 
 func API(shutdown chan os.Signal, repo database.Storer, log *log.Logger, origins string,
-	auth0Audience, auth0Domain, auth0MAPIAudience, auth0M2MClient, auth0M2MSecret, sendgridKey string, nats *events.Client) http.Handler {
+	auth0Audience, auth0Domain, auth0MAPIAudience, auth0M2MClient, auth0M2MSecret,
+	sendgridKey string, nats *events.Client) http.Handler {
 
 	a0 := &auth0.Auth0{
 		Repo:         repo,
@@ -35,8 +37,8 @@ func API(shutdown chan os.Signal, repo database.Storer, log *log.Logger, origins
 	app.Handle(http.MethodGet, "/api/v1/health", h.Health)
 	u := User{repo, log, a0, origins, UserQueries{&users.Queries{}}}
 	tm := Team{repo, log, a0, nats, origins, sendgridKey,
-		TeamQueries{&teams.Queries{}, &projects.Queries{}}}
-	m := Membership{repo, log, a0, nats}
+		TeamQueries{&teams.Queries{}, &projects.Queries{}, &memberships.Queries{}}}
+	m := Membership{repo, log, a0, nats, MembershipQueries{&memberships.Queries{}}}
 
 	app.Handle(http.MethodPost, "/api/v1/users", u.Create)
 	app.Handle(http.MethodGet, "/api/v1/users/me", u.RetrieveMe)
