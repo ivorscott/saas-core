@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -30,6 +32,17 @@ type Team struct {
 	nats        *events.Client
 	origins     string
 	sendgridKey string
+	query       TeamQueries
+}
+
+type TeamQueries struct {
+	team TeamQuerier
+}
+
+type TeamQuerier interface {
+	Create(ctx context.Context, repo database.Storer, nt teams.NewTeam, uid string, now time.Time) (teams.Team, error)
+	Retrieve(ctx context.Context, repo database.Storer, tid string) (teams.Team, error)
+	List(ctx context.Context, repo database.Storer, uid string) ([]teams.Team, error)
 }
 
 // TeamQueries defines queries required by team handlers

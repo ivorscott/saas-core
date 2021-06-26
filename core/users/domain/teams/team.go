@@ -18,7 +18,9 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-func Create(ctx context.Context, repo database.Storer, nt NewTeam, uid string, now time.Time) (Team, error) {
+type Queries struct{}
+
+func (q *Queries) Create(ctx context.Context, repo database.Storer, nt NewTeam, uid string, now time.Time) (Team, error) {
 	t := Team{
 		ID:        uuid.New().String(),
 		Name:      nt.Name,
@@ -44,7 +46,7 @@ func Create(ctx context.Context, repo database.Storer, nt NewTeam, uid string, n
 	return t, nil
 }
 
-func Retrieve(ctx context.Context, repo database.Storer, tid string) (Team, error) {
+func (q *Queries) Retrieve(ctx context.Context, repo database.Storer, tid string) (Team, error) {
 	var t Team
 
 	if _, err := uuid.Parse(tid); err != nil {
@@ -66,7 +68,7 @@ func Retrieve(ctx context.Context, repo database.Storer, tid string) (Team, erro
 		return t, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	if err := repo.GetContext(ctx, &t, q, tid); err != nil {
+	if err := repo.GetContext(ctx, &t, query, tid); err != nil {
 		if err == sql.ErrNoRows {
 			return t, ErrNotFound
 		}
@@ -76,7 +78,7 @@ func Retrieve(ctx context.Context, repo database.Storer, tid string) (Team, erro
 	return t, nil
 }
 
-func List(ctx context.Context, repo database.Storer, uid string) ([]Team, error) {
+func (q *Queries) List(ctx context.Context, repo database.Storer, uid string) ([]Team, error) {
 	var ts []Team
 
 	if _, err := uuid.Parse(uid); err != nil {
@@ -98,7 +100,7 @@ func List(ctx context.Context, repo database.Storer, uid string) ([]Team, error)
 		return ts, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	if err := repo.SelectContext(ctx, &ts, q, uid); err != nil {
+	if err := repo.SelectContext(ctx, &ts, query, uid); err != nil {
 		if err == sql.ErrNoRows {
 			return ts, ErrNotFound
 		}

@@ -44,7 +44,7 @@ func (m *queryMock) RetrieveMeByAuthID(ctx context.Context, repo database.Storer
 }
 
 type deps struct {
-	service *Users
+	service *User
 	repo    *database.Repository
 	auth0   *mockAuth.Auther
 	query   *queryMock
@@ -58,10 +58,10 @@ func setupMocks() *deps {
 		repo:  mockRepo,
 		auth0: mockAuth0,
 		query: mockQueries,
-		service: &Users{
+		service: &User{
 			repo:  mockRepo,
 			auth0: mockAuth0,
-			query: mockQueries,
+			query: UserQueries{mockQueries},
 		},
 	}
 }

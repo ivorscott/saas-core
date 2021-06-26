@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/chi"
 )
 
-type Memberships struct {
+type Membership struct {
 	repo  database.Storer
 	log   *log.Logger
 	auth0 auth0.Auther
@@ -21,7 +21,7 @@ type Memberships struct {
 	query MembershipQueries
 }
 
-func (m *Memberships) RetrieveMembers(w http.ResponseWriter, r *http.Request) error {
+func (m *Membership) RetrieveMembers(w http.ResponseWriter, r *http.Request) error {
 	uid := m.auth0.UserByID(r.Context())
 
 // RetrieveMemberships retrieves all memberships for the authenticated user
