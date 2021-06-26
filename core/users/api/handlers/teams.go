@@ -36,7 +36,8 @@ type Team struct {
 }
 
 type TeamQueries struct {
-	team TeamQuerier
+	team    TeamQuerier
+	project ProjectQuerier
 }
 
 type TeamQuerier interface {
@@ -45,16 +46,13 @@ type TeamQuerier interface {
 	List(ctx context.Context, repo database.Storer, uid string) ([]teams.Team, error)
 }
 
-// TeamQueries defines queries required by team handlers
-type TeamQueries struct {
-	team       teams.TeamQuerier
-	project    projects.ProjectQuerier
-	membership memberships.MembershipQuerier
-	user       users.UserQuerier
-	invite     invites.InviteQuerier
+type ProjectQuerier interface {
+	Create(ctx context.Context, repo *database.Repository, p projects.ProjectCopy) error
+	Retrieve(ctx context.Context, repo database.Storer, pid string) (projects.ProjectCopy, error)
+	Update(ctx context.Context, repo database.Storer, pid string, update projects.UpdateProjectCopy) error
+	Delete(ctx context.Context, repo database.Storer, pid string) error
 }
 
-// Create creates a new team for a project
 func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 	var nt teams.NewTeam
 	var role memberships.Role = memberships.Administrator
@@ -65,8 +63,6 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
-
-	uid := t.auth0.UserByID(r.Context())
 
 	if _, err := t.query.project.Retrieve(r.Context(), t.repo, nt.ProjectID); err != nil {
 		switch err {
@@ -99,9 +95,9 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 		TeamID: &tm.ID,
 	}
 
-	if err = t.query.project.Update(r.Context(), t.repo, nt.ProjectID, up); err != nil {
-		return err
-	}
+		if err := t.query.project.Update(r.Context(), t.repo, nt.ProjectID, up); err != nil {
+			return err
+		}
 
 	if t.nats != nil {
 		err = t.publish.MembershipCreatedForProject(t.nats, m, nt.ProjectID, uid)

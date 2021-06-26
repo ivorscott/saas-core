@@ -8,7 +8,6 @@ import (
 	"github.com/nats-io/stan.go"
 )
 
-// handleProjectCreated listens for a ProjectCreatedEvent
 func (l *Listener) handleProjectCreated(m *stan.Msg) {
 	msg, err := events.UnmarshalProjectCreatedEvent(m.Data)
 	if err != nil {
@@ -50,7 +49,6 @@ func (l *Listener) handleProjectCreated(m *stan.Msg) {
 	}
 }
 
-// handleProjectUpdated listens for a ProjectUpdatedEvent
 func (l *Listener) handleProjectUpdated(m *stan.Msg) {
 	msg, err := events.UnmarshalProjectUpdatedEvent(m.Data)
 	if err != nil {
@@ -84,7 +82,6 @@ func (l *Listener) handleProjectUpdated(m *stan.Msg) {
 	}
 }
 
-// handleProjectDeleted listens for a ProjectDeletedEvent
 func (l *Listener) handleProjectDeleted(m *stan.Msg) {
 	msg, err := events.UnmarshalProjectDeletedEvent(m.Data)
 	if err != nil {

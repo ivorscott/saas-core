@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/devpies/devpie-client-core/users/domain/projects"
 	"github.com/devpies/devpie-client-core/users/domain/teams"
 	"github.com/devpies/devpie-client-core/users/domain/users"
 	"log"
@@ -33,7 +34,8 @@ func API(shutdown chan os.Signal, repo database.Storer, log *log.Logger, origins
 
 	app.Handle(http.MethodGet, "/api/v1/health", h.Health)
 	u := User{repo, log, a0, origins, UserQueries{&users.Queries{}}}
-	tm := Team{repo, log, a0, nats, origins, sendgridKey, TeamQueries{&teams.Queries{}}}
+	tm := Team{repo, log, a0, nats, origins, sendgridKey,
+		TeamQueries{&teams.Queries{}, &projects.Queries{}}}
 	m := Membership{repo, log, a0, nats}
 
 	app.Handle(http.MethodPost, "/api/v1/users", u.Create)
