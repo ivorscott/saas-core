@@ -78,6 +78,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if err = u.auth0.UpdateUserAppMetaData(t, nu.Auth0ID, user.ID); err != nil {
+		log.Println("in here")
 		switch err {
 		case auth0.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
@@ -85,6 +86,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 			return errors.Wrapf(err,"failed to update user app metadata")
 		}
 	}
+	log.Println("in here too")
 
 	return web.Respond(r.Context(), w, user, status)
 }
