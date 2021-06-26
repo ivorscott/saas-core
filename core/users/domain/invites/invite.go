@@ -18,7 +18,9 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-func Create(ctx context.Context, repo database.Storer, ni NewInvite, now time.Time) (Invite, error) {
+type Queries struct{}
+
+func (q *Queries) Create(ctx context.Context, repo database.Storer, ni NewInvite, now time.Time) (Invite, error) {
 	i := Invite{
 		ID:         uuid.New().String(),
 		UserID:     ni.UserID,
@@ -50,7 +52,7 @@ func Create(ctx context.Context, repo database.Storer, ni NewInvite, now time.Ti
 	return i, nil
 }
 
-func RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (Invite, error) {
+func (q *Queries) RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (Invite, error) {
 	var i Invite
 
 	stmt := repo.Select(
@@ -71,7 +73,7 @@ func RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid s
 		return i, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	err = repo.QueryRowxContext(ctx, q, uid, iid).StructScan(&i)
+	err = repo.QueryRowxContext(ctx, query, uid, iid).StructScan(&i)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return i, ErrNotFound
@@ -82,7 +84,7 @@ func RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid s
 	return i, nil
 }
 
-func RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]Invite, error) {
+func (q *Queries) RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]Invite, error) {
 	var is []Invite
 
 	stmt := repo.Select(
@@ -103,7 +105,7 @@ func RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]I
 		return nil, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	if err := repo.SelectContext(ctx, &is, q, uid); err != nil {
+	if err := repo.SelectContext(ctx, &is, query, uid); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
 		}
@@ -113,10 +115,10 @@ func RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]I
 	return is, nil
 }
 
-func Update(ctx context.Context, repo database.Storer, update UpdateInvite, uid, iid string, now time.Time) (Invite, error) {
+func (q *Queries) Update(ctx context.Context, repo database.Storer, update UpdateInvite, uid, iid string, now time.Time) (Invite, error) {
 	var iv Invite
 
-	i, err := RetrieveInvite(ctx, repo, uid, iid)
+	i, err := q.RetrieveInvite(ctx, repo, uid, iid)
 	if err != nil {
 		return i, err
 	}

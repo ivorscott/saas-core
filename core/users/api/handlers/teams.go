@@ -40,6 +40,7 @@ type TeamQueries struct {
 	project    ProjectQuerier
 	membership MembershipQuerier
 	user       UserQuerier
+	invite     InviteQuerier
 }
 
 type TeamQuerier interface {
@@ -53,6 +54,13 @@ type ProjectQuerier interface {
 	Retrieve(ctx context.Context, repo database.Storer, pid string) (projects.ProjectCopy, error)
 	Update(ctx context.Context, repo database.Storer, pid string, update projects.UpdateProjectCopy) error
 	Delete(ctx context.Context, repo database.Storer, pid string) error
+}
+
+type InviteQuerier interface {
+	Create(ctx context.Context, repo database.Storer, ni invites.NewInvite, now time.Time) (invites.Invite, error)
+	RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (invites.Invite, error)
+	RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]invites.Invite, error)
+	Update(ctx context.Context, repo database.Storer, update invites.UpdateInvite, uid, iid string, now time.Time) (invites.Invite, error)
 }
 
 func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
@@ -378,10 +386,6 @@ func (t *Team) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
-
-	uid := t.auth0.UserByID(r.Context())
-	tid := chi.URLParam(r, "tid")
-	iid := chi.URLParam(r, "iid")
 
 	iv, err := t.query.invite.Update(r.Context(), t.repo, update, uid, iid, time.Now())
 	if err != nil {
