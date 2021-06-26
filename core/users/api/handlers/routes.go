@@ -37,7 +37,7 @@ func API(shutdown chan os.Signal, repo database.Storer, log *log.Logger, origins
 	app.Handle(http.MethodGet, "/api/v1/health", h.Health)
 	u := User{repo, log, a0, origins, UserQueries{&users.Queries{}}}
 	tm := Team{repo, log, a0, nats, origins, sendgridKey,
-		TeamQueries{&teams.Queries{}, &projects.Queries{}, &memberships.Queries{}}}
+		TeamQueries{&teams.Queries{}, &projects.Queries{}, &memberships.Queries{}, &users.Queries{}}}
 	m := Membership{repo, log, a0, nats, MembershipQueries{&memberships.Queries{}}}
 
 	app.Handle(http.MethodPost, "/api/v1/users", u.Create)
