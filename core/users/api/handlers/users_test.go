@@ -19,42 +19,42 @@ import (
 	"time"
 )
 
-type queryMock struct {
+type userQueryMock struct {
 	mock.Mock
 }
 
-func (m *queryMock) Create(ctx context.Context, repo database.Storer, nu users.NewUser, now time.Time) (users.User, error) {
+func (m *userQueryMock) Create(ctx context.Context, repo database.Storer, nu users.NewUser, now time.Time) (users.User, error) {
 	args := m.Called(ctx, repo, nu, now)
 	return args.Get(0).(users.User), args.Error(1)
 }
 
-func (m *queryMock) RetrieveByEmail(repo database.Storer, email string) (users.User, error) {
+func (m *userQueryMock) RetrieveByEmail(repo database.Storer, email string) (users.User, error) {
 	args := m.Called(repo, email)
 	return args.Get(0).(users.User), args.Error(1)
 }
 
-func (m *queryMock) RetrieveMe(ctx context.Context, repo database.Storer, uid string) (users.User, error) {
+func (m *userQueryMock) RetrieveMe(ctx context.Context, repo database.Storer, uid string) (users.User, error) {
 	args := m.Called(ctx, repo, uid)
 	return args.Get(0).(users.User), args.Error(1)
 }
 
-func (m *queryMock) RetrieveMeByAuthID(ctx context.Context, repo database.Storer, aid string) (users.User, error) {
+func (m *userQueryMock) RetrieveMeByAuthID(ctx context.Context, repo database.Storer, aid string) (users.User, error) {
 	args := m.Called(ctx, repo, aid)
 	return args.Get(0).(users.User), args.Error(1)
 }
 
-type deps struct {
+type UserDeps struct {
 	service *User
 	repo    *database.Repository
 	auth0   *mockAuth.Auther
-	query   *queryMock
+	query   *userQueryMock
 }
 
-func setupMocks() *deps {
+func setupUserMocks() *UserDeps {
 	mockRepo := th.Repo()
 	mockAuth0 := &mockAuth.Auther{}
-	mockQueries := &queryMock{}
-	return &deps{
+	mockQueries := &userQueryMock{}
+	return &UserDeps{
 		repo:  mockRepo,
 		auth0: mockAuth0,
 		query: mockQueries,
@@ -93,7 +93,7 @@ func user() users.User {
 func TestUsers_RetrieveMe_200(t *testing.T) {
 	// setup mocks
 	u := user()
-	fake := setupMocks()
+	fake := setupUserMocks()
 	fake.auth0.On("UserByID", context.Background()).Return(u.ID)
 	fake.query.On("RetrieveMe", context.Background(), fake.repo, u.ID).Return(u, nil)
 
@@ -121,7 +121,7 @@ func TestUsers_RetrieveMe_200(t *testing.T) {
 
 func TestUsers_RetrieveMe_404_Missing_ID(t *testing.T) {
 	// setup mocks
-	fake := setupMocks()
+	fake := setupUserMocks()
 	fake.auth0.On("UserByID", context.Background()).Return("")
 
 	// setup server
@@ -152,7 +152,7 @@ func TestUsers_RetrieveMe_404_Missing_ID(t *testing.T) {
 func TestUsers_RetrieveMe_404_Missing_Record(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
-	fake := setupMocks()
+	fake := setupUserMocks()
 	fake.auth0.On("UserByID", context.Background()).Return(uid)
 	fake.query.On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, users.ErrNotFound)
 
@@ -185,7 +185,7 @@ func TestUsers_RetrieveMe_404_Missing_Record(t *testing.T) {
 func TestUsers_RetrieveMe_404_Invalid_ID(t *testing.T) {
 	// setup mocks
 	uid := "123"
-	fake := setupMocks()
+	fake := setupUserMocks()
 	fake.auth0.On("UserByID", context.Background()).Return(uid)
 	fake.query.On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, users.ErrInvalidID)
 
@@ -220,7 +220,7 @@ func TestUsers_RetrieveMe_500_Uncaught_Error(t *testing.T) {
 
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
-	fake := setupMocks()
+	fake := setupUserMocks()
 	fake.auth0.On("UserByID", context.Background()).Return(uid)
 	fake.query.On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, cause)
 
@@ -256,7 +256,7 @@ func TestUsers_Create_201(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	nu := newUser()
-	fake := setupMocks()
+	fake := setupUserMocks()
 
 	fake.auth0.
 		On("GenerateToken").Return(auth0.Token{}, nil).
@@ -293,7 +293,7 @@ func TestUsers_Create_400(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	nu := newUser()
-	fake := setupMocks()
+	fake := setupUserMocks()
 
 	fake.auth0.
 		On("GenerateToken").Return(auth0.Token{}, nil).
@@ -335,7 +335,7 @@ func TestUsers_Create_500_Uncaught_Error_For_GenerateToken(t *testing.T) {
 
 	// setup mocks
 	nu := newUser()
-	fake := setupMocks()
+	fake := setupUserMocks()
 	fake.auth0.On("GenerateToken").Return(auth0.Token{}, cause)
 
 	// setup server
@@ -366,7 +366,7 @@ func TestUsers_Create_500_Uncaught_Error_For_Create(t *testing.T) {
 
 	// setup mocks
 	nu := newUser()
-	fake := setupMocks()
+	fake := setupUserMocks()
 	fake.query.
 		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
 		Return(users.User{}, users.ErrNotFound).
@@ -404,7 +404,7 @@ func TestUsers_Create_500_Uncaught_Error_For_UpdateUserAppMetadata(t *testing.T)
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	nu := newUser()
-	fake := setupMocks()
+	fake := setupUserMocks()
 	fake.query.
 		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
 		Return(users.User{}, users.ErrNotFound).
