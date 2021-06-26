@@ -26,7 +26,7 @@ type Config struct {
 // Repository represents the database and query builder methods
 type Repository struct {
 	SqlxStorer
-	Squirreler
+	SquirrelBuilder
 	URL url.URL
 }
 
@@ -59,7 +59,7 @@ func NewRepository(cfg Config) (*Repository, func(), error) {
 
 	r := &Repository{
 		SqlxStorer: db,
-		Squirreler: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar).RunWith(db),
+		SquirrelBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar).RunWith(db),
 		URL:        u,
 	}
 
@@ -89,10 +89,10 @@ func StatusCheck(ctx context.Context, db Storer) error {
 
 type Storer interface {
 	SqlxStorer
-	Squirreler
+	SquirrelBuilder
 }
 
-type Squirreler interface {
+type SquirrelBuilder interface {
 	Select(columns ...string) squirrel.SelectBuilder
 	Insert(into string) squirrel.InsertBuilder
 	Replace(into string) squirrel.InsertBuilder

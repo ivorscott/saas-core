@@ -9,7 +9,7 @@ import (
 func Repo() *database.Repository {
 	return &database.Repository{
 		SqlxStorer: &mockDB.SqlxStorer{},
-		Squirreler: &mockDB.Squirreler{},
+		SquirrelBuilder: &mockDB.Squirreler{},
 		URL:        url.URL{},
 	}
 }
