@@ -8,9 +8,9 @@ import (
 
 func Repo() *database.Repository {
 	return &database.Repository{
-		SqlxStorer: &mockDB.SqlxStorer{},
+		SqlxStorer:      &mockDB.SqlxStorer{},
 		SquirrelBuilder: &mockDB.Squirreler{},
-		URL:        url.URL{},
+		URL:             url.URL{},
 	}
 }
 

@@ -66,6 +66,15 @@ func setupMocks() *deps {
 	}
 }
 
+func newUser() users.NewUser {
+	return users.NewUser{
+		Auth0ID:   "auth0|60a666916089a00069b2a773",
+		Email:     "testuser@devpie.io",
+		FirstName: th.StringPointer("testuser"),
+		Picture:   th.StringPointer("https://s.gravatar.com/avatar/xxxxxxxxxxxx.png"),
+	}
+}
+
 func user() users.User {
 	return users.User{
 		ID:            "a4b54ec1-57f9-4c39-ab53-d936dbb6c177",
@@ -223,7 +232,7 @@ func TestUsers_RetrieveMe_500_Uncaught_Error(t *testing.T) {
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.Is(err, cause))
-			assert.Equal(t, err.Error(), fmt.Sprintf(`looking for user "%s": %s`, uid, cause))
+			assert.Equal(t, fmt.Sprintf(`looking for user "%s": %s`, uid, cause), err.Error())
 		})
 	})
 
@@ -238,22 +247,20 @@ func TestUsers_RetrieveMe_500_Uncaught_Error(t *testing.T) {
 	})
 }
 
+func payload(nu users.NewUser) string {
+	return fmt.Sprintf(`{ "auth0Id": "%s", "email": "%s", "firstName": "%s", "picture": "%s" }`,
+		nu.Auth0ID, nu.Email, *nu.FirstName, *nu.Picture)
+}
+
 func TestUsers_Create_201(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
-	nu := users.NewUser{
-		Auth0ID:   "auth0|60a666916089a00069b2a773",
-		Email:     "testuser@devpie.io",
-		FirstName: th.StringPointer("testuser"),
-		Picture:   th.StringPointer("https://s.gravatar.com/avatar/xxxxxxxxxxxx.png"),
-	}
-
+	nu := newUser()
 	fake := setupMocks()
-	mockToken := auth0.Token{}
 
 	fake.auth0.
-		On("GenerateToken").Return(mockToken, nil).
-		On("UpdateUserAppMetaData", mockToken, nu.Auth0ID, uid).Return(nil)
+		On("GenerateToken").Return(auth0.Token{}, nil).
+		On("UpdateUserAppMetaData", auth0.Token{}, nu.Auth0ID, uid).Return(nil)
 
 	fake.query.
 		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
@@ -268,12 +275,8 @@ func TestUsers_Create_201(t *testing.T) {
 		_ = u.Create(w, r)
 	})
 
-	// make request
-	json := fmt.Sprintf(`{ "auth0Id": "%s", "email": "%s", "firstName": "%s", "picture": "%s" }`,
-		nu.Auth0ID, nu.Email, *nu.FirstName, *nu.Picture)
-
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(json))
+	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(payload(nu)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Handler Response", func(t *testing.T) {
@@ -289,18 +292,12 @@ func TestUsers_Create_201(t *testing.T) {
 func TestUsers_Create_400(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
-	nu := users.NewUser{
-		Auth0ID:   "auth0|60a666916089a00069b2a773",
-		Email:     "testuser@devpie.io",
-		FirstName: th.StringPointer("testuser"),
-		Picture:   th.StringPointer("https://s.gravatar.com/avatar/xxxxxxxxxxxx.png"),
-	}
+	nu := newUser()
 	fake := setupMocks()
-	mockToken := auth0.Token{}
 
 	fake.auth0.
-		On("GenerateToken").Return(mockToken, nil).
-		On("UpdateUserAppMetaData", mockToken, nu.Auth0ID, uid).Return(auth0.ErrInvalidID)
+		On("GenerateToken").Return(auth0.Token{}, nil).
+		On("UpdateUserAppMetaData", auth0.Token{}, nu.Auth0ID, uid).Return(auth0.ErrInvalidID)
 
 	fake.query.
 		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
@@ -323,12 +320,115 @@ func TestUsers_Create_400(t *testing.T) {
 		})
 	})
 
-	// make request
-	json := fmt.Sprintf(`{ "auth0Id": "%s", "email": "%s", "firstName": "%s", "picture": "%s" }`,
-		nu.Auth0ID, nu.Email, *nu.FirstName, *nu.Picture)
-
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(json))
+	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(payload(nu)))
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.AssertExpectations(t)
+		fake.query.AssertExpectations(t)
+	})
+}
+
+func TestUsers_Create_500_Uncaught_Error_For_GenerateToken(t *testing.T) {
+	cause := errors.New("Something went wrong")
+
+	// setup mocks
+	nu := newUser()
+	fake := setupMocks()
+	fake.auth0.On("GenerateToken").Return(auth0.Token{}, cause)
+
+	// setup server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+		u := fake.service
+		err := u.Create(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, cause.Error(), err.Error())
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(payload(nu)))
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.AssertExpectations(t)
+		fake.query.AssertExpectations(t)
+	})
+}
+
+func TestUsers_Create_500_Uncaught_Error_For_Create(t *testing.T) {
+	cause := errors.New("Something went wrong")
+
+	// setup mocks
+	nu := newUser()
+	fake := setupMocks()
+	fake.query.
+		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
+		Return(users.User{}, users.ErrNotFound).
+		On("Create", context.Background(), fake.repo, nu, mock.AnythingOfType("time.Time")).
+		Return(users.User{}, cause)
+
+	fake.auth0.On("GenerateToken").Return(auth0.Token{}, nil)
+
+	// setup server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+		u := fake.service
+		err := u.Create(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, fmt.Sprintf("failed to create user: %s", cause), err.Error())
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(payload(nu)))
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.AssertExpectations(t)
+		fake.query.AssertExpectations(t)
+	})
+}
+
+func TestUsers_Create_500_Uncaught_Error_For_UpdateUserAppMetadata(t *testing.T) {
+	cause := errors.New("Something went wrong")
+
+	// setup mocks
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	nu := newUser()
+	fake := setupMocks()
+	fake.query.
+		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
+		Return(users.User{}, users.ErrNotFound).
+		On("Create", context.Background(), fake.repo, nu, mock.AnythingOfType("time.Time")).
+		Return(user(), nil)
+
+	fake.auth0.On("GenerateToken").Return(auth0.Token{}, nil).
+		On("UpdateUserAppMetaData", auth0.Token{}, nu.Auth0ID, uid).Return(cause)
+
+	// setup server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+		u := fake.service
+		err := u.Create(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, fmt.Sprintf("failed to update user app metadata: %s", cause), err.Error())
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(payload(nu)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {

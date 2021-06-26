@@ -58,9 +58,9 @@ func NewRepository(cfg Config) (*Repository, func(), error) {
 	}
 
 	r := &Repository{
-		SqlxStorer: db,
+		SqlxStorer:      db,
 		SquirrelBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar).RunWith(db),
-		URL:        u,
+		URL:             u,
 	}
 
 	return r, r.CloseFunc, nil
