@@ -45,9 +45,9 @@ func (m *queryMock) RetrieveMeByAuthID(ctx context.Context, repo database.Storer
 
 type deps struct {
 	service *Users
-	repo *database.Repository
-	auth0  *mockAuth.Auther
-	query *queryMock
+	repo    *database.Repository
+	auth0   *mockAuth.Auther
+	query   *queryMock
 }
 
 func setupMocks() *deps {
@@ -59,7 +59,7 @@ func setupMocks() *deps {
 		auth0: mockAuth0,
 		query: mockQueries,
 		service: &Users{
-			repo: mockRepo,
+			repo:  mockRepo,
 			auth0: mockAuth0,
 			query: mockQueries,
 		},
@@ -68,11 +68,11 @@ func setupMocks() *deps {
 
 func user() users.User {
 	return users.User{
-		ID: "a4b54ec1-57f9-4c39-ab53-d936dbb6c177",
-		Auth0ID:   "auth0|60a666916089a00069b2a773",
-		Email:     "testuser@devpie.io",
-		FirstName: th.StringPointer("testuser"),
-		Picture:   th.StringPointer("https://s.gravatar.com/avatar/xxxxxxxxxxxx.png"),
+		ID:            "a4b54ec1-57f9-4c39-ab53-d936dbb6c177",
+		Auth0ID:       "auth0|60a666916089a00069b2a773",
+		Email:         "testuser@devpie.io",
+		FirstName:     th.StringPointer("testuser"),
+		Picture:       th.StringPointer("https://s.gravatar.com/avatar/xxxxxxxxxxxx.png"),
 		EmailVerified: false,
 		LastName:      th.StringPointer(""),
 		Locale:        th.StringPointer(""),

@@ -105,7 +105,7 @@ const (
 
 // Error codes returned by failures to handle tokens.
 var (
-	ErrNotFound = errors.New("token not found")
+	ErrNotFound  = errors.New("token not found")
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 

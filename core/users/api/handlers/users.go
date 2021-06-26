@@ -82,7 +82,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 		case auth0.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return errors.Wrapf(err,"failed to update user app metadata")
+			return errors.Wrapf(err, "failed to update user app metadata")
 		}
 	}
 
