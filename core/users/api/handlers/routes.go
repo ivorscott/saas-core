@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/sendgrid/sendgrid-go"
 	"log"
 	"net/http"
 	"os"
@@ -38,7 +39,9 @@ func API(shutdown chan os.Signal, repo database.Storer, log *log.Logger, origins
 
 	app.Handle(http.MethodGet, "/api/v1/health", h.Health)
 	u := User{repo, log, a0, origins, UserQueries{&users.Queries{}}}
-	tm := Team{repo, log, a0, nats, origins, sendgridKey,
+
+	tm := Team{repo, log, a0, nats, origins,
+		sendgrid.NewSendClient(sendgridKey).Send,
 		TeamQueries{
 			&teams.Queries{},
 			&projects.Queries{},
