@@ -34,6 +34,10 @@ func setupTeamMocks() *Team {
 		nats:    &events.Client{},
 		auth0:   &mockAuth.Auther{},
 		origins: "http://localhost, https://devpie.io",
+		sender: func(email *mail.SGMailV3) (*rest.Response, error) {
+			var resp *rest.Response
+			return resp, nil
+		},
 		query: TeamQueries{
 			&mockQuery.TeamQuerier{},
 			&mockQuery.ProjectQuerier{},
@@ -1092,10 +1096,6 @@ func TestTeam_CreateInvite_200_New_Users(t *testing.T) {
 	u := user()
 	//setup mocks
 	fake := setupTeamMocks()
-	fake.sender = func(email *mail.SGMailV3) (*rest.Response, error) {
-		var resp *rest.Response
-		return resp, nil
-	}
 	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil).Once()
 	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveByEmail", fake.repo, mock.AnythingOfType("string")).Return(users.User{}, users.ErrNotFound).Twice()
 	fake.auth0.(*mockAuth.Auther).On("CreateUser", auth0.Token{}, mock.AnythingOfType("string")).Return(au, nil).Twice()
@@ -1132,12 +1132,9 @@ func TestTeam_CreateInvite_200_New_Users(t *testing.T) {
 func TestTeam_CreateInvite_200_Existing_Users(t *testing.T) {
 	tm := team()
 	u := user()
+
 	//setup mocks
 	fake := setupTeamMocks()
-	fake.sender = func(email *mail.SGMailV3) (*rest.Response, error) {
-		var resp *rest.Response
-		return resp, nil
-	}
 	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil).Once()
 	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveByEmail", fake.repo, mock.AnythingOfType("string")).Return(u, nil).Twice()
 	fake.query.invite.(*mockQuery.InviteQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, mock.AnythingOfType("invites.NewInvite"), mock.AnythingOfType("time.Time")).Return(invites.Invite{}, nil).Twice()
@@ -1163,5 +1160,309 @@ func TestTeam_CreateInvite_200_Existing_Users(t *testing.T) {
 		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
 		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
 		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_CreateInvite_400_Missing_Payload(t *testing.T) {
+	tm := team()
+
+	//setup mocks
+	fake := setupTeamMocks()
+
+	testcases := []struct {
+		name string
+		arg  string
+	}{
+		{"empty payload", ""},
+		{"empty object", "{}"},
+	}
+	for _, v := range testcases {
+		// setup server
+		mux := chi.NewMux()
+		mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+			err := fake.Create(w, r)
+
+			t.Run(fmt.Sprintf("Assert Handler Response/%s", v.name), func(t *testing.T) {
+				assert.NotNil(t, err)
+			})
+		})
+
+		// make request
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), strings.NewReader(v.arg))
+		mux.ServeHTTP(writer, request)
+
+		t.Run(fmt.Sprintf("Assert Server Response/%s", v.name), func(t *testing.T) {
+			assert.Equal(t, http.StatusBadRequest, writer.Code)
+		})
+	}
+}
+
+func TestTeam_CreateInvite_500_Uncaught_Error_On_GenerateToken(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	tm := team()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, cause).Once()
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.CreateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, fmt.Sprintf("failure during token generation: %s", cause), err.Error())
+		})
+	})
+
+	list := strings.NewReader(`{ "emailList": ["example@devpie.io","example@gmail.com"] }`)
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), list)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+	})
+}
+
+func TestTeam_CreateInvite_500_Uncaught_Error_On_Create_Auth_User(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	tm := team()
+	au := authUser()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveByEmail", fake.repo, mock.AnythingOfType("string")).Return(users.User{}, users.ErrNotFound)
+	fake.auth0.(*mockAuth.Auther).On("CreateUser", auth0.Token{}, mock.AnythingOfType("string")).Return(au, cause)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.CreateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+		})
+	})
+
+	list := strings.NewReader(`{ "emailList": ["example@devpie.io","example@gmail.com"] }`)
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), list)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
+
+	})
+}
+
+func TestTeam_CreateInvite_500_Uncaught_Error_On_Create_User(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	tm := team()
+	au := authUser()
+	nu := newUser()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveByEmail", fake.repo, mock.AnythingOfType("string")).Return(users.User{}, users.ErrNotFound).Once()
+	fake.auth0.(*mockAuth.Auther).On("CreateUser", auth0.Token{}, mock.AnythingOfType("string")).Return(au, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu, mock.AnythingOfType("time.Time")).Return(users.User{}, cause).Once()
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.CreateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+		})
+	})
+
+	list := strings.NewReader(`{ "emailList": ["example@devpie.io"] }`)
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), list)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_CreateInvite_500_Uncaught_Error_On_UpdateUserAppMetaData(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	tm := team()
+	au := authUser()
+	nu := newUser()
+	u := user()
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveByEmail", fake.repo, mock.AnythingOfType("string")).Return(users.User{}, users.ErrNotFound).Once()
+	fake.auth0.(*mockAuth.Auther).On("CreateUser", auth0.Token{}, mock.AnythingOfType("string")).Return(au, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu, mock.AnythingOfType("time.Time")).Return(u, nil).Once()
+	fake.auth0.(*mockAuth.Auther).On("UpdateUserAppMetaData", auth0.Token{}, au.Auth0ID, u.ID).Return(cause).Once()
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.CreateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+		})
+	})
+
+	list := strings.NewReader(`{ "emailList": ["example@devpie.io"] }`)
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), list)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_CreateInvite_500_Uncaught_Error_On_ChangePasswordTicket(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	tm := team()
+	au := authUser()
+	nu := newUser()
+	u := user()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveByEmail", fake.repo, mock.AnythingOfType("string")).Return(users.User{}, users.ErrNotFound).Once()
+	fake.auth0.(*mockAuth.Auther).On("CreateUser", auth0.Token{}, mock.AnythingOfType("string")).Return(au, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu, mock.AnythingOfType("time.Time")).Return(u, nil).Once()
+	fake.auth0.(*mockAuth.Auther).On("UpdateUserAppMetaData", auth0.Token{}, au.Auth0ID, u.ID).Return(nil).Once()
+	fake.auth0.(*mockAuth.Auther).On("ChangePasswordTicket", auth0.Token{}, au, mock.AnythingOfType("string")).Return("link-to-change-password", cause).Once()
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.CreateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+		})
+	})
+
+	list := strings.NewReader(`{ "emailList": ["example@devpie.io"] }`)
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), list)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_CreateInvite_500_Uncaught_Error_On_Invite_Create(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	tm := team()
+	au := authUser()
+	nu := newUser()
+	u := user()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveByEmail", fake.repo, mock.AnythingOfType("string")).Return(users.User{}, users.ErrNotFound).Once()
+	fake.auth0.(*mockAuth.Auther).On("CreateUser", auth0.Token{}, mock.AnythingOfType("string")).Return(au, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu, mock.AnythingOfType("time.Time")).Return(u, nil).Once()
+	fake.auth0.(*mockAuth.Auther).On("UpdateUserAppMetaData", auth0.Token{}, au.Auth0ID, u.ID).Return(nil).Once()
+	fake.auth0.(*mockAuth.Auther).On("ChangePasswordTicket", auth0.Token{}, au, mock.AnythingOfType("string")).Return("link-to-change-password", nil).Once()
+	fake.query.invite.(*mockQuery.InviteQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, mock.AnythingOfType("invites.NewInvite"), mock.AnythingOfType("time.Time")).Return(invites.Invite{}, cause).Once()
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.CreateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+		})
+	})
+
+	list := strings.NewReader(`{ "emailList": ["example@devpie.io"] }`)
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), list)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_CreateInvite_500_Uncaught_Error_On_SendMail(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	tm := team()
+	au := authUser()
+	nu := newUser()
+	u := user()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.sender = func(email *mail.SGMailV3) (*rest.Response, error) {
+		var resp *rest.Response
+		return resp, cause
+	}
+	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveByEmail", fake.repo, mock.AnythingOfType("string")).Return(users.User{}, users.ErrNotFound).Once()
+	fake.auth0.(*mockAuth.Auther).On("CreateUser", auth0.Token{}, mock.AnythingOfType("string")).Return(au, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu, mock.AnythingOfType("time.Time")).Return(u, nil).Once()
+	fake.auth0.(*mockAuth.Auther).On("UpdateUserAppMetaData", auth0.Token{}, au.Auth0ID, u.ID).Return(nil).Once()
+	fake.auth0.(*mockAuth.Auther).On("ChangePasswordTicket", auth0.Token{}, au, mock.AnythingOfType("string")).Return("link-to-change-password", nil).Once()
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.CreateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, fmt.Sprintf("failed to send email: %s", cause), err.Error())
+		})
+	})
+
+	list := strings.NewReader(`{ "emailList": ["example@devpie.io"] }`)
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), list)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
 	})
 }
