@@ -18,6 +18,13 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
+type ProjectQuerier interface {
+	Create(ctx context.Context, repo *database.Repository, p ProjectCopy) error
+	Retrieve(ctx context.Context, repo database.Storer, pid string) (ProjectCopy, error)
+	Update(ctx context.Context, repo database.Storer, pid string, update UpdateProjectCopy) error
+	Delete(ctx context.Context, repo database.Storer, pid string) error
+}
+
 type Queries struct{}
 
 func (q *Queries) Retrieve(ctx context.Context, repo database.Storer, pid string) (ProjectCopy, error) {

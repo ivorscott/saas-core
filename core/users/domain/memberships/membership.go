@@ -18,6 +18,14 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
+type MembershipQuerier interface {
+	Create(ctx context.Context, repo database.Storer, nm NewMembership, now time.Time) (Membership, error)
+	RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid string) ([]MembershipEnhanced, error)
+	RetrieveMembership(ctx context.Context, repo database.Storer, uid, tid string) (Membership, error)
+	Update(ctx context.Context, repo database.Storer, tid string, update UpdateMembership, uid string, now time.Time) error
+	Delete(ctx context.Context, repo database.Storer, tid, uid string) (string, error)
+}
+
 type Queries struct{}
 
 func (q *Queries) Create(ctx context.Context, repo database.Storer, nm NewMembership, now time.Time) (Membership, error) {

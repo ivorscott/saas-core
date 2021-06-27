@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"context"
+	"github.com/go-chi/chi"
+	"github.com/pkg/errors"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/devpies/devpie-client-core/users/domain/memberships"
 	"github.com/devpies/devpie-client-core/users/platform/auth0"
@@ -23,15 +23,7 @@ type Membership struct {
 }
 
 type MembershipQueries struct {
-	membership MembershipQuerier
-}
-
-type MembershipQuerier interface {
-	Create(ctx context.Context, repo database.Storer, nm memberships.NewMembership, now time.Time) (memberships.Membership, error)
-	RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid string) ([]memberships.MembershipEnhanced, error)
-	RetrieveMembership(ctx context.Context, repo database.Storer, uid, tid string) (memberships.Membership, error)
-	Update(ctx context.Context, repo database.Storer, tid string, update memberships.UpdateMembership, uid string, now time.Time) error
-	Delete(ctx context.Context, repo database.Storer, tid, uid string) (string, error)
+	membership memberships.MembershipQuerier
 }
 
 func (m *Membership) RetrieveMembers(w http.ResponseWriter, r *http.Request) error {

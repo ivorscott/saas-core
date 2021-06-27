@@ -3,10 +3,10 @@ package handlers
 import (
 	"context"
 	"fmt"
+	mockQuery "github.com/devpies/devpie-client-core/users/domain/mocks"
 	"github.com/devpies/devpie-client-core/users/domain/users"
 	"github.com/devpies/devpie-client-core/users/platform/auth0"
 	mockAuth "github.com/devpies/devpie-client-core/users/platform/auth0/mocks"
-	"github.com/devpies/devpie-client-core/users/platform/database"
 	th "github.com/devpies/devpie-client-core/users/platform/testhelpers"
 	"github.com/devpies/devpie-client-core/users/platform/web"
 	"github.com/pkg/errors"
@@ -19,51 +19,15 @@ import (
 	"time"
 )
 
-type userQueryMock struct {
-	mock.Mock
-}
-
-func (m *userQueryMock) Create(ctx context.Context, repo database.Storer, nu users.NewUser, now time.Time) (users.User, error) {
-	args := m.Called(ctx, repo, nu, now)
-	return args.Get(0).(users.User), args.Error(1)
-}
-
-func (m *userQueryMock) RetrieveByEmail(repo database.Storer, email string) (users.User, error) {
-	args := m.Called(repo, email)
-	return args.Get(0).(users.User), args.Error(1)
-}
-
-func (m *userQueryMock) RetrieveMe(ctx context.Context, repo database.Storer, uid string) (users.User, error) {
-	args := m.Called(ctx, repo, uid)
-	return args.Get(0).(users.User), args.Error(1)
-}
-
-func (m *userQueryMock) RetrieveMeByAuthID(ctx context.Context, repo database.Storer, aid string) (users.User, error) {
-	args := m.Called(ctx, repo, aid)
-	return args.Get(0).(users.User), args.Error(1)
-}
-
-type UserDeps struct {
-	service *User
-	repo    *database.Repository
-	auth0   *mockAuth.Auther
-	query   *userQueryMock
-}
-
-func setupUserMocks() *UserDeps {
+func setupUserMocks() *User{
 	mockRepo := th.Repo()
 	mockAuth0 := &mockAuth.Auther{}
-	mockQueries := &userQueryMock{}
-	return &UserDeps{
-		repo:  mockRepo,
-		auth0: mockAuth0,
-		query: mockQueries,
-		service: &User{
+	mockUserQueries := &mockQuery.UserQuerier{}
+	return &User{
 			repo:  mockRepo,
 			auth0: mockAuth0,
-			query: UserQueries{mockQueries},
-		},
-	}
+			query: UserQueries{mockUserQueries},
+		}
 }
 
 func newUser() users.NewUser {
@@ -94,14 +58,13 @@ func TestUsers_RetrieveMe_200(t *testing.T) {
 	// setup mocks
 	u := user()
 	fake := setupUserMocks()
-	fake.auth0.On("UserByID", context.Background()).Return(u.ID)
-	fake.query.On("RetrieveMe", context.Background(), fake.repo, u.ID).Return(u, nil)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(u.ID)
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", context.Background(), fake.repo, u.ID).Return(u, nil)
 
 	// setup server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
-		u := fake.service
-		_ = u.RetrieveMe(w, r)
+		_ = fake.RetrieveMe(w, r)
 	})
 
 	// make request
@@ -114,23 +77,21 @@ func TestUsers_RetrieveMe_200(t *testing.T) {
 	})
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
-		fake.auth0.AssertExpectations(t)
-		fake.query.AssertExpectations(t)
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
 	})
 }
 
 func TestUsers_RetrieveMe_404_Missing_ID(t *testing.T) {
 	// setup mocks
 	fake := setupUserMocks()
-	fake.auth0.On("UserByID", context.Background()).Return("")
+	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return("")
 
 	// setup server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
-		u := fake.service
-
 		var webErr *web.Error
-		err := u.RetrieveMe(w, r)
+		err := fake.RetrieveMe(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.As(err, &webErr))
@@ -145,7 +106,7 @@ func TestUsers_RetrieveMe_404_Missing_ID(t *testing.T) {
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
-		fake.auth0.AssertExpectations(t)
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
 	})
 }
 
@@ -153,16 +114,14 @@ func TestUsers_RetrieveMe_404_Missing_Record(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	fake := setupUserMocks()
-	fake.auth0.On("UserByID", context.Background()).Return(uid)
-	fake.query.On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, users.ErrNotFound)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, users.ErrNotFound)
 
 	// setup server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
-		u := fake.service
-
 		var webErr *web.Error
-		err := u.RetrieveMe(w, r)
+		err := fake.RetrieveMe(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.As(err, &webErr))
@@ -177,8 +136,8 @@ func TestUsers_RetrieveMe_404_Missing_Record(t *testing.T) {
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
-		fake.auth0.AssertExpectations(t)
-		fake.query.AssertExpectations(t)
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
 	})
 }
 
@@ -186,16 +145,14 @@ func TestUsers_RetrieveMe_404_Invalid_ID(t *testing.T) {
 	// setup mocks
 	uid := "123"
 	fake := setupUserMocks()
-	fake.auth0.On("UserByID", context.Background()).Return(uid)
-	fake.query.On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, users.ErrInvalidID)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, users.ErrInvalidID)
 
 	// setup server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
-		u := fake.service
-
 		var webErr *web.Error
-		err := u.RetrieveMe(w, r)
+		err := fake.RetrieveMe(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.As(err, &webErr))
@@ -210,8 +167,8 @@ func TestUsers_RetrieveMe_404_Invalid_ID(t *testing.T) {
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
-		fake.auth0.AssertExpectations(t)
-		fake.query.AssertExpectations(t)
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
 	})
 }
 
@@ -221,14 +178,13 @@ func TestUsers_RetrieveMe_500_Uncaught_Error(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	fake := setupUserMocks()
-	fake.auth0.On("UserByID", context.Background()).Return(uid)
-	fake.query.On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, cause)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, cause)
 
 	// setup server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
-		u := fake.service
-		err := u.RetrieveMe(w, r)
+		err := fake.RetrieveMe(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.Is(err, cause))
@@ -242,8 +198,8 @@ func TestUsers_RetrieveMe_500_Uncaught_Error(t *testing.T) {
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
-		fake.auth0.AssertExpectations(t)
-		fake.query.AssertExpectations(t)
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
 	})
 }
 
@@ -258,11 +214,11 @@ func TestUsers_Create_201(t *testing.T) {
 	nu := newUser()
 	fake := setupUserMocks()
 
-	fake.auth0.
+	fake.auth0.(*mockAuth.Auther).
 		On("GenerateToken").Return(auth0.Token{}, nil).
 		On("UpdateUserAppMetaData", auth0.Token{}, nu.Auth0ID, uid).Return(nil)
 
-	fake.query.
+	fake.query.user.(*mockQuery.UserQuerier).
 		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
 		Return(users.User{}, users.ErrNotFound).
 		On("Create", context.Background(), fake.repo, nu, mock.AnythingOfType("time.Time")).
@@ -271,8 +227,7 @@ func TestUsers_Create_201(t *testing.T) {
 	// setup server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
-		u := fake.service
-		_ = u.Create(w, r)
+		_ = fake.Create(w, r)
 	})
 
 	writer := httptest.NewRecorder()
@@ -284,8 +239,8 @@ func TestUsers_Create_201(t *testing.T) {
 	})
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
-		fake.auth0.AssertExpectations(t)
-		fake.query.AssertExpectations(t)
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
 	})
 }
 
@@ -295,11 +250,11 @@ func TestUsers_Create_400(t *testing.T) {
 	nu := newUser()
 	fake := setupUserMocks()
 
-	fake.auth0.
+	fake.auth0.(*mockAuth.Auther).
 		On("GenerateToken").Return(auth0.Token{}, nil).
 		On("UpdateUserAppMetaData", auth0.Token{}, nu.Auth0ID, uid).Return(auth0.ErrInvalidID)
 
-	fake.query.
+	fake.query.user.(*mockQuery.UserQuerier).
 		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
 		Return(users.User{}, users.ErrNotFound).
 		On("Create", context.Background(), fake.repo, nu, mock.AnythingOfType("time.Time")).
@@ -308,10 +263,8 @@ func TestUsers_Create_400(t *testing.T) {
 	// setup server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
-		u := fake.service
-
 		var webErr *web.Error
-		err := u.Create(w, r)
+		err := fake.Create(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.As(err, &webErr))
@@ -325,8 +278,8 @@ func TestUsers_Create_400(t *testing.T) {
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
-		fake.auth0.AssertExpectations(t)
-		fake.query.AssertExpectations(t)
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
 	})
 }
 
@@ -336,13 +289,12 @@ func TestUsers_Create_500_Uncaught_Error_For_GenerateToken(t *testing.T) {
 	// setup mocks
 	nu := newUser()
 	fake := setupUserMocks()
-	fake.auth0.On("GenerateToken").Return(auth0.Token{}, cause)
+	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, cause)
 
 	// setup server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
-		u := fake.service
-		err := u.Create(w, r)
+		err := fake.Create(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.Is(err, cause))
@@ -356,8 +308,8 @@ func TestUsers_Create_500_Uncaught_Error_For_GenerateToken(t *testing.T) {
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
-		fake.auth0.AssertExpectations(t)
-		fake.query.AssertExpectations(t)
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
 	})
 }
 
@@ -367,19 +319,18 @@ func TestUsers_Create_500_Uncaught_Error_For_Create(t *testing.T) {
 	// setup mocks
 	nu := newUser()
 	fake := setupUserMocks()
-	fake.query.
+	fake.query.user.(*mockQuery.UserQuerier).
 		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
 		Return(users.User{}, users.ErrNotFound).
 		On("Create", context.Background(), fake.repo, nu, mock.AnythingOfType("time.Time")).
 		Return(users.User{}, cause)
 
-	fake.auth0.On("GenerateToken").Return(auth0.Token{}, nil)
+	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil)
 
 	// setup server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
-		u := fake.service
-		err := u.Create(w, r)
+		err := fake.Create(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.Is(err, cause))
@@ -393,8 +344,8 @@ func TestUsers_Create_500_Uncaught_Error_For_Create(t *testing.T) {
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
-		fake.auth0.AssertExpectations(t)
-		fake.query.AssertExpectations(t)
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
 	})
 }
 
@@ -405,20 +356,19 @@ func TestUsers_Create_500_Uncaught_Error_For_UpdateUserAppMetadata(t *testing.T)
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	nu := newUser()
 	fake := setupUserMocks()
-	fake.query.
+	fake.query.user.(*mockQuery.UserQuerier).
 		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
 		Return(users.User{}, users.ErrNotFound).
 		On("Create", context.Background(), fake.repo, nu, mock.AnythingOfType("time.Time")).
 		Return(user(), nil)
 
-	fake.auth0.On("GenerateToken").Return(auth0.Token{}, nil).
+	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil).
 		On("UpdateUserAppMetaData", auth0.Token{}, nu.Auth0ID, uid).Return(cause)
 
 	// setup server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
-		u := fake.service
-		err := u.Create(w, r)
+		err := fake.Create(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.Is(err, cause))
@@ -432,7 +382,7 @@ func TestUsers_Create_500_Uncaught_Error_For_UpdateUserAppMetadata(t *testing.T)
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
-		fake.auth0.AssertExpectations(t)
-		fake.query.AssertExpectations(t)
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
 	})
 }

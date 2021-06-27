@@ -2,112 +2,109 @@ package handlers
 
 import (
 	"context"
-	"github.com/devpies/devpie-client-core/users/domain/invites"
+	"fmt"
+	"github.com/devpies/devpie-client-events/go/events"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	mockPub "github.com/devpies/devpie-client-core/users/api/publishers/mocks"
+	mockQuery "github.com/devpies/devpie-client-core/users/domain/mocks"
 	"github.com/devpies/devpie-client-core/users/domain/projects"
 	"github.com/devpies/devpie-client-core/users/domain/teams"
 	mockAuth "github.com/devpies/devpie-client-core/users/platform/auth0/mocks"
-	"github.com/devpies/devpie-client-core/users/platform/database"
 	th "github.com/devpies/devpie-client-core/users/platform/testhelpers"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
-	"time"
 )
 
-type teamQueryMock struct {
-	mock.Mock
-}
-
-func (m *teamQueryMock) Create(ctx context.Context, repo database.Storer, nt teams.NewTeam, uid string, now time.Time) (teams.Team, error) {
-	args := m.Called(ctx, repo, nt, uid, now)
-	return args.Get(0).(teams.Team), args.Error(1)
-}
-
-func (m *teamQueryMock) Retrieve(ctx context.Context, repo database.Storer, tid string) (teams.Team, error) {
-	args := m.Called(ctx, repo, tid)
-	return args.Get(0).(teams.Team), args.Error(1)
-}
-
-func (m *teamQueryMock) List(ctx context.Context, repo database.Storer, uid string) ([]teams.Team, error) {
-	args := m.Called(ctx, repo, uid)
-	return args.Get(0).([]teams.Team), args.Error(1)
-}
-
-type projectQueryMock struct {
-	mock.Mock
-}
-
-func (m *projectQueryMock) Create(ctx context.Context, repo *database.Repository, p projects.ProjectCopy) error {
-	args := m.Called(ctx, repo, p)
-	return args.Error(0)
-}
-func (m *projectQueryMock) Retrieve(ctx context.Context, repo database.Storer, pid string) (projects.ProjectCopy, error) {
-	args := m.Called(ctx, repo, pid)
-	return args.Get(0).(projects.ProjectCopy), args.Error(1)
-
-}
-func (m *projectQueryMock) Update(ctx context.Context, repo database.Storer, pid string, update projects.UpdateProjectCopy) error {
-	args := m.Called(ctx, repo, pid, update)
-	return args.Error(0)
-
-}
-func (m *projectQueryMock) Delete(ctx context.Context, repo database.Storer, pid string) error {
-	args := m.Called(ctx, repo, pid)
-	return args.Error(0)
-
-}
-
-type inviteQueryMock struct {
-	mock.Mock
-}
-
-func (m *inviteQueryMock) Create(ctx context.Context, repo database.Storer, ni invites.NewInvite, now time.Time) (invites.Invite, error) {
-	args := m.Called(ctx, repo, ni, now)
-	return args.Get(0).(invites.Invite), args.Error(1)
-}
-func (m *inviteQueryMock) RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (invites.Invite, error) {
-	args := m.Called(ctx, repo)
-	return args.Get(0).(invites.Invite), args.Error(1)
-}
-func (m *inviteQueryMock) RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]invites.Invite, error) {
-	args := m.Called(ctx, repo, uid)
-	return args.Get(0).([]invites.Invite), args.Error(1)
-}
-func (m *inviteQueryMock) Update(ctx context.Context, repo database.Storer, update invites.UpdateInvite, uid, iid string, now time.Time) (invites.Invite, error) {
-	args := m.Called(ctx, repo, uid, iid, now)
-	return args.Get(0).(invites.Invite), args.Error(1)
-}
-
-type TeamDeps struct {
-	service *Team
-	repo    *database.Repository
-	auth0   *mockAuth.Auther
-	query   TeamQueries
-}
-
-func setupTeamMocks() *TeamDeps {
+func setupTeamMocks() *Team {
 	mockRepo := th.Repo()
+	mockNats := &events.Client{}
 	mockAuth0 := &mockAuth.Auther{}
-	mockTeamQueries := &teamQueryMock{}
-	mockProjectQueries := &projectQueryMock{}
-	mockMembershipQueries := &membershipQueryMock{}
-	mockUserQueries := &userQueryMock{}
-	mockInviteQueries := &inviteQueryMock{}
+	mockTeamQueries := &mockQuery.TeamQuerier{}
+	mockProjectQueries := &mockQuery.ProjectQuerier{}
+	mockMembershipQueries := &mockQuery.MembershipQuerier{}
+	mockUserQueries := &mockQuery.UserQuerier{}
+	mockInviteQueries := &mockQuery.InviteQuerier{}
+	mockPublishers := &mockPub.Publisher{}
 
 	tq := TeamQueries{mockTeamQueries, mockProjectQueries, mockMembershipQueries, mockUserQueries, mockInviteQueries}
 
-	return &TeamDeps{
-		repo:  mockRepo,
-		auth0: mockAuth0,
-		query: tq,
-		service: &Team{
+	return  &Team{
 			repo:  mockRepo,
+			nats: mockNats,
 			auth0: mockAuth0,
 			query: tq,
-		},
+			publish: mockPublishers,
+		}
+}
+
+func newTeam() teams.NewTeam {
+	return teams.NewTeam{
+		Name:      "TestTeam",
+		ProjectID: "8695a94f-7e0a-4198-8c0a-d3e12727a5ba",
 	}
 }
 
+func team() teams.Team {
+	return teams.Team{
+		ID: "39541c75-ca3e-4e2b-9728-54327772d001",
+		Name:      "TestTeam",
+		UserID:    "a4b54ec1-57f9-4c39-ab53-d936dbb6c177",
+		UpdatedAt: time.Now(),
+		CreatedAt: time.Now(),
+	}
+}
+
+func teamJson(nt teams.NewTeam) string {
+	return fmt.Sprintf(`{ "name": "%s", "projectId": "%s" }`,
+		nt.Name, nt.ProjectID)
+}
+
 func TestTeams_Create_200(t *testing.T) {
-	t.Skip()
-	setupTeamMocks()
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	nt := newTeam()
+	tm := team()
+	nm := newMembership(tm)
+	m := membership(nm)
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", context.Background(), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, nil)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Create", context.Background(), fake.repo, nt, uid, mock.AnythingOfType("time.Time")).Return(tm, nil)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", context.Background(), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(m, nil)
+
+	up := projects.UpdateProjectCopy{
+		TeamID: &tm.ID,
+	}
+
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Update", context.Background(), fake.repo, nt.ProjectID, up).Return(nil)
+	fake.publish.(*mockPub.Publisher).On("MembershipCreatedForProject", fake.nats, m, nt.ProjectID, uid).Return(nil)
+
+	// setup server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
+		_ = fake.Create(w, r)
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/users/me", strings.NewReader(teamJson(nt)))
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Handler Response", func(t *testing.T) {
+		assert.Equal(t, http.StatusCreated, writer.Code)
+	})
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.project.(*mockQuery.ProjectQuerier).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+		fake.query.membership.(*mockQuery.MembershipQuerier).AssertExpectations(t)
+		fake.publish.(*mockPub.Publisher).AssertExpectations(t)
+	})
 }

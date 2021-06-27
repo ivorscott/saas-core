@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"github.com/devpies/devpie-client-core/users/domain/users"
 	"github.com/devpies/devpie-client-core/users/platform/auth0"
 	"github.com/devpies/devpie-client-core/users/platform/database"
@@ -23,14 +22,7 @@ type User struct {
 }
 
 type UserQueries struct {
-	user UserQuerier
-}
-
-type UserQuerier interface {
-	Create(ctx context.Context, repo database.Storer, nu users.NewUser, now time.Time) (users.User, error)
-	RetrieveByEmail(repo database.Storer, email string) (users.User, error)
-	RetrieveMe(ctx context.Context, repo database.Storer, uid string) (users.User, error)
-	RetrieveMeByAuthID(ctx context.Context, repo database.Storer, aid string) (users.User, error)
+	user users.UserQuerier
 }
 
 func (u *User) RetrieveMe(w http.ResponseWriter, r *http.Request) error {

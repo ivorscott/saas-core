@@ -18,6 +18,13 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
+type InviteQuerier interface {
+	Create(ctx context.Context, repo database.Storer, ni NewInvite, now time.Time) (Invite, error)
+	RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (Invite, error)
+	RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]Invite, error)
+	Update(ctx context.Context, repo database.Storer, update UpdateInvite, uid, iid string, now time.Time) (Invite, error)
+}
+
 type Queries struct{}
 
 func (q *Queries) Create(ctx context.Context, repo database.Storer, ni NewInvite, now time.Time) (Invite, error) {

@@ -1,15 +1,18 @@
 package handlers
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
+	"github.com/devpies/devpie-client-core/users/api/publishers"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/devpies/devpie-client-core/users/api/publishers"
+	"github.com/go-chi/chi"
+	"github.com/pkg/errors"
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
+
 	"github.com/devpies/devpie-client-core/users/domain/invites"
 	"github.com/devpies/devpie-client-core/users/domain/memberships"
 	"github.com/devpies/devpie-client-core/users/domain/projects"
@@ -33,34 +36,15 @@ type Team struct {
 	origins     string
 	sendgridKey string
 	query       TeamQueries
+	publish     publishers.Publisher
 }
 
 type TeamQueries struct {
-	team       TeamQuerier
-	project    ProjectQuerier
-	membership MembershipQuerier
-	user       UserQuerier
-	invite     InviteQuerier
-}
-
-type TeamQuerier interface {
-	Create(ctx context.Context, repo database.Storer, nt teams.NewTeam, uid string, now time.Time) (teams.Team, error)
-	Retrieve(ctx context.Context, repo database.Storer, tid string) (teams.Team, error)
-	List(ctx context.Context, repo database.Storer, uid string) ([]teams.Team, error)
-}
-
-type ProjectQuerier interface {
-	Create(ctx context.Context, repo *database.Repository, p projects.ProjectCopy) error
-	Retrieve(ctx context.Context, repo database.Storer, pid string) (projects.ProjectCopy, error)
-	Update(ctx context.Context, repo database.Storer, pid string, update projects.UpdateProjectCopy) error
-	Delete(ctx context.Context, repo database.Storer, pid string) error
-}
-
-type InviteQuerier interface {
-	Create(ctx context.Context, repo database.Storer, ni invites.NewInvite, now time.Time) (invites.Invite, error)
-	RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (invites.Invite, error)
-	RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]invites.Invite, error)
-	Update(ctx context.Context, repo database.Storer, update invites.UpdateInvite, uid, iid string, now time.Time) (invites.Invite, error)
+	team       teams.TeamQuerier
+	project    projects.ProjectQuerier
+	membership memberships.MembershipQuerier
+	user       users.UserQuerier
+	invite     invites.InviteQuerier
 }
 
 func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
@@ -105,50 +89,21 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 		TeamID: &tm.ID,
 	}
 
-	if err := t.query.project.Update(r.Context(), t.repo, nt.ProjectID, up); err != nil {
+	if err = t.query.project.Update(r.Context(), t.repo, nt.ProjectID, up); err != nil {
 		return err
 	} // mock
 
-	err = t.PublishMembershipCreatedForProject(m, nt.ProjectID, uid)
-	if err != nil {
-		return err
+	if t.nats != nil {
+		err = t.publish.MembershipCreatedForProject(t.nats, m, nt.ProjectID, uid)
+		if err != nil {
+			return err
+		}
 	}
 
 	return web.Respond(r.Context(), w, tm, http.StatusCreated)
 }
 
-func (t *Team)PublishMembershipCreatedForProject(m memberships.Membership, pid , uid string) error {
-	e := events.MembershipCreatedForProjectEvent{
-		ID:   uuid.New().String(),
-		Type: events.TypeMembershipCreatedForProject,
-		Data: events.MembershipCreatedForProjectEventData{
-			MembershipID: m.ID,
-			TeamID:       m.TeamID,
-			Role:         m.Role,
-			UserID:       m.UserID,
-			ProjectID:    pid,
-			UpdatedAt:    m.UpdatedAt.String(),
-			CreatedAt:    m.CreatedAt.String(),
-		},
-		Metadata: events.Metadata{
-			TraceID: uuid.New().String(),
-			UserID:  uid,
-		},
-	}
-
-	bytes, err := json.Marshal(e)
-	if err != nil {
-		return err
-	}
-
-	if t.nats != nil {
-		t.nats.Publish(string(events.EventsMembershipCreatedForProject), bytes) // mock
-	}
-	return nil
-}
-
-// AssignExistingTeam assigns an existing team to a project
-func (t *Team) AssignExistingTeam(w http.ResponseWriter, r *http.Request) error {
+func (t *Team) AssignExisting(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 	pid := chi.URLParam(r, "pid")
 	uid := t.auth0.UserByID(r.Context())
@@ -182,39 +137,15 @@ func (t *Team) AssignExistingTeam(w http.ResponseWriter, r *http.Request) error 
 		}
 	}
 
-	err = t.PublishProjectUpdateEvent(&tm.ID, pid,uid)
-	if err != nil {
-		return err
+	if t.nats != nil {
+		err = t.publish.ProjectUpdated(t.nats, &tm.ID, pid, uid)
+		if err != nil {
+			return err
+		}
 	}
-
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
-func (t *Team) PublishProjectUpdateEvent(tid *string, pid, uid string) error {
-	ue := events.ProjectUpdatedEvent{
-		ID:   uuid.New().String(),
-		Type: events.TypeProjectUpdated,
-		Data: events.ProjectUpdatedEventData{
-			TeamID:    tid,
-			ProjectID: pid,
-			UpdatedAt: time.Now().UTC().String(),
-		},
-		Metadata: events.Metadata{
-			TraceID: uuid.New().String(),
-			UserID:  uid,
-		},
-	}
-
-	bytes, err := json.Marshal(ue)
-	if err != nil {
-		return err
-	}
-
-	t.nats.Publish(string(events.EventsProjectUpdated), bytes)
-	return nil
-}
-
-// LeaveTeam destroys a team membership
 func (t *Team) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 
@@ -232,38 +163,15 @@ func (t *Team) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	err = t.PublishMembershipDeleted(mid, uid)
-	if err != nil {
-		return err
+	if t.nats != nil {
+		err = t.publish.MembershipDeleted(t.nats, mid, uid)
+		if err != nil {
+			return err
+		}
 	}
-
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
-func (t *Team) PublishMembershipDeleted(mid, uid string) error {
-	me := events.MembershipDeletedEvent{
-		ID:   uuid.New().String(),
-		Type: events.TypeMembershipDeleted,
-		Data: events.MembershipDeletedEventData{
-			MembershipID: mid,
-		},
-		Metadata: events.Metadata{
-			TraceID: uuid.New().String(),
-			UserID:  uid,
-		},
-	}
-
-	bytes, err := json.Marshal(me)
-	if err != nil {
-		return err
-	}
-
-	t.nats.Publish(string(events.EventsMembershipDeleted), bytes)
-
-	return nil
-}
-
-// Retrieve returns a team by id
 func (t *Team) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 
@@ -475,41 +383,15 @@ func (t *Team) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 
-		err = t.PublishMembershipCreated(m, uid)
-		if err != nil {
-			return err
+		if t.nats != nil {
+			err = t.publish.MembershipCreated(t.nats, m, uid)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	return web.Respond(r.Context(), w, iv, http.StatusOK)
-}
-
-func(t *Team) PublishMembershipCreated(m memberships.Membership, uid string) error {
-	e := events.MembershipCreatedEvent{
-		ID:   uuid.New().String(),
-		Type: events.TypeMembershipCreated,
-		Data: events.MembershipCreatedEventData{
-			MembershipID: m.ID,
-			TeamID:       m.TeamID,
-			Role:         m.Role,
-			UserID:       m.UserID,
-			UpdatedAt:    m.UpdatedAt.String(),
-			CreatedAt:    m.CreatedAt.String(),
-		},
-		Metadata: events.Metadata{
-			TraceID: uuid.New().String(),
-			UserID:  uid,
-		},
-	}
-
-	bytes, err := json.Marshal(e)
-	if err != nil {
-		return err
-	}
-
-	t.nats.Publish(string(events.EventsMembershipCreated), bytes)
-
-	return nil
 }
 
 func (t *Team) SendMail(email, link string) error {
