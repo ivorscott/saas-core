@@ -2,17 +2,12 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/devpies/devpie-client-core/users/api/publishers"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/pkg/errors"
-	"github.com/sendgrid/sendgrid-go"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
-
+	"github.com/devpies/devpie-client-core/users/api/publishers"
 	"github.com/devpies/devpie-client-core/users/domain/invites"
 	"github.com/devpies/devpie-client-core/users/domain/memberships"
 	"github.com/devpies/devpie-client-core/users/domain/projects"
@@ -24,6 +19,7 @@ import (
 	"github.com/devpies/devpie-client-core/users/platform/web"
 	"github.com/devpies/devpie-client-events/go/events"
 	"github.com/go-chi/chi"
+	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
@@ -65,7 +61,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 		case projects.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
-			return fmt.Errorf("failed retrieving project: %q : %w", nt.ProjectID, err)
+			return fmt.Errorf("failed to retrieve project: %w", err)
 		}
 	}
 
@@ -116,7 +112,7 @@ func (t *Team) AssignExistingTeam(w http.ResponseWriter, r *http.Request) error 
 		case teams.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
-			return fmt.Errorf("failed to retrieve team: %w", err)
+			return fmt.Errorf("failed to retrieve team %w", err)
 		}
 	}
 
@@ -154,9 +150,9 @@ func (t *Team) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 	mid, err := t.query.membership.Delete(r.Context(), t.repo, tid, uid)
 	if err != nil {
 		switch err {
-		case memberships.ErrInvalidID:
+		case teams.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case memberships.ErrNotFound:
+		case teams.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
 			return fmt.Errorf("failed to delete membership: %w", err)
@@ -324,7 +320,7 @@ func (t *Team) RetrieveInvites(w http.ResponseWriter, r *http.Request) error {
 			case teams.ErrNotFound:
 				return web.NewRequestError(err, http.StatusNotFound)
 			default:
-				return fmt.Errorf("failed to retrieve team: %w", err)
+				return fmt.Errorf("failed to retrieve team %w", err)
 			}
 		}
 
@@ -380,7 +376,7 @@ func (t *Team) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
 		}
 		m, err := t.query.membership.Create(r.Context(), t.repo, nm, time.Now())
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to insert membership: %w", err)
 		}
 
 		if t.nats != nil {

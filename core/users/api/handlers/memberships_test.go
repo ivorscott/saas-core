@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/devpies/devpie-client-core/users/domain/memberships"
 	"github.com/devpies/devpie-client-core/users/domain/teams"
-	"time"
 )
 
 func newMembership(t teams.Team) memberships.NewMembership {

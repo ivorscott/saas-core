@@ -1,8 +1,7 @@
 package handlers
 
 import (
-	"github.com/go-chi/chi"
-	"github.com/pkg/errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -27,10 +26,6 @@ type MembershipQueries struct {
 }
 
 func (m *Membership) RetrieveMembers(w http.ResponseWriter, r *http.Request) error {
-	uid := m.auth0.UserByID(r.Context())
-
-// RetrieveMemberships retrieves all memberships for the authenticated user
-func (m *Membership) RetrieveMemberships(w http.ResponseWriter, r *http.Request) error {
 	uid := m.auth0.UserByID(r.Context())
 	tid := chi.URLParam(r, "tid")
 

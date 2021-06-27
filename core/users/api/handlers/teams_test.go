@@ -3,8 +3,6 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"github.com/devpies/devpie-client-core/users/domain/memberships"
-	"github.com/go-chi/chi"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,6 +10,7 @@ import (
 	"time"
 
 	mockPub "github.com/devpies/devpie-client-core/users/api/publishers/mocks"
+	"github.com/devpies/devpie-client-core/users/domain/memberships"
 	mockQuery "github.com/devpies/devpie-client-core/users/domain/mocks"
 	"github.com/devpies/devpie-client-core/users/domain/projects"
 	"github.com/devpies/devpie-client-core/users/domain/teams"
@@ -19,6 +18,7 @@ import (
 	th "github.com/devpies/devpie-client-core/users/platform/testhelpers"
 	"github.com/devpies/devpie-client-core/users/platform/web"
 	"github.com/devpies/devpie-client-events/go/events"
+	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -223,7 +223,7 @@ func TestTeams_Create_500_Uncaught_Error_On_Retrieve(t *testing.T) {
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.Is(err, cause))
-			assert.Equal(t, fmt.Sprintf("failed retrieving project: %q : %s", nt.ProjectID, cause.Error()), err.Error())
+			assert.Equal(t, fmt.Sprintf("failed to retrieve project: %s", cause), err.Error())
 		})
 	})
 
@@ -403,6 +403,44 @@ func TestTeams_Create_500_Uncaught_Error_On_Publish(t *testing.T) {
 }
 
 func TestTeams_AssignExistingTeam_200(t *testing.T) {
+	pid := "40541c75-ed7a-4a2b-8788-88322221c000"
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tm := team()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, tm.ID).Return(tm, nil)
+
+	fake.query.project.(*mockQuery.ProjectQuerier).
+		On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, pid, mock.AnythingOfType("projects.UpdateProjectCopy")).
+		Return(nil)
+	fake.publish.(*mockPub.Publisher).On("ProjectUpdated", fake.nats, mock.AnythingOfType("*string"), pid, uid).Return(nil)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{pid}", func(w http.ResponseWriter, r *http.Request) {
+		_ = fake.AssignExistingTeam(w, r)
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, pid), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Handler Response", func(t *testing.T) {
+		assert.Equal(t, http.StatusOK, writer.Code)
+	})
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.project.(*mockQuery.ProjectQuerier).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+		fake.publish.(*mockPub.Publisher).AssertExpectations(t)
+	})
+}
+
+func TestTeams_AssignExistingTeam_400(t *testing.T) {
 	pid := "40541c75-ed7a-4a2b-8788-88322221c000"
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	tm := team()

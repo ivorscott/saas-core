@@ -1,12 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/devpies/devpie-client-core/users/domain/users"
 	"github.com/devpies/devpie-client-core/users/platform/auth0"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/devpies/devpie-client-core/users/platform/web"
-	"github.com/pkg/errors"
-
 	//"github.com/pkg/errors"
 	"log"
 	"net/http"
@@ -64,13 +63,12 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 	var user users.User
 	status := http.StatusAccepted
 
-	// does the user already exist?
 	user, err = u.query.user.RetrieveMeByAuthID(r.Context(), u.repo, nu.Auth0ID)
 	if err != nil {
 		status = http.StatusCreated
 		user, err = u.query.user.Create(r.Context(), u.repo, nu, time.Now())
 		if err != nil {
-			return errors.Wrapf(err, "failed to create user")
+			return fmt.Errorf("failed to create user: %w", err)
 		}
 	}
 
@@ -79,7 +77,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 		case auth0.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return errors.Wrapf(err, "failed to update user app metadata")
+			return fmt.Errorf("failed to update app metadata: %w", err)
 		}
 	}
 

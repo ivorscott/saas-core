@@ -1,17 +1,17 @@
 package handlers
 
 import (
+	"log"
+	"net/http"
+	"os"
+
+	mid "github.com/devpies/devpie-client-core/users/api/middleware"
 	"github.com/devpies/devpie-client-core/users/api/publishers"
 	"github.com/devpies/devpie-client-core/users/domain/invites"
 	"github.com/devpies/devpie-client-core/users/domain/memberships"
 	"github.com/devpies/devpie-client-core/users/domain/projects"
 	"github.com/devpies/devpie-client-core/users/domain/teams"
 	"github.com/devpies/devpie-client-core/users/domain/users"
-	"log"
-	"net/http"
-	"os"
-
-	mid "github.com/devpies/devpie-client-core/users/api/middleware"
 	"github.com/devpies/devpie-client-core/users/platform/auth0"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/devpies/devpie-client-core/users/platform/web"

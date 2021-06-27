@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	mockAuth "github.com/devpies/devpie-client-core/users/platform/auth0/mocks"
 	th "github.com/devpies/devpie-client-core/users/platform/testhelpers"
 	"github.com/devpies/devpie-client-core/users/platform/web"
+	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -170,7 +170,7 @@ func TestUsers_RetrieveMe_404_Missing_User(t *testing.T) {
 	})
 }
 
-func TestUsers_RetrieveMe_500_Uncaught_Error(t *testing.T) {
+func TestUsers_RetrieveMe_500_Uncaught_Error_On_RetrieveMe(t *testing.T) {
 	cause := errors.New("Something went wrong")
 
 	// setup mocks
@@ -186,7 +186,7 @@ func TestUsers_RetrieveMe_500_Uncaught_Error(t *testing.T) {
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.Is(err, cause))
-			assert.Equal(t, fmt.Sprintf(`looking for user "%s": %s`, uid, cause), err.Error())
+			assert.Equal(t, fmt.Sprintf(`failed to retrieve authenticated user: %s`, cause), err.Error())
 		})
 	})
 
@@ -402,7 +402,7 @@ func TestUsers_Create_500_Uncaught_Error_On_UpdateUserAppMetaData(t *testing.T) 
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.Is(err, cause))
-			assert.Equal(t, fmt.Sprintf("failed to update user app metadata: %s", cause), err.Error())
+			assert.Equal(t, fmt.Sprintf("failed to update app metadata: %s", cause), err.Error())
 		})
 	})
 

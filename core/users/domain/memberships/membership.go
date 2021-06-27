@@ -156,8 +156,11 @@ func (q *Queries) Update(ctx context.Context, repo database.Storer, tid string, 
 }
 
 func (q *Queries) Delete(ctx context.Context, repo database.Storer, tid, uid string) (string, error) {
-	if _, err := uuid.Parse(tid); err != nil {
-		return "", ErrInvalidID
+	var id string
+
+	_, err := q.RetrieveMembership(ctx, repo, tid, uid)
+	if err != nil {
+		return id, err
 	}
 
 	stmt := repo.Delete(
@@ -168,13 +171,12 @@ func (q *Queries) Delete(ctx context.Context, repo database.Storer, tid, uid str
 		"RETURNING membership_id",
 	)
 
-	query, _, err := stmt.ToSql()
+	query, args, err := stmt.ToSql()
 	if err != nil {
 		return id, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
 	row := repo.QueryRowxContext(ctx, query, tid, uid)
-	var membershipID string
 
 	if err = row.Scan(&id); err != nil {
 		return id, err

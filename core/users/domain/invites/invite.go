@@ -62,6 +62,14 @@ func (q *Queries) Create(ctx context.Context, repo database.Storer, ni NewInvite
 func (q *Queries) RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (Invite, error) {
 	var i Invite
 
+	if _, err := uuid.Parse(uid); err != nil {
+		return i, ErrInvalidID
+	}
+
+	if _, err := uuid.Parse(iid); err != nil {
+		return i, ErrInvalidID
+	}
+
 	stmt := repo.Select(
 		"invite_id",
 		"user_id",
@@ -94,6 +102,10 @@ func (q *Queries) RetrieveInvite(ctx context.Context, repo database.Storer, uid 
 func (q *Queries) RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]Invite, error) {
 	var is []Invite
 
+	if _, err := uuid.Parse(uid); err != nil {
+		return is, ErrInvalidID
+	}
+
 	stmt := repo.Select(
 		"invite_id",
 		"user_id",
@@ -123,8 +135,6 @@ func (q *Queries) RetrieveInvites(ctx context.Context, repo database.Storer, uid
 }
 
 func (q *Queries) Update(ctx context.Context, repo database.Storer, update UpdateInvite, uid, iid string, now time.Time) (Invite, error) {
-	var iv Invite
-
 	i, err := q.RetrieveInvite(ctx, repo, uid, iid)
 	if err != nil {
 		return i, err

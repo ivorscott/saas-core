@@ -27,7 +27,13 @@ type TeamQuerier interface {
 type Queries struct{}
 
 func (q *Queries) Create(ctx context.Context, repo database.Storer, nt NewTeam, uid string, now time.Time) (Team, error) {
-	t := Team{
+	var t Team
+
+	if _, err := uuid.Parse(uid); err != nil {
+		return t, ErrInvalidID
+	}
+
+	t = Team{
 		ID:        uuid.New().String(),
 		Name:      nt.Name,
 		UserID:    uid,

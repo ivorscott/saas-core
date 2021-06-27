@@ -68,6 +68,10 @@ func (q *Queries) Create(ctx context.Context, repo database.Storer, nu NewUser, 
 func (q *Queries) RetrieveByEmail(repo database.Storer, email string) (User, error) {
 	var u User
 
+	if _, err := mail.ParseAddress(email); err != nil {
+		return u, ErrInvalidEmail
+	}
+
 	stmt := repo.Select(
 		"user_id",
 		"auth0_id",
