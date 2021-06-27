@@ -46,8 +46,6 @@ kanban or agile style board management and auxiliary services like cost estimati
 
 and provide a github username and access token.
 
-`.gitpass` is read in the [Tiltfile](https://github.com/devpies/devpie-client-core/blob/2ddeab2eace966283f55cac58aa945a62c0c8aad/Tiltfile#L11) and passed to [Dockerfiles as build args](https://github.com/devpies/devpie-client-core/blob/2ddeab2eace966283f55cac58aa945a62c0c8aad/core/users/Dockerfile#L20). This allows services to pull private go modules but currently all repositories are public.
-
 ## Developement
 
 Run front and back ends simultaneously. For faster development we don't run the [devpie-client-app](https://github.com/ivorscott/devpie-client-app)
