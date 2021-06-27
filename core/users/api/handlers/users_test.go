@@ -2,21 +2,22 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
 	mockQuery "github.com/devpies/devpie-client-core/users/domain/mocks"
 	"github.com/devpies/devpie-client-core/users/domain/users"
 	"github.com/devpies/devpie-client-core/users/platform/auth0"
 	mockAuth "github.com/devpies/devpie-client-core/users/platform/auth0/mocks"
 	th "github.com/devpies/devpie-client-core/users/platform/testhelpers"
 	"github.com/devpies/devpie-client-core/users/platform/web"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
-	"time"
 )
 
 func setupUserMocks() *User {
@@ -79,7 +80,38 @@ func TestUsers_RetrieveMe_200(t *testing.T) {
 	})
 }
 
-func TestUsers_RetrieveMe_404_Missing_ID(t *testing.T) {
+func TestUsers_RetrieveMe_400_Invalid_User_ID(t *testing.T) {
+	// setup mocks
+	uid := "123"
+	fake := setupUserMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, users.ErrInvalidID)
+
+	// setup server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.RetrieveMe(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, users.ErrInvalidID))
+			assert.Equal(t, http.StatusBadRequest, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
+	})
+}
+
+func TestUsers_RetrieveMe_404_Missing_User_ID(t *testing.T) {
 	// setup mocks
 	fake := setupUserMocks()
 	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return("")
@@ -107,7 +139,7 @@ func TestUsers_RetrieveMe_404_Missing_ID(t *testing.T) {
 	})
 }
 
-func TestUsers_RetrieveMe_404_Missing_Record(t *testing.T) {
+func TestUsers_RetrieveMe_404_Missing_User(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	fake := setupUserMocks()
@@ -124,37 +156,6 @@ func TestUsers_RetrieveMe_404_Missing_Record(t *testing.T) {
 			assert.True(t, errors.As(err, &webErr))
 			assert.True(t, errors.Is(err.(*web.Error).Err, users.ErrNotFound))
 			assert.Equal(t, http.StatusNotFound, err.(*web.Error).Status)
-		})
-	})
-
-	// make request
-	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
-	mux.ServeHTTP(writer, request)
-
-	t.Run("Assert Mock Expectations", func(t *testing.T) {
-		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
-		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
-	})
-}
-
-func TestUsers_RetrieveMe_404_Invalid_ID(t *testing.T) {
-	// setup mocks
-	uid := "123"
-	fake := setupUserMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, users.ErrInvalidID)
-
-	// setup server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
-		var webErr *web.Error
-		err := fake.RetrieveMe(w, r)
-
-		t.Run("Assert Handler Response", func(t *testing.T) {
-			assert.True(t, errors.As(err, &webErr))
-			assert.True(t, errors.Is(err.(*web.Error).Err, users.ErrInvalidID))
-			assert.Equal(t, http.StatusBadRequest, err.(*web.Error).Status)
 		})
 	})
 
@@ -313,8 +314,8 @@ func TestUsers_Create_400_Invalid_ID_For_UpdateUserAppMetadata(t *testing.T) {
 	})
 }
 
-func TestUsers_Create_500_Uncaught_Error_For_GenerateToken(t *testing.T) {
-	cause := errors.New("Something went wrong")
+func TestUsers_Create_500_Uncaught_Error_On_GenerateToken(t *testing.T) {
+	cause := errors.New("something went wrong")
 
 	// setup mocks
 	nu := newUser()
@@ -328,7 +329,6 @@ func TestUsers_Create_500_Uncaught_Error_For_GenerateToken(t *testing.T) {
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
 			assert.True(t, errors.Is(err, cause))
-			assert.Equal(t, cause.Error(), err.Error())
 		})
 	})
 
@@ -343,8 +343,8 @@ func TestUsers_Create_500_Uncaught_Error_For_GenerateToken(t *testing.T) {
 	})
 }
 
-func TestUsers_Create_500_Uncaught_Error_For_Create(t *testing.T) {
-	cause := errors.New("Something went wrong")
+func TestUsers_Create_500_Uncaught_Error_On_Create(t *testing.T) {
+	cause := errors.New("something went wrong")
 
 	// setup mocks
 	nu := newUser()
@@ -379,8 +379,8 @@ func TestUsers_Create_500_Uncaught_Error_For_Create(t *testing.T) {
 	})
 }
 
-func TestUsers_Create_500_Uncaught_Error_For_UpdateUserAppMetadata(t *testing.T) {
-	cause := errors.New("Something went wrong")
+func TestUsers_Create_500_Uncaught_Error_On_UpdateUserAppMetaData(t *testing.T) {
+	cause := errors.New("something went wrong")
 
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"

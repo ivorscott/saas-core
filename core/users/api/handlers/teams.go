@@ -65,7 +65,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 		case projects.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
-			return fmt.Errorf("failed to retrieve project: %w", err)
+			return fmt.Errorf("failed retrieving project: %q : %w", nt.ProjectID, err)
 		}
 	}
 
