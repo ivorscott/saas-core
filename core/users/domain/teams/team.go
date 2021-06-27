@@ -32,7 +32,7 @@ func (q *Queries) Create(ctx context.Context, repo database.Storer, nt NewTeam, 
 		Name:      nt.Name,
 		UserID:    uid,
 		UpdatedAt: now.UTC(),
-		CreatedAt:  now.UTC(),
+		CreatedAt: now.UTC(),
 	}
 
 	stmt := repo.Insert(

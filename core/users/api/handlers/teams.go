@@ -51,14 +51,14 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 	var nt teams.NewTeam
 	var role memberships.Role = memberships.Administrator
 
-	uid := t.auth0.UserByID(r.Context()) // mock
+	uid := t.auth0.UserByID(r.Context())
 
 	if err := web.Decode(r, &nt); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 
-	if _, err := t.query.project.Retrieve(r.Context(), t.repo, nt.ProjectID); err != nil { //mock
+	if _, err := t.query.project.Retrieve(r.Context(), t.repo, nt.ProjectID); err != nil {
 		switch err {
 		case projects.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
@@ -69,7 +69,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	tm, err := t.query.team.Create(r.Context(), t.repo, nt, uid, time.Now()) // mock
+	tm, err := t.query.team.Create(r.Context(), t.repo, nt, uid, time.Now())
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 		Role:   role.String(),
 	}
 
-	m, err := t.query.membership.Create(r.Context(), t.repo, nm, time.Now()) // mock
+	m, err := t.query.membership.Create(r.Context(), t.repo, nm, time.Now())
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 
 	if err = t.query.project.Update(r.Context(), t.repo, nt.ProjectID, up); err != nil {
 		return err
-	} // mock
+	}
 
 	if t.nats != nil {
 		err = t.publish.MembershipCreatedForProject(t.nats, m, nt.ProjectID, uid)

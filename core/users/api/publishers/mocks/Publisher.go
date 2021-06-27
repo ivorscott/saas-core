@@ -1,6 +1,5 @@
 package mocks
 
-
 import (
 	"github.com/devpies/devpie-client-core/users/domain/memberships"
 	"github.com/devpies/devpie-client-events/go/events"
@@ -19,7 +18,7 @@ func (m *Publisher) MembershipCreated(nats *events.Client, mem memberships.Membe
 	args := m.Called(nats, mem, uid)
 	return args.Error(0)
 }
-func (m *Publisher) MembershipCreatedForProject(nats *events.Client, mem memberships.Membership, pid , uid string) error {
+func (m *Publisher) MembershipCreatedForProject(nats *events.Client, mem memberships.Membership, pid, uid string) error {
 	args := m.Called(nats, mem, pid, uid)
 	return args.Error(0)
 }

@@ -19,12 +19,12 @@ import (
 	"time"
 )
 
-func setupUserMocks() *User{
+func setupUserMocks() *User {
 	return &User{
-			repo:  th.Repo(),
-			auth0: &mockAuth.Auther{},
-			query: UserQueries{&mockQuery.UserQuerier{}},
-		}
+		repo:  th.Repo(),
+		auth0: &mockAuth.Auther{},
+		query: UserQueries{&mockQuery.UserQuerier{}},
+	}
 }
 
 func newUser() users.NewUser {
@@ -241,7 +241,40 @@ func TestUsers_Create_201(t *testing.T) {
 	})
 }
 
-func TestUsers_Create_400(t *testing.T) {
+func TestUsers_Create_400_Missing_Payload(t *testing.T) {
+	// setup mocks
+	fake := setupUserMocks()
+
+	testcases := []struct {
+		name string
+		arg  string
+	}{
+		{"empty payload", ""},
+		{"empty object", "{}"},
+	}
+
+	for _, v := range testcases {
+		// setup server
+		mux := http.NewServeMux()
+		mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+			err := fake.Create(w, r)
+
+			t.Run(fmt.Sprintf("Assert Handler Response/%s", v.name), func(t *testing.T) {
+				assert.NotNil(t, err)
+			})
+		})
+
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(v.arg))
+		mux.ServeHTTP(writer, request)
+
+		t.Run(fmt.Sprintf("Assert Server Response/%s", v.name), func(t *testing.T) {
+			assert.Equal(t, http.StatusBadRequest, writer.Code)
+		})
+	}
+}
+
+func TestUsers_Create_400_Invalid_ID_For_UpdateUserAppMetadata(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	nu := newUser()

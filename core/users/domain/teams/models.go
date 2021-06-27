@@ -10,7 +10,7 @@ type Team struct {
 	Name      string    `db:"name" json:"name"`
 	UserID    string    `db:"user_id" json:"userId"`
 	UpdatedAt time.Time `db:"updated_at" json:"updatedAt"`
-	CreatedAt  time.Time `db:"created_at" json:"createdAt"`
+	CreatedAt time.Time `db:"created_at" json:"createdAt"`
 }
 
 // NewTeam represents a new team request

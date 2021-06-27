@@ -11,11 +11,11 @@ import (
 type Publisher interface {
 	ProjectUpdated(nats *events.Client, tid *string, pid, uid string) error
 	MembershipCreated(nats *events.Client, m memberships.Membership, uid string) error
-	MembershipCreatedForProject(nats *events.Client, m memberships.Membership, pid , uid string) error
+	MembershipCreatedForProject(nats *events.Client, m memberships.Membership, pid, uid string) error
 	MembershipDeleted(nats *events.Client, mid, uid string) error
 }
 
-type Publishers struct {}
+type Publishers struct{}
 
 func (p *Publishers) ProjectUpdated(nats *events.Client, tid *string, pid, uid string) error {
 	ue := events.ProjectUpdatedEvent{
@@ -70,7 +70,7 @@ func (p *Publishers) MembershipCreated(nats *events.Client, m memberships.Member
 	return nil
 }
 
-func (p *Publishers) MembershipCreatedForProject(nats *events.Client, m memberships.Membership, pid , uid string) error {
+func (p *Publishers) MembershipCreatedForProject(nats *events.Client, m memberships.Membership, pid, uid string) error {
 	e := events.MembershipCreatedForProjectEvent{
 		ID:   uuid.New().String(),
 		Type: events.TypeMembershipCreatedForProject,
