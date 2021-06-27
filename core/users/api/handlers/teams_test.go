@@ -1124,8 +1124,44 @@ func TestTeam_CreateInvite_200_New_Users(t *testing.T) {
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
 		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
-		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
-		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
 		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_CreateInvite_200_Existing_Users(t *testing.T) {
+	tm := team()
+	u := user()
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.sender = func(email *mail.SGMailV3) (*rest.Response, error) {
+		var resp *rest.Response
+		return resp, nil
+	}
+	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil).Once()
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveByEmail", fake.repo, mock.AnythingOfType("string")).Return(u, nil).Twice()
+	fake.query.invite.(*mockQuery.InviteQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, mock.AnythingOfType("invites.NewInvite"), mock.AnythingOfType("time.Time")).Return(invites.Invite{}, nil).Twice()
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		_ = fake.CreateInvite(w, r)
+	})
+
+	list := strings.NewReader(`{ "emailList": ["example@devpie.io","example@gmail.com"] }`)
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), list)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Handler Response", func(t *testing.T) {
+		assert.Equal(t, http.StatusCreated, writer.Code)
+	})
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
 	})
 }

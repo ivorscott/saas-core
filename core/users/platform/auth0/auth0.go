@@ -339,7 +339,7 @@ func (a0 *Auth0) RetrieveToken() (Token, error) {
 
 	q, args, err := stmt.ToSql()
 	if err != nil {
-		return t,  fmt.Errorf("%w: arguments (%v)", err, args)
+		return t, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
 	if err := a0.Repo.Get(&t, q); err != nil {
