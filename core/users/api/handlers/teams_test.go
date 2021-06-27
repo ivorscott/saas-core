@@ -434,13 +434,194 @@ func TestTeams_AssignExistingTeam_200(t *testing.T) {
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
 		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
-		fake.query.project.(*mockQuery.ProjectQuerier).AssertExpectations(t)
 		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+		fake.query.project.(*mockQuery.ProjectQuerier).AssertExpectations(t)
 		fake.publish.(*mockPub.Publisher).AssertExpectations(t)
 	})
 }
 
-func TestTeams_AssignExistingTeam_400(t *testing.T) {
+func TestTeams_AssignExistingTeam_400_Invalid_Team_ID(t *testing.T) {
+	pid := "40541c75-ed7a-4a2b-8788-88322221c000"
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tid := "123"
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, tid).Return(teams.Team{}, teams.ErrInvalidID)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{pid}", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.AssignExistingTeam(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, teams.ErrInvalidID))
+			assert.Equal(t, http.StatusBadRequest, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tid, pid), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeams_AssignExistingTeam_404_Missing_Team(t *testing.T) {
+	pid := "40541c75-ed7a-4a2b-8788-88322221c000"
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tm := team()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, tm.ID).Return(teams.Team{}, teams.ErrNotFound)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{pid}", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.AssignExistingTeam(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, teams.ErrNotFound))
+			assert.Equal(t, http.StatusNotFound, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, pid), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeams_AssignExistingTeam_500_Uncaught_Error_On_Retrieve(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	pid := "40541c75-ed7a-4a2b-8788-88322221c000"
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tm := team()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, tm.ID).Return(teams.Team{}, cause)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{pid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.AssignExistingTeam(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, fmt.Sprintf("failed to retrieve team: %s", cause), err.Error())
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, pid), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeams_AssignExistingTeam_400_Invalid_Project_ID(t *testing.T) {
+	pid := "40541c75-ed7a-4a2b-8788-88322221c000"
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tm := team()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, tm.ID).Return(tm, nil)
+
+	fake.query.project.(*mockQuery.ProjectQuerier).
+		On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, pid, mock.AnythingOfType("projects.UpdateProjectCopy")).
+		Return(projects.ErrInvalidID)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{pid}", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.AssignExistingTeam(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, projects.ErrInvalidID))
+			assert.Equal(t, http.StatusBadRequest, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, pid), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+		fake.query.project.(*mockQuery.ProjectQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeams_AssignExistingTeam_400_Missing_Project(t *testing.T) {
+	pid := "40541c75-ed7a-4a2b-8788-88322221c000"
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tm := team()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, tm.ID).Return(tm, nil)
+
+	fake.query.project.(*mockQuery.ProjectQuerier).
+		On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, pid, mock.AnythingOfType("projects.UpdateProjectCopy")).
+		Return(projects.ErrNotFound)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{pid}", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.AssignExistingTeam(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, projects.ErrNotFound))
+			assert.Equal(t, http.StatusNotFound, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, pid), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+		fake.query.project.(*mockQuery.ProjectQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeams_AssignExistingTeam_500_Uncaught_Error_On_Publish(t *testing.T) {
+	cause := errors.New("something went wrong")
+
 	pid := "40541c75-ed7a-4a2b-8788-88322221c000"
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	tm := team()
@@ -453,17 +634,51 @@ func TestTeams_AssignExistingTeam_400(t *testing.T) {
 	fake.query.project.(*mockQuery.ProjectQuerier).
 		On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, pid, mock.AnythingOfType("projects.UpdateProjectCopy")).
 		Return(nil)
-	fake.publish.(*mockPub.Publisher).On("ProjectUpdated", fake.nats, mock.AnythingOfType("*string"), pid, uid).Return(nil)
+	fake.publish.(*mockPub.Publisher).On("ProjectUpdated", fake.nats, mock.AnythingOfType("*string"), pid, uid).Return(cause)
 
 	// setup server
 	mux := chi.NewMux()
 	mux.HandleFunc("/{tid}/{pid}", func(w http.ResponseWriter, r *http.Request) {
-		_ = fake.AssignExistingTeam(w, r)
+		err := fake.AssignExistingTeam(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+		})
 	})
 
 	// make request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, pid), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+		fake.query.project.(*mockQuery.ProjectQuerier).AssertExpectations(t)
+		fake.publish.(*mockPub.Publisher).AssertExpectations(t)
+	})
+}
+
+func TestTeams_LeaveTeam_200(t *testing.T) {
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	mid := "085cb8a0-b221-4a6d-95be-592eb68d5670"
+	tm := team()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Delete", mock.AnythingOfType("*context.valueCtx"), fake.repo, tm.ID, uid).Return(mid, nil)
+	fake.publish.(*mockPub.Publisher).On("MembershipDeleted", fake.nats, mid, uid).Return(nil)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		_ = fake.LeaveTeam(w, r)
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), nil)
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Handler Response", func(t *testing.T) {
@@ -472,8 +687,144 @@ func TestTeams_AssignExistingTeam_400(t *testing.T) {
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
 		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
-		fake.query.project.(*mockQuery.ProjectQuerier).AssertExpectations(t)
 		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+		fake.query.project.(*mockQuery.ProjectQuerier).AssertExpectations(t)
+		fake.publish.(*mockPub.Publisher).AssertExpectations(t)
+	})
+}
+
+func TestTeams_LeaveTeam_400_Invalid_ID(t *testing.T) {
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tid := "123"
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Delete", mock.AnythingOfType("*context.valueCtx"), fake.repo, tid, uid).Return("", memberships.ErrInvalidID)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.LeaveTeam(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, memberships.ErrInvalidID))
+			assert.Equal(t, http.StatusBadRequest, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tid), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.membership.(*mockQuery.MembershipQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeams_LeaveTeam_404_Missing_Membership(t *testing.T) {
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tid := "123"
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Delete", mock.AnythingOfType("*context.valueCtx"), fake.repo, tid, uid).Return("", memberships.ErrInvalidID)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.LeaveTeam(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, memberships.ErrInvalidID))
+			assert.Equal(t, http.StatusBadRequest, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tid), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.membership.(*mockQuery.MembershipQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeams_LeaveTeam_500_Uncaught_Error_On_Delete(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	mid := "085cb8a0-b221-4a6d-95be-592eb68d5670"
+	tm := team()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Delete", mock.AnythingOfType("*context.valueCtx"), fake.repo, tm.ID, uid).Return(mid, cause)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.LeaveTeam(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, fmt.Sprintf("failed to delete membership: %s", cause), err.Error())
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.membership.(*mockQuery.MembershipQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeams_LeaveTeam_500_Uncaught_Error_On_Publish(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	mid := "085cb8a0-b221-4a6d-95be-592eb68d5670"
+	tm := team()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Delete", mock.AnythingOfType("*context.valueCtx"), fake.repo, tm.ID, uid).Return(mid, nil)
+	fake.publish.(*mockPub.Publisher).On("MembershipDeleted", fake.nats, mid, uid).Return(cause)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.LeaveTeam(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+		fake.query.project.(*mockQuery.ProjectQuerier).AssertExpectations(t)
 		fake.publish.(*mockPub.Publisher).AssertExpectations(t)
 	})
 }

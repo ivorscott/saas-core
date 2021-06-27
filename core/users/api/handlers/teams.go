@@ -112,7 +112,7 @@ func (t *Team) AssignExistingTeam(w http.ResponseWriter, r *http.Request) error 
 		case teams.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
-			return fmt.Errorf("failed to retrieve team %w", err)
+			return fmt.Errorf("failed to retrieve team: %w", err)
 		}
 	}
 
@@ -150,9 +150,9 @@ func (t *Team) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 	mid, err := t.query.membership.Delete(r.Context(), t.repo, tid, uid)
 	if err != nil {
 		switch err {
-		case teams.ErrInvalidID:
+		case memberships.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case teams.ErrNotFound:
+		case memberships.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
 			return fmt.Errorf("failed to delete membership: %w", err)
