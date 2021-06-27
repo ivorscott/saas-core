@@ -828,3 +828,118 @@ func TestTeams_LeaveTeam_500_Uncaught_Error_On_Publish(t *testing.T) {
 		fake.publish.(*mockPub.Publisher).AssertExpectations(t)
 	})
 }
+
+
+func TestTeams_Retrieve_200(t *testing.T) {
+	tm := team()
+
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, tm.ID).Return(tm, nil)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		_ = fake.Retrieve(w, r)
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Handler Response", func(t *testing.T) {
+		assert.Equal(t, http.StatusOK, writer.Code)
+	})
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeams_Retrieve_400_Invalid_ID(t *testing.T) {
+	tid := "123"
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, tid).Return(teams.Team{}, teams.ErrInvalidID)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.Retrieve(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, teams.ErrInvalidID))
+			assert.Equal(t, http.StatusBadRequest, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tid), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeams_Retrieve_404_Missing_Team(t *testing.T) {
+	tm := team()
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, tm.ID).Return(teams.Team{}, teams.ErrNotFound)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.Retrieve(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, teams.ErrNotFound))
+			assert.Equal(t, http.StatusNotFound, err.(*web.Error).Status)
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeams_Retrieve_500_Uncaught_Error_On_Retrieve(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	tm := team()
+	//setup mocks
+	fake := setupTeamMocks()
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, tm.ID).Return(teams.Team{}, cause)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.Retrieve(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, fmt.Sprintf("failed to retrieve team: %s", cause), err.Error())
+		})
+	})
+
+	// make request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", tm.ID), nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+	})
+}
