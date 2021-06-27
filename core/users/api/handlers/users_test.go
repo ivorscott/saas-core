@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	"fmt"
+	"github.com/go-chi/chi"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -56,18 +56,18 @@ func TestUsers_RetrieveMe_200(t *testing.T) {
 	// setup mocks
 	u := user()
 	fake := setupUserMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(u.ID)
-	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", context.Background(), fake.repo, u.ID).Return(u, nil)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(u.ID)
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", mock.AnythingOfType("*context.valueCtx"), fake.repo, u.ID).Return(u, nil)
 
 	// setup server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		_ = fake.RetrieveMe(w, r)
 	})
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Handler Response", func(t *testing.T) {
@@ -84,12 +84,12 @@ func TestUsers_RetrieveMe_400_Invalid_User_ID(t *testing.T) {
 	// setup mocks
 	uid := "123"
 	fake := setupUserMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, users.ErrInvalidID)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid).Return(users.User{}, users.ErrInvalidID)
 
 	// setup server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var webErr *web.Error
 		err := fake.RetrieveMe(w, r)
 
@@ -102,7 +102,7 @@ func TestUsers_RetrieveMe_400_Invalid_User_ID(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -114,11 +114,11 @@ func TestUsers_RetrieveMe_400_Invalid_User_ID(t *testing.T) {
 func TestUsers_RetrieveMe_404_Missing_User_ID(t *testing.T) {
 	// setup mocks
 	fake := setupUserMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return("")
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return("")
 
 	// setup server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var webErr *web.Error
 		err := fake.RetrieveMe(w, r)
 
@@ -131,7 +131,7 @@ func TestUsers_RetrieveMe_404_Missing_User_ID(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -143,12 +143,12 @@ func TestUsers_RetrieveMe_404_Missing_User(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	fake := setupUserMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, users.ErrNotFound)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid).Return(users.User{}, users.ErrNotFound)
 
 	// setup server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var webErr *web.Error
 		err := fake.RetrieveMe(w, r)
 
@@ -161,7 +161,7 @@ func TestUsers_RetrieveMe_404_Missing_User(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -176,12 +176,12 @@ func TestUsers_RetrieveMe_500_Uncaught_Error(t *testing.T) {
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	fake := setupUserMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", context.Background(), fake.repo, uid).Return(users.User{}, cause)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.user.(*mockQuery.UserQuerier).On("RetrieveMe", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid).Return(users.User{}, cause)
 
 	// setup server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users/me", func(w http.ResponseWriter, r *http.Request) {
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := fake.RetrieveMe(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
@@ -192,7 +192,7 @@ func TestUsers_RetrieveMe_500_Uncaught_Error(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/users/me", nil)
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -217,19 +217,19 @@ func TestUsers_Create_201(t *testing.T) {
 		On("UpdateUserAppMetaData", auth0.Token{}, nu.Auth0ID, uid).Return(nil)
 
 	fake.query.user.(*mockQuery.UserQuerier).
-		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
+		On("RetrieveMeByAuthID", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu.Auth0ID).
 		Return(users.User{}, users.ErrNotFound).
-		On("Create", context.Background(), fake.repo, nu, mock.AnythingOfType("time.Time")).
+		On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu, mock.AnythingOfType("time.Time")).
 		Return(user(), nil)
 
 	// setup server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		_ = fake.Create(w, r)
 	})
 
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(payload(nu)))
+	request, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(payload(nu)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Handler Response", func(t *testing.T) {
@@ -256,8 +256,8 @@ func TestUsers_Create_400_Missing_Payload(t *testing.T) {
 
 	for _, v := range testcases {
 		// setup server
-		mux := http.NewServeMux()
-		mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+		mux := chi.NewMux()
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			err := fake.Create(w, r)
 
 			t.Run(fmt.Sprintf("Assert Handler Response/%s", v.name), func(t *testing.T) {
@@ -266,7 +266,7 @@ func TestUsers_Create_400_Missing_Payload(t *testing.T) {
 		})
 
 		writer := httptest.NewRecorder()
-		request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(v.arg))
+		request, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(v.arg))
 		mux.ServeHTTP(writer, request)
 
 		t.Run(fmt.Sprintf("Assert Server Response/%s", v.name), func(t *testing.T) {
@@ -286,14 +286,14 @@ func TestUsers_Create_400_Invalid_ID_For_UpdateUserAppMetadata(t *testing.T) {
 		On("UpdateUserAppMetaData", auth0.Token{}, nu.Auth0ID, uid).Return(auth0.ErrInvalidID)
 
 	fake.query.user.(*mockQuery.UserQuerier).
-		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
+		On("RetrieveMeByAuthID", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu.Auth0ID).
 		Return(users.User{}, users.ErrNotFound).
-		On("Create", context.Background(), fake.repo, nu, mock.AnythingOfType("time.Time")).
+		On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu, mock.AnythingOfType("time.Time")).
 		Return(user(), nil)
 
 	// setup server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var webErr *web.Error
 		err := fake.Create(w, r)
 
@@ -305,7 +305,7 @@ func TestUsers_Create_400_Invalid_ID_For_UpdateUserAppMetadata(t *testing.T) {
 	})
 
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(payload(nu)))
+	request, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(payload(nu)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -323,8 +323,8 @@ func TestUsers_Create_500_Uncaught_Error_On_GenerateToken(t *testing.T) {
 	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, cause)
 
 	// setup server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := fake.Create(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
@@ -334,7 +334,7 @@ func TestUsers_Create_500_Uncaught_Error_On_GenerateToken(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(payload(nu)))
+	request, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(payload(nu)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -350,16 +350,16 @@ func TestUsers_Create_500_Uncaught_Error_On_Create(t *testing.T) {
 	nu := newUser()
 	fake := setupUserMocks()
 	fake.query.user.(*mockQuery.UserQuerier).
-		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
+		On("RetrieveMeByAuthID", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu.Auth0ID).
 		Return(users.User{}, users.ErrNotFound).
-		On("Create", context.Background(), fake.repo, nu, mock.AnythingOfType("time.Time")).
+		On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu, mock.AnythingOfType("time.Time")).
 		Return(users.User{}, cause)
 
 	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil)
 
 	// setup server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := fake.Create(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
@@ -370,7 +370,7 @@ func TestUsers_Create_500_Uncaught_Error_On_Create(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(payload(nu)))
+	request, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(payload(nu)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -387,17 +387,17 @@ func TestUsers_Create_500_Uncaught_Error_On_UpdateUserAppMetaData(t *testing.T) 
 	nu := newUser()
 	fake := setupUserMocks()
 	fake.query.user.(*mockQuery.UserQuerier).
-		On("RetrieveMeByAuthID", context.Background(), fake.repo, nu.Auth0ID).
+		On("RetrieveMeByAuthID", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu.Auth0ID).
 		Return(users.User{}, users.ErrNotFound).
-		On("Create", context.Background(), fake.repo, nu, mock.AnythingOfType("time.Time")).
+		On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nu, mock.AnythingOfType("time.Time")).
 		Return(user(), nil)
 
 	fake.auth0.(*mockAuth.Auther).On("GenerateToken").Return(auth0.Token{}, nil).
 		On("UpdateUserAppMetaData", auth0.Token{}, nu.Auth0ID, uid).Return(cause)
 
 	// setup server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := fake.Create(w, r)
 
 		t.Run("Assert Handler Response", func(t *testing.T) {
@@ -408,7 +408,7 @@ func TestUsers_Create_500_Uncaught_Error_On_UpdateUserAppMetaData(t *testing.T) 
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodPost, "/users", strings.NewReader(payload(nu)))
+	request, _ := http.NewRequest(http.MethodPost, "/", strings.NewReader(payload(nu)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {

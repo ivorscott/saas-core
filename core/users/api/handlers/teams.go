@@ -103,7 +103,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, tm, http.StatusCreated)
 }
 
-func (t *Team) AssignExisting(w http.ResponseWriter, r *http.Request) error {
+func (t *Team) AssignExistingTeam(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 	pid := chi.URLParam(r, "pid")
 	uid := t.auth0.UserByID(r.Context())
