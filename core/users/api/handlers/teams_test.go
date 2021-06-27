@@ -104,11 +104,8 @@ func TestTeams_Create_201(t *testing.T) {
 }
 
 func TestTeams_Create_400_Missing_Payload(t *testing.T) {
-	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
-
 	//setup mocks
 	fake := setupTeamMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
 
 	testcases := []struct {
 		name string
@@ -132,10 +129,6 @@ func TestTeams_Create_400_Missing_Payload(t *testing.T) {
 		writer := httptest.NewRecorder()
 		request, _ := http.NewRequest(http.MethodGet, "/users/me", strings.NewReader(v.arg))
 		mux.ServeHTTP(writer, request)
-
-		t.Run("Assert Mock Expectations", func(t *testing.T) {
-			fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
-		})
 
 		t.Run(fmt.Sprintf("Assert Server Response/%s", v.name), func(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, writer.Code)
