@@ -20,13 +20,10 @@ import (
 )
 
 func setupUserMocks() *User{
-	mockRepo := th.Repo()
-	mockAuth0 := &mockAuth.Auther{}
-	mockUserQueries := &mockQuery.UserQuerier{}
 	return &User{
-			repo:  mockRepo,
-			auth0: mockAuth0,
-			query: UserQueries{mockUserQueries},
+			repo:  th.Repo(),
+			auth0: &mockAuth.Auther{},
+			query: UserQueries{&mockQuery.UserQuerier{}},
 		}
 }
 

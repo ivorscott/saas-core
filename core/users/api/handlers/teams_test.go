@@ -21,25 +21,19 @@ import (
 )
 
 func setupTeamMocks() *Team {
-	mockRepo := th.Repo()
-	mockNats := &events.Client{}
-	mockAuth0 := &mockAuth.Auther{}
-	mockTeamQueries := &mockQuery.TeamQuerier{}
-	mockProjectQueries := &mockQuery.ProjectQuerier{}
-	mockMembershipQueries := &mockQuery.MembershipQuerier{}
-	mockUserQueries := &mockQuery.UserQuerier{}
-	mockInviteQueries := &mockQuery.InviteQuerier{}
-	mockPublishers := &mockPub.Publisher{}
-
-	tq := TeamQueries{mockTeamQueries, mockProjectQueries, mockMembershipQueries, mockUserQueries, mockInviteQueries}
-
-	return  &Team{
-			repo:  mockRepo,
-			nats: mockNats,
-			auth0: mockAuth0,
-			query: tq,
-			publish: mockPublishers,
-		}
+	return &Team{
+		repo:  th.Repo(),
+		nats:  &events.Client{},
+		auth0: &mockAuth.Auther{},
+		query: TeamQueries{
+			&mockQuery.TeamQuerier{},
+			&mockQuery.ProjectQuerier{},
+			&mockQuery.MembershipQuerier{},
+			&mockQuery.UserQuerier{},
+			&mockQuery.InviteQuerier{},
+		},
+		publish: &mockPub.Publisher{},
+	}
 }
 
 func newTeam() teams.NewTeam {
@@ -51,7 +45,7 @@ func newTeam() teams.NewTeam {
 
 func team() teams.Team {
 	return teams.Team{
-		ID: "39541c75-ca3e-4e2b-9728-54327772d001",
+		ID:        "39541c75-ca3e-4e2b-9728-54327772d001",
 		Name:      "TestTeam",
 		UserID:    "a4b54ec1-57f9-4c39-ab53-d936dbb6c177",
 		UpdatedAt: time.Now(),
@@ -64,7 +58,7 @@ func teamJson(nt teams.NewTeam) string {
 		nt.Name, nt.ProjectID)
 }
 
-func TestTeams_Create_200(t *testing.T) {
+func TestTeams_Create_201(t *testing.T) {
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	nt := newTeam()
 	tm := team()
