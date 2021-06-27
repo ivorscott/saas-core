@@ -5,18 +5,19 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
-	jwtmiddleware "github.com/auth0/go-jwt-middleware"
-	"github.com/devpies/devpie-client-core/users/platform/database"
-	"github.com/devpies/devpie-client-core/users/platform/web"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	jwtmiddleware "github.com/auth0/go-jwt-middleware"
+	"github.com/devpies/devpie-client-core/users/platform/database"
+	"github.com/devpies/devpie-client-core/users/platform/web"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 )
 
 // Auth0 represents the configuration required for any service to use Auth0.
@@ -338,7 +339,7 @@ func (a0 *Auth0) RetrieveToken() (Token, error) {
 
 	q, args, err := stmt.ToSql()
 	if err != nil {
-		return t, errors.Wrapf(err, "building query: %v", args)
+		return t,  fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
 	if err := a0.Repo.Get(&t, q); err != nil {
@@ -373,7 +374,7 @@ func (a0 *Auth0) PersistToken(nt NewToken, now time.Time) (Token, error) {
 		"created_at":   t.CreatedAt,
 	})
 	if _, err := stmt.Exec(); err != nil {
-		return t, errors.Wrapf(err, "inserting token")
+		return t, fmt.Errorf("failed to persist token: %w", err)
 	}
 
 	return t, nil
@@ -383,7 +384,7 @@ func (a0 *Auth0) PersistToken(nt NewToken, now time.Time) (Token, error) {
 func (a0 *Auth0) DeleteToken() error {
 	stmt := a0.Repo.Delete("ma_token")
 	if _, err := stmt.Exec(); err != nil {
-		return errors.Wrapf(err, "deleting previous token")
+		return fmt.Errorf("failed to delete previous token: %w", err)
 	}
 	return nil
 }

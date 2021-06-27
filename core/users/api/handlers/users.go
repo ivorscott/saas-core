@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/devpies/devpie-client-core/users/domain/users"
 	"github.com/devpies/devpie-client-core/users/platform/auth0"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/devpies/devpie-client-core/users/platform/web"
-	//"github.com/pkg/errors"
-	"log"
-	"net/http"
-	"time"
 )
 
 type User struct {

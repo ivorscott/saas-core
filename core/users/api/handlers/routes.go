@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/sendgrid/sendgrid-go"
 	"log"
 	"net/http"
 	"os"

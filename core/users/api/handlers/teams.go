@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/devpies/devpie-client-core/users/platform/sendgrid"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"log"
 	"net/http"
 	"strings"
@@ -21,6 +19,7 @@ import (
 	"github.com/devpies/devpie-client-core/users/platform/web"
 	"github.com/devpies/devpie-client-events/go/events"
 	"github.com/go-chi/chi"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
 // Team defines team handlers and their dependencies
