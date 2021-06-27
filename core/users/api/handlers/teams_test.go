@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/devpies/devpie-client-core/users/domain/memberships"
@@ -71,20 +70,20 @@ func TestTeams_Create_201(t *testing.T) {
 
 	//setup mocks
 	fake := setupTeamMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", context.Background(), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, nil)
-	fake.query.team.(*mockQuery.TeamQuerier).On("Create", context.Background(), fake.repo, nt, uid, mock.AnythingOfType("time.Time")).Return(tm, nil)
-	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", context.Background(), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(m, nil)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, nil)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt, uid, mock.AnythingOfType("time.Time")).Return(tm, nil)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(m, nil)
 
 	up := projects.UpdateProjectCopy{
 		TeamID: &tm.ID,
 	}
 
-	fake.query.project.(*mockQuery.ProjectQuerier).On("Update", context.Background(), fake.repo, nt.ProjectID, up).Return(nil)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt.ProjectID, up).Return(nil)
 	fake.publish.(*mockPub.Publisher).On("MembershipCreatedForProject", fake.nats, m, nt.ProjectID, uid).Return(nil)
 
 	// setup server
-	mux := http.NewServeMux()
+	mux := chi.NewMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		_ = fake.Create(w, r)
 	})
@@ -120,7 +119,7 @@ func TestTeams_Create_400_Missing_Payload(t *testing.T) {
 	}
 	for _, v := range testcases {
 		// setup server
-		mux := http.NewServeMux()
+		mux := chi.NewMux()
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			err := fake.Create(w, r)
 
@@ -146,11 +145,11 @@ func TestTeams_Create_404_Missing_Project(t *testing.T) {
 
 	//setup mocks
 	fake := setupTeamMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", context.Background(), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, projects.ErrNotFound)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, projects.ErrNotFound)
 
 	// setup server
-	mux := http.NewServeMux()
+	mux := chi.NewMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var webErr *web.Error
 		err := fake.Create(w, r)
@@ -179,11 +178,11 @@ func TestTeams_Create_400_Invalid_Project_ID(t *testing.T) {
 
 	//setup mocks
 	fake := setupTeamMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", context.Background(), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, projects.ErrInvalidID)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, projects.ErrInvalidID)
 
 	// setup server
-	mux := http.NewServeMux()
+	mux := chi.NewMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var webErr *web.Error
 		err := fake.Create(w, r)
@@ -214,11 +213,11 @@ func TestTeams_Create_500_Uncaught_Error_On_Retrieve(t *testing.T) {
 
 	//setup mocks
 	fake := setupTeamMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", context.Background(), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, cause)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, cause)
 
 	// setup server
-	mux := http.NewServeMux()
+	mux := chi.NewMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := fake.Create(w, r)
 
@@ -247,12 +246,12 @@ func TestTeams_Create_500_Uncaught_Error_On_Create(t *testing.T) {
 
 	//setup mocks
 	fake := setupTeamMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", context.Background(), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, nil)
-	fake.query.team.(*mockQuery.TeamQuerier).On("Create", context.Background(), fake.repo, nt, uid, mock.AnythingOfType("time.Time")).Return(teams.Team{}, cause)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, nil)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt, uid, mock.AnythingOfType("time.Time")).Return(teams.Team{}, cause)
 
 	// setup server
-	mux := http.NewServeMux()
+	mux := chi.NewMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := fake.Create(w, r)
 
@@ -283,13 +282,13 @@ func TestTeams_Create_500_Uncaught_Error_On_Membership_Create(t *testing.T) {
 
 	//setup mocks
 	fake := setupTeamMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", context.Background(), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, nil)
-	fake.query.team.(*mockQuery.TeamQuerier).On("Create", context.Background(), fake.repo, nt, uid, mock.AnythingOfType("time.Time")).Return(tm, nil)
-	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", context.Background(), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(memberships.Membership{}, cause)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, nil)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt, uid, mock.AnythingOfType("time.Time")).Return(tm, nil)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(memberships.Membership{}, cause)
 
 	// setup server
-	mux := http.NewServeMux()
+	mux := chi.NewMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := fake.Create(w, r)
 
@@ -322,19 +321,19 @@ func TestTeams_Create_500_Uncaught_Error_On_Project_Update(t *testing.T) {
 
 	//setup mocks
 	fake := setupTeamMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", context.Background(), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, nil)
-	fake.query.team.(*mockQuery.TeamQuerier).On("Create", context.Background(), fake.repo, nt, uid, mock.AnythingOfType("time.Time")).Return(tm, nil)
-	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", context.Background(), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(m, nil)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, nil)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt, uid, mock.AnythingOfType("time.Time")).Return(tm, nil)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(m, nil)
 
 	up := projects.UpdateProjectCopy{
 		TeamID: &tm.ID,
 	}
 
-	fake.query.project.(*mockQuery.ProjectQuerier).On("Update", context.Background(), fake.repo, nt.ProjectID, up).Return(cause)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt.ProjectID, up).Return(cause)
 
 	// setup server
-	mux := http.NewServeMux()
+	mux := chi.NewMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := fake.Create(w, r)
 
@@ -367,20 +366,20 @@ func TestTeams_Create_500_Uncaught_Error_On_Publish(t *testing.T) {
 
 	//setup mocks
 	fake := setupTeamMocks()
-	fake.auth0.(*mockAuth.Auther).On("UserByID", context.Background()).Return(uid)
-	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", context.Background(), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, nil)
-	fake.query.team.(*mockQuery.TeamQuerier).On("Create", context.Background(), fake.repo, nt, uid, mock.AnythingOfType("time.Time")).Return(tm, nil)
-	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", context.Background(), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(m, nil)
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt.ProjectID).Return(projects.ProjectCopy{}, nil)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt, uid, mock.AnythingOfType("time.Time")).Return(tm, nil)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(m, nil)
 
 	up := projects.UpdateProjectCopy{
 		TeamID: &tm.ID,
 	}
 
-	fake.query.project.(*mockQuery.ProjectQuerier).On("Update", context.Background(), fake.repo, nt.ProjectID, up).Return(nil)
+	fake.query.project.(*mockQuery.ProjectQuerier).On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, nt.ProjectID, up).Return(nil)
 	fake.publish.(*mockPub.Publisher).On("MembershipCreatedForProject", fake.nats, m, nt.ProjectID, uid).Return(cause)
 
 	// setup server
-	mux := http.NewServeMux()
+	mux := chi.NewMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := fake.Create(w, r)
 
