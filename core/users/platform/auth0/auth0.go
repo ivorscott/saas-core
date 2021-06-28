@@ -30,6 +30,7 @@ type Auth0 struct {
 	MAPIAudience string
 }
 
+// Auther describes the behavior required when interacting with auth0
 type Auther interface {
 	PemCert(token *jwt.Token) (string, error)
 	UserByID(r context.Context) string
@@ -210,11 +211,13 @@ func (a0 *Auth0) PemCert(token *jwt.Token) (string, error) {
 	return cert, nil
 }
 
+// UserBySubject returns the token subject aka the auth0 id
 func (a0 *Auth0) UserBySubject(ctx context.Context) string {
 	claims := ctx.Value("user").(*jwt.Token).Claims.(jwt.MapClaims)
 	return fmt.Sprintf("%v", claims["sub"])
 }
 
+// UserByID returns the internal user id for the application
 func (a0 *Auth0) UserByID(ctx context.Context) string {
 	claims := ctx.Value("user").(*jwt.Token).Claims.(jwt.MapClaims)
 	if _, ok := claims["https://client.devpie.io/claims/user_id"]; !ok {
@@ -389,6 +392,7 @@ func (a0 *Auth0) DeleteToken() error {
 	return nil
 }
 
+// CreateUser creates an auth0 user
 func (a0 *Auth0) CreateUser(token Token, email string) (AuthUser, error) {
 	var u AuthUser
 
@@ -467,6 +471,7 @@ func (a0 *Auth0) UpdateUserAppMetaData(token Token, subject, userID string) erro
 	return nil
 }
 
+// ChangePasswordTicket creates a change password ticket and notifies the recipient via email to set a password
 func (a0 *Auth0) ChangePasswordTicket(token Token, user AuthUser, resultURL string) (string, error) {
 	var baseURL = "https://" + a0.Domain
 	var fiveDays = 432000 // 5 days in seconds
@@ -512,6 +517,7 @@ func (a0 *Auth0) ChangePasswordTicket(token Token, user AuthUser, resultURL stri
 	return ticket, err
 }
 
+// ConnectionID returns the connection id in order to create a change password ticket
 func (a0 *Auth0) ConnectionID(token Token) (string, error) {
 	var conn []struct {
 		ID   string

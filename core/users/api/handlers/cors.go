@@ -17,6 +17,7 @@ func Cors(origins string) *cors.Cors {
 	})
 }
 
+// ParseCorsOrigins splits a comma separated origins string into multiple allowed origins
 func ParseCorsOrigins(origins string) []string {
 	rawOrigins := strings.Split(origins, ",")
 	o := make([]string, 0, len(rawOrigins))

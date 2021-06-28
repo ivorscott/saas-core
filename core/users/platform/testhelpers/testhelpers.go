@@ -6,6 +6,7 @@ import (
 	"net/url"
 )
 
+// Repo initializes a mock repository
 func Repo() *database.Repository {
 	return &database.Repository{
 		SqlxStorer:      &mockDB.SqlxStorer{},
@@ -14,6 +15,7 @@ func Repo() *database.Repository {
 	}
 }
 
+// StringPointer converts a string to a string pointer
 func StringPointer(s string) *string {
 	return &s
 }

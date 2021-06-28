@@ -34,6 +34,7 @@ type Team struct {
 	publish publishers.Publisher
 }
 
+// TeamQueries defines queries required by team handlers
 type TeamQueries struct {
 	team       teams.TeamQuerier
 	project    projects.ProjectQuerier
@@ -42,6 +43,7 @@ type TeamQueries struct {
 	invite     invites.InviteQuerier
 }
 
+// Create creates a new team for a project
 func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 	var nt teams.NewTeam
 	var role memberships.Role = memberships.Administrator
@@ -98,6 +100,7 @@ func (t *Team) Create(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, tm, http.StatusCreated)
 }
 
+// AssignExistingTeam assigns an existing team to a project
 func (t *Team) AssignExistingTeam(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 	pid := chi.URLParam(r, "pid")
@@ -141,6 +144,7 @@ func (t *Team) AssignExistingTeam(w http.ResponseWriter, r *http.Request) error 
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
+// LeaveTeam destroys a team membership
 func (t *Team) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 
@@ -167,6 +171,7 @@ func (t *Team) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
+// Retrieve returns a team by id
 func (t *Team) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 

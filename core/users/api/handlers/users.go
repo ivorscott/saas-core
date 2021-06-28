@@ -12,6 +12,7 @@ import (
 	"github.com/devpies/devpie-client-core/users/platform/web"
 )
 
+// User defines user handlers and their dependencies
 type User struct {
 	repo  database.Storer
 	log   *log.Logger
@@ -19,10 +20,12 @@ type User struct {
 	query UserQueries
 }
 
+// UserQueries defines queries required by user handlers
 type UserQueries struct {
 	user users.UserQuerier
 }
 
+// RetrieveMe retrieves the authenticated user
 func (u *User) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 	var us users.User
 
@@ -46,6 +49,7 @@ func (u *User) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, us, http.StatusOK)
 }
 
+// Create adds a new user to the internal system and updates the existing Auth0 user
 func (u *User) Create(w http.ResponseWriter, r *http.Request) error {
 	var nu users.NewUser
 

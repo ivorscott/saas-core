@@ -20,7 +20,7 @@ var (
 	ErrInvalidEmail = errors.New("address provided was not a valid email")
 )
 
-// UserQuerier describes the behavior required for executing user related queries
+// UserQuerier describes behavior required for executing user related queries
 type UserQuerier interface {
 	Create(ctx context.Context, repo database.Storer, nu NewUser, now time.Time) (User, error)
 	RetrieveByEmail(repo database.Storer, email string) (User, error)

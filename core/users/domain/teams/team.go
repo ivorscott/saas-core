@@ -18,7 +18,7 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-// TeamQuerier describes the behavior required for executing team related queries
+// TeamQuerier describes behavior required for executing team related queries
 type TeamQuerier interface {
 	Create(ctx context.Context, repo database.Storer, nt NewTeam, uid string, now time.Time) (Team, error)
 	Retrieve(ctx context.Context, repo database.Storer, tid string) (Team, error)

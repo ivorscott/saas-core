@@ -2,12 +2,14 @@ package publishers
 
 import (
 	"encoding/json"
-	"github.com/devpies/devpie-client-core/users/domain/memberships"
-	"github.com/devpies/devpie-client-events/go/events"
 	"github.com/google/uuid"
 	"time"
+
+	"github.com/devpies/devpie-client-core/users/domain/memberships"
+	"github.com/devpies/devpie-client-events/go/events"
 )
 
+// Publisher describes the behavior required for publishing events
 type Publisher interface {
 	ProjectUpdated(nats *events.Client, tid *string, pid, uid string) error
 	MembershipCreated(nats *events.Client, m memberships.Membership, uid string) error
@@ -15,8 +17,10 @@ type Publisher interface {
 	MembershipDeleted(nats *events.Client, mid, uid string) error
 }
 
+// Publishers defines handlers that trigger events
 type Publishers struct{}
 
+// ProjectUpdated publishes a ProjectUpdatedEvent
 func (p *Publishers) ProjectUpdated(nats *events.Client, tid *string, pid, uid string) error {
 	ue := events.ProjectUpdatedEvent{
 		ID:   uuid.New().String(),
@@ -42,6 +46,7 @@ func (p *Publishers) ProjectUpdated(nats *events.Client, tid *string, pid, uid s
 	return nil
 }
 
+// MembershipCreated publishes a MembershipCreatedEvent
 func (p *Publishers) MembershipCreated(nats *events.Client, m memberships.Membership, uid string) error {
 	e := events.MembershipCreatedEvent{
 		ID:   uuid.New().String(),
@@ -70,6 +75,7 @@ func (p *Publishers) MembershipCreated(nats *events.Client, m memberships.Member
 	return nil
 }
 
+// MembershipCreatedForProject publishes a MembershipCreatedForProjectEvent
 func (p *Publishers) MembershipCreatedForProject(nats *events.Client, m memberships.Membership, pid, uid string) error {
 	e := events.MembershipCreatedForProjectEvent{
 		ID:   uuid.New().String(),
@@ -99,6 +105,7 @@ func (p *Publishers) MembershipCreatedForProject(nats *events.Client, m membersh
 	return nil
 }
 
+// MembershipDeleted publishes a MembershipDeletedEvent
 func (p *Publishers) MembershipDeleted(nats *events.Client, mid, uid string) error {
 	me := events.MembershipDeletedEvent{
 		ID:   uuid.New().String(),

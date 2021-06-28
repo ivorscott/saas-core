@@ -86,7 +86,7 @@ func invite() invites.Invite {
 	}
 }
 
-func teamJson(nt teams.NewTeam) string {
+func teamJSON(nt teams.NewTeam) string {
 	return fmt.Sprintf(`{ "name": "%s", "projectId": "%s" }`,
 		nt.Name, nt.ProjectID)
 }
@@ -120,7 +120,7 @@ func TestTeams_Create_201(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJson(nt)))
+	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJSON(nt)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Handler Response", func(t *testing.T) {
@@ -193,7 +193,7 @@ func TestTeams_Create_404_Missing_Project(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJson(nt)))
+	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJSON(nt)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -226,7 +226,7 @@ func TestTeams_Create_400_Invalid_Project_ID(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJson(nt)))
+	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJSON(nt)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -259,7 +259,7 @@ func TestTeams_Create_500_Uncaught_Error_On_Retrieve(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJson(nt)))
+	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJSON(nt)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -292,7 +292,7 @@ func TestTeams_Create_500_Uncaught_Error_On_Create(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJson(nt)))
+	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJSON(nt)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -329,7 +329,7 @@ func TestTeams_Create_500_Uncaught_Error_On_Membership_Create(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJson(nt)))
+	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJSON(nt)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -374,7 +374,7 @@ func TestTeams_Create_500_Uncaught_Error_On_Project_Update(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJson(nt)))
+	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJSON(nt)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
@@ -420,7 +420,7 @@ func TestTeams_Create_500_Uncaught_Error_On_Publish(t *testing.T) {
 
 	// make request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJson(nt)))
+	request, _ := http.NewRequest(http.MethodGet, "/", strings.NewReader(teamJSON(nt)))
 	mux.ServeHTTP(writer, request)
 
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
