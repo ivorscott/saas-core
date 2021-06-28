@@ -319,7 +319,7 @@ func (t *Team) RetrieveInvites(w http.ResponseWriter, r *http.Request) error {
 			case teams.ErrNotFound:
 				return web.NewRequestError(err, http.StatusNotFound)
 			default:
-				return fmt.Errorf("failed to retrieve team %w", err)
+				return fmt.Errorf("failed to retrieve team: %w", err)
 			}
 		}
 

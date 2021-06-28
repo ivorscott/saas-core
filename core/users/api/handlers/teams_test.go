@@ -75,6 +75,17 @@ func authUser() auth0.AuthUser {
 	}
 }
 
+func invite() invites.Invite {
+	return invites.Invite{
+		ID:         "29231d75-ca3e-7a2c-9728-12324445c009",
+		TeamID:     "39541c75-ca3e-4e2b-9728-54327772d001",
+		UserID:     "a4b54ec1-57f9-4c39-ab53-d936dbb6c177",
+		Expiration: time.Now().AddDate(0, 0, 5),
+		UpdatedAt:  time.Now(),
+		CreatedAt:  time.Now(),
+	}
+}
+
 func teamJson(nt teams.NewTeam) string {
 	return fmt.Sprintf(`{ "name": "%s", "projectId": "%s" }`,
 		nt.Name, nt.ProjectID)
@@ -1464,5 +1475,229 @@ func TestTeam_CreateInvite_500_Uncaught_Error_On_SendMail(t *testing.T) {
 	t.Run("Assert Mock Expectations", func(t *testing.T) {
 		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
 		fake.query.user.(*mockQuery.UserQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_RetrieveInvites_200(t *testing.T) {
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	iv := []invites.Invite{invite(), invite()}
+	tm := team()
+
+	// setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("RetrieveInvites", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid).Return(iv, nil).Once()
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, iv[0].TeamID).Return(tm, nil).Twice()
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		_ = fake.RetrieveInvites(w, r)
+	})
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Handler Response", func(t *testing.T) {
+		assert.Equal(t, http.StatusOK, writer.Code)
+	})
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_RetrieveInvites_400_Invalid_User_ID(t *testing.T) {
+	uid := "123"
+
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("RetrieveInvites", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid).Return([]invites.Invite{}, invites.ErrInvalidID)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.RetrieveInvites(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, invites.ErrInvalidID))
+			assert.Equal(t, http.StatusBadRequest, err.(*web.Error).Status)
+		})
+	})
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_RetrieveInvites_404_Missing_Invites(t *testing.T) {
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("RetrieveInvites", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid).Return([]invites.Invite{}, invites.ErrNotFound)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.RetrieveInvites(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, invites.ErrNotFound))
+			assert.Equal(t, http.StatusNotFound, err.(*web.Error).Status)
+		})
+	})
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_RetrieveInvites_500_Uncaught_Error_On_RetrieveInvites(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("RetrieveInvites", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid).Return([]invites.Invite{}, cause)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.RetrieveInvites(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, fmt.Sprintf("failed to retrieve invites: %s", cause), err.Error())
+		})
+	})
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_RetrieveInvites_400_Invalid_Team_ID(t *testing.T) {
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	iv := []invites.Invite{invite()}
+
+	// setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("RetrieveInvites", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid).Return(iv, nil)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, iv[0].TeamID).Return(teams.Team{}, teams.ErrInvalidID)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.RetrieveInvites(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, teams.ErrInvalidID))
+			assert.Equal(t, http.StatusBadRequest, err.(*web.Error).Status)
+		})
+	})
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_RetrieveInvites_404_Missing_Team(t *testing.T) {
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	iv := []invites.Invite{invite()}
+
+	// setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("RetrieveInvites", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid).Return(iv, nil)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, iv[0].TeamID).Return(teams.Team{}, teams.ErrNotFound)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.RetrieveInvites(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, teams.ErrNotFound))
+			assert.Equal(t, http.StatusNotFound, err.(*web.Error).Status)
+		})
+	})
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_RetrieveInvites_500_Uncaught_Error_On_Retrieve_Team(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	iv := []invites.Invite{invite()}
+
+	// setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("RetrieveInvites", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid).Return(iv, nil)
+	fake.query.team.(*mockQuery.TeamQuerier).On("Retrieve", mock.AnythingOfType("*context.valueCtx"), fake.repo, iv[0].TeamID).Return(teams.Team{}, cause)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.RetrieveInvites(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, fmt.Sprintf("failed to retrieve team: %s", cause), err.Error())
+		})
+	})
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, "/", nil)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
 	})
 }
