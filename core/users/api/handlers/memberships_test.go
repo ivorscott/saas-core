@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"github.com/devpies/devpie-client-core/users/platform/web"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,6 +12,7 @@ import (
 	mockQuery "github.com/devpies/devpie-client-core/users/domain/mocks"
 	mockAuth "github.com/devpies/devpie-client-core/users/platform/auth0/mocks"
 	th "github.com/devpies/devpie-client-core/users/platform/testhelpers"
+	"github.com/devpies/devpie-client-core/users/platform/web"
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
