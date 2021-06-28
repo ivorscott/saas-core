@@ -95,8 +95,8 @@ func TestTeams_Create_201(t *testing.T) {
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	nt := newTeam()
 	tm := team()
-	nm := newMembership(tm)
-	m := membership(nm)
+	nm := newMembership()
+	m := membership()
 
 	//setup mocks
 	fake := setupTeamMocks()
@@ -308,7 +308,7 @@ func TestTeams_Create_500_Uncaught_Error_On_Membership_Create(t *testing.T) {
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	nt := newTeam()
 	tm := team()
-	nm := newMembership(tm)
+	nm := newMembership()
 
 	//setup mocks
 	fake := setupTeamMocks()
@@ -346,8 +346,8 @@ func TestTeams_Create_500_Uncaught_Error_On_Project_Update(t *testing.T) {
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	nt := newTeam()
 	tm := team()
-	nm := newMembership(tm)
-	m := membership(nm)
+	nm := newMembership()
+	m := membership()
 
 	//setup mocks
 	fake := setupTeamMocks()
@@ -391,8 +391,8 @@ func TestTeams_Create_500_Uncaught_Error_On_Publish(t *testing.T) {
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	nt := newTeam()
 	tm := team()
-	nm := newMembership(tm)
-	m := membership(nm)
+	nm := newMembership()
+	m := membership()
 
 	//setup mocks
 	fake := setupTeamMocks()
@@ -1705,9 +1705,9 @@ func TestTeam_RetrieveInvites_500_Uncaught_Error_On_Retrieve_Team(t *testing.T) 
 func TestTeam_UpdateInvite_200(t *testing.T) {
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	tm := team()
-	nm := newMembership(tm)
+	nm := newMembership()
 	nm.Role = "editor"
-	m := membership(nm)
+	m := membership()
 	iv := invite()
 
 	// setup mocks
@@ -1847,8 +1847,6 @@ func TestTeam_UpdateInvite_500_Uncaught_Error_On_Update(t *testing.T) {
 
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	tm := team()
-	nm := newMembership(tm)
-	nm.Role = "editor"
 	iv := invite()
 
 	// setup mocks
@@ -1884,9 +1882,9 @@ func TestTeam_UpdateInvite_500_Uncaught_Error_On_Membership_Create(t *testing.T)
 
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	tm := team()
-	nm := newMembership(tm)
+	nm := newMembership()
 	nm.Role = "editor"
-	m := membership(nm)
+	m := membership()
 	iv := invite()
 
 	// setup mocks
@@ -1924,9 +1922,9 @@ func TestTeam_UpdateInvite_500_Uncaught_Error_On_Publish(t *testing.T) {
 
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
 	tm := team()
-	nm := newMembership(tm)
+	nm := newMembership()
 	nm.Role = "editor"
-	m := membership(nm)
+	m := membership()
 	iv := invite()
 
 	// setup mocks

@@ -171,7 +171,7 @@ func TestUsers_RetrieveMe_404_Missing_User(t *testing.T) {
 }
 
 func TestUsers_RetrieveMe_500_Uncaught_Error_On_RetrieveMe(t *testing.T) {
-	cause := errors.New("Something went wrong")
+	cause := errors.New("something went wrong")
 
 	// setup mocks
 	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
