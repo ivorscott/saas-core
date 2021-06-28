@@ -346,14 +346,14 @@ func (t *Team) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
 	var update invites.UpdateInvite
 	var role memberships.Role = memberships.Editor
 
-	uid := t.auth0.UserByID(r.Context())
-	tid := chi.URLParam(r, "tid")
-	iid := chi.URLParam(r, "iid")
-
 	if err := web.Decode(r, &update); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
+
+	uid := t.auth0.UserByID(r.Context())
+	tid := chi.URLParam(r, "tid")
+	iid := chi.URLParam(r, "iid")
 
 	iv, err := t.query.invite.Update(r.Context(), t.repo, update, uid, iid, time.Now())
 	if err != nil {

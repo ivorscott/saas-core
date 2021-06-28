@@ -1701,3 +1701,261 @@ func TestTeam_RetrieveInvites_500_Uncaught_Error_On_Retrieve_Team(t *testing.T) 
 		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
 	})
 }
+
+func TestTeam_UpdateInvite_200(t *testing.T) {
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tm := team()
+	nm := newMembership(tm)
+	nm.Role = "editor"
+	m := membership(nm)
+	iv := invite()
+
+	// setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid, iv.ID, mock.AnythingOfType("time.Time")).Return(iv, nil)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(m, nil)
+	fake.publish.(*mockPub.Publisher).On("MembershipCreated", fake.nats, m, uid).Return(nil)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{iid}", func(w http.ResponseWriter, r *http.Request) {
+		_ = fake.UpdateInvite(w, r)
+	})
+
+	json := strings.NewReader(`{ "accepted": true }`)
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, iv.ID), json)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Handler Response", func(t *testing.T) {
+		assert.Equal(t, http.StatusOK, writer.Code)
+	})
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+		fake.publish.(*mockPub.Publisher).AssertExpectations(t)
+	})
+}
+
+func TestTeam_UpdateInvite_400_Missing_Payload(t *testing.T) {
+	tm := team()
+	iv := invite()
+
+	// setup mocks
+	fake := setupTeamMocks()
+
+	testcases := []struct {
+		name string
+		arg  string
+	}{
+		{"empty payload", ""},
+		{"empty object", "{}"},
+	}
+	for _, v := range testcases {
+		// setup server
+		mux := chi.NewMux()
+		mux.HandleFunc("/{tid}/{iid}", func(w http.ResponseWriter, r *http.Request) {
+			err := fake.UpdateInvite(w, r)
+
+			t.Run(fmt.Sprintf("Assert Handler Response/%s", v.name), func(t *testing.T) {
+				assert.NotNil(t, err)
+			})
+		})
+
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, iv.ID), strings.NewReader(v.arg))
+		mux.ServeHTTP(writer, request)
+	}
+}
+
+func TestTeam_UpdateInvite_400_Invalid_ID(t *testing.T) {
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tm := team()
+	iv := invite()
+
+	// setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid, iv.ID, mock.AnythingOfType("time.Time")).Return(iv, invites.ErrInvalidID)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{iid}", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.UpdateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, invites.ErrInvalidID))
+			assert.Equal(t, http.StatusBadRequest, err.(*web.Error).Status)
+		})
+	})
+
+	json := strings.NewReader(`{ "accepted": true }`)
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, iv.ID), json)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_UpdateInvite_404_Missing_Invite(t *testing.T) {
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tm := team()
+	iv := invite()
+
+	// setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid, iv.ID, mock.AnythingOfType("time.Time")).Return(iv, invites.ErrNotFound)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{iid}", func(w http.ResponseWriter, r *http.Request) {
+		var webErr *web.Error
+		err := fake.UpdateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.As(err, &webErr))
+			assert.True(t, errors.Is(err.(*web.Error).Err, invites.ErrNotFound))
+			assert.Equal(t, http.StatusNotFound, err.(*web.Error).Status)
+		})
+	})
+
+	json := strings.NewReader(`{ "accepted": true }`)
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, iv.ID), json)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_UpdateInvite_500_Uncaught_Error_On_Update(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tm := team()
+	nm := newMembership(tm)
+	nm.Role = "editor"
+	iv := invite()
+
+	// setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid, iv.ID, mock.AnythingOfType("time.Time")).Return(iv, cause)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{iid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.UpdateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, fmt.Sprintf("failed to update invite: %s", cause), err.Error())
+		})
+	})
+
+	json := strings.NewReader(`{ "accepted": true }`)
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, iv.ID), json)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_UpdateInvite_500_Uncaught_Error_On_Membership_Create(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tm := team()
+	nm := newMembership(tm)
+	nm.Role = "editor"
+	m := membership(nm)
+	iv := invite()
+
+	// setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid, iv.ID, mock.AnythingOfType("time.Time")).Return(iv, nil)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(m, cause)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{iid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.UpdateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+			assert.Equal(t, fmt.Sprintf("failed to insert membership: %s", cause), err.Error())
+		})
+	})
+
+	json := strings.NewReader(`{ "accepted": true }`)
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, iv.ID), json)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+	})
+}
+
+func TestTeam_UpdateInvite_500_Uncaught_Error_On_Publish(t *testing.T) {
+	cause := errors.New("something went wrong")
+
+	uid := "a4b54ec1-57f9-4c39-ab53-d936dbb6c177"
+	tm := team()
+	nm := newMembership(tm)
+	nm.Role = "editor"
+	m := membership(nm)
+	iv := invite()
+
+	// setup mocks
+	fake := setupTeamMocks()
+	fake.auth0.(*mockAuth.Auther).On("UserByID", mock.AnythingOfType("*context.valueCtx")).Return(uid)
+	fake.query.invite.(*mockQuery.InviteQuerier).On("Update", mock.AnythingOfType("*context.valueCtx"), fake.repo, uid, iv.ID, mock.AnythingOfType("time.Time")).Return(iv, nil)
+	fake.query.membership.(*mockQuery.MembershipQuerier).On("Create", mock.AnythingOfType("*context.valueCtx"), fake.repo, nm, mock.AnythingOfType("time.Time")).Return(m, nil)
+	fake.publish.(*mockPub.Publisher).On("MembershipCreated", fake.nats, m, uid).Return(cause)
+
+	// setup server
+	mux := chi.NewMux()
+	mux.HandleFunc("/{tid}/{iid}", func(w http.ResponseWriter, r *http.Request) {
+		err := fake.UpdateInvite(w, r)
+
+		t.Run("Assert Handler Response", func(t *testing.T) {
+			assert.True(t, errors.Is(err, cause))
+		})
+	})
+
+	json := strings.NewReader(`{ "accepted": true }`)
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/%s/%s", tm.ID, iv.ID), json)
+	mux.ServeHTTP(writer, request)
+
+	t.Run("Assert Mock Expectations", func(t *testing.T) {
+		fake.auth0.(*mockAuth.Auther).AssertExpectations(t)
+		fake.query.invite.(*mockQuery.InviteQuerier).AssertExpectations(t)
+		fake.query.team.(*mockQuery.TeamQuerier).AssertExpectations(t)
+		fake.publish.(*mockPub.Publisher).AssertExpectations(t)
+	})
+}
