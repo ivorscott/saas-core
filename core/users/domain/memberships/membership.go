@@ -18,6 +18,7 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
+// MembershipQuerier describes the behavior required for executing Membership related queries
 type MembershipQuerier interface {
 	Create(ctx context.Context, repo database.Storer, nm NewMembership, now time.Time) (Membership, error)
 	RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid string) ([]MembershipEnhanced, error)
@@ -26,8 +27,10 @@ type MembershipQuerier interface {
 	Delete(ctx context.Context, repo database.Storer, tid, uid string) (string, error)
 }
 
+// Queries defines method implementations for interacting with the memberships table
 type Queries struct{}
 
+// Create inserts a new Membership into the database
 func (q *Queries) Create(ctx context.Context, repo database.Storer, nm NewMembership, now time.Time) (Membership, error) {
 	m := Membership{
 		ID:        uuid.New().String(),
@@ -56,6 +59,7 @@ func (q *Queries) Create(ctx context.Context, repo database.Storer, nm NewMember
 	return m, nil
 }
 
+// RetrieveMemberships retrieves a set of memberships from the database
 func (q *Queries) RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid string) ([]MembershipEnhanced, error) {
 	var m []MembershipEnhanced
 
@@ -93,6 +97,7 @@ func (q *Queries) RetrieveMemberships(ctx context.Context, repo database.Storer,
 	return m, nil
 }
 
+// RetrieveMembership retrieves a single membership from the database
 func (q *Queries) RetrieveMembership(ctx context.Context, repo database.Storer, uid, tid string) (Membership, error) {
 	var m Membership
 
@@ -130,6 +135,7 @@ func (q *Queries) RetrieveMembership(ctx context.Context, repo database.Storer, 
 	return m, nil
 }
 
+// Update modifies a membership in the database
 func (q *Queries) Update(ctx context.Context, repo database.Storer, tid string, update UpdateMembership, uid string, now time.Time) error {
 	m, err := q.RetrieveMembership(ctx, repo, tid, uid)
 	if err != nil {
@@ -155,6 +161,7 @@ func (q *Queries) Update(ctx context.Context, repo database.Storer, tid string, 
 	return nil
 }
 
+// Delete removes a membership from the database
 func (q *Queries) Delete(ctx context.Context, repo database.Storer, tid, uid string) (string, error) {
 	var id string
 

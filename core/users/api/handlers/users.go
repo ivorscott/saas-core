@@ -13,11 +13,10 @@ import (
 )
 
 type User struct {
-	repo    database.Storer
-	log     *log.Logger
-	auth0   auth0.Auther
-	origins string
-	query   UserQueries
+	repo  database.Storer
+	log   *log.Logger
+	auth0 auth0.Auther
+	query UserQueries
 }
 
 type UserQueries struct {

@@ -5,8 +5,10 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
+// Sender describes the function dependency required by SendMail
 type Sender func(email *mail.SGMailV3) (*rest.Response, error)
 
+// SendMail sends mail via the sendgrid client
 func SendMail(email *mail.SGMailV3, send Sender) (*rest.Response, error) {
 	var resp *rest.Response
 

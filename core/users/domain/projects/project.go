@@ -18,6 +18,7 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
+// ProjectQuerier describes the behavior required for executing Project related queries
 type ProjectQuerier interface {
 	Create(ctx context.Context, repo *database.Repository, p ProjectCopy) error
 	Retrieve(ctx context.Context, repo database.Storer, pid string) (ProjectCopy, error)
@@ -25,8 +26,10 @@ type ProjectQuerier interface {
 	Delete(ctx context.Context, repo database.Storer, pid string) error
 }
 
+// Queries defines method implementations for interacting with the projects table
 type Queries struct{}
 
+// Retrieve retrieves a single project from the database
 func (q *Queries) Retrieve(ctx context.Context, repo database.Storer, pid string) (ProjectCopy, error) {
 	var p ProjectCopy
 
@@ -67,6 +70,7 @@ func (q *Queries) Retrieve(ctx context.Context, repo database.Storer, pid string
 	return p, nil
 }
 
+// Create inserts a new project into the database
 func (q *Queries) Create(ctx context.Context, repo *database.Repository, p ProjectCopy) error {
 	stmt := repo.Insert(
 		"projects",
@@ -91,6 +95,7 @@ func (q *Queries) Create(ctx context.Context, repo *database.Repository, p Proje
 	return nil
 }
 
+// Update modifies a project in the database
 func (q *Queries) Update(ctx context.Context, repo database.Storer, pid string, update UpdateProjectCopy) error {
 	p, err := q.Retrieve(ctx, repo, pid)
 	if err != nil {
@@ -136,6 +141,7 @@ func (q *Queries) Update(ctx context.Context, repo database.Storer, pid string, 
 	return nil
 }
 
+// Delete removes a project from the database
 func (q *Queries) Delete(ctx context.Context, repo database.Storer, pid string) error {
 	if _, err := uuid.Parse(pid); err != nil {
 		return ErrInvalidID

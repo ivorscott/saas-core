@@ -18,6 +18,7 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
+// InviteQuerier describes the behavior required for executing Invite related queries
 type InviteQuerier interface {
 	Create(ctx context.Context, repo database.Storer, ni NewInvite, now time.Time) (Invite, error)
 	RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (Invite, error)
@@ -25,8 +26,10 @@ type InviteQuerier interface {
 	Update(ctx context.Context, repo database.Storer, update UpdateInvite, uid, iid string, now time.Time) (Invite, error)
 }
 
+// Queries defines method implementations for interacting with the invites table
 type Queries struct{}
 
+// Create inserts new invites into the database
 func (q *Queries) Create(ctx context.Context, repo database.Storer, ni NewInvite, now time.Time) (Invite, error) {
 	i := Invite{
 		ID:         uuid.New().String(),
@@ -59,6 +62,7 @@ func (q *Queries) Create(ctx context.Context, repo database.Storer, ni NewInvite
 	return i, nil
 }
 
+// RetrieveInvite retrieves a single invite from the database
 func (q *Queries) RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (Invite, error) {
 	var i Invite
 
@@ -99,6 +103,7 @@ func (q *Queries) RetrieveInvite(ctx context.Context, repo database.Storer, uid 
 	return i, nil
 }
 
+// RetrieveInvites retrieves a set of invites from the database
 func (q *Queries) RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]Invite, error) {
 	var is []Invite
 
@@ -134,6 +139,7 @@ func (q *Queries) RetrieveInvites(ctx context.Context, repo database.Storer, uid
 	return is, nil
 }
 
+// Update modifies a single invite in the database
 func (q *Queries) Update(ctx context.Context, repo database.Storer, update UpdateInvite, uid, iid string, now time.Time) (Invite, error) {
 	i, err := q.RetrieveInvite(ctx, repo, uid, iid)
 	if err != nil {

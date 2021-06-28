@@ -37,7 +37,7 @@ func API(shutdown chan os.Signal, repo database.Storer, log *log.Logger, origins
 	h := HealthCheck{repo: repo}
 
 	app.Handle(http.MethodGet, "/api/v1/health", h.Health)
-	u := User{repo, log, a0, origins, UserQueries{&users.Queries{}}}
+	u := User{repo, log, a0, UserQueries{&users.Queries{}}}
 
 	tm := Team{repo, log, a0, nats, origins,
 		sendgrid.NewSendClient(sendgridKey).Send,

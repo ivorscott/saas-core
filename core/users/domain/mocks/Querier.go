@@ -87,7 +87,7 @@ func (m *InviteQuerier) Create(ctx context.Context, repo database.Storer, ni inv
 	return args.Get(0).(invites.Invite), args.Error(1)
 }
 func (m *InviteQuerier) RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (invites.Invite, error) {
-	args := m.Called(ctx, repo)
+	args := m.Called(ctx, repo, uid, iid)
 	return args.Get(0).(invites.Invite), args.Error(1)
 }
 func (m *InviteQuerier) RetrieveInvites(ctx context.Context, repo database.Storer, uid string) ([]invites.Invite, error) {
@@ -95,7 +95,7 @@ func (m *InviteQuerier) RetrieveInvites(ctx context.Context, repo database.Store
 	return args.Get(0).([]invites.Invite), args.Error(1)
 }
 func (m *InviteQuerier) Update(ctx context.Context, repo database.Storer, update invites.UpdateInvite, uid, iid string, now time.Time) (invites.Invite, error) {
-	args := m.Called(ctx, repo, uid, iid, now)
+	args := m.Called(ctx, repo, update, uid, iid, now)
 	return args.Get(0).(invites.Invite), args.Error(1)
 }
 
