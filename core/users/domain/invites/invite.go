@@ -18,7 +18,7 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-// InviteQuerier describes the behavior required for executing Invite related queries
+// InviteQuerier describes the behavior required for executing invite related queries
 type InviteQuerier interface {
 	Create(ctx context.Context, repo database.Storer, ni NewInvite, now time.Time) (Invite, error)
 	RetrieveInvite(ctx context.Context, repo database.Storer, uid string, iid string) (Invite, error)

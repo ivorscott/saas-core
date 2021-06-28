@@ -18,7 +18,7 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-// MembershipQuerier describes the behavior required for executing Membership related queries
+// MembershipQuerier describes the behavior required for executing membership related queries
 type MembershipQuerier interface {
 	Create(ctx context.Context, repo database.Storer, nm NewMembership, now time.Time) (Membership, error)
 	RetrieveMemberships(ctx context.Context, repo database.Storer, uid, tid string) ([]MembershipEnhanced, error)

@@ -18,7 +18,7 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-// ProjectQuerier describes the behavior required for executing Project related queries
+// ProjectQuerier describes the behavior required for executing project related queries
 type ProjectQuerier interface {
 	Create(ctx context.Context, repo *database.Repository, p ProjectCopy) error
 	Retrieve(ctx context.Context, repo database.Storer, pid string) (ProjectCopy, error)

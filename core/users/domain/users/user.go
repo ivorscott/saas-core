@@ -20,7 +20,7 @@ var (
 	ErrInvalidEmail = errors.New("address provided was not a valid email")
 )
 
-// UserQuerier describes the behavior required for executing User related queries
+// UserQuerier describes the behavior required for executing user related queries
 type UserQuerier interface {
 	Create(ctx context.Context, repo database.Storer, nu NewUser, now time.Time) (User, error)
 	RetrieveByEmail(repo database.Storer, email string) (User, error)
@@ -31,7 +31,7 @@ type UserQuerier interface {
 // Queries defines method implementations for interacting with the users table
 type Queries struct{}
 
-// Create inserts a new User into the database
+// Create inserts a new user into the database
 func (q *Queries) Create(ctx context.Context, repo database.Storer, nu NewUser, now time.Time) (User, error) {
 	u := User{
 		ID:            uuid.New().String(),
@@ -68,7 +68,7 @@ func (q *Queries) Create(ctx context.Context, repo database.Storer, nu NewUser, 
 	return u, nil
 }
 
-// RetrieveByEmail retrieves a User via a provided email address
+// RetrieveByEmail retrieves a user via a provided email address
 func (q *Queries) RetrieveByEmail(repo database.Storer, email string) (User, error) {
 	var u User
 
@@ -106,7 +106,7 @@ func (q *Queries) RetrieveByEmail(repo database.Storer, email string) (User, err
 	return u, nil
 }
 
-// RetrieveMe retrieves the authenticated User
+// RetrieveMe retrieves the authenticated user
 func (q *Queries) RetrieveMe(ctx context.Context, repo database.Storer, uid string) (User, error) {
 	var u User
 
@@ -143,7 +143,7 @@ func (q *Queries) RetrieveMe(ctx context.Context, repo database.Storer, uid stri
 	return u, nil
 }
 
-// RetrieveMeByAuthID retrieves a User via the provided Auth0 id
+// RetrieveMeByAuthID retrieves a user via the provided Auth0 id
 func (q *Queries) RetrieveMeByAuthID(ctx context.Context, repo database.Storer, aid string) (User, error) {
 	var u User
 
