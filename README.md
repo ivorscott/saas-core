@@ -17,20 +17,10 @@ kanban or agile style board management and auxiliary services like cost estimati
 ### Setup
 
 #### Requirements
-- [Go](https://golang.org/doc/install) 1.13+
-- Docker Desktop 3.3.3 ([Windows](https://docs.docker.com/docker-for-windows/release-notes/#docker-desktop-333), [Mac](https://docs.docker.com/docker-for-mac/release-notes/#docker-desktop-333))
-- [Tilt](https://tilt.dev/) 0.20+
-- [golangci-lint](https://golangci-lint.run/usage/install/#local-installation)
-- [migrate](https://github.com/golang-migrate/migrate/releases)
-- [shadow linter ](golang.org/x/tools/go/analysis/passes/shadow) `go get golang.org/x/tools/go/analysis/passes/shadow  `
-- Secrets
-
+- [Go](https://golang.org/doc/install)
 - [Docker and Kubernetes](https://docs.docker.com/desktop/)
 - [Tilt](https://tilt.dev/)
-- AWS
-- Sengrid
-- Freshbooks
-- [Auth0](http://auth0.com/) with [Github Deployments](https://auth0.com/docs/extensions/github-deployments) enabled
+- Secrets
 
 
 #### Secrets
@@ -85,6 +75,8 @@ kubectl port-forward pod/pgadmin 8888:80
 ```
 
 ### Migrations
+
+Install [migrate](https://github.com/golang-migrate/migrate/releases).
 
 Migrations exist under the following paths:
 
