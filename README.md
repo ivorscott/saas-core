@@ -17,11 +17,22 @@ kanban or agile style board management and auxiliary services like cost estimati
 ### Setup
 
 #### Requirements
-- [Go](https://golang.org/doc/install)
-- [Docker and Kubernetes](https://docs.docker.com/desktop/)
-- [Tilt](https://tilt.dev/)
+- [Go](https://golang.org/doc/install) 1.13+
+- Docker Desktop 3.3.3 ([Windows](https://docs.docker.com/docker-for-windows/release-notes/#docker-desktop-333), [Mac](https://docs.docker.com/docker-for-mac/release-notes/#docker-desktop-333))
+- [Tilt](https://tilt.dev/) 0.20+
 - Secrets
 
+#### ***Note For Windows Users***
+
+<details>
+<summary> Please Enable WSL </summary>
+<br>
+
+![frontend preview](docs/images/windows.png)
+</details>
+
+
+#### Configuration
 
 #### Secrets
 
