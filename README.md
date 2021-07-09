@@ -34,11 +34,11 @@ kanban or agile style board management and auxiliary services like cost estimati
 
 #### Configuration
 
-#### Secrets
+`manifests/secrets.yaml` is required.
 
-`manifests/secrets.yaml` is required for deployments.
+`core/{service}/.env` is required for the integration tests of each service.
 
-`.gitpass` is required for private go modules but currently all repositories are public. Rename `core/.gitpass.sample` and provide a github username and access token.
+`.gitpass` is required for private go modules but currently all repositories are public.
 
 ## Developement
 
