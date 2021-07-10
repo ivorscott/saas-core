@@ -20,25 +20,28 @@ kanban or agile style board management and auxiliary services like cost estimati
 - [Go](https://golang.org/doc/install) 1.13+
 - Docker Desktop 3.3.3 ([Windows](https://docs.docker.com/docker-for-windows/release-notes/#docker-desktop-333), [Mac](https://docs.docker.com/docker-for-mac/release-notes/#docker-desktop-333))
 - [Tilt](https://tilt.dev/) 0.20+
+- [golangci-lint](https://golangci-lint.run/usage/install/#local-installation)
+- [migrate](https://github.com/golang-migrate/migrate/releases)
+- [shadow linter ](golang.org/x/tools/go/analysis/passes/shadow) `go get golang.org/x/tools/go/analysis/passes/shadow  `
 - Secrets
 
 #### ***Note For Windows Users***
 
 <details>
 <summary> Please Enable WSL </summary>
-<br>
+<br>sha
 
 ![frontend preview](docs/images/windows.png)
 </details>
 
 
-#### Configuration
+#### Secrets
 
-`manifests/secrets.yaml` is required.
+`manifests/secrets.yaml` is required for deployments.
 
-`core/{service}/.env` is required for the integration tests of each service.
+`core/{service}/.env` is required for end to end testing of each service.
 
-`.gitpass` is required for private go modules but currently all repositories are public.
+`.gitpass` is read in the [Tiltfile](https://github.com/devpies/devpie-client-core/blob/2ddeab2eace966283f55cac58aa945a62c0c8aad/Tiltfile#L11) and passed to [Dockerfiles as build args](https://github.com/devpies/devpie-client-core/blob/2ddeab2eace966283f55cac58aa945a62c0c8aad/core/users/Dockerfile#L20). This allows services to pull private go modules but currently all repositories are public.
 
 ## Developement
 
@@ -86,8 +89,6 @@ kubectl port-forward pod/pgadmin 8888:80
 ```
 
 ### Migrations
-
-Install [migrate](https://github.com/golang-migrate/migrate/releases).
 
 Migrations exist under the following paths:
 
