@@ -10,6 +10,7 @@ var (
 	basepath   = filepath.Dir(b)
 )
 
-func RootDir() string {
+// PWD provided an absolute path to the caller
+func PWD() string {
 	return basepath
 }

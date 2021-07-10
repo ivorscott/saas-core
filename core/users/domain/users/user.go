@@ -3,25 +3,39 @@ package users
 import (
 	"context"
 	"database/sql"
-	"log"
+	"errors"
+	"fmt"
+	"net/mail"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 )
 
 // Error codes returned by failures to handle users.
 var (
-	ErrNotFound  = errors.New("user not found")
-	ErrInvalidID = errors.New("id provided was not a valid UUID")
+	ErrNotFound     = errors.New("user not found")
+	ErrInvalidID    = errors.New("id provided was not a valid UUID")
+	ErrInvalidEmail = errors.New("address provided was not a valid email")
 )
 
-func Create(ctx context.Context, repo *database.Repository, nu NewUser, aid string, now time.Time) (User, error) {
+// UserQuerier describes behavior required for executing user related queries
+type UserQuerier interface {
+	Create(ctx context.Context, repo database.Storer, nu NewUser, now time.Time) (User, error)
+	RetrieveByEmail(repo database.Storer, email string) (User, error)
+	RetrieveMe(ctx context.Context, repo database.Storer, uid string) (User, error)
+	RetrieveMeByAuthID(ctx context.Context, repo database.Storer, aid string) (User, error)
+}
+
+// Queries defines method implementations for interacting with the users table
+type Queries struct{}
+
+// Create inserts a new user into the database
+func (q *Queries) Create(ctx context.Context, repo database.Storer, nu NewUser, now time.Time) (User, error) {
 	u := User{
 		ID:            uuid.New().String(),
-		Auth0ID:       aid,
+		Auth0ID:       nu.Auth0ID,
 		Email:         nu.Email,
 		EmailVerified: nu.EmailVerified,
 		FirstName:     nu.FirstName,
@@ -32,11 +46,11 @@ func Create(ctx context.Context, repo *database.Repository, nu NewUser, aid stri
 		CreatedAt:     now.UTC(),
 	}
 
-	stmt := repo.SQ.Insert(
+	stmt := repo.Insert(
 		"users",
 	).SetMap(map[string]interface{}{
 		"user_id":        u.ID,
-		"auth0_id":       u.Auth0ID, // unique
+		"auth0_id":       u.Auth0ID,
 		"email":          u.Email,
 		"email_verified": u.EmailVerified,
 		"first_name":     u.FirstName,
@@ -48,16 +62,21 @@ func Create(ctx context.Context, repo *database.Repository, nu NewUser, aid stri
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
-		return u, errors.Wrapf(err, "inserting user: %v", nu)
+		return u, err
 	}
 
 	return u, nil
 }
 
-func RetrieveByEmail(repo *database.Repository, email string) (User, error) {
+// RetrieveByEmail retrieves a user via a provided email address
+func (q *Queries) RetrieveByEmail(repo database.Storer, email string) (User, error) {
 	var u User
 
-	stmt := repo.SQ.Select(
+	if _, err := mail.ParseAddress(email); err != nil {
+		return u, ErrInvalidEmail
+	}
+
+	stmt := repo.Select(
 		"user_id",
 		"auth0_id",
 		"email",
@@ -72,12 +91,12 @@ func RetrieveByEmail(repo *database.Repository, email string) (User, error) {
 		"users",
 	).Where(sq.Eq{"email": "?"})
 
-	q, args, err := stmt.ToSql()
+	query, args, err := stmt.ToSql()
 	if err != nil {
-		return u, errors.Wrapf(err, "building query: %v", args)
+		return u, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	if err := repo.DB.Get(&u, q, email); err != nil {
+	if err := repo.Get(&u, query, email); err != nil {
 		if err == sql.ErrNoRows {
 			return u, ErrNotFound
 		}
@@ -87,17 +106,14 @@ func RetrieveByEmail(repo *database.Repository, email string) (User, error) {
 	return u, nil
 }
 
-func RetrieveMe(ctx context.Context, repo *database.Repository, uid string) (User, error) {
+// RetrieveMe retrieves the authenticated user
+func (q *Queries) RetrieveMe(ctx context.Context, repo database.Storer, uid string) (User, error) {
 	var u User
-	log.Println("the user", uid)
 
 	if _, err := uuid.Parse(uid); err != nil {
-		log.Println("the invalid user", uid)
-
 		return u, ErrInvalidID
 	}
-
-	stmt := repo.SQ.Select(
+	stmt := repo.Select(
 		"user_id",
 		"auth0_id",
 		"email",
@@ -112,12 +128,12 @@ func RetrieveMe(ctx context.Context, repo *database.Repository, uid string) (Use
 		"users",
 	).Where(sq.Eq{"user_id": "?"})
 
-	q, args, err := stmt.ToSql()
+	query, args, err := stmt.ToSql()
 	if err != nil {
-		return u, errors.Wrapf(err, "building query: %v", args)
+		return u, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	if err := repo.DB.GetContext(ctx, &u, q, uid); err != nil {
+	if err := repo.GetContext(ctx, &u, query, uid); err != nil {
 		if err == sql.ErrNoRows {
 			return u, ErrNotFound
 		}
@@ -127,10 +143,11 @@ func RetrieveMe(ctx context.Context, repo *database.Repository, uid string) (Use
 	return u, nil
 }
 
-func RetrieveMeByAuthID(ctx context.Context, repo *database.Repository, aid string) (User, error) {
+// RetrieveMeByAuthID retrieves a user via the provided Auth0 id
+func (q *Queries) RetrieveMeByAuthID(ctx context.Context, repo database.Storer, aid string) (User, error) {
 	var u User
 
-	stmt := repo.SQ.Select(
+	stmt := repo.Select(
 		"user_id",
 		"auth0_id",
 		"email",
@@ -145,12 +162,12 @@ func RetrieveMeByAuthID(ctx context.Context, repo *database.Repository, aid stri
 		"users",
 	).Where(sq.Eq{"auth0_id": "?"})
 
-	q, args, err := stmt.ToSql()
+	query, args, err := stmt.ToSql()
 	if err != nil {
-		return u, errors.Wrapf(err, "building query: %v", args)
+		return u, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	if err := repo.DB.GetContext(ctx, &u, q, aid); err != nil {
+	if err := repo.GetContext(ctx, &u, query, aid); err != nil {
 		if err == sql.ErrNoRows {
 			return u, ErrNotFound
 		}

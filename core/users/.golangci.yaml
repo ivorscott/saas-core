@@ -1,6 +1,7 @@
 linters:
   enable:
     - revive
+    - cyclop
 
 # The list of ids of default excludes to include or disable. By default it's empty.
 issues:
@@ -47,3 +48,5 @@ linters-settings:
       - name: struct-tag
       - name: early-return
       - name: defer
+  cyclop:
+    max-complexity: 15

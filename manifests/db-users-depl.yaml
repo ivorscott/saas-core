@@ -14,7 +14,7 @@ spec:
       volumes:
         - name: mic-db-users-volume
           hostPath:
-            path: "/Users/ivorscott/databases/users"
+            path: "/Users/databases/users"
       containers:
         - name: mic-db-users
           image: postgres:11.6

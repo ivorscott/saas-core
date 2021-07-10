@@ -1,15 +1,9 @@
-package tests
+package e2e
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ardanlabs/conf"
-	"github.com/devpies/devpie-client-core/users/platform/database"
-	"github.com/devpies/devpie-client-core/users/schema"
-	"github.com/docker/go-connections/nat"
-	tc "github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,9 +11,16 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ardanlabs/conf"
+	"github.com/devpies/devpie-client-core/users/platform/database"
+	"github.com/devpies/devpie-client-core/users/schema"
+	"github.com/docker/go-connections/nat"
+	tc "github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-type Cfg struct {
+type config struct {
 	Web struct {
 		Port                 string        `conf:"default::4000"`
 		Debug                string        `conf:"default:localhost:6060"`
@@ -52,10 +53,10 @@ type Cfg struct {
 	}
 }
 
-func SetupTests(t *testing.T) (Cfg, *database.Repository, *log.Logger) {
-	infolog := log.New(os.Stderr, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+func setupTests(t *testing.T) (config, *database.Repository, func(), *log.Logger) {
+	infolog := log.New(os.Stderr, "E2E TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
-	var cfg Cfg
+	var cfg config
 
 	if err := conf.Parse(os.Args[1:], "API", &cfg); err != nil {
 		if err == conf.ErrHelpWanted {
@@ -69,12 +70,12 @@ func SetupTests(t *testing.T) (Cfg, *database.Repository, *log.Logger) {
 		infolog.Fatal(err, "error: parsing config")
 	}
 
-	repo := NewIntegration(t, cfg)
+	repo, rClose := newTestRepository(t, cfg)
 
-	return cfg, repo, infolog
+	return cfg, repo, rClose, infolog
 }
 
-func NewIntegration(t *testing.T, cfg Cfg) *database.Repository {
+func newTestRepository(t *testing.T, cfg config) (*database.Repository, func()) {
 	ctx := context.Background()
 
 	postgresPort := nat.Port("5432/tcp")
@@ -101,7 +102,7 @@ func NewIntegration(t *testing.T, cfg Cfg) *database.Repository {
 	// MappedPort gets the externally mapped port for the container
 	hostPort, err := postgres.MappedPort(ctx, postgresPort)
 	if err != nil {
-		log.Fatal("map:", err)
+		t.Fatal("map:", err)
 	}
 
 	repo, rClose, err := database.NewRepository(database.Config{
@@ -114,29 +115,29 @@ func NewIntegration(t *testing.T, cfg Cfg) *database.Repository {
 	if err != nil {
 		t.Fatal(err, "connecting to db")
 	}
-	defer rClose()
 
-	log.Printf("Postgres container started, running at:  %s\n", repo.URL.String())
+	t.Logf("Postgres container started, running at:  %s\n", repo.URL.String())
 
 	if err := schema.Migrate(repo.URL.String()); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := schema.Seed(repo.DB, "users"); err != nil {
+	if err := schema.Seed(repo.SqlxStorer, "users"); err != nil {
 		t.Fatal(err)
 	}
-	if err := schema.Seed(repo.DB, "teams"); err != nil {
+	if err := schema.Seed(repo.SqlxStorer, "teams"); err != nil {
 		t.Fatal(err)
 	}
-	if err := schema.Seed(repo.DB, "memberships"); err != nil {
+	if err := schema.Seed(repo.SqlxStorer, "memberships"); err != nil {
 		t.Fatal(err)
 	}
-	if err := schema.Seed(repo.DB, "projects"); err != nil {
+	if err := schema.Seed(repo.SqlxStorer, "projects"); err != nil {
 		t.Fatal(err)
 	}
-	return repo
+	return repo, rClose
 }
 
+// Test stores auth dependencies to support e2e tests
 type Test struct {
 	t                 *testing.T
 	Auth0Domain       string
@@ -145,7 +146,7 @@ type Test struct {
 	Auth0ClientSecret string
 }
 
-func (t *Test) Token(username, password string) string {
+func (t *Test) token(username, password string) string {
 	const TokenNotFound = "could not retrieve access token"
 
 	urlStr := fmt.Sprintf("https://%s/oauth/token", t.Auth0Domain)

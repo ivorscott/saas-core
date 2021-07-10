@@ -2,6 +2,7 @@ package invites
 
 import "time"
 
+// Invite represents a team invitation
 type Invite struct {
 	ID         string    `db:"invite_id" json:"id"`
 	UserID     string    `db:"user_id" json:"userId"`
@@ -13,6 +14,7 @@ type Invite struct {
 	CreatedAt  time.Time `db:"created_at" json:"createdAt"`
 }
 
+// InviteEnhanced represents an invitation enhanced with team details
 type InviteEnhanced struct {
 	ID         string    `json:"id"`
 	UserID     string    `json:"userId"`
@@ -25,15 +27,18 @@ type InviteEnhanced struct {
 	CreatedAt  time.Time `json:"createdAt"`
 }
 
+// NewInvite represents a new team invite request
 type NewInvite struct {
-	UserID string `json:"userId"`
-	TeamID string `json:"teamId"`
+	UserID string `json:"userId" validate:"required"`
+	TeamID string `json:"teamId" validate:"required"`
 }
 
+// NewList represents a list of email addresses to be invited
 type NewList struct {
-	Emails []string `json:"emailList"`
+	Emails []string `json:"emailList" validate:"required"`
 }
 
+// UpdateInvite represents an update to an invite
 type UpdateInvite struct {
 	Accepted bool `json:"accepted" validate:"required"`
 }

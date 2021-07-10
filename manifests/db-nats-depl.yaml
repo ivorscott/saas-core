@@ -14,7 +14,7 @@ spec:
       volumes:
         - name: nats-db-store-volume
           hostPath:
-            path: "/Users/ivorscott/databases/nats"
+            path: "/Users/databases/nats"
       containers:
         - name: nats-db-store
           image: postgres:11.6

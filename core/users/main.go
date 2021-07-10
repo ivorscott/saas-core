@@ -125,13 +125,13 @@ func run() error {
 	nats, eClose := events.NewClient(cfg.Nats.ClusterID, clusterID, cfg.Nats.URL)
 	defer func() {
 		cerr := eClose()
-		if err != nil {
+		if cerr != nil {
 			err = cerr
 		}
 	}()
 
 	go func(repo *database.Repository, nats *events.Client, infolog *log.Logger, queueGroup string) {
-		l := listeners.NewListeners(infolog, repo)
+		l := listeners.NewListener(infolog, repo)
 		l.RegisterAll(nats, queueGroup)
 	}(repo, nats, infolog, queueGroup)
 

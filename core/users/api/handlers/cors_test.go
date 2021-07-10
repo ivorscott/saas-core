@@ -1,13 +1,12 @@
-package tests
+package handlers
 
 import (
 	"bytes"
-	"github.com/devpies/devpie-client-core/users/api/handlers"
 	"strings"
 	"testing"
 )
 
-func TestParseOrigins(t *testing.T) {
+func TestParseCorsOrigins(t *testing.T) {
 	testcases := []struct {
 		arg  string
 		want []string
@@ -19,7 +18,7 @@ func TestParseOrigins(t *testing.T) {
 	}
 
 	for _, v := range testcases {
-		got := handlers.ParseOrigins(v.arg)
+		got := ParseCorsOrigins(v.arg)
 		if !bytes.Equal([]byte(strings.Join(got, ",")), []byte(strings.Join(v.want, ","))) {
 			t.Errorf("ParseOrigins(%v) = %v; want %v", v.arg, got, v.want)
 		}

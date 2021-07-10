@@ -17,25 +17,31 @@ kanban or agile style board management and auxiliary services like cost estimati
 ### Setup
 
 #### Requirements
+- [Go](https://golang.org/doc/install) 1.13+
+- Docker Desktop 3.3.3 ([Windows](https://docs.docker.com/docker-for-windows/release-notes/#docker-desktop-333), [Mac](https://docs.docker.com/docker-for-mac/release-notes/#docker-desktop-333))
+- [Tilt](https://tilt.dev/) 0.20+
+- [golangci-lint](https://golangci-lint.run/usage/install/#local-installation)
+- [migrate](https://github.com/golang-migrate/migrate/releases)
+- [shadow linter ](golang.org/x/tools/go/analysis/passes/shadow) `go get golang.org/x/tools/go/analysis/passes/shadow  `
+- Secrets
 
-- [Docker and Kubernetes](https://docs.docker.com/desktop/)
-- [Tilt](https://tilt.dev/)
+#### ***Note For Windows Users***
 
-- AWS
-- Sengrid
-- Freshbooks
-- [Auth0](http://auth0.com/) with [Github Deployments](https://auth0.com/docs/extensions/github-deployments) enabled
+<details>
+<summary> Please Enable WSL </summary>
+<br>sha
 
-#### Configuration
+![frontend preview](docs/images/windows.png)
+</details>
 
-`manifests/secrets.yaml` is required. Rename `manifests/secrets.sample.yaml` and provide base64 encoded credentials for all secrets.
 
-`core/{service}/.env` is required for integration tests.  Rename `core/{service}/.env.sample` and provide plaintext secrets.
+#### Secrets
 
-`.gitpass` is required for private go modules but currently all repositories are public. Rename `core/.gitpass.sample`
-and provide a github username and access token.
+`manifests/secrets.yaml` is required for deployments.
 
-There's a `secrets.zip` for the team. Just Ask.
+`core/{service}/.env` is required for end to end testing of each service.
+
+`.gitpass` is read in the [Tiltfile](https://github.com/devpies/devpie-client-core/blob/2ddeab2eace966283f55cac58aa945a62c0c8aad/Tiltfile#L11) and passed to [Dockerfiles as build args](https://github.com/devpies/devpie-client-core/blob/2ddeab2eace966283f55cac58aa945a62c0c8aad/core/users/Dockerfile#L20). This allows services to pull private go modules but currently all repositories are public.
 
 ## Developement
 
@@ -53,8 +59,8 @@ make up
 Build, Test, Linting and Formatting commands exist for each service. See `core/{service}/Makefile`
 
 ```bash
-make test # uses exported env vars
-make unit # short tests
+make test # short tests
+make e2e # uses exported env vars
 make fmt
 make lint
 make vet
@@ -201,11 +207,16 @@ This backend should be used with the [devpie-client-app](https://github.com/ivor
 It uses [devpie-client-events](https://github.com/ivorscott/devpie-client-common-module) as a shared library to generate
 message interfaces across multiple programming languages, but the Typescript definitions in the events repository are the source of truth.
 
+
+<details>
+<summary>Read More</summary>
+<br>
+
 ## How Data Moves Through System Parts
 
 Two architectural models are adopted: _a traditional microservices model_ and
 _an event sourcing model_ driven by CQRS.
-[CQRS allows you to scale your writes and reads separately](https://medium.com/@hugo.oliveira.rocha/what-they-dont-tell-you-about-event-sourcing-6afc23c69e9a). For example, the `accounting` integration will make use CQRS to write data to Freshbooks and read data from a cache. This introduces eventual consistency and requires the frontend's support in handling eventual consistent data intelligently.
+[CQRS allows you to scale your writes and reads separately](https://medium.com/@hugo.oliveira.rocha/what-they-dont-tell-you-about-event-sourcing-6afc23c69e9a). For example, the planned `freshbooks` accounting integration is set to make use of CQRS to write data to Freshbooks and read data from a cache. This introduces eventual consistency and requires the frontend's support in handling eventual consistent data intelligently. _Note: the freshbooks integration is out of scope for the initial mvp._
 
 In the traditional microservices model every microservice has its own database. Within
 the event sourcing model the authoritative source of truth is stored in a single message store (NATS).
@@ -263,9 +274,11 @@ Under this model, end users send requests to Applications. Applications write me
 - View Data can be stored in any format or database that makes sense for the Application.
 </details>
 
+</details>
+
 ## Contribute
 
-Reach out on twitter or email me if you have any questions about contributing.
+Reach out on twitter or email me if you have any questions about contributing. 
 
 - [ivorsco77](https://twitter.com/ivorsco77)
 - ivor@devpie.io

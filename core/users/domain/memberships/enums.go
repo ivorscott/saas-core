@@ -11,6 +11,7 @@ const (
 	Viewer
 )
 
+// String retrieves the corresponding string value for a role
 func (r Role) String() string {
 	return [...]string{"administrator", "editor", "commenter", "viewer"}[r]
 }

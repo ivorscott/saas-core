@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// ProjectCopy represents a project copied from the projects service, stored for redundancy
 type ProjectCopy struct {
 	ID          string    `db:"project_id" json:"projectId"`
 	Name        string    `db:"name" json:"name"`
@@ -18,6 +19,7 @@ type ProjectCopy struct {
 	CreatedAt   time.Time `db:"created_at" json:"createdAt"`
 }
 
+// UpdateProjectCopy represents an update to a project copy
 type UpdateProjectCopy struct {
 	Name        *string   `json:"name"`
 	Active      *bool     `json:"active"`

@@ -3,11 +3,13 @@ package projects
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/pkg/errors"
 )
 
 // Error codes returned by failures to handle projects.
@@ -16,14 +18,26 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-func Retrieve(ctx context.Context, repo *database.Repository, pid string) (ProjectCopy, error) {
+// ProjectQuerier describes behavior required for executing project related queries
+type ProjectQuerier interface {
+	Create(ctx context.Context, repo *database.Repository, p ProjectCopy) error
+	Retrieve(ctx context.Context, repo database.Storer, pid string) (ProjectCopy, error)
+	Update(ctx context.Context, repo database.Storer, pid string, update UpdateProjectCopy) error
+	Delete(ctx context.Context, repo database.Storer, pid string) error
+}
+
+// Queries defines method implementations for interacting with the projects table
+type Queries struct{}
+
+// Retrieve retrieves a single project from the database
+func (q *Queries) Retrieve(ctx context.Context, repo database.Storer, pid string) (ProjectCopy, error) {
 	var p ProjectCopy
 
 	if _, err := uuid.Parse(pid); err != nil {
 		return p, ErrInvalidID
 	}
 
-	stmt := repo.SQ.Select(
+	stmt := repo.Select(
 		"project_id",
 		"name",
 		"prefix",
@@ -39,12 +53,12 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid string) (Proje
 		"projects",
 	).Where(sq.Eq{"project_id": "?"})
 
-	q, args, err := stmt.ToSql()
+	query, args, err := stmt.ToSql()
 	if err != nil {
-		return p, errors.Wrapf(err, "building query: %v", args)
+		return p, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	row := repo.DB.QueryRowContext(ctx, q, pid)
+	row := repo.QueryRowxContext(ctx, query, pid)
 	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -56,8 +70,9 @@ func Retrieve(ctx context.Context, repo *database.Repository, pid string) (Proje
 	return p, nil
 }
 
-func Create(ctx context.Context, repo *database.Repository, p ProjectCopy) error {
-	stmt := repo.SQ.Insert(
+// Create inserts a new project into the database
+func (q *Queries) Create(ctx context.Context, repo *database.Repository, p ProjectCopy) error {
+	stmt := repo.Insert(
 		"projects",
 	).SetMap(map[string]interface{}{
 		"project_id":   p.ID,
@@ -74,14 +89,15 @@ func Create(ctx context.Context, repo *database.Repository, p ProjectCopy) error
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
-		return errors.Wrapf(err, "inserting project: %v", p)
+		return err
 	}
 
 	return nil
 }
 
-func Update(ctx context.Context, repo *database.Repository, pid string, update UpdateProjectCopy) error {
-	p, err := Retrieve(ctx, repo, pid)
+// Update modifies a project in the database
+func (q *Queries) Update(ctx context.Context, repo database.Storer, pid string, update UpdateProjectCopy) error {
+	p, err := q.Retrieve(ctx, repo, pid)
 	if err != nil {
 		return err
 	}
@@ -105,7 +121,7 @@ func Update(ctx context.Context, repo *database.Repository, pid string, update U
 		p.ColumnOrder = update.ColumnOrder
 	}
 
-	stmt := repo.SQ.Update(
+	stmt := repo.Update(
 		"projects",
 	).SetMap(map[string]interface{}{
 		"name":         p.Name,
@@ -119,23 +135,24 @@ func Update(ctx context.Context, repo *database.Repository, pid string, update U
 
 	_, err = stmt.ExecContext(ctx)
 	if err != nil {
-		return errors.Wrap(err, "updating project")
+		return err
 	}
 
 	return nil
 }
 
-func Delete(ctx context.Context, repo *database.Repository, pid string) error {
+// Delete removes a project from the database
+func (q *Queries) Delete(ctx context.Context, repo database.Storer, pid string) error {
 	if _, err := uuid.Parse(pid); err != nil {
 		return ErrInvalidID
 	}
 
-	stmt := repo.SQ.Delete(
+	stmt := repo.Delete(
 		"projects",
 	).Where(sq.Eq{"project_id": pid})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
-		return errors.Wrapf(err, "deleting project %s", pid)
+		return err
 	}
 
 	return nil

@@ -4,11 +4,11 @@ export $(shell sed 's/=.*//' .env)
 .DEFAULT_GOAL := build
 
 test:
-	go test ./... -v
+	go test -v --short --cover ./...
 .PHONY: test
 
-unit:
-	go test ./... -v -short
+e2e:
+	go test -v ./api/e2e
 .PHONY: unit
 
 fmt:

@@ -6,6 +6,7 @@ build:
 	docker build -t devpies/msg-db-nats-migration:v000003 ./nats/migrations
 
 up: build
+	kubectl config use-context docker-desktop
 	kubectl apply -f ./manifests/db-nats-depl.yaml
 	kubectl apply -f ./manifests/db-projects-depl.yaml
 	kubectl apply -f ./manifests/db-users-depl.yaml

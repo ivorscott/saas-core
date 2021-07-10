@@ -23,6 +23,7 @@ type Values struct {
 	Start      time.Time
 }
 
+// Handler represents a custom http handler that returns an error
 type Handler func(http.ResponseWriter, *http.Request) error
 
 // App is the entry point for all applications
@@ -44,7 +45,6 @@ func NewApp(shutdown chan os.Signal, logger *log.Logger, mw ...Middleware) *App 
 }
 
 // Handle associates a handler function with an HTTP Method and URL pattern.
-//
 // It converts our custom handler type to the std lib Handler type. It captures
 // errors from the handler and serves them to the client in a uniform way.
 func (a *App) Handle(method, url string, h Handler) {
@@ -72,6 +72,7 @@ func (a *App) Handle(method, url string, h Handler) {
 	a.mux.MethodFunc(method, url, fn)
 }
 
+// ServeHTTP proxies the original mux ServeHTTP method to extend it
 func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	a.mux.ServeHTTP(w, r)

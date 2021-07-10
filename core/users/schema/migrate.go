@@ -13,8 +13,9 @@ import (
 
 const dest = "/migrations"
 
+// Migrate runs the latest migration
 func Migrate(url string) error {
-	src := fmt.Sprintf("file://%s%s", RootDir(), dest)
+	src := fmt.Sprintf("file://%s%s", PWD(), dest)
 	m, err := migrate.New(src, url)
 	if err != nil {
 		log.Fatal(err)

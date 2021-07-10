@@ -3,12 +3,13 @@ package teams
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/devpies/devpie-client-core/users/platform/database"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 )
 
 // Error codes returned by failures to handle teams.
@@ -17,40 +18,58 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-func Create(ctx context.Context, repo *database.Repository, nt NewTeam, uid string, now time.Time) (Team, error) {
-	t := Team{
+// TeamQuerier describes behavior required for executing team related queries
+type TeamQuerier interface {
+	Create(ctx context.Context, repo database.Storer, nt NewTeam, uid string, now time.Time) (Team, error)
+	Retrieve(ctx context.Context, repo database.Storer, tid string) (Team, error)
+	List(ctx context.Context, repo database.Storer, uid string) ([]Team, error)
+}
+
+// Queries defines method implementations for interacting with the teams table
+type Queries struct{}
+
+// Create inserts a new team into the database
+func (q *Queries) Create(ctx context.Context, repo database.Storer, nt NewTeam, uid string, now time.Time) (Team, error) {
+	var t Team
+
+	if _, err := uuid.Parse(uid); err != nil {
+		return t, ErrInvalidID
+	}
+
+	t = Team{
 		ID:        uuid.New().String(),
 		Name:      nt.Name,
 		UserID:    uid,
 		UpdatedAt: now.UTC(),
-		CreateAt:  now.UTC(),
+		CreatedAt: now.UTC(),
 	}
 
-	stmt := repo.SQ.Insert(
+	stmt := repo.Insert(
 		"teams",
 	).SetMap(map[string]interface{}{
 		"team_id":    t.ID,
 		"name":       t.Name,
 		"user_id":    t.UserID,
 		"updated_at": t.UpdatedAt,
-		"created_at": t.CreateAt,
+		"created_at": t.CreatedAt,
 	})
 
 	if _, err := stmt.ExecContext(ctx); err != nil {
-		return t, errors.Wrap(err, "inserting team")
+		return t, err
 	}
 
 	return t, nil
 }
 
-func Retrieve(ctx context.Context, repo *database.Repository, tid string) (Team, error) {
+// Retrieve retrieves a single team from the database
+func (q *Queries) Retrieve(ctx context.Context, repo database.Storer, tid string) (Team, error) {
 	var t Team
 
 	if _, err := uuid.Parse(tid); err != nil {
 		return t, ErrInvalidID
 	}
 
-	stmt := repo.SQ.Select(
+	stmt := repo.Select(
 		"team_id",
 		"user_id",
 		"name",
@@ -60,12 +79,12 @@ func Retrieve(ctx context.Context, repo *database.Repository, tid string) (Team,
 		"teams",
 	).Where(sq.Eq{"team_id": "?"})
 
-	q, args, err := stmt.ToSql()
+	query, args, err := stmt.ToSql()
 	if err != nil {
-		return t, errors.Wrapf(err, "building query: %v", args)
+		return t, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	if err := repo.DB.GetContext(ctx, &t, q, tid); err != nil {
+	if err := repo.GetContext(ctx, &t, query, tid); err != nil {
 		if err == sql.ErrNoRows {
 			return t, ErrNotFound
 		}
@@ -75,14 +94,15 @@ func Retrieve(ctx context.Context, repo *database.Repository, tid string) (Team,
 	return t, nil
 }
 
-func List(ctx context.Context, repo *database.Repository, uid string) ([]Team, error) {
+// List retrieves a set of teams from the database
+func (q *Queries) List(ctx context.Context, repo database.Storer, uid string) ([]Team, error) {
 	var ts []Team
 
 	if _, err := uuid.Parse(uid); err != nil {
 		return ts, ErrInvalidID
 	}
 
-	stmt := repo.SQ.Select(
+	stmt := repo.Select(
 		"team_id",
 		"user_id",
 		"name",
@@ -92,12 +112,12 @@ func List(ctx context.Context, repo *database.Repository, uid string) ([]Team, e
 		"teams",
 	).Where("team_id IN (SELECT team_id FROM memberships WHERE user_id = ?)")
 
-	q, args, err := stmt.ToSql()
+	query, args, err := stmt.ToSql()
 	if err != nil {
-		return ts, errors.Wrapf(err, "building query: %v", args)
+		return ts, fmt.Errorf("%w: arguments (%v)", err, args)
 	}
 
-	if err := repo.DB.SelectContext(ctx, &ts, q, uid); err != nil {
+	if err := repo.SelectContext(ctx, &ts, query, uid); err != nil {
 		if err == sql.ErrNoRows {
 			return ts, ErrNotFound
 		}

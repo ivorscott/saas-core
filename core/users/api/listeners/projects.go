@@ -8,7 +8,8 @@ import (
 	"github.com/nats-io/stan.go"
 )
 
-func (l *Listeners) handleProjectCreated(m *stan.Msg) {
+// handleProjectCreated listens for a ProjectCreatedEvent
+func (l *Listener) handleProjectCreated(m *stan.Msg) {
 	msg, err := events.UnmarshalProjectCreatedEvent(m.Data)
 	if err != nil {
 		l.log.Printf("warning: failed to unmarshal Command \n %v", err)
@@ -39,7 +40,7 @@ func (l *Listeners) handleProjectCreated(m *stan.Msg) {
 		CreatedAt:   createdtime,
 	}
 
-	if err = projects.Create(context.Background(), l.repo, update); err != nil {
+	if err = l.query.project.Create(context.Background(), l.repo, update); err != nil {
 		l.log.Printf("failed to update project: %s \n %v", event.ProjectID, err)
 	}
 
@@ -49,7 +50,8 @@ func (l *Listeners) handleProjectCreated(m *stan.Msg) {
 	}
 }
 
-func (l *Listeners) handleProjectUpdated(m *stan.Msg) {
+// handleProjectUpdated listens for a ProjectUpdatedEvent
+func (l *Listener) handleProjectUpdated(m *stan.Msg) {
 	msg, err := events.UnmarshalProjectUpdatedEvent(m.Data)
 	if err != nil {
 		l.log.Printf("warning: failed to unmarshal Command \n %v", err)
@@ -72,7 +74,7 @@ func (l *Listeners) handleProjectUpdated(m *stan.Msg) {
 		UpdatedAt:   updatedtime,
 	}
 
-	if err = projects.Update(context.Background(), l.repo, event.ProjectID, update); err != nil {
+	if err = l.query.project.Update(context.Background(), l.repo, event.ProjectID, update); err != nil {
 		l.log.Printf("failed to update project: %s \n %v", event.ProjectID, err)
 	}
 
@@ -82,7 +84,8 @@ func (l *Listeners) handleProjectUpdated(m *stan.Msg) {
 	}
 }
 
-func (l *Listeners) handleProjectDeleted(m *stan.Msg) {
+// handleProjectDeleted listens for a ProjectDeletedEvent
+func (l *Listener) handleProjectDeleted(m *stan.Msg) {
 	msg, err := events.UnmarshalProjectDeletedEvent(m.Data)
 	if err != nil {
 		l.log.Printf("warning: failed to unmarshal Command \n %v", err)
@@ -90,7 +93,7 @@ func (l *Listeners) handleProjectDeleted(m *stan.Msg) {
 
 	event := msg.Data
 
-	if err = projects.Delete(context.Background(), l.repo, event.ProjectID); err != nil {
+	if err = l.query.project.Delete(context.Background(), l.repo, event.ProjectID); err != nil {
 		l.log.Printf("failed to delete project: %s \n %v", event.ProjectID, err)
 	}
 

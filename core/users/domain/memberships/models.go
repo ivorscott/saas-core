@@ -2,6 +2,7 @@ package memberships
 
 import "time"
 
+// Membership represents a membership to a team
 type Membership struct {
 	ID        string    `db:"membership_id" json:"id"`
 	UserID    string    `db:"user_id" json:"userId"`
@@ -11,6 +12,7 @@ type Membership struct {
 	CreatedAt time.Time `db:"created_at" json:"createdAt"`
 }
 
+// MembershipEnhanced represents a membership enhanced with user details
 type MembershipEnhanced struct {
 	ID        string    `db:"membership_id" json:"id"`
 	UserID    string    `db:"user_id" json:"userId"`
@@ -24,12 +26,14 @@ type MembershipEnhanced struct {
 	CreatedAt time.Time `db:"created_at" json:"createdAt"`
 }
 
+// NewMembership represents a new membership request
 type NewMembership struct {
-	UserID string `json:"userId"`
-	TeamID string `json:"teamId"`
-	Role   string `json:"role"`
+	UserID string `json:"userId" validate:"required"`
+	TeamID string `json:"teamId" validate:"required"`
+	Role   string `json:"role" validate:"required"`
 }
 
+// UpdateMembership represents an update to a membership
 type UpdateMembership struct {
 	Role      *string   `json:"role"`
 	UpdatedAt time.Time `json:"updatedAt"`

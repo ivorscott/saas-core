@@ -6,3 +6,4 @@ manifests/secrets.yaml
 .gitpass
 secrets.zip
 main
+secrets

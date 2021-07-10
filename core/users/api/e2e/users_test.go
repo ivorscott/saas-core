@@ -1,13 +1,14 @@
-package tests
+package e2e
 
 import (
 	"fmt"
-	"github.com/devpies/devpie-client-core/users/api/handlers"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/devpies/devpie-client-core/users/api/handlers"
 )
 
 func TestUsers(t *testing.T) {
@@ -15,8 +16,8 @@ func TestUsers(t *testing.T) {
 		t.Skip()
 	}
 
-	cfg, repo, logger := SetupTests(t)
-	defer repo.Close()
+	cfg, repo, rClose, logger := setupTests(t)
+	defer rClose()
 
 	test := Test{
 		t:                 t,
@@ -32,8 +33,8 @@ func TestUsers(t *testing.T) {
 		app: handlers.API(shutdown, repo, logger, cfg.Web.CorsOrigins,
 			cfg.Web.AuthAudience, cfg.Web.AuthDomain, cfg.Web.AuthMAPIAudience, cfg.Web.AuthM2MClient,
 			cfg.Web.AuthM2MSecret, cfg.Web.SendgridAPIKey, nil),
-		userToken:    test.Token("testuser@devpie.io", "devpie12345!"),
-		newUserToken: test.Token("test@example.com", "devpie12345!"),
+		userToken:    test.token("testuser@devpie.io", "devpie12345!"),
+		newUserToken: test.token("test@example.com", "devpie12345!"),
 	}
 
 	t.Run("getUser200", ut.getUser200)
