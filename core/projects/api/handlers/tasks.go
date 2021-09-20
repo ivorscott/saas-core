@@ -58,7 +58,7 @@ func (t *Tasks) Retrieve(w http.ResponseWriter, r *http.Request) error {
 func (t *Tasks) Create(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 	cid := chi.URLParam(r, "cid")
-	uid := t.auth0.GetUserById(r)
+	uid := t.auth0.UserByID(r.Context())
 
 	var nt tasks.NewTask
 	if err := web.Decode(r, &nt); err != nil {
