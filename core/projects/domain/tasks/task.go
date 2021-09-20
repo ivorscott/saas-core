@@ -29,7 +29,7 @@ func Retrieve(ctx context.Context, repo *database.Repository, tid string) (Task,
 		return t, ErrInvalidID
 	}
 
-	stmt := repo.SQ.Select(
+	stmt := repo.Select(
 		"task_id",
 		"key",
 		"seq",
@@ -51,7 +51,7 @@ func Retrieve(ctx context.Context, repo *database.Repository, tid string) (Task,
 		return t, errors.Wrapf(err, "building query: %v", args)
 	}
 
-	err = repo.DB.QueryRowContext(ctx, q, tid).Scan(&t.ID, &t.Key, &t.Seq, &t.Title, &t.Points, &t.Content, &t.AssignedTo, (*pq.StringArray)(&t.Attachments), (*pq.StringArray)(&t.Comments), &t.ProjectID, &t.UpdatedAt, &t.CreatedAt)
+	err = repo.QueryRowxContext(ctx, q, tid).Scan(&t.ID, &t.Key, &t.Seq, &t.Title, &t.Points, &t.Content, &t.AssignedTo, (*pq.StringArray)(&t.Attachments), (*pq.StringArray)(&t.Comments), &t.ProjectID, &t.UpdatedAt, &t.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return t, ErrNotFound
@@ -66,7 +66,7 @@ func List(ctx context.Context, repo *database.Repository, pid string) ([]Task, e
 	var t Task
 	var ts = make([]Task, 0)
 
-	stmt := repo.SQ.Select(
+	stmt := repo.Select(
 		"task_id",
 		"key",
 		"seq",
@@ -85,7 +85,7 @@ func List(ctx context.Context, repo *database.Repository, pid string) ([]Task, e
 		return nil, errors.Wrapf(err, "building query: %v", args)
 	}
 
-	rows, err := repo.DB.QueryContext(ctx, q, pid)
+	rows, err := repo.QueryxContext(ctx, q, pid)
 	if err != nil {
 		return nil, errors.Wrap(err, "selecting tasks")
 	}
@@ -115,7 +115,7 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid
 	}
 
 	// get key from last task created in project
-	stmt1 := repo.SQ.Select(
+	stmt1 := repo.Select(
 		"key",
 	).From(
 		"tasks",
@@ -128,7 +128,7 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid
 		return t, errors.Wrapf(err, "building query: %v", args)
 	}
 
-	err = repo.DB.QueryRowContext(ctx, q, pid).Scan(&ltk.Key)
+	err = repo.QueryRowxContext(ctx, q, pid).Scan(&ltk.Key)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			return t, err
@@ -159,7 +159,7 @@ func Create(ctx context.Context, repo *database.Repository, nt NewTask, pid, uid
 		Attachments: make([]string, 0),
 	}
 
-	stmt2 := repo.SQ.Insert(
+	stmt2 := repo.Insert(
 		"tasks",
 	).SetMap(map[string]interface{}{
 		"task_id":     t.ID,
@@ -203,7 +203,7 @@ func Update(ctx context.Context, repo *database.Repository, tid string, update U
 		t.Comments = update.Comments
 	}
 
-	stmt := repo.SQ.Update(
+	stmt := repo.Update(
 		"tasks",
 	).SetMap(map[string]interface{}{
 		"title":       t.Title,
@@ -227,7 +227,7 @@ func Delete(ctx context.Context, repo *database.Repository, tid string) error {
 		return ErrInvalidID
 	}
 
-	stmt := repo.SQ.Delete(
+	stmt := repo.Delete(
 		"tasks",
 	).Where(sq.Eq{"task_id": tid})
 
@@ -244,7 +244,7 @@ func DeleteAll(ctx context.Context, repo *database.Repository, pid string) error
 		return ErrInvalidID
 	}
 
-	stmt := repo.SQ.Delete(
+	stmt := repo.Delete(
 		"tasks",
 	).Where(sq.Eq{"project_id": pid})
 

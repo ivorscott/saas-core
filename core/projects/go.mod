@@ -23,6 +23,7 @@ require (
 	github.com/nats-io/stan.go v0.8.3
 	github.com/pkg/errors v0.9.1
 	github.com/rs/cors v1.7.0
+	github.com/stretchr/testify v1.5.1
 	google.golang.org/protobuf v1.26.0 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
