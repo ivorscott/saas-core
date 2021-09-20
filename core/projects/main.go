@@ -103,7 +103,7 @@ func run() error {
 	// =========================================================================
 	// Start Database
 
-	repo, err := database.NewRepository(database.Config{
+	repo, closeRepo, err := database.NewRepository(database.Config{
 		User:       cfg.DB.User,
 		Host:       cfg.DB.Host,
 		Name:       cfg.DB.Name,
@@ -113,7 +113,7 @@ func run() error {
 	if err != nil {
 		return errors.Wrap(err, "connecting to db")
 	}
-	defer repo.Close()
+	defer closeRepo()
 
 	// =========================================================================
 	// Start Listeners

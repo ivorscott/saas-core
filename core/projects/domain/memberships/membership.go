@@ -17,8 +17,8 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 )
 
-func Create(ctx context.Context, repo *database.Repository, nm MembershipCopy) error {
-	stmt := repo.SQ.Insert(
+func Create(ctx context.Context, repo database.Storer, nm MembershipCopy) error {
+	stmt := repo.Insert(
 		"memberships",
 	).SetMap(map[string]interface{}{
 		"membership_id": nm.ID,
@@ -36,14 +36,14 @@ func Create(ctx context.Context, repo *database.Repository, nm MembershipCopy) e
 	return nil
 }
 
-func RetrieveById(ctx context.Context, repo *database.Repository, mid string) (MembershipCopy, error) {
+func RetrieveById(ctx context.Context, repo database.Storer, mid string) (MembershipCopy, error) {
 	var m MembershipCopy
 
 	if _, err := uuid.Parse(mid); err != nil {
 		return m, ErrInvalidID
 	}
 
-	stmt := repo.SQ.Select(
+	stmt := repo.Select(
 		"membership_id",
 		"user_id",
 		"team_id",
@@ -59,7 +59,7 @@ func RetrieveById(ctx context.Context, repo *database.Repository, mid string) (M
 		return m, errors.Wrapf(err, "building query: %v", args)
 	}
 
-	if err := repo.DB.SelectContext(ctx, &m, q, mid); err != nil {
+	if err := repo.SelectContext(ctx, &m, q, mid); err != nil {
 		if err == sql.ErrNoRows {
 			return m, ErrNotFound
 		}
@@ -69,7 +69,7 @@ func RetrieveById(ctx context.Context, repo *database.Repository, mid string) (M
 	return m, nil
 }
 
-func Retrieve(ctx context.Context, repo *database.Repository, uid, tid string) (MembershipCopy, error) {
+func Retrieve(ctx context.Context, repo database.Storer, uid, tid string) (MembershipCopy, error) {
 	var m MembershipCopy
 
 	if _, err := uuid.Parse(uid); err != nil {
@@ -79,7 +79,7 @@ func Retrieve(ctx context.Context, repo *database.Repository, uid, tid string) (
 		return m, ErrInvalidID
 	}
 
-	stmt := repo.SQ.Select(
+	stmt := repo.Select(
 		"membership_id",
 		"user_id",
 		"team_id",
@@ -95,7 +95,7 @@ func Retrieve(ctx context.Context, repo *database.Repository, uid, tid string) (
 		return m, errors.Wrapf(err, "building query: %v", args)
 	}
 
-	err = repo.DB.QueryRowxContext(ctx, q, uid, tid).StructScan(&m)
+	err = repo.QueryRowxContext(ctx, q, uid, tid).StructScan(&m)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Println(err)
@@ -106,12 +106,12 @@ func Retrieve(ctx context.Context, repo *database.Repository, uid, tid string) (
 	return m, nil
 }
 
-func Update(ctx context.Context, repo *database.Repository, mid string, update UpdateMembershipCopy) error {
+func Update(ctx context.Context, repo database.Storer, mid string, update UpdateMembershipCopy) error {
 	if _, err := RetrieveById(ctx, repo, mid); err != nil {
 		return err
 	}
 
-	stmt := repo.SQ.Update(
+	stmt := repo.Update(
 		"memberships",
 	).SetMap(map[string]interface{}{
 		"role":       update.Role,
@@ -125,11 +125,11 @@ func Update(ctx context.Context, repo *database.Repository, mid string, update U
 	return nil
 }
 
-func Delete(ctx context.Context, repo *database.Repository, mid string) error {
+func Delete(ctx context.Context, repo database.Storer, mid string) error {
 	if _, err := uuid.Parse(mid); err != nil {
 		return ErrInvalidID
 	}
-	stmt := repo.SQ.Delete(
+	stmt := repo.Delete(
 		"memberships",
 	).Where(sq.Eq{"membership_id": mid})
 

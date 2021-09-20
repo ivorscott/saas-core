@@ -28,8 +28,7 @@ type Projects struct {
 }
 
 func (p *Projects) List(w http.ResponseWriter, r *http.Request) error {
-	uid := p.auth0.GetUserById(r)
-
+	uid := p.auth0.UserByID(r.Context())
 	list, err := projects.List(r.Context(), p.repo, uid)
 	if err != nil {
 		return err
@@ -39,7 +38,7 @@ func (p *Projects) List(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
-	uid := p.auth0.GetUserById(r)
+	uid := p.auth0.UserByID(r.Context())
 	pid := chi.URLParam(r, "pid")
 
 	opr, err := projects.Retrieve(r.Context(), p.repo, pid, uid)
@@ -65,7 +64,7 @@ func (p *Projects) Retrieve(w http.ResponseWriter, r *http.Request) error {
 func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
 	var np projects.NewProject
 
-	uid := p.auth0.GetUserById(r)
+	uid := p.auth0.UserByID(r.Context())
 
 	if err := web.Decode(r, &np); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -123,7 +122,7 @@ func (p *Projects) Create(w http.ResponseWriter, r *http.Request) error {
 func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 	var update projects.UpdateProject
 
-	uid := p.auth0.GetUserById(r)
+	uid := p.auth0.UserByID(r.Context())
 
 	pid := chi.URLParam(r, "pid")
 
@@ -174,7 +173,7 @@ func (p *Projects) Update(w http.ResponseWriter, r *http.Request) error {
 
 func (p *Projects) Delete(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
-	uid := p.auth0.GetUserById(r)
+	uid := p.auth0.UserByID(r.Context())
 
 	if _, err := projects.Retrieve(r.Context(), p.repo, pid, uid); err != nil {
 		_, err := projects.RetrieveShared(r.Context(), p.repo, pid, uid)

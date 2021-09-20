@@ -16,7 +16,7 @@ func (c *HealthCheck) Health(w http.ResponseWriter, r *http.Request) error {
 		Status string `json:"status"`
 	}
 
-	if err := database.StatusCheck(r.Context(), c.repo.DB); err != nil {
+	if err := database.StatusCheck(r.Context(), c.repo); err != nil {
 		health.Status = "db not ready"
 		return web.Respond(r.Context(), w, health, http.StatusInternalServerError)
 	}
