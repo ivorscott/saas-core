@@ -1,9 +1,0 @@
-{
-  "name": "DevPie Client M2M",
-  "description": "Authorized for DevPieClient Backend. Used to update user app_metadata upon first login.",
-  "logo_uri": "https://devpieclient.s3.amazonaws.com/brand/devpie-gravatar.png",
-  "app_type": "non_interactive",
-  "grant_types": [
-    "client_credentials"
-  ]
-}

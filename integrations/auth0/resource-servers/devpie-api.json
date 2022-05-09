@@ -1,6 +1,0 @@
-{
-  "name": "DevPie Client Backend",
-  "identifier": "https://devpie-dev.client/api",
-  "signing_alg": "RS256",
-  "skip_consent_for_verifiable_first_party_clients": true
-}

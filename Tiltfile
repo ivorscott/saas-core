@@ -7,8 +7,8 @@ k8s_yaml([
     'manifests/secrets.yaml',
 ])
 
-docker_build('devpies/mic-users:latest', 'core/users',
+docker_build('devpies/users:latest', 'users',
 build_args=read_json('.gitpass'), target='dev')
 
-docker_build('devpies/mic-projects:latest', 'core/projects',
+docker_build('devpies/projects:latest', 'projects',
 build_args=read_json('.gitpass'), target='dev')
