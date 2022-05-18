@@ -1,11 +1,16 @@
-package main
+package webapp
 
-import "net/http"
+import (
+	"go.uber.org/zap"
+	"net/http"
+)
 
-func Login(w http.ResponseWriter, r *http.Request) {}
+func (app *WebApp) Login(w http.ResponseWriter, r *http.Request) {
+	if err := app.render.Template(w, r, "login", nil); err != nil {
+		app.logger.Error("", zap.Error(err))
+	}
+}
 
-func Logout(w http.ResponseWriter, r *http.Request) {}
+func (app *WebApp) Logout(w http.ResponseWriter, r *http.Request) {}
 
-func Dashboard(w http.ResponseWriter, r *http.Request) {}
-
-func WsEndpoint(w http.ResponseWriter, r *http.Request) {}
+func (app *WebApp) Dashboard(w http.ResponseWriter, r *http.Request) {}

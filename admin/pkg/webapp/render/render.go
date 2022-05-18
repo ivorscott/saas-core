@@ -1,11 +1,11 @@
 package render
 
 import (
-	"embed"
 	"fmt"
 	"github.com/devpies/core/admin/pkg/config"
 	"go.uber.org/zap"
 	"html/template"
+	"io/fs"
 	"net/http"
 	"strings"
 )
@@ -13,9 +13,11 @@ import (
 type Render struct {
 	logger     *zap.Logger
 	cfg        config.Config
-	cache      map[string]*template.Template
-	templateFS embed.FS
+	cache      templateCache
+	templateFS fs.FS
 }
+
+type templateCache map[string]*template.Template
 
 type templateData struct {
 	StringMap       map[string]string
@@ -29,17 +31,18 @@ type templateData struct {
 // functions for templates.
 var functions = template.FuncMap{}
 
-func New(logger *zap.Logger, config config.Config, templateCache map[string]*template.Template, templateFS embed.FS) *Render {
+func New(logger *zap.Logger, config config.Config, templateFS fs.FS) *Render {
+	cache := make(templateCache)
 	return &Render{
 		logger:     logger,
 		cfg:        config,
-		cache:      templateCache,
+		cache:      cache,
 		templateFS: templateFS,
 	}
 }
 
-func (re *Render) addDefaultData(td *templateData, r *http.Request) *templateData {
-	td.API = re.cfg.Web.APIAddress
+func (re *Render) AddDefaultData(td *templateData, r *http.Request) *templateData {
+	td.API = re.cfg.Web.AppBackend
 	td.IsAuthenticated = 0
 	td.UserID = 0
 
@@ -51,9 +54,9 @@ func (re *Render) addDefaultData(td *templateData, r *http.Request) *templateDat
 	return td
 }
 
-// renderTemplate renders a template for the application.
+// Template renders a template for the application.
 // During development, renderTemplate will never use the template cache.
-func (re *Render) renderTemplate(
+func (re *Render) Template(
 	w http.ResponseWriter,
 	r *http.Request,
 	page string,
@@ -63,7 +66,7 @@ func (re *Render) renderTemplate(
 	var err error
 
 	// The template to render.
-	tmpl := fmt.Sprintf("templates/%s.page.gohtml", page)
+	tmpl := fmt.Sprintf("%s.page.gohtml", page)
 
 	if val, ok := re.cache[tmpl]; ok {
 		t = val
@@ -78,7 +81,7 @@ func (re *Render) renderTemplate(
 		td = &templateData{}
 	}
 
-	td = re.addDefaultData(td, r)
+	td = re.AddDefaultData(td, r)
 	err = t.Execute(w, td)
 	if err != nil {
 		re.logger.Error("", zap.Error(err))
@@ -96,14 +99,14 @@ func (re *Render) parseTemplate(partials []string, page, tmpl string) (*template
 	// Retrieve partial templates if they exist.
 	if len(partials) > 0 {
 		for i, x := range partials {
-			partials[i] = fmt.Sprintf("templates/%s.partial.gohtml", x)
+			partials[i] = fmt.Sprintf("%s.partial.gohtml", x)
 		}
 
 		t, err = template.New(fmt.Sprintf("%s.page.gohtml", page)).Funcs(functions).
-			ParseFS(re.templateFS, "templates/base.layout.gohtml", strings.Join(partials, ","), tmpl)
+			ParseFS(re.templateFS, "base.layout.gohtml", strings.Join(partials, ","), tmpl)
 	} else {
 		t, err = template.New(fmt.Sprintf("%s.page.gohtml", page)).Funcs(functions).
-			ParseFS(re.templateFS, "templates/base.layout.gohtml", tmpl)
+			ParseFS(re.templateFS, "base.layout.gohtml", tmpl)
 	}
 
 	re.cache[tmpl] = t

@@ -2,7 +2,7 @@ package main
 
 import (
 	"embed"
-	"github.com/devpies/core/admin/pkg/render"
+	"github.com/devpies/core/admin/pkg/webapp"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 	"io/fs"
@@ -10,28 +10,28 @@ import (
 	"os"
 )
 
-// API configures the application routes, middleware and handlers.
+// API composes routes, middleware and handlers.
 func API(
 	shutdown chan os.Signal,
 	logger *zap.Logger,
-	render *render.Render,
-	contentFS embed.FS,
+	staticFS embed.FS,
+	app *webapp.WebApp,
 ) http.Handler {
 	mux := chi.NewRouter()
 
-	swagger, _ := fs.Sub(content, "te/swagger-ui")
-
-	fileServer := http.FileServer(http.Dir("./static"))
-	mux.Handle("/static/*", http.StripPrefix("/static", fileServer))
-
-	mux.Get("/", Login)
-	mux.Get("/logout", Logout)
-	mux.Get("/ws", WsEndpoint)
+	mux.Get("/", app.Login)
+	mux.Get("/logout", app.Logout)
 
 	mux.Route("/admin", func(mux chi.Router) {
 		mux.Use(withAuth)
-		mux.Get("/", Dashboard)
+		mux.Get("/", app.Dashboard)
 	})
+
+	assets, err := fs.Sub(staticFS, "static/assets")
+	if err != nil {
+		logger.Fatal("", zap.Error(err))
+	}
+	mux.Handle("/static/*", http.StripPrefix("/static", http.FileServer(http.FS(assets))))
 
 	return mux
 }

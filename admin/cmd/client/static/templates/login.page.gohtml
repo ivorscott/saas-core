@@ -1,0 +1,33 @@
+{{template "base" .}}
+
+{{define "title"}}
+
+{{end}}
+
+{{define "content"}}
+    <div class="alert alert-danger text-center d-none" id="messages"></div>
+
+    <form id="login-form" name="login-form" action="" method="post"
+          class="d-block needs-validation login-form" autocomplete="off" novalidate>
+
+        <h3 class="mt-2 text-center mb-3">Login</h3>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required autocomplete="email-new">
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required autocomplete="password-new">
+        </div>
+
+        <a id="pay-button" href="javascript:void(0)" class="btn btn-primary" onclick="val()">Login In</a>
+    </form>
+{{end}}
+
+{{define "js"}}
+    <script>
+        let messages = document.getElementById("messages");
+        function val() {}
+    </script>
+{{end}}

@@ -8,3 +8,4 @@ secrets.zip
 main
 secrets
 .data
+bin/*

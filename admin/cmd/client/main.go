@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/devpies/core/admin/pkg/config"
-	"github.com/devpies/core/admin/pkg/render"
-	"html/template"
+	"github.com/devpies/core/admin/pkg/webapp"
+	"github.com/devpies/core/admin/pkg/webapp/render"
+	"go.uber.org/zap"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,13 +22,11 @@ import (
 	"github.com/devpies/core/pkg/log"
 )
 
-//go:embed static/templates
-var templateFS embed.FS
+//go:embed static
+var staticFS embed.FS
 var cfg config.Config
 var logPath = ".log/out.log"
 var session *scs.SessionManager
-
-type templateCache map[string]*template.Template
 
 func main() {
 	err := run()
@@ -59,15 +59,19 @@ func run() error {
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+	templateFS, err := fs.Sub(staticFS, "static/templates")
 
-	templateCache := make(map[string]*template.Template)
-	templateEngine := render.New(logger, cfg, templateCache, templateFS)
+	if err != nil {
+		logger.Error("", zap.Error(err))
+	}
+	renderEngine := render.New(logger, cfg, templateFS)
+	app := webapp.New(logger, cfg, renderEngine)
 
 	srv := &http.Server{
-		Addr:         "0.0.0.0:8080",
+		Addr:         cfg.Web.AppFrontend,
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      API(shutdown, logger, templateEngine, templateFS),
+		Handler:      API(shutdown, logger, staticFS, app),
 	}
 	serverErrors := make(chan error, 1)
 
