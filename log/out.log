@@ -1,0 +1,79 @@
+{"level":"fatal","ts":1652144846.5049229,"caller":"admin/main.go:48","msg":"listen tcp 0.0.0.0:8080: bind: address already in use"}
+{"level":"info","ts":1652888245.560996,"caller":"api/main.go:65","msg":"starting api server"}
+{"level":"info","ts":1652909681.9828322,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910055.425727,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910091.558732,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910119.6499178,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910231.214423,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910263.0568728,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910280.6285179,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910284.026279,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910304.714154,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910311.437192,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910329.952529,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910369.072852,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910388.550121,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910414.820229,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910456.266753,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652910482.535139,"caller":"client/main.go:73","msg":"Starting server..."}
+{"level":"error","ts":1652910487.3640718,"caller":"webapp/handlers.go:10","msg":"","error":"template: pattern matches no files: `templates/base.layout.gohtml`"}
+{"level":"info","ts":1652910688.8111172,"caller":"client/main.go:78","msg":"Starting server..."}
+{"level":"error","ts":1652910691.53308,"caller":"webapp/handlers.go:10","msg":"","error":"template: pattern matches no files: `templates/base.layout.gohtml`"}
+{"level":"info","ts":1652910765.904633,"caller":"client/main.go:79","msg":"Starting server..."}
+{"level":"info","ts":1652910796.746309,"caller":"client/main.go:79","msg":"Starting server..."}
+{"level":"info","ts":1652910839.191749,"caller":"client/main.go:79","msg":"Starting server..."}
+{"level":"info","ts":1652910950.1546319,"caller":"client/main.go:79","msg":"Starting server..."}
+{"level":"error","ts":1652910966.4792662,"caller":"webapp/handlers.go:10","msg":"","error":"template: pattern matches no files: `base.layout.gohtml`"}
+{"level":"info","ts":1652910982.842518,"caller":"client/main.go:79","msg":"Starting server..."}
+{"level":"info","ts":1652910987.807724,"caller":"client/main.go:87","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652910989.948641,"caller":"client/main.go:79","msg":"Starting server..."}
+{"level":"info","ts":1652911303.989522,"caller":"client/main.go:79","msg":"Starting server..."}
+{"level":"info","ts":1652911331.294967,"caller":"client/main.go:87","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652978462.7945018,"caller":"admin-api/main.go:71","msg":"Starting server..."}
+{"level":"info","ts":1652978499.603114,"caller":"admin-api/main.go:71","msg":"Starting server..."}
+{"level":"info","ts":1652978569.2838569,"caller":"admin-api/main.go:71","msg":"Starting server..."}
+{"level":"info","ts":1652979292.0326679,"caller":"admin-api/main.go:71","msg":"Starting server..."}
+{"level":"info","ts":1652979295.829736,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652979429.532956,"caller":"admin-api/main.go:71","msg":"Starting server..."}
+{"level":"info","ts":1652979429.5945861,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652979430.8416839,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652979439.563861,"caller":"admin-api/main.go:71","msg":"Starting server..."}
+{"level":"info","ts":1652979477.468696,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652979554.956105,"caller":"admin-api/main.go:71","msg":"Starting server..."}
+{"level":"info","ts":1652979682.409733,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652982528.799294,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652982580.335745,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652982586.385927,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652982599.759712,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652982601.5512042,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652982645.281976,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652982654.160393,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652982655.525321,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652982689.056753,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652982883.86163,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652982886.140793,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652983044.7281432,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652983259.6689699,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652983268.3551948,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652983299.549686,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652983303.2653599,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652983318.2884622,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652983433.442034,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652983459.169514,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652983513.64508,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652983514.0419378,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652983534.7172968,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652983556.117258,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652983560.8060448,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652983769.265294,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652983812.659401,"caller":"admin-api/main.go:81","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652983814.892998,"caller":"admin-api/main.go:73","msg":"Starting server..."}
+{"level":"info","ts":1652983820.708461,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652983891.9560692,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652983894.172768,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652983911.1283772,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652983913.635167,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652983923.031575,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652983924.830938,"caller":"admin-client/main.go:80","msg":"Starting server..."}
+{"level":"info","ts":1652984074.2130141,"caller":"admin-client/main.go:88","msg":"Start shutdown due to interrupt signal"}
+{"level":"info","ts":1652984077.004093,"caller":"admin-api/main.go:81","msg":"Start shutdown due to interrupt signal"}
