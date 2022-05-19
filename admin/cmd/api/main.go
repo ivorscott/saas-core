@@ -5,33 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ardanlabs/conf"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/devpies/core/admin/pkg/config"
 	"github.com/devpies/core/admin/pkg/handler"
 	"github.com/devpies/core/admin/pkg/service"
+	"github.com/devpies/core/pkg/log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
-
-	"github.com/devpies/core/pkg/log"
 )
-
-// Config contains application configuration with good defaults.
-type config struct {
-	Web struct {
-		Address         string        `conf:"default:localhost:4000"`
-		Debug           string        `conf:"default:localhost:6060"`
-		Production      bool          `conf:"default:false"`
-		ReadTimeout     time.Duration `conf:"default:5s"`
-		WriteTimeout    time.Duration `conf:"default:5s"`
-		ShutdownTimeout time.Duration `conf:"default:5s"`
-		APIAddress      string        `conf:"default:http://localhost:4001"`
-	}
-	Stripe struct {
-		Key    string `conf:"default:none"`
-		Secret string `conf:"default:none"`
-	}
-}
 
 var logPath = ".log/out.log"
 
@@ -44,7 +28,7 @@ func main() {
 
 func run() error {
 	var (
-		cfg config
+		cfg config.Config
 		err error
 	)
 
@@ -63,11 +47,17 @@ func run() error {
 		return fmt.Errorf("error parsing config: %w", err)
 	}
 
+	awsCfg, err := awsConfig.LoadDefaultConfig(context.Background())
+	if err != nil {
+		return err
+	}
+
+	cognitoClient := cip.NewFromConfig(awsCfg)
+	authService := service.NewAuthService(logger, cfg, cognitoClient)
+	authHandler := handler.NewAuth(logger, authService)
+
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-
-	authService := service.NewAuthService(logger)
-	authHandler := handler.NewAuth(logger, authService)
 
 	srv := &http.Server{
 		Addr:         "0.0.0.0:8080",

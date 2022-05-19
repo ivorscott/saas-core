@@ -13,4 +13,12 @@ type Config struct {
 		AppFrontend     string        `conf:"default:localhost:4000"`
 		AppBackend      string        `conf:"default:http://localhost:4001"`
 	}
+	Cognito struct {
+		AppClientID      string `conf:"default:none"`
+		UserPoolClientID string `conf:"default:none"`
+	}
+	Stripe struct {
+		Key    string `conf:"default:none"`
+		Secret string `conf:"default:none"`
+	}
 }
