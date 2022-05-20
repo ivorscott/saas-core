@@ -2,18 +2,18 @@ package handler
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+	"github.com/devpies/core/pkg/web"
 	"net/http"
 
 	"go.uber.org/zap"
 
 	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-
-	"github.com/devpies/core/internal/admin/model"
-	"github.com/devpies/core/pkg/web"
 )
 
 type authService interface {
-	Authenticate(ctx context.Context, credentials model.AuthCredentials) (*cip.AdminInitiateAuthOutput, error)
+	Authenticate(ctx context.Context, email, password string) (*cip.AdminInitiateAuthOutput, error)
+	RespondToNewPasswordRequiredChallenge(ctx context.Context, email, password string, session string) (*cip.AdminRespondToAuthChallengeOutput, error)
 }
 
 type AuthHandler struct {
@@ -29,38 +29,68 @@ func NewAuth(logger *zap.Logger, service authService) *AuthHandler {
 }
 
 // AuthenticateCredentials handles email and password values from the admin login form.
-func (a *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Request) {
-	var (
-		credentials model.AuthCredentials
-		err         error
-	)
+func (ah *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Request) error {
+	var err error
 
-	err = web.Decode(r, &credentials)
-	if err != nil {
-		a.logger.Error("", zap.Error(err))
+	var payload struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
-	output, err := a.service.Authenticate(r.Context(), credentials)
+	err = web.Decode(r, &payload)
 	if err != nil {
-		a.logger.Error("authenticate failed", zap.Error(err))
+		return web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	output, err := ah.service.Authenticate(r.Context(), payload.Email, payload.Password)
+	if err != nil {
+		return web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	if output.AuthenticationResult != nil {
+		var resp = struct {
+			IDToken *string `json:"idToken"`
+		}{
+			IDToken: output.AuthenticationResult.IdToken,
+		}
+		return web.Respond(r.Context(), w, resp, http.StatusOK)
 	}
 
 	var resp = struct {
-		AccessToken  *string `json:"accessToken"`
-		ExpiresIn    int32   `json:"expiresIn"`
-		IDToken      *string `json:"idToken"`
-		RefreshToken *string `json:"refreshToken"`
-		TokenType    *string `json:"tokenType"`
+		ChallengeName types.ChallengeNameType `json:"challengeName"`
+		Session       *string                 `json:"session"`
 	}{
-		AccessToken:  output.AuthenticationResult.AccessToken,
-		ExpiresIn:    output.AuthenticationResult.ExpiresIn,
-		IDToken:      output.AuthenticationResult.IdToken,
-		RefreshToken: output.AuthenticationResult.RefreshToken,
-		TokenType:    output.AuthenticationResult.TokenType,
+		ChallengeName: output.ChallengeName,
+		Session:       output.Session,
 	}
 
-	err = web.Respond(r.Context(), w, resp, http.StatusOK)
-	if err != nil {
-		a.logger.Error("", zap.Error(err))
+	return web.Respond(r.Context(), w, resp, http.StatusOK)
+}
+
+func (ah *AuthHandler) SetupNewUserWithSecurePassword(w http.ResponseWriter, r *http.Request) error {
+	var err error
+
+	var payload struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		Session  string `json:"session"`
 	}
+
+	err = web.Decode(r, &payload)
+	if err != nil {
+		return web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	output, err := ah.service.RespondToNewPasswordRequiredChallenge(r.Context(), payload.Email, payload.Password, payload.Session)
+	if err != nil {
+		return web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	var resp = struct {
+		IDToken *string `json:"idToken"`
+	}{
+		IDToken: output.AuthenticationResult.IdToken,
+	}
+
+	return web.Respond(r.Context(), w, resp, http.StatusOK)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"net/http"
 	"os"
 	"os/signal"
@@ -30,16 +31,15 @@ func main() {
 
 func run() error {
 	var (
-		cfg admin.Config
-		err error
+		cfg    admin.APIConfig
+		logger *zap.Logger
+		err    error
 	)
 
-	logger, Sync := log.NewLoggerOrPanic(logPath)
-	defer Sync()
-
-	if err = conf.Parse(os.Args[1:], "API", &cfg); err != nil {
+	if err = conf.Parse(os.Args[1:], "ADMIN", &cfg); err != nil {
 		if err == conf.ErrHelpWanted {
-			usage, err := conf.Usage("API", &cfg)
+			var usage string
+			usage, err = conf.Usage("ADMIN", &cfg)
 			if err != nil {
 				return fmt.Errorf("error generating config usage: %w", err)
 			}
@@ -48,6 +48,19 @@ func run() error {
 		}
 		return fmt.Errorf("error parsing config: %w", err)
 	}
+
+	if cfg.Web.Production {
+		logger, err = log.NewProductionLogger(logPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		logger, err = zap.NewDevelopment()
+		if err != nil {
+			return err
+		}
+	}
+	defer logger.Sync()
 
 	awsCfg, err := awsConfig.LoadDefaultConfig(context.Background())
 	if err != nil {

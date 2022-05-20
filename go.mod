@@ -11,6 +11,7 @@ require (
 	github.com/devpies/core/pkg/log v0.0.0-20220519154201-382d963b2ca0
 	github.com/devpies/core/pkg/web v0.0.0-20220519154201-382d963b2ca0
 	github.com/go-chi/chi/v5 v5.0.7
+	github.com/go-chi/cors v1.2.1
 	go.uber.org/zap v1.21.0
 )
 
@@ -33,3 +34,7 @@ require (
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 )
+
+replace github.com/devpies/core/pkg/web v0.0.0-20220519154201-382d963b2ca0 => ./pkg/web
+
+replace github.com/devpies/core/pkg/log v0.0.0-20220519154201-382d963b2ca0 => ./pkg/log

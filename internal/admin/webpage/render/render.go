@@ -13,7 +13,7 @@ import (
 
 type Render struct {
 	logger     *zap.Logger
-	cfg        admin.Config
+	cfg        admin.ClientConfig
 	cache      templateCache
 	templateFS fs.FS
 }
@@ -32,7 +32,7 @@ type TemplateData struct {
 // functions for templates.
 var functions = template.FuncMap{}
 
-func New(logger *zap.Logger, config admin.Config, templateFS fs.FS) *Render {
+func New(logger *zap.Logger, config admin.ClientConfig, templateFS fs.FS) *Render {
 	cache := make(templateCache)
 	return &Render{
 		logger:     logger,

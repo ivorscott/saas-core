@@ -13,16 +13,19 @@ import (
 	"go.uber.org/zap"
 )
 
-// Handler represents a custom http handler that returns an error.
-type Handler func(http.ResponseWriter, *http.Request) error
-
-// Web represents a new application.
-type Web struct {
+// WebApp represents a new application.
+type WebApp struct {
 	log      *zap.Logger
 	mux      *chi.Mux
 	mw       []Middleware
 	shutdown chan os.Signal
 }
+
+// Handler represents a custom http handler that returns an error.
+type Handler func(http.ResponseWriter, *http.Request) error
+
+// Middleware runs some code before and/or after another Handler.
+type Middleware func(Handler) Handler
 
 // ctxKey represents the type of value for the context key.
 type ctxKey int
@@ -37,8 +40,8 @@ type Values struct {
 }
 
 // New returns a new Web framework equipped with built-in middleware required for every handler.
-func New(router *chi.Mux, shutdown chan os.Signal, logger *zap.Logger, middleware ...Middleware) *Web {
-	return &Web{
+func New(router *chi.Mux, shutdown chan os.Signal, logger *zap.Logger, middleware ...Middleware) *WebApp {
+	return &WebApp{
 		log:      logger,
 		mux:      router,
 		mw:       middleware,
@@ -46,8 +49,20 @@ func New(router *chi.Mux, shutdown chan os.Signal, logger *zap.Logger, middlewar
 	}
 }
 
+// wrapMiddleware creates new handler by wrapping middleware around a handler.
+func wrapMiddleware(mw []Middleware, handler Handler) Handler {
+	// Loop backwards through the middleware list invoking each one.
+	for i := len(mw) - 1; i >= 0; i-- {
+		h := mw[i]
+		if h != nil {
+			handler = h(handler)
+		}
+	}
+	return handler
+}
+
 // Handle converts our custom handler to the standard library Handler.
-func (web *Web) Handle(method string, url string, h Handler) {
+func (web *WebApp) Handle(method string, url string, h Handler) {
 	h = wrapMiddleware(web.mw, h)
 
 	fn := func(w http.ResponseWriter, r *http.Request) {
@@ -72,12 +87,12 @@ func (web *Web) Handle(method string, url string, h Handler) {
 }
 
 // ServeHTTP extends original mux ServeHTTP method.
-func (web *Web) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (web *WebApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	web.mux.ServeHTTP(w, r)
 }
 
 // SignalShutdown sends application shutdown signal.
-func (web *Web) SignalShutdown() {
+func (web *WebApp) SignalShutdown() {
 	web.log.Error("integrity issue: shutting down service")
 	web.shutdown <- syscall.SIGSTOP
 }

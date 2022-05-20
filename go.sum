@@ -34,12 +34,10 @@ github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZx
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/devpies/core/pkg/log v0.0.0-20220519154201-382d963b2ca0 h1:gS8YonEsZlu0XcOU9AG/LBiLU4dnWWVu4MWibMCCoYQ=
-github.com/devpies/core/pkg/log v0.0.0-20220519154201-382d963b2ca0/go.mod h1:D89uCM61ABDy+NhAoTarVBiJ0gKdJH4TLclteCUyg74=
-github.com/devpies/core/pkg/web v0.0.0-20220519154201-382d963b2ca0 h1:trdBhpPRrr1rGO/63pNoxtGr9tOhc68/pCXul2t+/0Y=
-github.com/devpies/core/pkg/web v0.0.0-20220519154201-382d963b2ca0/go.mod h1:6MtgP+/N5PQ85DOobvR6k7chmnJMfTVJTTItvzASKSo=
 github.com/go-chi/chi/v5 v5.0.7 h1:rDTPXLDHGATaeHvVlLcR4Qe0zftYethFucbjVQ1PxU8=
 github.com/go-chi/chi/v5 v5.0.7/go.mod h1:DslCQbL2OYiznFReuXYUmQ2hGd1aDpCnlMNITLSKoi8=
+github.com/go-chi/cors v1.2.1 h1:xEC8UT3Rlp2QuWNEr4Fs/c2EAGVKBwy/1vHx3bppil4=
+github.com/go-chi/cors v1.2.1/go.mod h1:sSbTewc+6wYHBBCW7ytsFSn836hqM7JxpglAy2Vzc58=
 github.com/go-playground/locales v0.14.0 h1:u50s323jtVGugKlcYeyzC0etD1HifMjqmJqb8WugfUU=
 github.com/go-playground/locales v0.14.0/go.mod h1:sawfccIbzZTqEDETgFXqTho0QybSa7l++s0DH+LDiLs=
 github.com/go-playground/universal-translator v0.18.0 h1:82dyy6p4OuJq4/CByFNOn/jYrnRPArHwAcmLoJZxyho=

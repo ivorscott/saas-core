@@ -9,19 +9,20 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-// ErrInvalidLogPath represents an invalid log destination
+// ErrInvalidLogPath represents an invalid log destination.
 var ErrInvalidLogPath = errors.New("invalid log path")
 
-func NewLoggerOrPanic(logPath string) (*zap.Logger, func() error) {
+// NewProductionLogger creates a zap production logger with lumberjack logger.
+func NewProductionLogger(logPath string) (*zap.Logger, error) {
 	if logPath == "" {
-		panic(ErrInvalidLogPath)
-	}
-	// fail immediately if we cannot log to file
-	if _, err := os.OpenFile(logPath, os.O_RDONLY|os.O_CREATE, 0600); err != nil {
-		panic(err)
+		return nil, ErrInvalidLogPath
 	}
 
-	// log retention policy
+	if _, err := os.OpenFile(logPath, os.O_RDONLY|os.O_CREATE, 0600); err != nil {
+		return nil, err
+	}
+
+	// Create log retention policy with lumberjack logger.
 	lj := &lumberjack.Logger{
 		Filename:   logPath,
 		MaxSize:    1000,
@@ -30,15 +31,13 @@ func NewLoggerOrPanic(logPath string) (*zap.Logger, func() error) {
 		Compress:   true,
 	}
 
-	// integrate lumberjack logger with zap
 	ws := zapcore.AddSync(lj)
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoder := zapcore.NewJSONEncoder(encoderConfig)
 
 	core := zapcore.NewTee(
-		zapcore.NewCore(encoder, ws, zapcore.DebugLevel),        // log to file
-		zapcore.NewCore(encoder, os.Stdout, zapcore.DebugLevel), // log to stdout
+		zapcore.NewCore(encoder, ws, zapcore.DebugLevel),
 	)
 	logger := zap.New(core, zap.AddCaller())
-	return logger, logger.Sync
+	return logger, nil
 }
