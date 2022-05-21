@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"github.com/alexedwards/scs/v2"
 	"github.com/ardanlabs/conf"
-	"github.com/devpies/core/internal/adminapi/webpage"
-	"github.com/devpies/core/internal/adminapi/webpage/render"
+	"github.com/devpies/core/internal/adminclient/config"
+	"github.com/devpies/core/internal/adminclient/render"
+	"github.com/devpies/core/internal/adminclient/webpage"
 	"github.com/devpies/core/pkg/log"
 	"go.uber.org/zap"
 	"io/fs"
@@ -15,20 +16,7 @@ import (
 	"time"
 )
 
-type Config struct {
-	Web struct {
-		DebugPort       string        `conf:"default:6060"`
-		Production      bool          `conf:"default:false"`
-		ReadTimeout     time.Duration `conf:"default:5s"`
-		WriteTimeout    time.Duration `conf:"default:5s"`
-		ShutdownTimeout time.Duration `conf:"default:5s"`
-		Backend         string        `conf:"default:localhost:4001"`
-		BackendPort     string        `conf:"default:4001"`
-		FrontendPort    string        `conf:"default:4000"`
-	}
-}
-
-var cfg Config
+var cfg config.Config
 var logPath = "log/out.log"
 var session *scs.SessionManager
 

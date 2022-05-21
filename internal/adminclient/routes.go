@@ -1,7 +1,7 @@
-package main
+package adminclient
 
 import (
-	"github.com/devpies/core/internal/admin-api/webpage"
+	"github.com/devpies/core/internal/adminclient/webpage"
 	"github.com/go-chi/chi/v5"
 	"io/fs"
 	"net/http"

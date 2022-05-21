@@ -2,18 +2,18 @@ package render
 
 import (
 	"fmt"
+	"github.com/devpies/core/internal/adminclient/config"
 	"html/template"
 	"io/fs"
 	"net/http"
 	"strings"
 
-	"github.com/devpies/core/internal/adminapi"
 	"go.uber.org/zap"
 )
 
 type Render struct {
 	logger     *zap.Logger
-	cfg        adminapi.ClientConfig
+	cfg        config.Config
 	cache      templateCache
 	templateFS fs.FS
 }
@@ -32,7 +32,7 @@ type TemplateData struct {
 // functions for templates.
 var functions = template.FuncMap{}
 
-func New(logger *zap.Logger, config adminapi.ClientConfig, templateFS fs.FS) *Render {
+func New(logger *zap.Logger, config config.Config, templateFS fs.FS) *Render {
 	cache := make(templateCache)
 	return &Render{
 		logger:     logger,

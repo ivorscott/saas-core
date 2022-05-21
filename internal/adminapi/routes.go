@@ -1,4 +1,4 @@
-package main
+package adminapi
 
 import (
 	"github.com/devpies/core/pkg/web"

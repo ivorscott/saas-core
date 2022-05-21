@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 
+	"github.com/devpies/core/internal/adminapi/config"
+
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/devpies/core/internal/admin-api"
 	"go.uber.org/zap"
 )
 
 // AuthService is responsible for managing authentication with Cognito.
 type AuthService struct {
 	logger        *zap.Logger
-	config        admin_api.APIConfig
+	config        config.Config
 	cognitoClient cognitoClient
 }
 
@@ -31,7 +32,7 @@ type cognitoClient interface {
 var ErrMissingCognito = errors.New("missing cognito context")
 
 // NewAuthService creates a new instance of AuthService.
-func NewAuthService(logger *zap.Logger, config admin_api.APIConfig, cognitoClient cognitoClient) *AuthService {
+func NewAuthService(logger *zap.Logger, config config.Config, cognitoClient cognitoClient) *AuthService {
 	return &AuthService{
 		logger:        logger,
 		config:        config,

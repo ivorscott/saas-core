@@ -1,6 +1,6 @@
 .idea
 .env
 .DS_Store
-.data
+data
 bin
 log

@@ -4,8 +4,8 @@ include .env
 
 admin-client: ;@ ## Run admin frontend with live reload.
 	@CompileDaemon \
-	-build="go build -o ./bin/admin-client ./cmd/admin-client" \
-	-command="./bin/admin-client \
+	-build="go build -o ./bin/adminclient ./cmd/adminclient" \
+	-command="./bin/adminclient \
 	--web-backend=${ADMIN_WEB_BACKEND} \
 	--web-backend-port=${ADMIN_WEB_BACKEND_PORT} \
 	--web-frontend-port=${ADMIN_WEB_FRONTEND_PORT}" \
@@ -15,8 +15,8 @@ admin-client: ;@ ## Run admin frontend with live reload.
 
 admin-api: ;@ ## Run admin backend with live reload.
 	@CompileDaemon \
-	-build="go build -o ./bin/admin-api ./cmd/admin-api" \
-	-command="./bin/admin-api \
+	-build="go build -o ./bin/adminapi ./cmd/adminapi" \
+	-command="./bin/adminapi \
 	--web-backend=${ADMIN_WEB_BACKEND} \
 	--web-backend-port=${ADMIN_WEB_BACKEND_PORT} \
 	--web-frontend-port=${ADMIN_WEB_FRONTEND_PORT} \
@@ -25,6 +25,9 @@ admin-api: ;@ ## Run admin backend with live reload.
 	-log-prefix=false
 
 .PHONY: admin-api
+
+db-sessions:  ;@ ## Enter user sessions database.
+	pgcli postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)
 
 lint: ;@ ## Run linter.
 	@golangci-lint run

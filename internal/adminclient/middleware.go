@@ -1,4 +1,4 @@
-package main
+package adminclient
 
 import "net/http"
 

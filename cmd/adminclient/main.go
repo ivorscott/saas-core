@@ -2,14 +2,14 @@ package main
 
 import (
 	"embed"
-	app "github.com/devpies/core/internal/admin-client"
+	"github.com/devpies/core/internal/adminclient"
 )
 
 //go:embed static
 var staticFS embed.FS
 
 func main() {
-	err := app.Run(staticFS)
+	err := adminclient.Run(staticFS)
 	if err != nil {
 		panic(err)
 	}
