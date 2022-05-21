@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/devpies/core/internal/admin/webpage"
+	"github.com/devpies/core/internal/admin-api/webpage"
 	"github.com/go-chi/chi/v5"
 	"io/fs"
 	"net/http"

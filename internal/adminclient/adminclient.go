@@ -1,38 +1,38 @@
-package main
+package adminclient
 
 import (
 	"embed"
 	"fmt"
+	"github.com/alexedwards/scs/v2"
+	"github.com/ardanlabs/conf"
+	"github.com/devpies/core/internal/adminapi/webpage"
+	"github.com/devpies/core/internal/adminapi/webpage/render"
+	"github.com/devpies/core/pkg/log"
+	"go.uber.org/zap"
 	"io/fs"
 	"net/http"
 	"os"
 	"time"
-
-	"go.uber.org/zap"
-
-	"github.com/ardanlabs/conf"
-
-	"github.com/alexedwards/scs/v2"
-	"github.com/devpies/core/internal/admin"
-	"github.com/devpies/core/internal/admin/webpage"
-	"github.com/devpies/core/internal/admin/webpage/render"
-	"github.com/devpies/core/pkg/log"
 )
 
-//go:embed static
-var staticFS embed.FS
-var cfg admin.ClientConfig
-var logPath = "log/out.log"
-var session *scs.SessionManager
-
-func main() {
-	err := run()
-	if err != nil {
-		panic(err)
+type Config struct {
+	Web struct {
+		DebugPort       string        `conf:"default:6060"`
+		Production      bool          `conf:"default:false"`
+		ReadTimeout     time.Duration `conf:"default:5s"`
+		WriteTimeout    time.Duration `conf:"default:5s"`
+		ShutdownTimeout time.Duration `conf:"default:5s"`
+		Backend         string        `conf:"default:localhost:4001"`
+		BackendPort     string        `conf:"default:4001"`
+		FrontendPort    string        `conf:"default:4000"`
 	}
 }
 
-func run() error {
+var cfg Config
+var logPath = "log/out.log"
+var session *scs.SessionManager
+
+func Run(staticFS embed.FS) error {
 	var (
 		logger *zap.Logger
 		err    error

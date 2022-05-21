@@ -7,13 +7,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/devpies/core/internal/admin"
+	"github.com/devpies/core/internal/adminapi"
 	"go.uber.org/zap"
 )
 
 type Render struct {
 	logger     *zap.Logger
-	cfg        admin.ClientConfig
+	cfg        adminapi.ClientConfig
 	cache      templateCache
 	templateFS fs.FS
 }
@@ -32,7 +32,7 @@ type TemplateData struct {
 // functions for templates.
 var functions = template.FuncMap{}
 
-func New(logger *zap.Logger, config admin.ClientConfig, templateFS fs.FS) *Render {
+func New(logger *zap.Logger, config adminapi.ClientConfig, templateFS fs.FS) *Render {
 	cache := make(templateCache)
 	return &Render{
 		logger:     logger,

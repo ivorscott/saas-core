@@ -11,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
-	"github.com/devpies/core/internal/admin/handler"
+	"github.com/devpies/core/internal/adminapi/handler"
 )
 
 // API configures the application routes, middleware and handlers.

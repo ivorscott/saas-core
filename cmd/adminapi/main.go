@@ -14,9 +14,9 @@ import (
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 
-	"github.com/devpies/core/internal/admin"
-	"github.com/devpies/core/internal/admin/handler"
-	"github.com/devpies/core/internal/admin/service"
+	"github.com/devpies/core/internal/admin-api"
+	"github.com/devpies/core/internal/admin-api/handler"
+	"github.com/devpies/core/internal/admin-api/service"
 	"github.com/devpies/core/pkg/log"
 )
 
@@ -31,7 +31,7 @@ func main() {
 
 func run() error {
 	var (
-		cfg    admin.APIConfig
+		cfg    admin_api.APIConfig
 		logger *zap.Logger
 		err    error
 	)
