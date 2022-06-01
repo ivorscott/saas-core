@@ -1,10 +1,12 @@
 package adminclient
 
 import (
-	"github.com/devpies/core/internal/adminclient/webpage"
-	"github.com/go-chi/chi/v5"
 	"io/fs"
 	"net/http"
+
+	"github.com/devpies/core/internal/adminclient/webpage"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // API composes routes, middleware and handlers.

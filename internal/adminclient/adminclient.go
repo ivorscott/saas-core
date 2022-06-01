@@ -3,13 +3,16 @@ package adminclient
 import (
 	"embed"
 	"fmt"
-	"github.com/alexedwards/scs/v2"
-	"github.com/ardanlabs/conf"
+
 	"github.com/devpies/core/internal/adminclient/config"
 	"github.com/devpies/core/internal/adminclient/render"
 	"github.com/devpies/core/internal/adminclient/webpage"
 	"github.com/devpies/core/pkg/log"
+
+	"github.com/alexedwards/scs/v2"
+	"github.com/ardanlabs/conf"
 	"go.uber.org/zap"
+
 	"io/fs"
 	"net/http"
 	"os"

@@ -20,4 +20,12 @@ type Config struct {
 		AppClientID      string `conf:"required"`
 		UserPoolClientID string `conf:"required"`
 	}
+	Postgres struct {
+		User       string `conf:"required"`
+		Password   string `conf:"required"`
+		Host       string `conf:"required"`
+		Port       int    `conf:"required"`
+		DB         string `conf:"required"`
+		DisableTLS bool   `conf:"default:false"`
+	}
 }

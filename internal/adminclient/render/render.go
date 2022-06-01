@@ -2,13 +2,14 @@ package render
 
 import (
 	"fmt"
-	"github.com/devpies/core/internal/adminclient/config"
 	"html/template"
 	"io/fs"
 	"net/http"
 	"strings"
 
 	"go.uber.org/zap"
+
+	"github.com/devpies/core/internal/adminclient/config"
 )
 
 type Render struct {

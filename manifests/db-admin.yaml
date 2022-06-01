@@ -14,7 +14,8 @@ spec:
       volumes:
         - name: db-admin-volume
           hostPath:
-            path: "/appdata/admin"
+            # use your local path, not mine
+            path: "/Users/ivorscott/DevPie/saas-core/data/admin"
       containers:
         - name: db-admin
           image: postgres:11.6
@@ -30,7 +31,7 @@ spec:
               memory: "250Mi"
           env:
             - name: POSTGRES_DB
-              value: postgres
+              value: admin
             - name: POSTGRES_USER
               value: postgres
             - name: POSTGRES_PASSWORD

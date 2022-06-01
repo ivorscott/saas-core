@@ -21,16 +21,45 @@ admin-api: ;@ ## Run admin backend with live reload.
 	--web-backend-port=${ADMIN_WEB_BACKEND_PORT} \
 	--web-frontend-port=${ADMIN_WEB_FRONTEND_PORT} \
 	--cognito-app-client-id=${ADMIN_COGNITO_APP_CLIENT_ID} \
-	--cognito-user-pool-client-id=${ADMIN_COGNITO_USER_POOL_CLIENT_ID}" \
+	--cognito-user-pool-client-id=${ADMIN_COGNITO_USER_POOL_CLIENT_ID} \
+	--postgres-user=${ADMIN_POSTGRES_USER} \
+	--postgres-password=${ADMIN_POSTGRES_PASSWORD} \
+	--postgres-host=${ADMIN_POSTGRES_HOST} \
+	--postgres-port=${ADMIN_POSTGRES_PORT} \
+	--postgres-db=${ADMIN_POSTGRES_DB} \
+	--postgres-disable-tls=true" \
 	-log-prefix=false
-
 .PHONY: admin-api
 
+# http://bit.ly/37TR1r2
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),db-admin-gen, db-admin-rollback))
+  val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(val):;@:)
+endif
+
+db-admin-gen: ;@ ## Generate migration files. Required <name> argument.
+	@migrate create -ext sql -dir ./internal/adminapi/res/migrations $(val)
+.PHONY: db-admin-gen
+
 db-admin: ;@ ## Enter admin database.
-	pgcli postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)
+	pgcli postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)
+.PHONY: db-admin
+
+db-admin-migrate: ;@ ## Migrate admin database. Optional <num> argument.
+	@migrate -path ./internal/adminapi/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable up $(val)
+.PHONY: db-admin-migrate
+
+db-admin-version: ;@ ## Print migration version for admin database.
+	@migrate -path ./internal/adminapi/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable up $(val)
+.PHONY: db-admin-version
+
+db-admin-rollback: ;@ ## Rollback admin database. Optional <num> argument.
+	@migrate -path ./internal/adminapi/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable down $(val)
+.PHONY: db-admin-rollback
 
 lint: ;@ ## Run linter.
 	@golangci-lint run
+.PHONY: lint
 
 help:
 	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \

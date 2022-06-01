@@ -1,8 +1,9 @@
 package webpage
 
 import (
-	"go.uber.org/zap"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 func (page *WebPage) Dashboard(w http.ResponseWriter, r *http.Request) {

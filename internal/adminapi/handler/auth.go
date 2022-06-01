@@ -2,13 +2,14 @@ package handler
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
-	"github.com/devpies/core/pkg/web"
 	"net/http"
 
-	"go.uber.org/zap"
+	"github.com/devpies/core/pkg/web"
 
+	"github.com/alexedwards/scs/v2"
 	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+	"go.uber.org/zap"
 )
 
 type authService interface {
@@ -19,12 +20,14 @@ type authService interface {
 type AuthHandler struct {
 	logger  *zap.Logger
 	service authService
+	session *scs.SessionManager
 }
 
-func NewAuth(logger *zap.Logger, service authService) *AuthHandler {
+func NewAuth(logger *zap.Logger, service authService, session *scs.SessionManager) *AuthHandler {
 	return &AuthHandler{
 		logger:  logger,
 		service: service,
+		session: session,
 	}
 }
 
