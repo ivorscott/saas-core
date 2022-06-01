@@ -4,11 +4,14 @@ import (
 	"embed"
 	"fmt"
 
+	"github.com/devpies/core/internal/adminclient/db"
+
 	"github.com/devpies/core/internal/adminclient/config"
 	"github.com/devpies/core/internal/adminclient/render"
 	"github.com/devpies/core/internal/adminclient/webpage"
 	"github.com/devpies/core/pkg/log"
 
+	"github.com/alexedwards/scs/postgresstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/ardanlabs/conf"
 	"go.uber.org/zap"
@@ -55,9 +58,17 @@ func Run(staticFS embed.FS) error {
 	}
 	defer logger.Sync()
 
+	// Initialize admin database.
+	repo, err := db.NewPostgresRepository(cfg)
+	if err != nil {
+		return err
+	}
+	defer repo.Close()
+
 	// Initialize a new session manager and configure the session lifetime.
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
+	session.Store = postgresstore.New(repo.DB.DB)
 
 	templateFS, err := fs.Sub(staticFS, "static/templates")
 	if err != nil {
@@ -69,7 +80,7 @@ func Run(staticFS embed.FS) error {
 	}
 
 	renderEngine := render.New(logger, cfg, templateFS)
-	pages := webpage.New(logger, cfg, renderEngine)
+	pages := webpage.New(logger, cfg, renderEngine, session)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.FrontendPort),

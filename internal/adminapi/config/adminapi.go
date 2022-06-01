@@ -19,6 +19,7 @@ type Config struct {
 	Cognito struct {
 		AppClientID      string `conf:"required"`
 		UserPoolClientID string `conf:"required"`
+		Region           string `conf:"default:eu-central-1"`
 	}
 	Postgres struct {
 		User       string `conf:"required"`

@@ -6,7 +6,6 @@ import (
 
 	"github.com/devpies/core/pkg/web"
 
-	"github.com/alexedwards/scs/v2"
 	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 	"go.uber.org/zap"
@@ -14,20 +13,19 @@ import (
 
 type authService interface {
 	Authenticate(ctx context.Context, email, password string) (*cip.AdminInitiateAuthOutput, error)
+	GetSubject(ctx context.Context, token []byte) (string, error)
 	RespondToNewPasswordRequiredChallenge(ctx context.Context, email, password string, session string) (*cip.AdminRespondToAuthChallengeOutput, error)
 }
 
 type AuthHandler struct {
 	logger  *zap.Logger
 	service authService
-	session *scs.SessionManager
 }
 
-func NewAuth(logger *zap.Logger, service authService, session *scs.SessionManager) *AuthHandler {
+func NewAuthHandler(logger *zap.Logger, service authService) *AuthHandler {
 	return &AuthHandler{
 		logger:  logger,
 		service: service,
-		session: session,
 	}
 }
 
@@ -89,10 +87,22 @@ func (ah *AuthHandler) SetupNewUserWithSecurePassword(w http.ResponseWriter, r *
 		return web.NewRequestError(err, http.StatusBadRequest)
 	}
 
+	if output.AuthenticationResult.IdToken == nil {
+		return web.NewRequestError(err, http.StatusInternalServerError)
+	}
+	token := *output.AuthenticationResult.IdToken
+
+	sub, err := ah.service.GetSubject(r.Context(), []byte(token))
+	if err != nil {
+		return web.NewRequestError(err, http.StatusBadRequest)
+	}
+
 	var resp = struct {
-		IDToken *string `json:"idToken"`
+		IDToken string `json:"idToken"`
+		UserID  string `json:"userID"`
 	}{
-		IDToken: output.AuthenticationResult.IdToken,
+		IDToken: token,
+		UserID:  sub,
 	}
 
 	return web.Respond(r.Context(), w, resp, http.StatusOK)

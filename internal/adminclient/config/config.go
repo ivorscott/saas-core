@@ -13,4 +13,16 @@ type Config struct {
 		BackendPort     string        `conf:"default:4001"`
 		FrontendPort    string        `conf:"default:4000"`
 	}
+	Cognito struct {
+		UserPoolClientID string `conf:"required"`
+		Region           string `conf:"default:eu-central-1"`
+	}
+	Postgres struct {
+		User       string `conf:"required"`
+		Password   string `conf:"required"`
+		Host       string `conf:"required"`
+		Port       int    `conf:"required"`
+		DB         string `conf:"required"`
+		DisableTLS bool   `conf:"default:false"`
+	}
 }

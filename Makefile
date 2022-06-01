@@ -8,7 +8,13 @@ admin-client: ;@ ## Run admin frontend with live reload.
 	-command="./bin/adminclient \
 	--web-backend=${ADMIN_WEB_BACKEND} \
 	--web-backend-port=${ADMIN_WEB_BACKEND_PORT} \
-	--web-frontend-port=${ADMIN_WEB_FRONTEND_PORT}" \
+	--web-frontend-port=${ADMIN_WEB_FRONTEND_PORT} \
+	--postgres-user=${ADMIN_POSTGRES_USER} \
+	--postgres-password=${ADMIN_POSTGRES_PASSWORD} \
+	--postgres-host=${ADMIN_POSTGRES_HOST} \
+	--postgres-port=${ADMIN_POSTGRES_PORT} \
+	--postgres-db=${ADMIN_POSTGRES_DB} \
+	--postgres-disable-tls=true" \
 	-include="*.gohtml" \
 	-log-prefix=false
 .PHONY: admin-client
@@ -32,7 +38,7 @@ admin-api: ;@ ## Run admin backend with live reload.
 .PHONY: admin-api
 
 # http://bit.ly/37TR1r2
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),db-admin-gen, db-admin-rollback))
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),db-admin-gen db-admin-migrate db-admin-rollback))
   val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(val):;@:)
 endif

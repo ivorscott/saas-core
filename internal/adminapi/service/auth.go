@@ -3,8 +3,11 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/devpies/core/internal/adminapi/config"
+	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/jwt"
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/aws"
@@ -63,4 +66,25 @@ func (as *AuthService) RespondToNewPasswordRequiredChallenge(ctx context.Context
 		Session: aws.String(session),
 	}
 	return as.cognitoClient.AdminRespondToAuthChallenge(ctx, params)
+}
+
+// GetSubject parses the idToken and retrieves the subject.
+func (as *AuthService) GetSubject(ctx context.Context, idToken []byte) (string, error) {
+	pubKeyURL := "https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json"
+	formattedURL := fmt.Sprintf(pubKeyURL, as.config.Cognito.Region, as.config.Cognito.UserPoolClientID)
+
+	keySet, err := jwk.Fetch(ctx, formattedURL)
+	if err != nil {
+		return "", err
+	}
+
+	tok, err := jwt.Parse(idToken, jwt.WithKeySet(keySet))
+	if err != nil {
+		return "", err
+	}
+	sub, ok := tok.Get("sub")
+	if !ok {
+		return "", fmt.Errorf("sub is not available")
+	}
+	return sub.(string), nil
 }

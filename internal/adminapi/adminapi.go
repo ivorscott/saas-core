@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/devpies/core/internal/adminapi/config"
 	"github.com/devpies/core/internal/adminapi/db"
@@ -17,8 +16,6 @@ import (
 	"github.com/devpies/core/internal/adminapi/service"
 	"github.com/devpies/core/pkg/log"
 
-	"github.com/alexedwards/scs/postgresstore"
-	"github.com/alexedwards/scs/v2"
 	"github.com/ardanlabs/conf"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -82,13 +79,8 @@ func Run() error {
 		logger.Fatal("", zap.Error(err))
 	}
 
-	// Initialize a session manager..
-	session := scs.New()
-	session.Lifetime = 24 * time.Hour
-	session.Store = postgresstore.New(repo.DB.DB)
-
 	authService := service.NewAuthService(logger, cfg, cognitoClient)
-	authHandler := handler.NewAuth(logger, authService, session)
+	authHandler := handler.NewAuthHandler(logger, authService)
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
