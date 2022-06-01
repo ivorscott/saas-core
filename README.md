@@ -3,7 +3,7 @@
 This project is a part of "AWS SaaS app in 30 days" - _Proof of Concept_
 
 ## Getting Started
-You can print the purpose of each makefile target using `make`.
+Print a description of each makefile command.
 
 ```bash
 > make
@@ -11,17 +11,10 @@ admin-client      Run admin frontend with live reload
 admin-api         Run admin backend with live reload
 ```
 
->__TIP__
-> 
->Enable bash-completion of the makefile targets. Add this in your `~/.bash_profile` file or `~/.bashrc` file.
-> ```bash
-> complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' ?akefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
-> ```
-
 ## Environment Variables
 
 The `.env` file contains variables for all programs. Using `make` automatically references these values.
-Program requirements are also documented in help text.
+Program requirements are also documented in help text. 
 ```bash
 > go run ./cmd/admin-client -h
 Usage: admin-client [options] [arguments]
@@ -44,8 +37,14 @@ OPTIONS
 
 > __TIP__  
 > 
-> Export `.env` file variables before running go binaries to avoid using CLI flags:  
+> 1. Using `make` is the easiest way to get started. However, if you choose to run go binaries directly, you can export the `.env` file variables to avoid using CLI flags:  
 > ```bash
 > export $(grep -v '^#' .env | xargs)
 > go run ./cmd/{PROGRAM}
 >```
+> 
+> 2. Enable bash-completion of the makefile targets. Add this in your `~/.bash_profile` file or `~/.bashrc` file.
+> ```bash
+> complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' ?akefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
+> ```
+
