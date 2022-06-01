@@ -49,7 +49,3 @@ OPTIONS
 > export $(grep -v '^#' .env | xargs)
 > go run ./cmd/{PROGRAM}
 >```
-
-## Conventions
-Every program has its own README under `cmd`. Common packages are kept in `pkg`. Most logic for apps and services live under `internal`.
-Apps and services __MUST__ use a 3 layered architecture: _handler, service, and repository layers._ Here's an [example](https://github.com/devpies/employee-service/blob/bbeebf3d6a301750c2bdef999bb4e8c9bae9467b/cmd/employee/main.go#L81-L83).
