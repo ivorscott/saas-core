@@ -26,7 +26,7 @@ admin-api: ;@ ## Run admin backend with live reload.
 
 .PHONY: admin-api
 
-db-sessions:  ;@ ## Enter user sessions database.
+db-admin: ;@ ## Enter admin database.
 	pgcli postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)
 
 lint: ;@ ## Run linter.

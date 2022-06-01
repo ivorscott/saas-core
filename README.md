@@ -7,8 +7,11 @@ Print a description of each makefile command.
 
 ```bash
 > make
-admin-client      Run admin frontend with live reload
-admin-api         Run admin backend with live reload
+admin-client      Run admin frontend with live reload.
+admin-api         Run admin backend with live reload.
+db-admin          Enter admin database.
+lint              Run linter.
+...
 ```
 
 ## Environment Variables

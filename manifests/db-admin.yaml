@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: db-user-sessions-depl
+  name: db-admin-depl
 spec:
   selector:
     matchLabels:
-      app: db-user-sessions
+      app: db-admin
   template:
     metadata:
       labels:
-        app: db-user-sessions
+        app: db-admin
     spec:
       volumes:
-        - name: db-user-sessions-volume
+        - name: db-admin-volume
           hostPath:
-            path: "/Users/ivorscott/DevPie/core/data/sessions"
+            path: "/appdata/admin"
       containers:
-        - name: db-user-sessions
+        - name: db-admin
           image: postgres:11.6
           imagePullPolicy: "IfNotPresent"
           ports:
@@ -37,16 +37,16 @@ spec:
               value: postgres
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
-              name: db-user-sessions-volume
+              name: db-admin-volume
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: db-user-sessions-svc
+  name: db-admin-svc
 spec:
   type: NodePort
   selector:
-    app: db-user-sessions
+    app: db-admin
   ports:
     - port: 5432
       targetPort: 5432
