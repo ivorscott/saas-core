@@ -11,12 +11,7 @@
               integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
               crossorigin="anonymous">
 
-        <script>
-            function logout() {
-                localStorage.removeItem("token");
-                location.href = "/logout";
-            }
-        </script>
+        <link href="/static/css/main.css" rel="stylesheet" type="text/css">
 
         <title>{{block "title" .}} {{end}}</title>
     </head>
@@ -28,19 +23,22 @@
                 {{if eq .IsAuthenticated 1}}
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="/">Home</a>
+                            <a class="nav-link active" aria-current="page" href="/admin">Home</a>
                         </li>
                     </ul>
 
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                        <li id="login-link" class="nav-item">
-                            <a class="nav-link" href="/logout">Logout</a>
-                        </li>
-                    </ul>
-                {{ else }}
-                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                        <li id="login-link" class="nav-item">
-                            <a class="nav-link" href="/login">login</a>
+                        <li class="nav-item dropdown mx-3">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Account
+                            </a>
+                            <ul class="dropdown-menu mx-3" aria-labelledby="navbarDropdown">
+                                <li class="dropdown-item"><p>{{.Email}}</p></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="/admin/logout">log out</a>
+                                </li>
+                            </ul>
                         </li>
                     </ul>
                 {{end}}

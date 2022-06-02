@@ -9,7 +9,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/devpies/core/internal/adminclient/config"
+	"github.com/alexedwards/scs/v2"
+	"github.com/devpies/core/internal/admin/config"
 )
 
 type Render struct {
@@ -17,6 +18,7 @@ type Render struct {
 	cfg        config.Config
 	cache      templateCache
 	templateFS fs.FS
+	session    *scs.SessionManager
 }
 
 type templateCache map[string]*template.Template
@@ -26,32 +28,35 @@ type TemplateData struct {
 	IntMap          map[string]int
 	Data            map[string]interface{}
 	IsAuthenticated int
-	UserID          int
+	UserID          string
+	Email           string
 	API             string
 }
 
 // functions for templates.
 var functions = template.FuncMap{}
 
-func New(logger *zap.Logger, config config.Config, templateFS fs.FS) *Render {
+func New(logger *zap.Logger, config config.Config, templateFS fs.FS, session *scs.SessionManager) *Render {
 	cache := make(templateCache)
 	return &Render{
 		logger:     logger,
 		cfg:        config,
 		cache:      cache,
 		templateFS: templateFS,
+		session:    session,
 	}
 }
 
 func (re *Render) AddDefaultData(td *TemplateData, r *http.Request) *TemplateData {
-	td.API = re.cfg.Web.Backend
+	td.API = fmt.Sprintf("%s:%s", re.cfg.Web.Address, re.cfg.Web.Port)
 	td.IsAuthenticated = 0
-	td.UserID = 0
-
-	//if app.Session.Exists(r.Context(), "userID") {
-	//	td.IsAuthenticated = 1
-	//	td.UserID = app.Session.GetInt(r.Context(), "userID")
-	//}
+	td.UserID = ""
+	td.Email = "sdfaskdfj"
+	if re.session.Exists(r.Context(), "userID") {
+		td.IsAuthenticated = 1
+		td.UserID = re.session.GetString(r.Context(), "userID")
+		td.Email = re.session.GetString(r.Context(), "email")
+	}
 
 	return td
 }

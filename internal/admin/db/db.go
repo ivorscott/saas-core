@@ -1,4 +1,4 @@
-// Package db maintains the database connection and extensions.
+// Package db maintains database connection and extensions.
 package db
 
 import (
@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/devpies/core/internal/adminclient/config"
+	"github.com/devpies/core/internal/admin/config"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -16,15 +16,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-// PostgresRepository represents a database repository.
-type PostgresRepository struct {
+// PostgresDatabase represents a database repository.
+type PostgresDatabase struct {
 	*sqlx.DB
 	SQ  squirrel.StatementBuilderType
 	URL url.URL
 }
 
-// NewPostgresRepository creates a new repository, connecting it to the postgres server.
-func NewPostgresRepository(cfg config.Config) (*PostgresRepository, error) {
+// NewPostgresDatabase returns a new postgres connection.
+func NewPostgresDatabase(cfg config.Config) (*PostgresDatabase, error) {
 	// Define SSL mode.
 	sslMode := "require"
 	if cfg.Postgres.DisableTLS {
@@ -50,7 +50,7 @@ func NewPostgresRepository(cfg config.Config) (*PostgresRepository, error) {
 		return nil, errors.Wrap(err, "connecting to database")
 	}
 
-	r := &PostgresRepository{
+	r := &PostgresDatabase{
 		DB:  db,
 		SQ:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar).RunWith(db),
 		URL: u,
@@ -60,7 +60,7 @@ func NewPostgresRepository(cfg config.Config) (*PostgresRepository, error) {
 }
 
 // RunInTransaction runs callback function in a transaction.
-func (r *PostgresRepository) RunInTransaction(ctx context.Context, fn func(*sqlx.Tx) error) error {
+func (r *PostgresDatabase) RunInTransaction(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	tx, err := r.BeginTxx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func txRun(tx *sqlx.Tx, fn func(*sqlx.Tx) error) error {
 
 // StatusCheck returns nil if it can successfully talk to the database. It
 // returns a non-nil error otherwise.
-func StatusCheck(ctx context.Context, db *PostgresRepository) error {
+func StatusCheck(ctx context.Context, db *PostgresDatabase) error {
 	// Run a simple query to determine connectivity.
 	const q = `SELECT true`
 	var tmp bool

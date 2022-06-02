@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/devpies/core/internal/adminapi/config"
+	"github.com/alexedwards/scs/v2"
+	"github.com/devpies/core/internal/admin/config"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 
@@ -19,6 +20,7 @@ type AuthService struct {
 	logger        *zap.Logger
 	config        config.Config
 	cognitoClient cognitoClient
+	session       *scs.SessionManager
 }
 
 type cognitoClient interface {
@@ -35,11 +37,12 @@ type cognitoClient interface {
 var ErrMissingCognito = errors.New("missing cognito context")
 
 // NewAuthService creates a new instance of AuthService.
-func NewAuthService(logger *zap.Logger, config config.Config, cognitoClient cognitoClient) *AuthService {
+func NewAuthService(logger *zap.Logger, config config.Config, cognitoClient cognitoClient, session *scs.SessionManager) *AuthService {
 	return &AuthService{
 		logger:        logger,
 		config:        config,
 		cognitoClient: cognitoClient,
+		session:       session,
 	}
 }
 
@@ -68,23 +71,31 @@ func (as *AuthService) RespondToNewPasswordRequiredChallenge(ctx context.Context
 	return as.cognitoClient.AdminRespondToAuthChallenge(ctx, params)
 }
 
-// GetSubject parses the idToken and retrieves the subject.
-func (as *AuthService) GetSubject(ctx context.Context, idToken []byte) (string, error) {
+// CreateUserSession parses the idToken and saves the subject.
+func (as *AuthService) CreateUserSession(ctx context.Context, idToken []byte) error {
 	pubKeyURL := "https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json"
 	formattedURL := fmt.Sprintf(pubKeyURL, as.config.Cognito.Region, as.config.Cognito.UserPoolClientID)
 
 	keySet, err := jwk.Fetch(ctx, formattedURL)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	tok, err := jwt.Parse(idToken, jwt.WithKeySet(keySet))
 	if err != nil {
-		return "", err
+		return err
 	}
-	sub, ok := tok.Get("sub")
+
+	// retrieve values
+	sub := tok.Subject()
+	email, ok := tok.Get("email")
 	if !ok {
-		return "", fmt.Errorf("sub is not available")
+		return fmt.Errorf("sub is not available")
 	}
-	return sub.(string), nil
+
+	// Store session
+	as.session.Put(ctx, "userID", sub)
+	as.session.Put(ctx, "email", email.(string))
+
+	return nil
 }

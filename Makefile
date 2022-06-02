@@ -2,30 +2,12 @@ include .env
 
 .DEFAULT_GOAL := help
 
-admin-client: ;@ ## Run admin frontend with live reload.
+admin: ;@ ## Run admin app with live reload.
 	@CompileDaemon \
-	-build="go build -o ./bin/adminclient ./cmd/adminclient" \
-	-command="./bin/adminclient \
-	--web-backend=${ADMIN_WEB_BACKEND} \
-	--web-backend-port=${ADMIN_WEB_BACKEND_PORT} \
-	--web-frontend-port=${ADMIN_WEB_FRONTEND_PORT} \
-	--postgres-user=${ADMIN_POSTGRES_USER} \
-	--postgres-password=${ADMIN_POSTGRES_PASSWORD} \
-	--postgres-host=${ADMIN_POSTGRES_HOST} \
-	--postgres-port=${ADMIN_POSTGRES_PORT} \
-	--postgres-db=${ADMIN_POSTGRES_DB} \
-	--postgres-disable-tls=true" \
-	-include="*.gohtml" \
-	-log-prefix=false
-.PHONY: admin-client
-
-admin-api: ;@ ## Run admin backend with live reload.
-	@CompileDaemon \
-	-build="go build -o ./bin/adminapi ./cmd/adminapi" \
-	-command="./bin/adminapi \
-	--web-backend=${ADMIN_WEB_BACKEND} \
-	--web-backend-port=${ADMIN_WEB_BACKEND_PORT} \
-	--web-frontend-port=${ADMIN_WEB_FRONTEND_PORT} \
+	-build="go build -o ./bin/admin ./cmd/admin" \
+	-command="./bin/admin \
+	--web-address=${ADMIN_WEB_ADDRESS} \
+	--web-port=${ADMIN_WEB_PORT} \
 	--cognito-app-client-id=${ADMIN_COGNITO_APP_CLIENT_ID} \
 	--cognito-user-pool-client-id=${ADMIN_COGNITO_USER_POOL_CLIENT_ID} \
 	--postgres-user=${ADMIN_POSTGRES_USER} \
@@ -34,8 +16,9 @@ admin-api: ;@ ## Run admin backend with live reload.
 	--postgres-port=${ADMIN_POSTGRES_PORT} \
 	--postgres-db=${ADMIN_POSTGRES_DB} \
 	--postgres-disable-tls=true" \
+	-include="*.gohtml" \
 	-log-prefix=false
-.PHONY: admin-api
+.PHONY: admin
 
 # http://bit.ly/37TR1r2
 ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),db-admin-gen db-admin-migrate db-admin-rollback))

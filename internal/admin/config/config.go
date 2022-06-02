@@ -9,9 +9,8 @@ type Config struct {
 		ReadTimeout     time.Duration `conf:"default:5s"`
 		WriteTimeout    time.Duration `conf:"default:5s"`
 		ShutdownTimeout time.Duration `conf:"default:5s"`
-		Backend         string        `conf:"default:localhost:4001"`
-		BackendPort     string        `conf:"default:4001"`
-		FrontendPort    string        `conf:"default:4000"`
+		Address         string        `conf:"default:localhost"`
+		Port            string        `conf:"default:4001"`
 	}
 	Cognito struct {
 		AppClientID      string `conf:"required"`

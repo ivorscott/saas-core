@@ -1,0 +1,6 @@
+/* Navbar */
+nav ul.dropdown-menu[data-bs-popper] {
+    top: 100%;
+    left: -80px;
+    margin-top: .125rem;
+}

@@ -21,12 +21,17 @@
             <input type="password" class="form-control" id="password" name="password" required autocomplete="password-new">
         </div>
 
-        <a id="pay-button" href="javascript:void(0)" class="btn btn-primary" onclick="val()">Login In</a>
+        <a id="pay-button" href="javascript:void(0)" class="btn btn-primary" onclick="val()">Log In</a>
     </form>
 {{end}}
 
 {{define "js"}}
     <script>
+
+        if(!parseInt("{{.IsAuthenticated}}", 10)) {
+            localStorage.removeItem("id_token")
+        }
+
         let messages = document.getElementById("messages");
 
         function showError(msg) {
@@ -64,7 +69,7 @@
                 body: JSON.stringify(payload),
             };
 
-            fetch("{{.API}}/api/authenticate", options)
+            fetch("/authenticate", options)
                 .then(res => res.json())
                 .then(res => {
                     if (res.error) {
@@ -78,6 +83,10 @@
                         localStorage.setItem("obp", JSON.stringify(params))
                         location.href = "/setup/new-password"
                         return
+                    }
+                    if(res.idToken) {
+                        localStorage.setItem("id_token", res.idToken)
+                        location.href = "/admin"
                     }
                 });
         }
