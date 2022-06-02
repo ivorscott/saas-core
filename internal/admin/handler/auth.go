@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
+	"github.com/devpies/core/internal/admin/model"
 	"net/http"
 
 	"github.com/devpies/core/internal/admin/config"
@@ -20,6 +23,11 @@ type AuthHandler struct {
 	service authService
 	session *scs.SessionManager
 }
+
+var (
+	ErrAuthenticationFailed    = errors.New("authentication failed")
+	ErrSettingUpSecurePassword = errors.New("setting up secure password failed")
+)
 
 // NewAuthHandler returns a new authentication handler.
 func NewAuthHandler(logger *zap.Logger, config config.Config, renderEngine *render.Render, service authService, session *scs.SessionManager) *AuthHandler {
@@ -66,12 +74,11 @@ func (app *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 // AuthenticateCredentials handles email and password values from the admin login form.
 func (app *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Request) {
-	var err error
+	var (
+		err     error
+		payload model.AuthCredentials
+	)
 
-	var payload struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
 	// Renew the session token everytime a user logs in.
 	err = app.session.RenewToken(r.Context())
 	if err != nil {
@@ -79,33 +86,41 @@ func (app *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.R
 		_ = web.Respond(r.Context(), w, nil, http.StatusInternalServerError)
 		return
 	}
+
 	err = web.Decode(r, &payload)
 	if err != nil {
 		_ = web.Respond(r.Context(), w, nil, http.StatusBadRequest)
 		return
 	}
+
+	// Authenticate.
 	output, err := app.service.Authenticate(r.Context(), payload.Email, payload.Password)
 	if err != nil {
-		_ = web.Respond(r.Context(), w, nil, http.StatusUnauthorized)
+		webErr := web.NewRequestError(ErrAuthenticationFailed, http.StatusUnauthorized)
+		_ = web.RespondError(r.Context(), w, webErr)
 		return
 	}
-	if output.AuthenticationResult != nil {
-		var resp = struct {
-			IDToken *string `json:"idToken"`
-		}{
-			IDToken: output.AuthenticationResult.IdToken,
-		}
 
+	// On success.
+	if output.AuthenticationResult != nil {
 		err = app.service.CreateUserSession(r.Context(), []byte(*output.AuthenticationResult.IdToken))
 		if err != nil {
 			app.logger.Error("error creating user session")
 			_ = web.Respond(r.Context(), w, nil, http.StatusInternalServerError)
 			return
 		}
+
+		var resp = struct {
+			IDToken *string `json:"idToken"`
+		}{
+			IDToken: output.AuthenticationResult.IdToken,
+		}
+
 		_ = web.Respond(r.Context(), w, resp, http.StatusOK)
 		return
 	}
 
+	// On challenge.
 	var resp = struct {
 		ChallengeName types.ChallengeNameType `json:"challengeName"`
 		Session       *string                 `json:"session"`
@@ -122,9 +137,8 @@ func (app *AuthHandler) SetupNewUserWithSecurePassword(w http.ResponseWriter, r 
 	var (
 		err     error
 		payload struct {
-			Email    string `json:"email"`
-			Password string `json:"password"`
-			Session  string `json:"session"`
+			model.AuthCredentials
+			Session string `json:"session"`
 		}
 	)
 
@@ -138,7 +152,9 @@ func (app *AuthHandler) SetupNewUserWithSecurePassword(w http.ResponseWriter, r 
 	output, err := app.service.RespondToNewPasswordRequiredChallenge(r.Context(), payload.Email, payload.Password, payload.Session)
 	if err != nil {
 		app.logger.Error("error responding to challenge", zap.Error(err))
-		_ = web.Respond(r.Context(), w, nil, http.StatusInternalServerError)
+		extErr := fmt.Errorf("%s. %w", ErrSettingUpSecurePassword)
+		webErr := web.NewRequestError(extErr, http.StatusBadRequest)
+		_ = web.RespondError(r.Context(), w, webErr)
 		return
 	}
 

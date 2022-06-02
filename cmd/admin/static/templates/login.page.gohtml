@@ -5,10 +5,11 @@
 {{end}}
 
 {{define "content"}}
-    <div class="alert alert-danger text-center d-none" id="messages"></div>
 
     <form id="login-form" name="login-form" action="" method="post"
           class="d-block needs-validation login-form col-md-4 offset-md-4" autocomplete="off" novalidate>
+
+        <div class="alert alert-danger text-center d-none text-capitalize" id="messages"></div>
 
         <h3 class="mt-2 text-center mb-3">Login</h3>
         <div class="mb-3">
@@ -77,7 +78,6 @@
                         return
                     }
                     hideError()
-                    console.log(res)
                     if(res.challengeName === "NEW_PASSWORD_REQUIRED") {
                         let params = { session: res.session, email: payload.email }
                         localStorage.setItem("obp", JSON.stringify(params))

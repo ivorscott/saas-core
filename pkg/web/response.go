@@ -11,6 +11,7 @@ import (
 func Respond(ctx context.Context, w http.ResponseWriter, val interface{}, statusCode int) error {
 	w.WriteHeader(statusCode)
 	w.Header().Set("Content-Type", "application/json")
+
 	if statusCode >= 400 {
 		w.Header().Set("Content-Type", "application/problem+json")
 	}
@@ -19,6 +20,7 @@ func Respond(ctx context.Context, w http.ResponseWriter, val interface{}, status
 		v.StatusCode = statusCode
 	}
 
+	// Response with value when it exists.
 	if val != nil {
 		res, err := json.Marshal(val)
 		if err != nil {
@@ -29,6 +31,18 @@ func Respond(ctx context.Context, w http.ResponseWriter, val interface{}, status
 		if err != nil {
 			return err
 		}
+		return nil
+	}
+
+	// Otherwise, default response is an empty object.
+	res, err := json.Marshal(struct{}{})
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(res)
+	if err != nil {
+		return err
 	}
 
 	return nil
