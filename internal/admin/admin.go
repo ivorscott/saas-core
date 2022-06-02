@@ -13,8 +13,8 @@ import (
 
 	"github.com/devpies/core/internal/admin/config"
 	"github.com/devpies/core/internal/admin/db"
+	"github.com/devpies/core/internal/admin/handler"
 	"github.com/devpies/core/internal/admin/render"
-	"github.com/devpies/core/internal/admin/webapp"
 	"github.com/devpies/core/pkg/log"
 
 	"github.com/alexedwards/scs/postgresstore"
@@ -31,6 +31,7 @@ import (
 
 var session *scs.SessionManager
 
+// Run contains the app setup.
 func Run(staticFS embed.FS) error {
 	var (
 		cfg     config.Config
@@ -107,7 +108,8 @@ func Run(staticFS embed.FS) error {
 	}
 
 	renderEngine := render.New(logger, cfg, templateFS, session)
-	app := webapp.New(logger, cfg, renderEngine, authService, session)
+	authHandler := handler.NewAuthHandler(logger, cfg, renderEngine, authService, session)
+	webPageHandler := handler.NewWebPageHandler(logger, cfg, renderEngine, authService, session)
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
@@ -117,7 +119,7 @@ func Run(staticFS embed.FS) error {
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      API(logger, shutdown, cfg, assets, app),
+		Handler:      Routes(assets, authHandler, webPageHandler),
 	}
 
 	go func() {
@@ -132,7 +134,7 @@ func Run(staticFS embed.FS) error {
 	case sig := <-shutdown:
 		logger.Info(fmt.Sprintf("Start shutdown due to %s signal", sig))
 
-		// give on going tasks a deadline for completion
+		// Give on going tasks a deadline for completion.
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
 		defer cancel()
 

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/alexedwards/scs/v2"
@@ -34,8 +33,6 @@ type cognitoClient interface {
 		optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminRespondToAuthChallengeOutput, error)
 }
 
-var ErrMissingCognito = errors.New("missing cognito context")
-
 // NewAuthService creates a new instance of AuthService.
 func NewAuthService(logger *zap.Logger, config config.Config, cognitoClient cognitoClient, session *scs.SessionManager) *AuthService {
 	return &AuthService{
@@ -46,6 +43,7 @@ func NewAuthService(logger *zap.Logger, config config.Config, cognitoClient cogn
 	}
 }
 
+// Authenticate initiates the server-side auth flow.
 func (as *AuthService) Authenticate(ctx context.Context, email, password string) (*cognitoidentityprovider.AdminInitiateAuthOutput, error) {
 	signInInput := &cognitoidentityprovider.AdminInitiateAuthInput{
 		AuthFlow:       "ADMIN_USER_PASSWORD_AUTH",
@@ -57,6 +55,7 @@ func (as *AuthService) Authenticate(ctx context.Context, email, password string)
 	return as.cognitoClient.AdminInitiateAuth(ctx, signInInput)
 }
 
+// RespondToNewPasswordRequiredChallenge completes the server-side auth flow for freshly onboarded users.
 func (as *AuthService) RespondToNewPasswordRequiredChallenge(ctx context.Context, email, password string, session string) (*cognitoidentityprovider.AdminRespondToAuthChallengeOutput, error) {
 	params := &cognitoidentityprovider.AdminRespondToAuthChallengeInput{
 		ChallengeName: "NEW_PASSWORD_REQUIRED",
@@ -86,14 +85,14 @@ func (as *AuthService) CreateUserSession(ctx context.Context, idToken []byte) er
 		return err
 	}
 
-	// retrieve values
+	// Retrieve values.
 	sub := tok.Subject()
 	email, ok := tok.Get("email")
 	if !ok {
 		return fmt.Errorf("sub is not available")
 	}
 
-	// Store session
+	// Store session.
 	as.session.Put(ctx, "userID", sub)
 	as.session.Put(ctx, "email", email.(string))
 

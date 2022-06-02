@@ -1,21 +1,53 @@
-package webapp
+package handler
 
 import (
 	"net/http"
 
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+	"github.com/devpies/core/internal/admin/config"
+	"github.com/devpies/core/internal/admin/render"
 	"github.com/devpies/core/pkg/web"
 
+	"github.com/alexedwards/scs/v2"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 	"go.uber.org/zap"
 )
 
-func (app *WebApp) Login(w http.ResponseWriter, r *http.Request) {
+// AuthHandler contains various auth related handlers.
+type AuthHandler struct {
+	logger  *zap.Logger
+	config  config.Config
+	render  *render.Render
+	service authService
+	session *scs.SessionManager
+}
+
+// NewAuthHandler returns a new authentication handler.
+func NewAuthHandler(logger *zap.Logger, config config.Config, renderEngine *render.Render, service authService, session *scs.SessionManager) *AuthHandler {
+	return &AuthHandler{
+		logger:  logger,
+		config:  config,
+		render:  renderEngine,
+		service: service,
+		session: session,
+	}
+}
+
+// Login displays a form to allow users to sign in.
+func (app *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err := app.render.Template(w, r, "login", nil); err != nil {
 		app.logger.Error("login", zap.Error(err))
 	}
 }
 
-func (app *WebApp) Logout(w http.ResponseWriter, r *http.Request) {
+// ForceNewPassword displays a form where freshly onboarded users can change their OTP.
+func (app *AuthHandler) ForceNewPassword(w http.ResponseWriter, r *http.Request) {
+	if err := app.render.Template(w, r, "new-password", nil); err != nil {
+		app.logger.Error("new-password", zap.Error(err))
+	}
+}
+
+// Logout allows users to log out by destroying the existing session.
+func (app *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	err = app.session.Destroy(r.Context())
@@ -32,14 +64,8 @@ func (app *WebApp) Logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func (app *WebApp) ForceNewPassword(w http.ResponseWriter, r *http.Request) {
-	if err := app.render.Template(w, r, "new-password", nil); err != nil {
-		app.logger.Error("new-password", zap.Error(err))
-	}
-}
-
 // AuthenticateCredentials handles email and password values from the admin login form.
-func (app *WebApp) AuthenticateCredentials(w http.ResponseWriter, r *http.Request) {
+func (app *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	var payload struct {
@@ -91,7 +117,8 @@ func (app *WebApp) AuthenticateCredentials(w http.ResponseWriter, r *http.Reques
 	_ = web.Respond(r.Context(), w, resp, http.StatusOK)
 }
 
-func (app *WebApp) SetupNewUserWithSecurePassword(w http.ResponseWriter, r *http.Request) {
+// SetupNewUserWithSecurePassword responds to force change password challenge.
+func (app *AuthHandler) SetupNewUserWithSecurePassword(w http.ResponseWriter, r *http.Request) {
 	var (
 		err     error
 		payload struct {

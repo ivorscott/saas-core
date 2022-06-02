@@ -2,6 +2,7 @@ package config
 
 import "time"
 
+// Config represents the application configuration.
 type Config struct {
 	Web struct {
 		DebugPort       string        `conf:"default:6060"`

@@ -13,6 +13,7 @@ import (
 	"github.com/devpies/core/internal/admin/config"
 )
 
+// Render contains various methods for rendering .gohtml templates.
 type Render struct {
 	logger     *zap.Logger
 	cfg        config.Config
@@ -23,6 +24,7 @@ type Render struct {
 
 type templateCache map[string]*template.Template
 
+// TemplateData models data options in templates.
 type TemplateData struct {
 	StringMap       map[string]string
 	IntMap          map[string]int
@@ -33,9 +35,9 @@ type TemplateData struct {
 	API             string
 }
 
-// functions for templates.
 var functions = template.FuncMap{}
 
+// New returns a new Render with template rendering logic.
 func New(logger *zap.Logger, config config.Config, templateFS fs.FS, session *scs.SessionManager) *Render {
 	cache := make(templateCache)
 	return &Render{
@@ -47,11 +49,13 @@ func New(logger *zap.Logger, config config.Config, templateFS fs.FS, session *sc
 	}
 }
 
+// AddDefaultData provides .gohtml templates with default data.
 func (re *Render) AddDefaultData(td *TemplateData, r *http.Request) *TemplateData {
 	td.API = fmt.Sprintf("%s:%s", re.cfg.Web.Address, re.cfg.Web.Port)
 	td.IsAuthenticated = 0
 	td.UserID = ""
-	td.Email = "sdfaskdfj"
+	td.Email = ""
+
 	if re.session.Exists(r.Context(), "userID") {
 		td.IsAuthenticated = 1
 		td.UserID = re.session.GetString(r.Context(), "userID")
