@@ -14,6 +14,7 @@ type Config struct {
 		FrontendPort    string        `conf:"default:4000"`
 	}
 	Cognito struct {
+		AppClientID      string `conf:"required"`
 		UserPoolClientID string `conf:"required"`
 		Region           string `conf:"default:eu-central-1"`
 	}

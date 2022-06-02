@@ -29,6 +29,10 @@ func NewAuthHandler(logger *zap.Logger, service authService) *AuthHandler {
 	}
 }
 
+func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
 // AuthenticateCredentials handles email and password values from the admin login form.
 func (ah *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Request) error {
 	var err error

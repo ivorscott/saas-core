@@ -1,8 +1,17 @@
 package adminclient
 
 import (
+	"context"
 	"embed"
+	"errors"
 	"fmt"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/devpies/core/internal/adminclient/handler"
+	"github.com/devpies/core/internal/adminclient/res"
+	"github.com/devpies/core/internal/adminclient/service"
+	"os/signal"
+	"syscall"
 
 	"github.com/devpies/core/internal/adminclient/db"
 
@@ -22,14 +31,13 @@ import (
 	"time"
 )
 
-var cfg config.Config
-var logPath = "log/out.log"
-var session *scs.SessionManager
-
 func Run(staticFS embed.FS) error {
 	var (
-		logger *zap.Logger
-		err    error
+		cfg     config.Config
+		logger  *zap.Logger
+		logPath = "log/out.log"
+		session *scs.SessionManager
+		err     error
 	)
 
 	if err = conf.Parse(os.Args[1:], "ADMIN", &cfg); err != nil {
@@ -65,6 +73,23 @@ func Run(staticFS embed.FS) error {
 	}
 	defer repo.Close()
 
+	// Execute latest migration.
+	if err = res.MigrateUp(repo.URL.String()); err != nil {
+		logger.Fatal("", zap.Error(err))
+	}
+
+	// Initialize AWS clients.
+	awsCfg, err := awsConfig.LoadDefaultConfig(context.Background())
+	if err != nil {
+		return err
+	}
+
+	cognitoClient := cip.NewFromConfig(awsCfg)
+
+	// Initialize 3-layered architecture.
+	authService := service.NewAuthService(logger, cfg, cognitoClient)
+	authHandler := handler.NewAuthHandler(logger, authService)
+
 	// Initialize a new session manager and configure the session lifetime.
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
@@ -82,21 +107,43 @@ func Run(staticFS embed.FS) error {
 	renderEngine := render.New(logger, cfg, templateFS)
 	pages := webpage.New(logger, cfg, renderEngine, session)
 
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+	serverErrors := make(chan error, 1)
+
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.FrontendPort),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      API(assets, pages),
+		Handler:      API(logger, shutdown, assets, pages, authHandler),
 	}
-	serverErrors := make(chan error, 1)
 
-	logger.Info("Starting server...")
-	serverErrors <- srv.ListenAndServe()
+	go func() {
+		logger.Info("Starting server...")
+		serverErrors <- srv.ListenAndServe()
+	}()
 
 	select {
 	case err = <-serverErrors:
 		return fmt.Errorf("server error on startup : %w", err)
-	default:
+	case sig := <-shutdown:
+		logger.Info(fmt.Sprintf("Start shutdown due to %s signal", sig))
+
+		// give on going tasks a deadline for completion
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
+		defer cancel()
+
+		err = srv.Shutdown(ctx)
+		if err != nil {
+			err = srv.Close()
+		}
+
+		switch {
+		case sig == syscall.SIGSTOP:
+			return errors.New("integrity issue caused shutdown")
+		case err != nil:
+			return errors.New("could not stop server gracefully")
+		}
 	}
 
 	return err
