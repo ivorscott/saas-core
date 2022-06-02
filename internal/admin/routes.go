@@ -34,5 +34,7 @@ func Routes(
 		mux.Get("/logout", authHandler.Logout)
 	})
 
+	mux.Get("/*", webPageHandler.E404)
+
 	return mux
 }

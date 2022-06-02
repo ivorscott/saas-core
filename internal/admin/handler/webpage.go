@@ -36,3 +36,10 @@ func (page *WebPageHandler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		page.logger.Error("dashboard", zap.Error(err))
 	}
 }
+
+// E404 displays a 404 error page.
+func (page *WebPageHandler) E404(w http.ResponseWriter, r *http.Request) {
+	if err := page.render.Template(w, r, "404", nil); err != nil {
+		page.logger.Error("404", zap.Error(err))
+	}
+}
