@@ -3,15 +3,17 @@
 This project is a part of "AWS SaaS app in 30 days" - _Proof of Concept_
 
 ### Requirements
-- go v1.18 or higher
-- [tilt](https://tilt.dev/)
-- docker-desktop - enable kubernetes
+- mac or linux machine
 - aws account
-- mac/linux environment
-- [pgcli](https://www.pgcli.com/)
-- [golangci-lint](https://github.com/golangci/golangci-lint)
-- [go-migrate](https://github.com/golang-migrate/migrate)
-- [saas-infra resources](https://github.com/devpies/saas-infra/tree/main/local/saas)
+- install [go v1.18 or higher](https://go.dev/doc/install)
+- install [tilt](https://tilt.dev/)
+- install docker-desktop - enable kubernetes
+
+- install cypress `npm install cypress -g`
+- install [pgcli](https://www.pgcli.com/)
+- install [golangci-lint](https://github.com/golangci/golangci-lint)
+- install [go-migrate](https://github.com/golang-migrate/migrate)
+- [saas-infra resources](https://github.com/devpies/saas-infra/tree/main/local/saas) 
 
 ## Getting Started
 Print a description of each supported makefile command.
@@ -19,11 +21,12 @@ Print a description of each supported makefile command.
 ```bash
 > make
 admin             Run admin app with live reload.
-db-admin-gen      Generate migration files. Required <name> argument.
-db-admin          Enter admin database.
-db-admin-migrate  Migrate admin database. Optional <num> argument.
-db-admin-version  Print migration version for admin database.
-db-admin-rollback Rollback admin database. Optional <num> argument.
+admin-end         Run end-to-end tests with Cypress.
+admin-db          Enter admin database.
+admin-db-gen      Generate migration files. Required <name> argument.
+admin-db-migrate  Migrate admin database. Optional <num> argument.
+admin-db-version  Print migration version for admin database.
+admin-db-rollback Rollback admin database. Optional <num> argument.
 lint              Run linter.
 ...
 ```
