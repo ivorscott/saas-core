@@ -24,15 +24,13 @@ admin-end:	;@ ## Run end-to-end admin tests with Cypress.
 	@cypress run --project e2e/admin/
 .PHONY: admin-end
 
-admin-test:	;@ ## Run admin tests.
-	go test ./internal/admin/...
+admin-test: admin-mock	;@ ## Run admin tests.
+	go test -cover ./internal/admin/...
 .PHONY: admin-test
 
-# http://bit.ly/37TR1r2
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),db-admin-gen db-admin-migrate db-admin-rollback))
-  val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  $(eval $(val):;@:)
-endif
+admin-mock: ;@ ## Generate admin mocks.
+	go generate ./internal/admin/...
+.PHONY: admin-mock
 
 admin-db: ;@ ## Enter admin database.
 	pgcli postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)
@@ -62,3 +60,9 @@ help:
 	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-17s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
+
+# http://bit.ly/37TR1r2
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),db-admin-gen db-admin-migrate db-admin-rollback))
+  val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(val):;@:)
+endif
