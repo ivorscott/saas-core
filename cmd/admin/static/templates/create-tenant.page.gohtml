@@ -1,0 +1,95 @@
+{{template "base" .}}
+
+{{define "title"}}
+
+{{end}}
+
+{{define "content"}}
+
+    <form id="create-tenant-form" name="login-form"
+          class="d-block needs-validation login-form col-md-4 offset-md-4" autocomplete="off" novalidate>
+
+        <div class="alert alert-danger text-center d-none text-capitalize" id="messages"></div>
+
+        <h3 class="mt-2 text-center mb-3">Provision Tenant</h3>
+        <div class="mb-3">
+            <label for="full-name" class="form-label">Full Name</label>
+            <input type="text" class="form-control" id="full-name" name="full-name" required autocomplete="full-name-new">
+        </div>
+
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required autocomplete="email-new">
+        </div>
+
+        <div class="mb-3">
+            <label for="company-name" class="form-label">Company Name</label>
+            <input type="text" class="form-control" id="company-name" name="company-name" required autocomplete="company-name-new">
+        </div>
+        <div class="mb-3">
+            <label for="plan" class="form-label">Plan</label>
+            <select name="plan" id="plan" class="form-select" required>
+                <option disabled="disabled" selected="selected" value="">Select Plan</option>
+                <option value="basic">Basic</option>
+                <option value="premium">Premium</option>
+            </select>
+        </div>
+        <div class="d-flex justify-content-end">
+            <a id="cancel-button" href="/admin/tenants" class="btn btn-secondary mx-2">Cancel</a>
+            <a id="create-button" href="javascript:void(0)" class="btn btn-primary" onclick="val()">Create</a>
+        </div>
+    </form>
+{{end}}
+
+{{define "js"}}
+    <script>
+        let messages = document.getElementById("messages");
+
+        function showError(msg) {
+            messages.classList.add("alert-danger");
+            messages.classList.remove("alert-success");
+            messages.classList.remove("d-none");
+            messages.innerText = msg;
+        }
+        function hideError() {
+            messages.classList.remove("alert-danger");
+            messages.classList.add("d-none");
+            messages.innerText = "";
+        }
+        function val() {
+            let payload = {}, options = {};
+            let form = document.getElementById("create-tenant-form");
+
+            if (form.checkValidity() === false) {
+                this.event.preventDefault();
+                this.event.stopPropagation();
+                form.classList.add("was-validated");
+                return;
+            }
+            form.classList.add("was-validated");
+
+            payload.fullName = document.getElementById("full-name").value;
+            payload.email = document.getElementById("email").value;
+            payload.companyName = document.getElementById("company-name").value;
+            payload.plan = document.getElementById("plan").value;
+
+            options = {
+                method: "post",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": 'application/json',
+                    "Authorization": `Bearer ${localStorage.getItem("id_token")}`,
+                },
+                body: JSON.stringify(payload),
+            };
+
+            //TODO: Add path to tenant-registration service. - {{.API}}/api/registration/register
+            fetch("#", options)
+                .then(() => {
+                    setTimeout(()=> {
+                        location.href = "/admin/tenants"
+                    }, 2000)
+                })
+        }
+    </script>
+{{end}}

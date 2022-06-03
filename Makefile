@@ -20,9 +20,13 @@ admin: ;@ ## Run admin app with live reload.
 	-log-prefix=false
 .PHONY: admin
 
-admin-end:	;@ ## Run end-to-end tests with Cypress.
+admin-end:	;@ ## Run end-to-end admin tests with Cypress.
 	@cypress run --project e2e/admin/
 .PHONY: admin-end
+
+admin-test:	;@ ## Run admin tests.
+	go test ./internal/admin/...
+.PHONY: admin-test
 
 # http://bit.ly/37TR1r2
 ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),db-admin-gen db-admin-migrate db-admin-rollback))

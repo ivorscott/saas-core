@@ -6,7 +6,7 @@
 
 {{define "content"}}
 
-    <form id="login-form" name="login-form" action="" method="post"
+    <form id="login-form" name="login-form"
           class="d-block needs-validation login-form col-md-4 offset-md-4" autocomplete="off" novalidate>
 
         <div class="alert alert-danger text-center d-none text-capitalize" id="messages"></div>
@@ -14,7 +14,7 @@
         <h3 class="mt-2 text-center mb-3">Login</h3>
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" minlength="8" required autocomplete="email-new">
+            <input type="email" class="form-control" id="email" name="email" required autocomplete="email-new">
         </div>
 
         <div class="mb-3">
@@ -22,17 +22,12 @@
             <input type="password" class="form-control" id="password" name="password" minlength="8" required autocomplete="password-new">
         </div>
 
-        <a id="pay-button" href="javascript:void(0)" class="btn btn-primary" onclick="val()">Log In</a>
+        <a id="login-button" href="javascript:void(0)" class="btn btn-primary" onclick="val()">Log In</a>
     </form>
 {{end}}
 
 {{define "js"}}
     <script>
-
-        if(!parseInt("{{.IsAuthenticated}}", 10)) {
-            localStorage.removeItem("id_token")
-        }
-
         let messages = document.getElementById("messages");
 
         function showError(msg) {
@@ -74,13 +69,19 @@
                 .then(res => res.json())
                 .then(res => {
                     if (res.error) {
-                        showError(res.error)
+                        let err = `${res.error}.`
+                        if(res.fields.length > 0) {
+                            res.fields.forEach(field => {
+                                err += ` ${field.error}.`
+                            })
+                        }
+                        showError(err)
                         return
                     }
                     hideError()
                     if(res.challengeName === "NEW_PASSWORD_REQUIRED") {
                         let params = { session: res.session, email: payload.email }
-                        localStorage.setItem("obp", JSON.stringify(params))
+                        localStorage.setItem("pchal", JSON.stringify(params))
                         location.href = "/change-password"
                         return
                     }

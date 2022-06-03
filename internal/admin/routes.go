@@ -36,6 +36,8 @@ func Routes(
 
 	// Authenticated webpages.
 	app.Handle(http.MethodGet, "/admin", withSession()(webPageHandler.Dashboard))
+	app.Handle(http.MethodGet, "/admin/tenants", withSession()(webPageHandler.Tenants))
+	app.Handle(http.MethodGet, "/admin/create-tenant", withSession()(webPageHandler.CreateTenant))
 	app.Handle(http.MethodGet, "/admin/logout", withSession()(authHandler.Logout))
 	app.Handle(http.MethodGet, "/*", withSession()(webPageHandler.E404))
 

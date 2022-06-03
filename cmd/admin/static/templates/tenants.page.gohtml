@@ -1,0 +1,23 @@
+{{template "base" .}}
+
+{{define "title"}}
+    Tenants
+{{end}}
+
+
+{{define "content"}}
+    <h3 class="mt-2 mb-3">Tenants</h3>
+    <div class="d-flex justify-content-end">
+        <a href="/admin/create-tenant" class="btn btn-primary ">Provision Tenant</a>
+    </div>
+
+    <table  class="table table-striped">
+        <thead>
+            <th>Id</th>
+            <th>Tenant Name</th>
+            <th>E-Mail</th>
+            <th>Plan</th>
+        </thead>
+        <tbody></tbody>
+    </table>
+{{end}}

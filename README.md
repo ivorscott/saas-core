@@ -8,7 +8,7 @@ This project is a part of "AWS SaaS app in 30 days" - _Proof of Concept_
 - install [go v1.18 or higher](https://go.dev/doc/install)
 - install [tilt](https://tilt.dev/)
 - install docker-desktop - enable kubernetes
-
+- install [mockery](https://github.com/vektra/mockery)
 - install cypress `npm install cypress -g`
 - install [pgcli](https://www.pgcli.com/)
 - install [golangci-lint](https://github.com/golangci/golangci-lint)
