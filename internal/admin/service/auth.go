@@ -93,8 +93,14 @@ func (as *AuthService) CreateUserSession(ctx context.Context, idToken []byte) er
 	}
 
 	// Store session.
-	as.session.Put(ctx, "userID", sub)
-	as.session.Put(ctx, "email", email.(string))
+	as.session.Put(ctx, "UserID", sub)
+	as.session.Put(ctx, "Email", email.(string))
 
 	return nil
+}
+
+// CreatePasswordChallengeSession creates a session for the active password challenge.
+// This is used to deny access to the change password form. Only users with an active password challenge can view it.
+func (as *AuthService) CreatePasswordChallengeSession(ctx context.Context) {
+	as.session.Put(ctx, "PasswordChallenge", true)
 }

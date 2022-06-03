@@ -128,6 +128,8 @@ func (ah *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Re
 		return web.Respond(r.Context(), w, resp, http.StatusOK)
 	}
 
+	ah.service.CreatePasswordChallengeSession(r.Context())
+
 	// On challenge.
 	var resp = struct {
 		ChallengeName types.ChallengeNameType `json:"challengeName"`

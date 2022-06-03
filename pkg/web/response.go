@@ -75,8 +75,15 @@ func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 	return Respond(ctx, w, er, http.StatusInternalServerError)
 }
 
+// SetContextStatusCode sets the status code for request logger middleware.
 func SetContextStatusCode(ctx context.Context, statusCode int) {
 	if v, ok := ctx.Value(KeyValues).(*Values); ok {
 		v.StatusCode = statusCode
 	}
+}
+
+// Redirect redirects and sets status code for request logger middleware.
+func Redirect(w http.ResponseWriter, r *http.Request, path string) {
+	http.Redirect(w, r, path, http.StatusTemporaryRedirect)
+	SetContextStatusCode(r.Context(), http.StatusTemporaryRedirect)
 }

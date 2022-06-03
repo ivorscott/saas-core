@@ -14,12 +14,12 @@
         <h3 class="mt-2 text-center mb-3">Login</h3>
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" required autocomplete="email-new">
+            <input type="email" class="form-control" id="email" name="email" minlength="8" required autocomplete="email-new">
         </div>
 
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control" id="password" name="password" required autocomplete="password-new">
+            <input type="password" class="form-control" id="password" name="password" minlength="8" required autocomplete="password-new">
         </div>
 
         <a id="pay-button" href="javascript:void(0)" class="btn btn-primary" onclick="val()">Log In</a>
@@ -81,7 +81,7 @@
                     if(res.challengeName === "NEW_PASSWORD_REQUIRED") {
                         let params = { session: res.session, email: payload.email }
                         localStorage.setItem("obp", JSON.stringify(params))
-                        location.href = "/setup/new-password"
+                        location.href = "/change-password"
                         return
                     }
                     if(res.idToken) {

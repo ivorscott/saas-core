@@ -5,6 +5,7 @@ import (
 
 	"github.com/devpies/core/internal/admin/config"
 	"github.com/devpies/core/internal/admin/render"
+	"github.com/devpies/core/pkg/web"
 
 	"github.com/alexedwards/scs/v2"
 	"go.uber.org/zap"
@@ -37,5 +38,7 @@ func (page *WebPageHandler) Dashboard(w http.ResponseWriter, r *http.Request) er
 
 // E404 displays a 404 error page.
 func (page *WebPageHandler) E404(w http.ResponseWriter, r *http.Request) error {
-	return page.render.Template(w, r, "404", nil)
+	err := page.render.Template(w, r, "404", nil)
+	web.SetContextStatusCode(r.Context(), http.StatusNotFound)
+	return err
 }

@@ -30,9 +30,9 @@ func Routes(
 
 	// Unauthenticated webpages.
 	app.Handle(http.MethodGet, "/", withNoSession()(authHandler.Login))
-	app.Handle(http.MethodGet, "/setup/new-password", authHandler.ForceNewPassword)
-	app.Handle(http.MethodPost, "/authenticate", authHandler.AuthenticateCredentials)
-	app.Handle(http.MethodPost, "/force-new-password", authHandler.SetupNewUserWithSecurePassword)
+	app.Handle(http.MethodGet, "/change-password", withPasswordChallengeSession()(authHandler.ForceNewPassword))
+	app.Handle(http.MethodPost, "/secure-new-password", withNoSession()(authHandler.SetupNewUserWithSecurePassword))
+	app.Handle(http.MethodPost, "/authenticate", withNoSession()(authHandler.AuthenticateCredentials))
 
 	// Authenticated webpages.
 	app.Handle(http.MethodGet, "/admin", withSession()(webPageHandler.Dashboard))

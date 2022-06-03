@@ -58,10 +58,10 @@ func (re *Render) AddDefaultData(td *TemplateData, r *http.Request) *TemplateDat
 	td.UserID = ""
 	td.Email = ""
 
-	if re.session.Exists(r.Context(), "userID") {
+	if re.session.Exists(r.Context(), "UserID") {
 		td.IsAuthenticated = 1
-		td.UserID = re.session.GetString(r.Context(), "userID")
-		td.Email = re.session.GetString(r.Context(), "email")
+		td.UserID = re.session.GetString(r.Context(), "UserID")
+		td.Email = re.session.GetString(r.Context(), "Email")
 	}
 
 	return td
