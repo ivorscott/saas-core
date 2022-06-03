@@ -18,7 +18,7 @@ func Respond(ctx context.Context, w http.ResponseWriter, val interface{}, status
 
 	SetContextStatusCode(ctx, statusCode)
 
-	// Response with value when it exists.
+	// Respond with a value when it exists.
 	if val != nil {
 		res, err := json.Marshal(val)
 		if err != nil {
@@ -32,7 +32,9 @@ func Respond(ctx context.Context, w http.ResponseWriter, val interface{}, status
 		return nil
 	}
 
-	// Otherwise, default response is an empty object.
+	// Default to empty json object.
+	// Always return valid json responses.
+	// This simplifies calls from the frontend because a check isn't required.
 	res, err := json.Marshal(struct{}{})
 	if err != nil {
 		return err
