@@ -1,7 +1,6 @@
 package mid
 
 import (
-	"fmt"
 	"github.com/devpies/core/pkg/web"
 	"go.uber.org/zap"
 	"net/http"
@@ -21,15 +20,15 @@ func Errors(log *zap.Logger) web.Middleware {
 			if err := before(w, r); err != nil {
 
 				// Log the error.
-				log.Error(fmt.Sprintf("error : %+v", err))
+				log.Info("", zap.Error(err))
 
 				// Respond to the error.
 				if err = web.RespondError(r.Context(), w, err); err != nil {
 					return err
 				}
 
-				// If we receive the shutdown err we need to return it
-				// back to the base handler to shutdown the service.
+				// Errors middleware is designed to consume errors but, if we receive a
+				// shutdown error we need to return it so we can shutdown.
 				if ok := web.IsShutdown(err); ok {
 					return err
 				}

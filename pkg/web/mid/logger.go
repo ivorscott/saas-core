@@ -1,7 +1,6 @@
 package mid
 
 import (
-	"errors"
 	"fmt"
 	"github.com/devpies/core/pkg/web"
 	"go.uber.org/zap"
@@ -14,13 +13,14 @@ import (
 func Logger(log *zap.Logger) web.Middleware {
 
 	// This is the actual middleware function to be executed.
+	// "before" is the handler that this middleware is wrapping around.
 	f := func(before web.Handler) web.Handler {
 
 		// Create the handler that will be attached in the middleware chain.
 		h := func(w http.ResponseWriter, r *http.Request) error {
 			v, ok := r.Context().Value(web.KeyValues).(*web.Values)
 			if !ok {
-				return errors.New("web value missing from context")
+				return web.NewShutdownError("web value missing from context")
 			}
 
 			err := before(w, r)

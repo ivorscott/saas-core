@@ -16,9 +16,7 @@ func Respond(ctx context.Context, w http.ResponseWriter, val interface{}, status
 		w.Header().Set("Content-Type", "application/problem+json")
 	}
 
-	if v, ok := ctx.Value(KeyValues).(*Values); ok {
-		v.StatusCode = statusCode
-	}
+	SetContextStatusCode(ctx, statusCode)
 
 	// Response with value when it exists.
 	if val != nil {
@@ -73,4 +71,10 @@ func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 	}
 
 	return Respond(ctx, w, er, http.StatusInternalServerError)
+}
+
+func SetContextStatusCode(ctx context.Context, statusCode int) {
+	if v, ok := ctx.Value(KeyValues).(*Values); ok {
+		v.StatusCode = statusCode
+	}
 }

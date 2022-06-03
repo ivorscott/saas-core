@@ -31,15 +31,11 @@ func NewWebPageHandler(logger *zap.Logger, config config.Config, renderEngine *r
 }
 
 // Dashboard displays a useful dashboard for users.
-func (page *WebPageHandler) Dashboard(w http.ResponseWriter, r *http.Request) {
-	if err := page.render.Template(w, r, "dashboard", nil); err != nil {
-		page.logger.Error("dashboard", zap.Error(err))
-	}
+func (page *WebPageHandler) Dashboard(w http.ResponseWriter, r *http.Request) error {
+	return page.render.Template(w, r, "dashboard", nil)
 }
 
 // E404 displays a 404 error page.
-func (page *WebPageHandler) E404(w http.ResponseWriter, r *http.Request) {
-	if err := page.render.Template(w, r, "404", nil); err != nil {
-		page.logger.Error("404", zap.Error(err))
-	}
+func (page *WebPageHandler) E404(w http.ResponseWriter, r *http.Request) error {
+	return page.render.Template(w, r, "404", nil)
 }

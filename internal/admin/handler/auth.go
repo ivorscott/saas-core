@@ -2,16 +2,17 @@ package handler
 
 import (
 	"errors"
-	"fmt"
-	"github.com/devpies/core/internal/admin/model"
 	"net/http"
+	"strings"
 
 	"github.com/devpies/core/internal/admin/config"
+	"github.com/devpies/core/internal/admin/model"
 	"github.com/devpies/core/internal/admin/render"
 	"github.com/devpies/core/pkg/web"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+
 	"go.uber.org/zap"
 )
 
@@ -25,8 +26,12 @@ type AuthHandler struct {
 }
 
 var (
-	ErrAuthenticationFailed    = errors.New("authentication failed")
-	ErrSettingUpSecurePassword = errors.New("setting up secure password failed")
+	// ErrIncorrectUsernameOrPassword represents an AWS Cognito error caused by invalid credentials.
+	ErrIncorrectUsernameOrPassword = errors.New("incorrect username or password")
+	// ErrPasswordAttemptsExceeded represents an AWS Cognito error caused by exceeding allowed password attempts.
+	ErrPasswordAttemptsExceeded = errors.New("password attempts exceeded")
+	// ErrNotAuthorizedException represents an unknown AWS Cognito error effecting login.
+	ErrNotAuthorizedException = errors.New("login failed")
 )
 
 // NewAuthHandler returns a new authentication handler.
@@ -41,73 +46,77 @@ func NewAuthHandler(logger *zap.Logger, config config.Config, renderEngine *rend
 }
 
 // Login displays a form to allow users to sign in.
-func (app *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	if err := app.render.Template(w, r, "login", nil); err != nil {
-		app.logger.Error("login", zap.Error(err))
-	}
+func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
+	return ah.render.Template(w, r, "login", nil)
 }
 
 // ForceNewPassword displays a form where freshly onboarded users can change their OTP.
-func (app *AuthHandler) ForceNewPassword(w http.ResponseWriter, r *http.Request) {
-	if err := app.render.Template(w, r, "new-password", nil); err != nil {
-		app.logger.Error("new-password", zap.Error(err))
-	}
+func (ah *AuthHandler) ForceNewPassword(w http.ResponseWriter, r *http.Request) error {
+	return ah.render.Template(w, r, "new-password", nil)
 }
 
 // Logout allows users to log out by destroying the existing session.
-func (app *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 	var err error
 
-	err = app.session.Destroy(r.Context())
+	err = ah.session.Destroy(r.Context())
 	if err != nil {
-		app.logger.Error("session destroy failed", zap.Error(err))
+		ah.logger.Error("failure on session destroy", zap.Error(err))
+		return web.NewShutdownError(err.Error())
 	}
 
 	// Renew the session token everytime a user logs out.
-	err = app.session.RenewToken(r.Context())
+	err = ah.session.RenewToken(r.Context())
 	if err != nil {
-		app.logger.Error("session renew token failed", zap.Error(err))
+		ah.logger.Error("failure on session renewal", zap.Error(err))
+		return web.NewShutdownError(err.Error())
 	}
 
+	web.SetContextStatusCode(r.Context(), http.StatusOK)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
 }
 
 // AuthenticateCredentials handles email and password values from the admin login form.
-func (app *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Request) {
+func (ah *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Request) error {
 	var (
 		err     error
 		payload model.AuthCredentials
 	)
 
 	// Renew the session token everytime a user logs in.
-	err = app.session.RenewToken(r.Context())
+	err = ah.session.RenewToken(r.Context())
 	if err != nil {
-		app.logger.Error("error on renew session token", zap.Error(err))
-		_ = web.Respond(r.Context(), w, nil, http.StatusInternalServerError)
-		return
+		ah.logger.Error("failure on session renewal", zap.Error(err))
+		return web.NewShutdownError(err.Error())
 	}
 
 	err = web.Decode(r, &payload)
 	if err != nil {
-		_ = web.Respond(r.Context(), w, nil, http.StatusBadRequest)
-		return
+		return err
 	}
 
 	// Authenticate.
-	output, err := app.service.Authenticate(r.Context(), payload.Email, payload.Password)
+	output, err := ah.service.Authenticate(r.Context(), payload.Email, payload.Password)
 	if err != nil {
-		webErr := web.NewRequestError(ErrAuthenticationFailed, http.StatusUnauthorized)
-		_ = web.RespondError(r.Context(), w, webErr)
-		return
+		ah.logger.Info("", zap.Error(err))
+		switch {
+		case strings.Contains(strings.ToLower(err.Error()), ErrIncorrectUsernameOrPassword.Error()):
+			err = ErrIncorrectUsernameOrPassword
+		case strings.Contains(strings.ToLower(err.Error()), ErrPasswordAttemptsExceeded.Error()):
+			err = ErrPasswordAttemptsExceeded
+		default:
+			err = ErrNotAuthorizedException
+		}
+		return web.NewRequestError(err, http.StatusUnauthorized)
 	}
 
 	// On success.
 	if output.AuthenticationResult != nil {
-		err = app.service.CreateUserSession(r.Context(), []byte(*output.AuthenticationResult.IdToken))
+		err = ah.service.CreateUserSession(r.Context(), []byte(*output.AuthenticationResult.IdToken))
 		if err != nil {
-			app.logger.Error("error creating user session")
-			_ = web.Respond(r.Context(), w, nil, http.StatusInternalServerError)
-			return
+			ah.logger.Error("failure on user session creation", zap.Error(err))
+			return web.NewShutdownError(err.Error())
 		}
 
 		var resp = struct {
@@ -116,8 +125,7 @@ func (app *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.R
 			IDToken: output.AuthenticationResult.IdToken,
 		}
 
-		_ = web.Respond(r.Context(), w, resp, http.StatusOK)
-		return
+		return web.Respond(r.Context(), w, resp, http.StatusOK)
 	}
 
 	// On challenge.
@@ -129,11 +137,11 @@ func (app *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.R
 		Session:       output.Session,
 	}
 
-	_ = web.Respond(r.Context(), w, resp, http.StatusOK)
+	return web.Respond(r.Context(), w, resp, http.StatusOK)
 }
 
 // SetupNewUserWithSecurePassword responds to force change password challenge.
-func (app *AuthHandler) SetupNewUserWithSecurePassword(w http.ResponseWriter, r *http.Request) {
+func (ah *AuthHandler) SetupNewUserWithSecurePassword(w http.ResponseWriter, r *http.Request) error {
 	var (
 		err     error
 		payload struct {
@@ -144,25 +152,19 @@ func (app *AuthHandler) SetupNewUserWithSecurePassword(w http.ResponseWriter, r 
 
 	err = web.Decode(r, &payload)
 	if err != nil {
-		app.logger.Error("error decoding payload", zap.Error(err))
-		_ = web.Respond(r.Context(), w, nil, http.StatusBadRequest)
-		return
+		return err
 	}
 
-	output, err := app.service.RespondToNewPasswordRequiredChallenge(r.Context(), payload.Email, payload.Password, payload.Session)
+	output, err := ah.service.RespondToNewPasswordRequiredChallenge(r.Context(), payload.Email, payload.Password, payload.Session)
 	if err != nil {
-		app.logger.Error("error responding to challenge", zap.Error(err))
-		extErr := fmt.Errorf("%s. %w", ErrSettingUpSecurePassword)
-		webErr := web.NewRequestError(extErr, http.StatusBadRequest)
-		_ = web.RespondError(r.Context(), w, webErr)
-		return
+		ah.logger.Info("failure on password required challenge response", zap.Error(err))
+		return web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	err = app.service.CreateUserSession(r.Context(), []byte(*output.AuthenticationResult.IdToken))
+	err = ah.service.CreateUserSession(r.Context(), []byte(*output.AuthenticationResult.IdToken))
 	if err != nil {
-		app.logger.Error("error creating user session")
-		_ = web.Respond(r.Context(), w, nil, http.StatusInternalServerError)
-		return
+		ah.logger.Error("failure on user session creation", zap.Error(err))
+		return web.NewShutdownError(err.Error())
 	}
 
 	var resp = struct {
@@ -171,5 +173,5 @@ func (app *AuthHandler) SetupNewUserWithSecurePassword(w http.ResponseWriter, r 
 		IDToken: *output.AuthenticationResult.IdToken,
 	}
 
-	_ = web.Respond(r.Context(), w, resp, http.StatusOK)
+	return web.Respond(r.Context(), w, resp, http.StatusOK)
 }

@@ -17,7 +17,7 @@ func Panics(log *zap.Logger) web.Middleware {
 
 		h := func(w http.ResponseWriter, r *http.Request) (err error) {
 
-			// Defer a function to recover from a panic and set the err return
+			// Defer a function to recover from a panic and set the error return
 			// variable after the fact.
 			defer func() {
 				if r := recover(); r != nil {
@@ -28,7 +28,7 @@ func Panics(log *zap.Logger) web.Middleware {
 				}
 			}()
 
-			// Call the next Handler and set its return value in the err variable.
+			// Call the next Handler and set its return value in the error variable.
 			return after(w, r)
 		}
 

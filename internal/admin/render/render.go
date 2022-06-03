@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"strings"
 
-	"go.uber.org/zap"
+	"github.com/devpies/core/internal/admin/config"
+	"github.com/devpies/core/pkg/web"
 
 	"github.com/alexedwards/scs/v2"
-	"github.com/devpies/core/internal/admin/config"
+
+	"go.uber.org/zap"
 )
 
 // Render contains various methods for rendering .gohtml templates.
@@ -65,6 +67,12 @@ func (re *Render) AddDefaultData(td *TemplateData, r *http.Request) *TemplateDat
 	return td
 }
 
+// ctxKey represents the type of value for the context key.
+type ctxKey int
+
+// KeyValues is how request values or stored/retrieved.
+const KeyValues ctxKey = 1
+
 // Template renders a template for the application.
 // During development, renderTemplate will never use the template cache.
 func (re *Render) Template(
@@ -84,7 +92,8 @@ func (re *Render) Template(
 	} else {
 		t, err = re.parseTemplate(partials, page, tmpl)
 		if err != nil {
-			return err
+			re.logger.Error("", zap.Error(err))
+			return web.NewShutdownError(err.Error())
 		}
 	}
 
@@ -96,10 +105,12 @@ func (re *Render) Template(
 	err = t.Execute(w, td)
 	if err != nil {
 		re.logger.Error("", zap.Error(err))
-		return err
+		return web.NewShutdownError(err.Error())
 	}
 
-	return err
+	web.SetContextStatusCode(r.Context(), http.StatusOK)
+
+	return nil
 }
 
 // parseTemplate parses the desired page template with or with partials.

@@ -119,7 +119,7 @@ func Run(staticFS embed.FS) error {
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(assets, authHandler, webPageHandler),
+		Handler:      Routes(logger, shutdown, assets, authHandler, webPageHandler),
 	}
 
 	go func() {
