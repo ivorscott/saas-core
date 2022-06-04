@@ -4,3 +4,5 @@
 data
 bin
 log
+e2e/*/cypress/downloads
+e2e/*/cypress/videos

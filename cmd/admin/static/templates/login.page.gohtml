@@ -1,0 +1,95 @@
+{{template "base" .}}
+
+{{define "title"}}
+
+{{end}}
+
+{{define "content"}}
+
+    <form id="login-form" name="login-form"
+          class="d-block needs-validation login-form col-md-4 offset-md-4" autocomplete="off" novalidate>
+
+        <div class="alert alert-danger text-center d-none text-capitalize" id="messages"></div>
+
+        <h3 class="mt-2 text-center mb-3">Login</h3>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required autocomplete="email-new">
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" minlength="8" required autocomplete="password-new">
+        </div>
+
+        <a id="login-button" href="javascript:void(0)" class="btn btn-primary" onclick="val()">Log In</a>
+    </form>
+{{end}}
+
+{{define "js"}}
+    <script>
+        let messages = document.getElementById("messages");
+
+        function showError(msg) {
+            messages.classList.add("alert-danger");
+            messages.classList.remove("alert-success");
+            messages.classList.remove("d-none");
+            messages.innerText = msg;
+        }
+        function hideError() {
+            messages.classList.remove("alert-danger");
+            messages.classList.add("d-none");
+            messages.innerText = "";
+        }
+        function val() {
+            let payload = {}, options = {};
+            let form = document.getElementById("login-form");
+
+            if (form.checkValidity() === false) {
+                this.event.preventDefault();
+                this.event.stopPropagation();
+                form.classList.add("was-validated");
+                return;
+            }
+            form.classList.add("was-validated");
+
+            payload.email = document.getElementById("email").value;
+            payload.password = document.getElementById("password").value;
+
+            options = {
+                method: "post",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": 'application/json',
+                },
+                body: JSON.stringify(payload),
+            };
+
+            fetch("/authenticate", options)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.error) {
+                        let err = `${res.error}.`
+                        if(res.fields && res.fields.length > 0) {
+                            res.fields.forEach(field => {
+                                err += ` ${field.error}.`
+                            })
+                        }
+                        showError(err)
+                        return
+                    }
+                    hideError()
+                    if(res.challengeName === "NEW_PASSWORD_REQUIRED") {
+                        let params = { session: res.session, email: payload.email }
+                        localStorage.setItem("pchal", JSON.stringify(params))
+                        location.href = "/force-new-password"
+                        return
+                    }
+                    if(res.idToken) {
+                        localStorage.setItem("id_token", res.idToken)
+                        location.href = "/admin"
+                    }
+                });
+        }
+    </script>
+{{end}}

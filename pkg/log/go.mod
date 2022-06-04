@@ -1,4 +1,4 @@
-module github.com/devpies/core/pkg/log
+module github.com/devpies/saas-core/pkg/log
 
 go 1.18
 

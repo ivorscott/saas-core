@@ -11,14 +11,14 @@ import (
 func Respond(ctx context.Context, w http.ResponseWriter, val interface{}, statusCode int) error {
 	w.WriteHeader(statusCode)
 	w.Header().Set("Content-Type", "application/json")
+
 	if statusCode >= 400 {
 		w.Header().Set("Content-Type", "application/problem+json")
 	}
 
-	if v, ok := ctx.Value(KeyValues).(*Values); ok {
-		v.StatusCode = statusCode
-	}
+	SetContextStatusCode(ctx, statusCode)
 
+	// Respond with a value when it exists.
 	if val != nil {
 		res, err := json.Marshal(val)
 		if err != nil {
@@ -29,6 +29,20 @@ func Respond(ctx context.Context, w http.ResponseWriter, val interface{}, status
 		if err != nil {
 			return err
 		}
+		return nil
+	}
+
+	// Default to empty json object.
+	// Always return valid json responses.
+	// This simplifies calls from the frontend because a check isn't required.
+	res, err := json.Marshal(struct{}{})
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(res)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -59,4 +73,17 @@ func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 	}
 
 	return Respond(ctx, w, er, http.StatusInternalServerError)
+}
+
+// SetContextStatusCode sets the status code for request logger middleware.
+func SetContextStatusCode(ctx context.Context, statusCode int) {
+	if v, ok := ctx.Value(KeyValues).(*Values); ok {
+		v.StatusCode = statusCode
+	}
+}
+
+// Redirect redirects and sets status code for request logger middleware.
+func Redirect(w http.ResponseWriter, r *http.Request, path string) {
+	http.Redirect(w, r, path, http.StatusTemporaryRedirect)
+	SetContextStatusCode(r.Context(), http.StatusTemporaryRedirect)
 }
