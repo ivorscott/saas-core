@@ -50,6 +50,5 @@ func (reg *RegistrationHandler) ProcessRegistration(w http.ResponseWriter, r *ht
 		return err
 	}
 
-	web.Redirect(w, r, "/admin/tenants")
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }

@@ -70,7 +70,7 @@
                 .then(res => {
                     if (res.error) {
                         let err = `${res.error}.`
-                        if(res.fields.length > 0) {
+                        if(res.fields && res.fields.length > 0) {
                             res.fields.forEach(field => {
                                 err += ` ${field.error}.`
                             })

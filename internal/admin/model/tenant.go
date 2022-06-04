@@ -13,7 +13,7 @@ func init() {
 type NewTenant struct {
 	Email    string `json:"email" validate:"required"`
 	FullName string `json:"fullName" validate:"required"`
-	Company  string `json:"company" validate:"required"`
+	Company  string `json:"companyName" validate:"required"`
 	Plan     string `json:"plan" validate:"required,oneof=basic premium"`
 }
 

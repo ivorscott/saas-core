@@ -11,6 +11,7 @@ import (
 	"github.com/devpies/saas-core/pkg/web/mid"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"go.uber.org/zap"
 )
 
@@ -26,7 +27,13 @@ func Routes(
 ) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(loadSession)
-
+	mux.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost", "https://devpie.io"},
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
 	mux.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(assets))))
 
 	app := web.NewApp(mux, shutdown, log, []web.Middleware{mid.Logger(log), mid.Errors(log), mid.Panics(log)}...)
