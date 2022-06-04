@@ -2,12 +2,6 @@ include .env
 
 .DEFAULT_GOAL := help
 
-# http://bit.ly/37TR1r2
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test db-admin-gen db-admin-migrate db-admin-rollback))
-  val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  $(eval $(val):;@:)
-endif
-
 admin: ;@ ## Run admin app with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/admin ./cmd/admin" \
@@ -66,3 +60,9 @@ help:
 	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-17s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
+
+# http://bit.ly/37TR1r2
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test db-admin-gen db-admin-migrate db-admin-rollback))
+  val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(val):;@:)
+endif
