@@ -29,17 +29,17 @@ func Routes(
 	app := web.NewApp(mux, shutdown, log, []web.Middleware{mid.Logger(log), mid.Errors(log), mid.Panics(log)}...)
 
 	// Unauthenticated webpages.
-	app.Handle(http.MethodGet, "/", withNoSession()(authHandler.Login))
-	app.Handle(http.MethodGet, "/force-new-password", withPasswordChallengeSession()(authHandler.ForceNewPassword))
+	app.Handle(http.MethodGet, "/", withNoSession()(authHandler.LoginPage))
+	app.Handle(http.MethodGet, "/force-new-password", withPasswordChallengeSession()(authHandler.ForceNewPasswordPage))
 	app.Handle(http.MethodPost, "/secure-new-password", withNoSession()(authHandler.SetupNewUserWithSecurePassword))
 	app.Handle(http.MethodPost, "/authenticate", withNoSession()(authHandler.AuthenticateCredentials))
 
 	// Authenticated webpages.
-	app.Handle(http.MethodGet, "/admin", withSession()(webPageHandler.Dashboard))
-	app.Handle(http.MethodGet, "/admin/tenants", withSession()(webPageHandler.Tenants))
-	app.Handle(http.MethodGet, "/admin/create-tenant", withSession()(webPageHandler.CreateTenant))
+	app.Handle(http.MethodGet, "/admin", withSession()(webPageHandler.DashboardPage))
+	app.Handle(http.MethodGet, "/admin/tenants", withSession()(webPageHandler.TenantsPage))
+	app.Handle(http.MethodGet, "/admin/create-tenant", withSession()(webPageHandler.CreateTenantPage))
 	app.Handle(http.MethodGet, "/admin/logout", withSession()(authHandler.Logout))
-	app.Handle(http.MethodGet, "/*", withSession()(webPageHandler.E404))
+	app.Handle(http.MethodGet, "/*", withSession()(webPageHandler.E404Page))
 
 	return mux
 }

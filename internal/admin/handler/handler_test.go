@@ -8,9 +8,11 @@ import (
 )
 
 var (
-	testEmail        = "test@email.com"
-	testPassword     = "password"
-	testTemplateData *render.TemplateData
-	testIDToken      = "test_aws_cognito_id_token"
-	mockCtx          = mock.AnythingOfType("*context.valueCtx")
+	testEmail          = "test@email.com"
+	testPassword       = "password"
+	testTemplateData   *render.TemplateData
+	testIDToken        = "test_aws_cognito_id_token"
+	testPChalSession   = "test_password_challenge_session"
+	mockCtx            = mock.AnythingOfType("*context.valueCtx")
+	fieldValidationErr = "field validation error"
 )

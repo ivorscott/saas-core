@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestWebPageHandler_Dashboard(t *testing.T) {
+func TestWebPageHandler_DashboardPage(t *testing.T) {
 	basePath := "/admin"
 
 	t.Run("success", func(t *testing.T) {
@@ -31,7 +31,7 @@ func TestWebPageHandler_Dashboard(t *testing.T) {
 	})
 }
 
-func TestWebPageHandler_Tenants(t *testing.T) {
+func TestWebPageHandler_TenantsPage(t *testing.T) {
 	basePath := "/admin/tenants"
 
 	t.Run("success", func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestWebPageHandler_Tenants(t *testing.T) {
 	})
 }
 
-func TestWebPageHandler_CreateTenant(t *testing.T) {
+func TestWebPageHandler_CreateTenantPage(t *testing.T) {
 	basePath := "/admin/create-tenant"
 
 	t.Run("success", func(t *testing.T) {
@@ -65,7 +65,7 @@ func TestWebPageHandler_CreateTenant(t *testing.T) {
 	})
 }
 
-func TestWebPageHandler_E404(t *testing.T) {
+func TestWebPageHandler_E404Page(t *testing.T) {
 	basePath := "/noSuchThing"
 
 	t.Run("success", func(t *testing.T) {
@@ -97,19 +97,19 @@ func setupWebPageHandler() (http.Handler, webPageHandlerDeps) {
 	webpage := handler.NewWebPageHandler(logger, renderEngine, setStatusCodeFunc.Execute)
 
 	router.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
-		_ = webpage.Dashboard(w, r)
+		_ = webpage.DashboardPage(w, r)
 	})
 
 	router.Get("/admin/tenants", func(w http.ResponseWriter, r *http.Request) {
-		_ = webpage.Tenants(w, r)
+		_ = webpage.TenantsPage(w, r)
 	})
 
 	router.Get("/admin/create-tenant", func(w http.ResponseWriter, r *http.Request) {
-		_ = webpage.CreateTenant(w, r)
+		_ = webpage.CreateTenantPage(w, r)
 	})
 
 	router.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		_ = webpage.E404(w, r)
+		_ = webpage.E404Page(w, r)
 	})
 
 	return router, webPageHandlerDeps{logger, renderEngine, setStatusCodeFunc}

@@ -29,23 +29,23 @@ func NewWebPageHandler(
 	}
 }
 
-// Dashboard displays a useful dashboard for users.
-func (page *WebPageHandler) Dashboard(w http.ResponseWriter, r *http.Request) error {
+// DashboardPage displays a useful dashboard for users.
+func (page *WebPageHandler) DashboardPage(w http.ResponseWriter, r *http.Request) error {
 	return page.render.Template(w, r, "dashboard", nil)
 }
 
-// Tenants displays a table list for tenants.
-func (page *WebPageHandler) Tenants(w http.ResponseWriter, r *http.Request) error {
+// TenantsPage displays a table list for tenants.
+func (page *WebPageHandler) TenantsPage(w http.ResponseWriter, r *http.Request) error {
 	return page.render.Template(w, r, "tenants", nil)
 }
 
-// CreateTenant displays a tenant registration form.
-func (page *WebPageHandler) CreateTenant(w http.ResponseWriter, r *http.Request) error {
+// CreateTenantPage displays a tenant registration form.
+func (page *WebPageHandler) CreateTenantPage(w http.ResponseWriter, r *http.Request) error {
 	return page.render.Template(w, r, "create-tenant", nil)
 }
 
-// E404 displays a 404 error page.
-func (page *WebPageHandler) E404(w http.ResponseWriter, r *http.Request) error {
+// E404Page displays a 404 error page.
+func (page *WebPageHandler) E404Page(w http.ResponseWriter, r *http.Request) error {
 	err := page.render.Template(w, r, "404", nil)
 	page.setStatusCode(r.Context(), http.StatusNotFound)
 	return err

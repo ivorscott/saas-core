@@ -56,13 +56,13 @@ func NewAuthHandler(logger *zap.Logger, config config.Config, renderEngine rende
 	}
 }
 
-// Login displays a form to allow users to sign in.
-func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
+// LoginPage displays a form to allow users to sign in.
+func (ah *AuthHandler) LoginPage(w http.ResponseWriter, r *http.Request) error {
 	return ah.render.Template(w, r, "login", nil)
 }
 
-// ForceNewPassword displays a form where freshly onboarded users can change their OTP.
-func (ah *AuthHandler) ForceNewPassword(w http.ResponseWriter, r *http.Request) error {
+// ForceNewPasswordPage displays a form where freshly onboarded users can change their OTP.
+func (ah *AuthHandler) ForceNewPasswordPage(w http.ResponseWriter, r *http.Request) error {
 	return ah.render.Template(w, r, "force-new-password", nil)
 }
 
@@ -94,16 +94,16 @@ func (ah *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Re
 		payload model.AuthCredentials
 	)
 
+	err = web.Decode(r, &payload)
+	if err != nil {
+		return err
+	}
+
 	// Renew the session token everytime a user logs in.
 	err = ah.session.RenewToken(r.Context())
 	if err != nil {
 		ah.logger.Error("failure on session renewal", zap.Error(err))
 		return web.NewShutdownError(err.Error())
-	}
-
-	err = web.Decode(r, &payload)
-	if err != nil {
-		return err
 	}
 
 	// Authenticate.
@@ -143,10 +143,10 @@ func (ah *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Re
 	// On challenge.
 	var resp = struct {
 		ChallengeName types.ChallengeNameType `json:"challengeName"`
-		Session       *string                 `json:"session"`
+		Session       string                  `json:"session"`
 	}{
 		ChallengeName: output.ChallengeName,
-		Session:       output.Session,
+		Session:       *output.Session,
 	}
 
 	return web.Respond(r.Context(), w, resp, http.StatusOK)

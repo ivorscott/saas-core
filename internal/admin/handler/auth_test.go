@@ -23,7 +23,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestAuthHandler_Login(t *testing.T) {
+func TestAuthHandler_LoginPage(t *testing.T) {
 	basePath := "/"
 
 	t.Run("success", func(t *testing.T) {
@@ -40,7 +40,7 @@ func TestAuthHandler_Login(t *testing.T) {
 	})
 }
 
-func TestAuthHandler_ForceNewPassword(t *testing.T) {
+func TestAuthHandler_ForceNewPasswordPage(t *testing.T) {
 	basePath := "/force-new-password"
 
 	t.Run("success", func(t *testing.T) {
@@ -76,109 +76,278 @@ func TestAuthHandler_Logout(t *testing.T) {
 		assert.Equal(t, http.StatusTemporaryRedirect, w.Code)
 	})
 
-	t.Run("500 error on session destroy failure", func(t *testing.T) {
-		handle, deps := setupAuthHandler()
+	t.Run("500 on logout", func(t *testing.T) {
+		tests := []struct {
+			name         string
+			expectations func(deps authHandlerDeps)
+		}{
+			{
+				name: "error on session destroy failure",
+				expectations: func(deps authHandlerDeps) {
+					deps.session.On("Destroy", mockCtx).Return(nil)
+					deps.session.On("RenewToken", mockCtx).Return(assert.AnError)
+				},
+			},
+			{
+				name: "error on session renew token failure",
+				expectations: func(deps authHandlerDeps) {
+					deps.session.On("Destroy", mockCtx).Return(assert.AnError)
+				},
+			},
+		}
 
-		r := httptest.NewRequest(http.MethodGet, basePath, nil)
-		w := httptest.NewRecorder()
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				handle, deps := setupAuthHandler()
 
-		deps.session.On("Destroy", mockCtx).Return(nil)
-		deps.session.On("RenewToken", mockCtx).Return(assert.AnError)
+				r := httptest.NewRequest(http.MethodGet, basePath, nil)
+				w := httptest.NewRecorder()
 
-		handle.ServeHTTP(w, r)
+				tc.expectations(deps)
 
-		var resp web.ErrorResponse
-		err := json.Unmarshal(w.Body.Bytes(), &resp)
-		assert.Nil(t, err)
+				handle.ServeHTTP(w, r)
 
-		deps.session.AssertExpectations(t)
+				var resp web.ErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.Nil(t, err)
 
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		assert.Equal(t, http.StatusText(http.StatusInternalServerError), resp.Error)
-	})
+				deps.session.AssertExpectations(t)
 
-	t.Run("500 error on session renew token failure", func(t *testing.T) {
-		handle, deps := setupAuthHandler()
-
-		r := httptest.NewRequest(http.MethodGet, basePath, nil)
-		w := httptest.NewRecorder()
-
-		deps.session.On("Destroy", mockCtx).Return(assert.AnError)
-
-		handle.ServeHTTP(w, r)
-
-		var resp web.ErrorResponse
-		err := json.Unmarshal(w.Body.Bytes(), &resp)
-		assert.Nil(t, err)
-
-		deps.session.AssertExpectations(t)
-
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		assert.Equal(t, http.StatusText(http.StatusInternalServerError), resp.Error)
+				assert.Equal(t, http.StatusInternalServerError, w.Code)
+				assert.Equal(t, http.StatusText(http.StatusInternalServerError), resp.Error)
+			})
+		}
 	})
 }
 
 func TestAuthHandler_AuthenticateCredentials(t *testing.T) {
 	basePath := "/authenticate"
 
-	t.Run("success", func(t *testing.T) {
-		var err error
-
-		handle, deps := setupAuthHandler()
-
-		payload := model.AuthCredentials{
-			Email:    testEmail,
-			Password: testPassword,
-		}
-		data, err := json.Marshal(payload)
-		assert.Nil(t, err)
-
-		r := httptest.NewRequest(http.MethodGet, basePath, bytes.NewReader(data))
-		w := httptest.NewRecorder()
-
-		deps.session.On("RenewToken", mockCtx).Return(nil)
-		deps.authService.On("Authenticate", mockCtx, testEmail, testPassword).
-			Return(&cognitoidentityprovider.AdminInitiateAuthOutput{
+	t.Run("200 on authenticated", func(t *testing.T) {
+		var (
+			adminInitiateAuthOutput = &cognitoidentityprovider.AdminInitiateAuthOutput{
 				AuthenticationResult: &types.AuthenticationResultType{
 					IdToken: &testIDToken,
 				},
-			}, nil)
-		deps.authService.On("CreateUserSession", mockCtx, []byte(testIDToken)).Return(nil)
-		handle.ServeHTTP(w, r)
+			}
+			nilAuthenticationResult = &cognitoidentityprovider.AdminInitiateAuthOutput{
+				AuthenticationResult: nil,
+				ChallengeName:        "NEW_PASSWORD_REQUIRED",
+				Session:              &testPChalSession,
+			}
+			request = model.AuthCredentials{
+				Email:    testEmail,
+				Password: testPassword,
+			}
+		)
 
-		deps.session.AssertExpectations(t)
-
-		var resp struct {
+		type loginResponse struct {
 			IDToken string `json:"idToken"`
 		}
+		type pChalResponse struct {
+			ChallengeName types.ChallengeNameType `json:"challengeName"`
+			Session       string                  `json:"session"`
+		}
+
+		tests := []struct {
+			name         string
+			expectations func(deps authHandlerDeps)
+			respJSON     func() []byte
+		}{
+			{
+				name: "login",
+				expectations: func(deps authHandlerDeps) {
+					deps.session.On("RenewToken", mockCtx).Return(nil)
+					deps.authService.On("Authenticate", mockCtx, testEmail, testPassword).Return(adminInitiateAuthOutput, nil)
+					deps.authService.On("CreateUserSession", mockCtx, []byte(testIDToken)).Return(nil)
+				},
+				respJSON: func() []byte {
+					b, _ := json.Marshal(loginResponse{testIDToken})
+					return b
+				},
+			},
+			{
+				name: "password challenge",
+				expectations: func(deps authHandlerDeps) {
+					deps.session.On("RenewToken", mockCtx).Return(nil)
+					deps.authService.On("Authenticate", mockCtx, testEmail, testPassword).Return(nilAuthenticationResult, nil)
+					deps.authService.On("CreatePasswordChallengeSession", mockCtx)
+				},
+				respJSON: func() []byte {
+					b, _ := json.Marshal(pChalResponse{"NEW_PASSWORD_REQUIRED", testPChalSession})
+					return b
+				},
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				handle, deps := setupAuthHandler()
+
+				payload, err := json.Marshal(request)
+				assert.Nil(t, err)
+
+				r := httptest.NewRequest(http.MethodGet, basePath, bytes.NewReader(payload))
+				w := httptest.NewRecorder()
+
+				tc.expectations(deps)
+
+				handle.ServeHTTP(w, r)
+
+				deps.session.AssertExpectations(t)
+				deps.authService.AssertExpectations(t)
+
+				assert.True(t, assert.Exactlyf(t, tc.respJSON(), w.Body.Bytes(), "not exact match"))
+				assert.Equal(t, http.StatusOK, w.Code)
+			})
+		}
+	})
+
+	t.Run("400 on invalid payload", func(t *testing.T) {
+		var (
+			request = model.AuthCredentials{
+				Email:    "",
+				Password: "",
+			}
+			resp web.ErrorResponse
+			err  error
+		)
+
+		handle, _ := setupAuthHandler()
+
+		payload, err := json.Marshal(request)
+		assert.Nil(t, err)
+
+		r := httptest.NewRequest(http.MethodGet, basePath, bytes.NewReader(payload))
+		w := httptest.NewRecorder()
+
+		handle.ServeHTTP(w, r)
 
 		err = json.Unmarshal(w.Body.Bytes(), &resp)
 		assert.Nil(t, err)
 
-		deps.session.AssertExpectations(t)
-
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, testIDToken, resp.IDToken)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, fieldValidationErr, resp.Error)
 	})
 
-	t.Run("500 error on session renew token failure", func(t *testing.T) {
-		handle, deps := setupAuthHandler()
+	t.Run("401 on unauthorized login", func(t *testing.T) {
+		var (
+			validRequest = model.AuthCredentials{
+				Email:    testEmail,
+				Password: testPassword,
+			}
+			resp web.ErrorResponse
+		)
 
-		r := httptest.NewRequest(http.MethodGet, basePath, nil)
-		w := httptest.NewRecorder()
+		tests := []struct {
+			name        string
+			errToReturn error
+			errResp     string
+		}{
+			{
+				name:        "incorrect username and password error",
+				errToReturn: handler.ErrIncorrectUsernameOrPassword,
+				errResp:     handler.ErrIncorrectUsernameOrPassword.Error(),
+			},
+			{
+				name:        "password attempts exceeded error",
+				errToReturn: handler.ErrPasswordAttemptsExceeded,
+				errResp:     handler.ErrPasswordAttemptsExceeded.Error(),
+			},
+			{
+				name:        "generic unauthorized error",
+				errToReturn: assert.AnError,
+				errResp:     handler.ErrNotAuthorizedException.Error(),
+			},
+		}
 
-		deps.session.On("RenewToken", mock.AnythingOfType("*context.valueCtx")).Return(assert.AnError)
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				handle, deps := setupAuthHandler()
 
-		handle.ServeHTTP(w, r)
+				payload, err := json.Marshal(validRequest)
+				assert.Nil(t, err)
 
-		var resp web.ErrorResponse
-		err := json.Unmarshal(w.Body.Bytes(), &resp)
-		assert.Nil(t, err)
+				r := httptest.NewRequest(http.MethodGet, basePath, bytes.NewReader(payload))
+				w := httptest.NewRecorder()
 
-		deps.session.AssertExpectations(t)
+				deps.session.
+					On("RenewToken", mock.AnythingOfType("*context.valueCtx")).
+					Return(nil)
+				deps.authService.
+					On("Authenticate", mockCtx, testEmail, testPassword).
+					Return(nil, tc.errToReturn)
 
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		assert.Equal(t, http.StatusText(http.StatusInternalServerError), resp.Error)
+				handle.ServeHTTP(w, r)
+
+				err = json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.Nil(t, err)
+
+				deps.session.AssertExpectations(t)
+
+				assert.Equal(t, http.StatusUnauthorized, w.Code)
+				assert.Equal(t, tc.errResp, resp.Error)
+			})
+		}
+	})
+
+	t.Run("500 on authenticate", func(t *testing.T) {
+		var (
+			adminInitiateAuthOutput = &cognitoidentityprovider.AdminInitiateAuthOutput{
+				AuthenticationResult: &types.AuthenticationResultType{
+					IdToken: &testIDToken,
+				},
+			}
+			request = model.AuthCredentials{
+				Email:    testEmail,
+				Password: testPassword,
+			}
+			resp web.ErrorResponse
+		)
+
+		tests := []struct {
+			name         string
+			expectations func(deps authHandlerDeps)
+		}{
+			{
+				name: "renew session token failure",
+				expectations: func(deps authHandlerDeps) {
+					deps.session.On("RenewToken", mock.AnythingOfType("*context.valueCtx")).Return(assert.AnError)
+				},
+			},
+			{
+				name: "create user session failure",
+				expectations: func(deps authHandlerDeps) {
+					deps.session.On("RenewToken", mockCtx).Return(nil)
+					deps.authService.On("Authenticate", mockCtx, testEmail, testPassword).Return(adminInitiateAuthOutput, nil)
+					deps.authService.On("CreateUserSession", mockCtx, []byte(testIDToken)).Return(assert.AnError)
+				},
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				handle, deps := setupAuthHandler()
+
+				payload, err := json.Marshal(request)
+				assert.Nil(t, err)
+
+				r := httptest.NewRequest(http.MethodGet, basePath, bytes.NewReader(payload))
+				w := httptest.NewRecorder()
+
+				tc.expectations(deps)
+
+				handle.ServeHTTP(w, r)
+
+				err = json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.Nil(t, err)
+
+				deps.session.AssertExpectations(t)
+
+				assert.Equal(t, http.StatusInternalServerError, w.Code)
+				assert.Equal(t, http.StatusText(http.StatusInternalServerError), resp.Error)
+			})
+		}
 	})
 }
 
@@ -202,11 +371,11 @@ func setupAuthHandler() (http.Handler, authHandlerDeps) {
 	app := web.NewApp(router, shutdown, logger, []web.Middleware{mid.Errors(logger)}...)
 
 	app.Handle(http.MethodGet, "/", func(w http.ResponseWriter, r *http.Request) error {
-		return auth.Login(w, r)
+		return auth.LoginPage(w, r)
 	})
 
 	app.Handle(http.MethodGet, "/force-new-password", func(w http.ResponseWriter, r *http.Request) error {
-		return auth.ForceNewPassword(w, r)
+		return auth.ForceNewPasswordPage(w, r)
 	})
 
 	app.Handle(http.MethodGet, "/authenticate", func(w http.ResponseWriter, r *http.Request) error {
