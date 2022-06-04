@@ -158,7 +158,7 @@ func (ah *AuthHandler) SetupNewUserWithSecurePassword(w http.ResponseWriter, r *
 		err     error
 		payload struct {
 			model.AuthCredentials
-			Session string `json:"session"`
+			Session string `json:"session" validate:"required"`
 		}
 	)
 

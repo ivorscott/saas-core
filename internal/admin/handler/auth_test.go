@@ -351,6 +351,163 @@ func TestAuthHandler_AuthenticateCredentials(t *testing.T) {
 	})
 }
 
+func TestAuthHandler_SetupNewUserWithSecurePassword(t *testing.T) {
+	var (
+		basePath = "/secure-new-password"
+	)
+	type requestType struct {
+		model.AuthCredentials
+		Session string `json:"session"`
+	}
+
+	t.Run("200 on success challenge response", func(t *testing.T) {
+		var (
+			request = requestType{
+				AuthCredentials: model.AuthCredentials{
+					Email:    testEmail,
+					Password: testPassword,
+				},
+				Session: testPChalSession,
+			}
+			adminRespondToAuthChallengeOutput = &cognitoidentityprovider.AdminRespondToAuthChallengeOutput{
+				AuthenticationResult: &types.AuthenticationResultType{
+					IdToken: &testIDToken,
+				}}
+		)
+
+		handle, deps := setupAuthHandler()
+
+		payload, err := json.Marshal(request)
+		assert.Nil(t, err)
+
+		r := httptest.NewRequest(http.MethodGet, basePath, bytes.NewReader(payload))
+		w := httptest.NewRecorder()
+
+		deps.authService.
+			On("RespondToNewPasswordRequiredChallenge", mockCtx, testEmail, testPassword, testPChalSession).
+			Return(adminRespondToAuthChallengeOutput, nil)
+		deps.authService.On("CreateUserSession", mockCtx, []byte(testIDToken)).Return(nil)
+
+		handle.ServeHTTP(w, r)
+
+		var resp struct {
+			IDToken string `json:"idToken"`
+		}
+		err = json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.Nil(t, err)
+
+		deps.session.AssertExpectations(t)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, testIDToken, resp.IDToken)
+	})
+
+	t.Run("400 on setup secure password", func(t *testing.T) {
+		t.Run("400", func(t *testing.T) {
+			tests := []struct {
+				name         string
+				request      requestType
+				expectations func(deps authHandlerDeps)
+				errMsg       string
+			}{
+				{
+					name: "missing session in payload",
+					request: requestType{
+						AuthCredentials: model.AuthCredentials{
+							Email:    testEmail,
+							Password: testPassword,
+						},
+						Session: "",
+					},
+					expectations: func(deps authHandlerDeps) {},
+					errMsg:       fieldValidationErr,
+				},
+				{
+					name: "response to challenge failed",
+					request: requestType{
+						AuthCredentials: model.AuthCredentials{
+							Email:    testEmail,
+							Password: testPassword,
+						},
+						Session: testPChalSession,
+					},
+					expectations: func(deps authHandlerDeps) {
+						deps.authService.
+							On("RespondToNewPasswordRequiredChallenge", mockCtx, testEmail, testPassword, testPChalSession).
+							Return(nil, assert.AnError)
+					},
+					errMsg: assert.AnError.Error(),
+				},
+			}
+
+			for _, tc := range tests {
+				t.Run(tc.name, func(t *testing.T) {
+					handle, deps := setupAuthHandler()
+
+					payload, err := json.Marshal(tc.request)
+					assert.Nil(t, err)
+
+					r := httptest.NewRequest(http.MethodGet, basePath, bytes.NewReader(payload))
+					w := httptest.NewRecorder()
+
+					tc.expectations(deps)
+
+					handle.ServeHTTP(w, r)
+
+					var resp web.ErrorResponse
+					err = json.Unmarshal(w.Body.Bytes(), &resp)
+					assert.Nil(t, err)
+
+					deps.session.AssertExpectations(t)
+					assert.Equal(t, http.StatusBadRequest, w.Code)
+					assert.Equal(t, tc.errMsg, resp.Error)
+				})
+			}
+		})
+	})
+
+	t.Run("500 on setup secure password", func(t *testing.T) {
+		var (
+			request = requestType{
+				AuthCredentials: model.AuthCredentials{
+					Email:    testEmail,
+					Password: testPassword,
+				},
+				Session: testPChalSession,
+			}
+			adminRespondToAuthChallengeOutput = &cognitoidentityprovider.AdminRespondToAuthChallengeOutput{
+				AuthenticationResult: &types.AuthenticationResultType{
+					IdToken: &testIDToken,
+				}}
+		)
+
+		handle, deps := setupAuthHandler()
+
+		payload, err := json.Marshal(request)
+		assert.Nil(t, err)
+
+		r := httptest.NewRequest(http.MethodGet, basePath, bytes.NewReader(payload))
+		w := httptest.NewRecorder()
+
+		deps.authService.
+			On("RespondToNewPasswordRequiredChallenge", mockCtx, testEmail, testPassword, testPChalSession).
+			Return(adminRespondToAuthChallengeOutput, nil)
+		deps.authService.On("CreateUserSession", mockCtx, []byte(testIDToken)).Return(assert.AnError)
+
+		handle.ServeHTTP(w, r)
+
+		var resp struct {
+			IDToken string `json:"idToken"`
+		}
+		err = json.Unmarshal(w.Body.Bytes(), &resp)
+		assert.Nil(t, err)
+
+		deps.session.AssertExpectations(t)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
 type authHandlerDeps struct {
 	logger      *zap.Logger
 	render      *mocks.Renderer
@@ -376,6 +533,9 @@ func setupAuthHandler() (http.Handler, authHandlerDeps) {
 
 	app.Handle(http.MethodGet, "/force-new-password", func(w http.ResponseWriter, r *http.Request) error {
 		return auth.ForceNewPasswordPage(w, r)
+	})
+	app.Handle(http.MethodGet, "/secure-new-password", func(w http.ResponseWriter, r *http.Request) error {
+		return auth.SetupNewUserWithSecurePassword(w, r)
 	})
 
 	app.Handle(http.MethodGet, "/authenticate", func(w http.ResponseWriter, r *http.Request) error {
