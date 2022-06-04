@@ -40,6 +40,18 @@ func Run(staticFS embed.FS) error {
 		err     error
 	)
 
+	// Initialize static files.
+	templateFS, err := fs.Sub(staticFS, "static/templates")
+	if err != nil {
+		logger.Error("error retrieving static templates", zap.Error(err))
+		return err
+	}
+	assets, err := fs.Sub(staticFS, "static/assets")
+	if err != nil {
+		logger.Error("error retrieving static assets", zap.Error(err))
+		return err
+	}
+
 	if err = conf.Parse(os.Args[1:], "ADMIN", &cfg); err != nil {
 		if err == conf.ErrHelpWanted {
 			var usage string
@@ -94,23 +106,12 @@ func Run(staticFS embed.FS) error {
 
 	// Initialize 3-layered architecture.
 	authService := service.NewAuthService(logger, cfg, cognitoClient, session)
-
-	// Initialize static files.
-	templateFS, err := fs.Sub(staticFS, "static/templates")
-	if err != nil {
-		logger.Error("error retrieving static templates", zap.Error(err))
-		return err
-	}
-	assets, err := fs.Sub(staticFS, "static/assets")
-	if err != nil {
-		logger.Error("error retrieving static assets", zap.Error(err))
-		return err
-	}
+	registrationService := service.NewRegistrationService(logger)
 
 	renderEngine := render.New(logger, cfg, templateFS, session)
 	authHandler := handler.NewAuthHandler(logger, cfg, renderEngine, session, authService)
 	webPageHandler := handler.NewWebPageHandler(logger, renderEngine, web.SetContextStatusCode)
-
+	registrationHandler := handler.NewRegistrationHandler(logger, registrationService)
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	serverErrors := make(chan error, 1)
@@ -119,7 +120,7 @@ func Run(staticFS embed.FS) error {
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, assets, authHandler, webPageHandler),
+		Handler:      Routes(logger, shutdown, assets, authHandler, webPageHandler, registrationHandler, cfg),
 	}
 
 	go func() {

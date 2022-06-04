@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/devpies/saas-core/internal/admin/config"
 	"github.com/devpies/saas-core/internal/admin/handler"
 	"github.com/devpies/saas-core/pkg/web"
 	"github.com/devpies/saas-core/pkg/web/mid"
@@ -20,6 +21,8 @@ func Routes(
 	assets fs.FS,
 	authHandler *handler.AuthHandler,
 	webPageHandler *handler.WebPageHandler,
+	registrationHandler *handler.RegistrationHandler,
+	config config.Config,
 ) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(loadSession)
@@ -40,6 +43,9 @@ func Routes(
 	app.Handle(http.MethodGet, "/admin/create-tenant", withSession()(webPageHandler.CreateTenantPage))
 	app.Handle(http.MethodGet, "/admin/logout", withSession()(authHandler.Logout))
 	app.Handle(http.MethodGet, "/*", withSession()(webPageHandler.E404Page))
+
+	app.Handle(http.MethodPost, "/api/send-registration",
+		mid.Auth(log, config.Cognito.Region, config.Cognito.UserPoolClientID)(registrationHandler.ProcessRegistration))
 
 	return mux
 }

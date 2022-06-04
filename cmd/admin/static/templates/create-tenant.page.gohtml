@@ -83,13 +83,8 @@
                 body: JSON.stringify(payload),
             };
 
-            //TODO: Add path to tenant-registration service. - {{.API}}/api/registration/register
-            fetch("#", options)
-                .then(() => {
-                    setTimeout(()=> {
-                        location.href = "/admin/tenants"
-                    }, 2000)
-                })
+            fetch("/api/send-registration", options)
+                .then(() => {})
         }
     </script>
 {{end}}
