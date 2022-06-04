@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/alexedwards/scs/v2"
-	"github.com/devpies/core/internal/admin/config"
-	"github.com/lestrrat-go/jwx/jwk"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/devpies/saas-core/internal/admin/config"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/lestrrat-go/jwx/jwt"
 	"go.uber.org/zap"
 )
 

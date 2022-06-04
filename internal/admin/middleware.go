@@ -3,7 +3,7 @@ package admin
 import (
 	"net/http"
 
-	"github.com/devpies/core/pkg/web"
+	"github.com/devpies/saas-core/pkg/web"
 )
 
 func loadSession(next http.Handler) http.Handler {

@@ -1,5 +1,10 @@
 issues:
   exclude-use-default: false
+  exclude-rules:
+    - text: "G101: Potential hardcoded credentials"
+      path: "internal/admin/handler/handler_test"
+      linters:
+        - gosec
 
 linters:
   disable-all: true
@@ -25,3 +30,5 @@ linters:
 linters-settings:
   cyclop:
     max-complexity: 16
+  goimports:
+    local-prefixes: github.com/devpies/saas-core

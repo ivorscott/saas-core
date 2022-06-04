@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/devpies/core/internal/admin/handler"
-	"github.com/devpies/core/pkg/web"
-	"github.com/devpies/core/pkg/web/mid"
+	"github.com/devpies/saas-core/internal/admin/handler"
+	"github.com/devpies/saas-core/pkg/web"
+	"github.com/devpies/saas-core/pkg/web/mid"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -30,7 +30,7 @@ func Routes(
 
 	// Unauthenticated webpages.
 	app.Handle(http.MethodGet, "/", withNoSession()(authHandler.Login))
-	app.Handle(http.MethodGet, "/change-password", withPasswordChallengeSession()(authHandler.ForceNewPassword))
+	app.Handle(http.MethodGet, "/force-new-password", withPasswordChallengeSession()(authHandler.ForceNewPassword))
 	app.Handle(http.MethodPost, "/secure-new-password", withNoSession()(authHandler.SetupNewUserWithSecurePassword))
 	app.Handle(http.MethodPost, "/authenticate", withNoSession()(authHandler.AuthenticateCredentials))
 

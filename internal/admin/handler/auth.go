@@ -1,28 +1,39 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
 
-	"github.com/devpies/core/internal/admin/config"
-	"github.com/devpies/core/internal/admin/model"
-	"github.com/devpies/core/internal/admin/render"
-	"github.com/devpies/core/pkg/web"
+	"github.com/devpies/saas-core/internal/admin/config"
+	"github.com/devpies/saas-core/internal/admin/model"
+	"github.com/devpies/saas-core/pkg/web"
 
-	"github.com/alexedwards/scs/v2"
+	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
-
 	"go.uber.org/zap"
 )
 
+type authService interface {
+	Authenticate(ctx context.Context, email, password string) (*cip.AdminInitiateAuthOutput, error)
+	CreateUserSession(ctx context.Context, token []byte) error
+	CreatePasswordChallengeSession(ctx context.Context)
+	RespondToNewPasswordRequiredChallenge(ctx context.Context, email, password string, session string) (*cip.AdminRespondToAuthChallengeOutput, error)
+}
+
+type sessionManager interface {
+	Destroy(ctx context.Context) error
+	RenewToken(ctx context.Context) error
+}
+
 // AuthHandler contains various auth related handlers.
 type AuthHandler struct {
-	logger  *zap.Logger
-	config  config.Config
-	render  *render.Render
-	service authService
-	session *scs.SessionManager
+	logger      *zap.Logger
+	config      config.Config
+	render      renderer
+	session     sessionManager
+	authService authService
 }
 
 var (
@@ -35,13 +46,13 @@ var (
 )
 
 // NewAuthHandler returns a new authentication handler.
-func NewAuthHandler(logger *zap.Logger, config config.Config, renderEngine *render.Render, service authService, session *scs.SessionManager) *AuthHandler {
+func NewAuthHandler(logger *zap.Logger, config config.Config, renderEngine renderer, session sessionManager, authService authService) *AuthHandler {
 	return &AuthHandler{
-		logger:  logger,
-		config:  config,
-		render:  renderEngine,
-		service: service,
-		session: session,
+		logger:      logger,
+		config:      config,
+		render:      renderEngine,
+		session:     session,
+		authService: authService,
 	}
 }
 
@@ -52,7 +63,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 
 // ForceNewPassword displays a form where freshly onboarded users can change their OTP.
 func (ah *AuthHandler) ForceNewPassword(w http.ResponseWriter, r *http.Request) error {
-	return ah.render.Template(w, r, "new-password", nil)
+	return ah.render.Template(w, r, "force-new-password", nil)
 }
 
 // Logout allows users to log out by destroying the existing session.
@@ -72,9 +83,8 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 		return web.NewShutdownError(err.Error())
 	}
 
-	web.SetContextStatusCode(r.Context(), http.StatusOK)
-	http.Redirect(w, r, "/", http.StatusSeeOther)
-	return nil
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	return web.Respond(r.Context(), w, nil, http.StatusTemporaryRedirect)
 }
 
 // AuthenticateCredentials handles email and password values from the admin login form.
@@ -97,7 +107,7 @@ func (ah *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Re
 	}
 
 	// Authenticate.
-	output, err := ah.service.Authenticate(r.Context(), payload.Email, payload.Password)
+	output, err := ah.authService.Authenticate(r.Context(), payload.Email, payload.Password)
 	if err != nil {
 		ah.logger.Info("", zap.Error(err))
 		switch {
@@ -113,22 +123,22 @@ func (ah *AuthHandler) AuthenticateCredentials(w http.ResponseWriter, r *http.Re
 
 	// On success.
 	if output.AuthenticationResult != nil {
-		err = ah.service.CreateUserSession(r.Context(), []byte(*output.AuthenticationResult.IdToken))
+		err = ah.authService.CreateUserSession(r.Context(), []byte(*output.AuthenticationResult.IdToken))
 		if err != nil {
 			ah.logger.Error("failure on user session creation", zap.Error(err))
 			return web.NewShutdownError(err.Error())
 		}
 
 		var resp = struct {
-			IDToken *string `json:"idToken"`
+			IDToken string `json:"idToken"`
 		}{
-			IDToken: output.AuthenticationResult.IdToken,
+			IDToken: *output.AuthenticationResult.IdToken,
 		}
 
 		return web.Respond(r.Context(), w, resp, http.StatusOK)
 	}
 
-	ah.service.CreatePasswordChallengeSession(r.Context())
+	ah.authService.CreatePasswordChallengeSession(r.Context())
 
 	// On challenge.
 	var resp = struct {
@@ -157,13 +167,13 @@ func (ah *AuthHandler) SetupNewUserWithSecurePassword(w http.ResponseWriter, r *
 		return err
 	}
 
-	output, err := ah.service.RespondToNewPasswordRequiredChallenge(r.Context(), payload.Email, payload.Password, payload.Session)
+	output, err := ah.authService.RespondToNewPasswordRequiredChallenge(r.Context(), payload.Email, payload.Password, payload.Session)
 	if err != nil {
 		ah.logger.Info("failure on password required challenge response", zap.Error(err))
 		return web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	err = ah.service.CreateUserSession(r.Context(), []byte(*output.AuthenticationResult.IdToken))
+	err = ah.authService.CreateUserSession(r.Context(), []byte(*output.AuthenticationResult.IdToken))
 	if err != nil {
 		ah.logger.Error("failure on user session creation", zap.Error(err))
 		return web.NewShutdownError(err.Error())

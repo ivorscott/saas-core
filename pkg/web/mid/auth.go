@@ -2,7 +2,7 @@ package mid
 
 import (
 	"fmt"
-	"github.com/devpies/core/pkg/web"
+	"github.com/devpies/saas-core/pkg/web"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jwt"
 	"go.uber.org/zap"

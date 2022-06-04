@@ -1,4 +1,4 @@
-module github.com/devpies/core/pkg/web
+module github.com/devpies/saas-core/pkg/web
 
 go 1.18
 

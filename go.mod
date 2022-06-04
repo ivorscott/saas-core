@@ -1,4 +1,4 @@
-module github.com/devpies/core
+module github.com/devpies/saas-core
 
 go 1.18
 
@@ -10,8 +10,8 @@ require (
 	github.com/aws/aws-sdk-go v1.44.17
 	github.com/aws/aws-sdk-go-v2/config v1.15.7
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5
-	github.com/devpies/core/pkg/log v0.0.0-20220519154201-382d963b2ca0
-	github.com/devpies/core/pkg/web v0.0.0-20220519154201-382d963b2ca0
+	github.com/devpies/saas-core/pkg/log v0.0.0-20220519154201-382d963b2ca0
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220519154201-382d963b2ca0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
@@ -61,6 +61,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-replace github.com/devpies/core/pkg/web v0.0.0-20220519154201-382d963b2ca0 => ./pkg/web
+replace github.com/devpies/saas-core/pkg/web v0.0.0-20220519154201-382d963b2ca0 => ./pkg/web
 
-replace github.com/devpies/core/pkg/log v0.0.0-20220519154201-382d963b2ca0 => ./pkg/log
+replace github.com/devpies/saas-core/pkg/log v0.0.0-20220519154201-382d963b2ca0 => ./pkg/log

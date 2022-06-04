@@ -5,8 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/devpies/core/internal/admin/handler"
-	"github.com/devpies/core/internal/admin/mocks"
+	"github.com/devpies/saas-core/internal/admin/handler"
+	"github.com/devpies/saas-core/internal/admin/mocks"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/mock"
 
@@ -74,7 +75,7 @@ func TestWebPageHandler_E404(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		deps.render.On("Template", mock.Anything, mock.AnythingOfType("*http.Request"), "404", testTemplateData).Return(nil)
-		deps.setStatus.On("Execute", mock.AnythingOfType("*context.valueCtx"), http.StatusNotFound)
+		deps.setStatusCodeFunc.On("Execute", mock.AnythingOfType("*context.valueCtx"), http.StatusNotFound)
 
 		handle.ServeHTTP(w, r)
 
@@ -83,17 +84,17 @@ func TestWebPageHandler_E404(t *testing.T) {
 }
 
 type webPageHandlerDeps struct {
-	logger    *zap.Logger
-	render    *mocks.Renderer
-	setStatus *mocks.StatusSetter
+	logger            *zap.Logger
+	render            *mocks.Renderer
+	setStatusCodeFunc *mocks.SetStatusCodeFunc
 }
 
 func setupWebPageHandler() (http.Handler, webPageHandlerDeps) {
 	router := chi.NewRouter()
 	logger := zap.NewNop()
 	renderEngine := &mocks.Renderer{}
-	setStatus := &mocks.StatusSetter{}
-	webpage := handler.NewWebPageHandler(logger, renderEngine, setStatus.Execute)
+	setStatusCodeFunc := &mocks.SetStatusCodeFunc{}
+	webpage := handler.NewWebPageHandler(logger, renderEngine, setStatusCodeFunc.Execute)
 
 	router.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
 		_ = webpage.Dashboard(w, r)
@@ -111,5 +112,5 @@ func setupWebPageHandler() (http.Handler, webPageHandlerDeps) {
 		_ = webpage.E404(w, r)
 	})
 
-	return router, webPageHandlerDeps{logger, renderEngine, setStatus}
+	return router, webPageHandlerDeps{logger, renderEngine, setStatusCodeFunc}
 }

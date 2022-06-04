@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/devpies/core/internal/admin/config"
-	"github.com/devpies/core/pkg/web"
+	"github.com/devpies/saas-core/internal/admin/config"
+	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/alexedwards/scs/v2"
 

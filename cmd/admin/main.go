@@ -3,7 +3,7 @@ package main
 import (
 	"embed"
 
-	"github.com/devpies/core/internal/admin"
+	"github.com/devpies/saas-core/internal/admin"
 )
 
 //go:embed static

@@ -5,7 +5,7 @@ package mocks
 import (
 	http "net/http"
 
-	render "github.com/devpies/core/internal/admin/render"
+	render "github.com/devpies/saas-core/internal/admin/render"
 	mock "github.com/stretchr/testify/mock"
 )
 

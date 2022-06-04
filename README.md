@@ -21,7 +21,9 @@ Print a description of each supported makefile command.
 ```bash
 > make
 admin             Run admin app with live reload.
-admin-end         Run end-to-end tests with Cypress.
+admin-end         Run end-to-end admin tests with Cypress.
+admin-test        Run admin tests. Add " -- -v" for verbosity.
+admin-mock        Generate admin mocks.
 admin-db          Enter admin database.
 admin-db-gen      Generate migration files. Required <name> argument.
 admin-db-migrate  Migrate admin database. Optional <num> argument.

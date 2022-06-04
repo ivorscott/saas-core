@@ -8,14 +8,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/devpies/core/internal/admin/config"
-	"github.com/devpies/core/internal/admin/db"
-	"github.com/devpies/core/internal/admin/handler"
-	"github.com/devpies/core/internal/admin/render"
-	"github.com/devpies/core/internal/admin/res"
-	"github.com/devpies/core/internal/admin/service"
-	"github.com/devpies/core/pkg/log"
-	"github.com/devpies/core/pkg/web"
+	"github.com/devpies/saas-core/internal/admin/config"
+	"github.com/devpies/saas-core/internal/admin/db"
+	"github.com/devpies/saas-core/internal/admin/handler"
+	"github.com/devpies/saas-core/internal/admin/render"
+	"github.com/devpies/saas-core/internal/admin/res"
+	"github.com/devpies/saas-core/internal/admin/service"
+	"github.com/devpies/saas-core/pkg/log"
+	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/alexedwards/scs/postgresstore"
 	"github.com/alexedwards/scs/v2"
@@ -108,7 +108,7 @@ func Run(staticFS embed.FS) error {
 	}
 
 	renderEngine := render.New(logger, cfg, templateFS, session)
-	authHandler := handler.NewAuthHandler(logger, cfg, renderEngine, authService, session)
+	authHandler := handler.NewAuthHandler(logger, cfg, renderEngine, session, authService)
 	webPageHandler := handler.NewWebPageHandler(logger, renderEngine, web.SetContextStatusCode)
 
 	shutdown := make(chan os.Signal, 1)

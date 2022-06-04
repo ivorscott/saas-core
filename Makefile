@@ -2,6 +2,12 @@ include .env
 
 .DEFAULT_GOAL := help
 
+# http://bit.ly/37TR1r2
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test db-admin-gen db-admin-migrate db-admin-rollback))
+  val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(val):;@:)
+endif
+
 admin: ;@ ## Run admin app with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/admin ./cmd/admin" \
@@ -24,8 +30,8 @@ admin-end:	;@ ## Run end-to-end admin tests with Cypress.
 	@cypress run --project e2e/admin/
 .PHONY: admin-end
 
-admin-test: admin-mock	;@ ## Run admin tests.
-	go test -cover ./internal/admin/...
+admin-test: admin-mock	;@ ## Run admin tests. Add " -- -v" for verbosity.
+	go test $(val) -cover ./internal/admin/...
 .PHONY: admin-test
 
 admin-mock: ;@ ## Generate admin mocks.
@@ -60,9 +66,3 @@ help:
 	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-17s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
-
-# http://bit.ly/37TR1r2
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),db-admin-gen db-admin-migrate db-admin-rollback))
-  val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  $(eval $(val):;@:)
-endif

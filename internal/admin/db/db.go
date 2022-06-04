@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/devpies/core/internal/admin/config"
+	"github.com/devpies/saas-core/internal/admin/config"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"

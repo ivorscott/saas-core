@@ -3,7 +3,8 @@ package model_test
 import (
 	"testing"
 
-	"github.com/devpies/core/internal/admin/model"
+	"github.com/devpies/saas-core/internal/admin/model"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,7 +60,6 @@ func TestAuthCredentials_Validate(t *testing.T) {
 
 			err := ac.Validate()
 			if tc.err != "" {
-				t.Log(err.Error())
 				assert.Regexp(t, tc.err, err.Error())
 			} else {
 				assert.Nil(t, err)

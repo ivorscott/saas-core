@@ -82,7 +82,7 @@
                     if(res.challengeName === "NEW_PASSWORD_REQUIRED") {
                         let params = { session: res.session, email: payload.email }
                         localStorage.setItem("pchal", JSON.stringify(params))
-                        location.href = "/change-password"
+                        location.href = "/force-new-password"
                         return
                     }
                     if(res.idToken) {

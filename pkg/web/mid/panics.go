@@ -2,7 +2,7 @@ package mid
 
 import (
 	"fmt"
-	"github.com/devpies/core/pkg/web"
+	"github.com/devpies/saas-core/pkg/web"
 	"go.uber.org/zap"
 	"net/http"
 	"runtime/debug"
