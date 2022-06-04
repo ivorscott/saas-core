@@ -33,23 +33,23 @@ admin-mock: ;@ ## Generate admin mocks.
 .PHONY: admin-mock
 
 admin-db: ;@ ## Enter admin database.
-	pgcli postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)
+	@pgcli postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)
 .PHONY: admin-db
 
 admin-db-gen: ;@ ## Generate migration files. Required <name> argument.
-	@migrate create -ext sql -dir ./internal/adminapi/res/migrations $(val)
+	@migrate create -ext sql -dir ./internal/admin/res/migrations $(val)
 .PHONY: admin-db-gen
 
 admin-db-migrate: ;@ ## Migrate admin database. Optional <num> argument.
-	@migrate -path ./internal/adminapi/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable up $(val)
+	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable up $(val)
 .PHONY: admin-db-migrate
 
 admin-db-version: ;@ ## Print migration version for admin database.
-	@migrate -path ./internal/adminapi/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable up $(val)
+	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable up $(val)
 .PHONY: admin-db-version
 
 admin-db-rollback: ;@ ## Rollback admin database. Optional <num> argument.
-	@migrate -path ./internal/adminapi/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable down $(val)
+	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable down $(val)
 .PHONY: admin-db-rollback
 
 lint: ;@ ## Run linter.
@@ -62,7 +62,7 @@ help:
 .PHONY: help
 
 # http://bit.ly/37TR1r2
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test db-admin-gen db-admin-migrate db-admin-rollback))
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test admin-db-gen admin-db-migrate admin-db-rollback))
   val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(val):;@:)
 endif
