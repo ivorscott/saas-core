@@ -14,7 +14,7 @@ func withSession() web.Middleware {
 	f := func(before web.Handler) web.Handler {
 		h := func(w http.ResponseWriter, r *http.Request) error {
 			if !session.Exists(r.Context(), "UserID") {
-				web.Redirect(w, r, "/")
+				web.Redirect(w, r, "/", http.StatusSeeOther)
 				return nil
 			}
 			err := before(w, r)
@@ -29,7 +29,7 @@ func withNoSession() web.Middleware {
 	f := func(before web.Handler) web.Handler {
 		h := func(w http.ResponseWriter, r *http.Request) error {
 			if session.Exists(r.Context(), "UserID") {
-				web.Redirect(w, r, "/admin")
+				web.Redirect(w, r, "/admin", http.StatusSeeOther)
 				return nil
 			}
 			err := before(w, r)
@@ -44,7 +44,7 @@ func withPasswordChallengeSession() web.Middleware {
 	f := func(before web.Handler) web.Handler {
 		h := func(w http.ResponseWriter, r *http.Request) error {
 			if !session.Exists(r.Context(), "PasswordChallenge") {
-				web.Redirect(w, r, "/")
+				web.Redirect(w, r, "/", http.StatusSeeOther)
 				return nil
 			}
 			err := before(w, r)

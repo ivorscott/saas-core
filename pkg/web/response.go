@@ -83,7 +83,7 @@ func SetContextStatusCode(ctx context.Context, statusCode int) {
 }
 
 // Redirect redirects and sets status code for request logger middleware.
-func Redirect(w http.ResponseWriter, r *http.Request, path string) {
-	http.Redirect(w, r, path, http.StatusTemporaryRedirect)
-	SetContextStatusCode(r.Context(), http.StatusTemporaryRedirect)
+func Redirect(w http.ResponseWriter, r *http.Request, path string, statusCode int) {
+	http.Redirect(w, r, path, statusCode)
+	SetContextStatusCode(r.Context(), statusCode)
 }
