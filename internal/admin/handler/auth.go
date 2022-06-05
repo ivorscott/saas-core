@@ -56,6 +56,11 @@ func NewAuthHandler(logger *zap.Logger, config config.Config, renderEngine rende
 	}
 }
 
+// VerifyTokenNoop does nothing. It's only used to allow the app middleware to verify the id_token on each page.
+func (ah *AuthHandler) VerifyTokenNoop(w http.ResponseWriter, r *http.Request) error {
+	return web.Respond(r.Context(), w, nil, http.StatusOK)
+}
+
 // LoginPage displays a form to allow users to sign in.
 func (ah *AuthHandler) LoginPage(w http.ResponseWriter, r *http.Request) error {
 	return ah.render.Template(w, r, "login", nil)
@@ -83,8 +88,8 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 		return web.NewShutdownError(err.Error())
 	}
 
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-	return web.Respond(r.Context(), w, nil, http.StatusTemporaryRedirect)
+	web.Redirect(w, r, "/", http.StatusSeeOther)
+	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
 // AuthenticateCredentials handles email and password values from the admin login form.

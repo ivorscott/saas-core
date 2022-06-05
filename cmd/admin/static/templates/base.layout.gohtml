@@ -18,6 +18,17 @@
         <script>
             if(!parseInt("{{.IsAuthenticated}}", 10)) {
                 localStorage.removeItem("id_token")
+            } else {
+                if(localStorage.getItem("id_token")){
+                    fetch("/api/verify",{
+                        method: "get",
+                        headers: {
+                            "Accept": "application/json",
+                            "Content-Type": 'application/json',
+                            "Authorization": `Bearer ${localStorage.getItem("id_token")}`,
+                        },
+                    })
+                }
             }
         </script>
     </head>

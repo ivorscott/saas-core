@@ -36,7 +36,14 @@ func Routes(
 	}))
 	mux.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(assets))))
 
-	app := web.NewApp(mux, shutdown, log, []web.Middleware{mid.Logger(log), mid.Errors(log), mid.Panics(log)}...)
+	middleware := []web.Middleware{
+		mid.Logger(log),
+		mid.Errors(log),
+		mid.APIAuth(log, config.Cognito.Region, config.Cognito.UserPoolClientID),
+		mid.Panics(log),
+	}
+
+	app := web.NewApp(mux, shutdown, log, middleware...)
 
 	// Unauthenticated webpages.
 	app.Handle(http.MethodGet, "/", withNoSession()(authHandler.LoginPage))
@@ -51,8 +58,8 @@ func Routes(
 	app.Handle(http.MethodGet, "/admin/logout", withSession()(authHandler.Logout))
 	app.Handle(http.MethodGet, "/*", withSession()(webPageHandler.E404Page))
 
-	app.Handle(http.MethodPost, "/api/send-registration",
-		mid.Auth(log, config.Cognito.Region, config.Cognito.UserPoolClientID)(registrationHandler.ProcessRegistration))
+	app.Handle(http.MethodGet, "/api/verify", authHandler.VerifyTokenNoop)
+	app.Handle(http.MethodPost, "/api/send-registration", registrationHandler.ProcessRegistration)
 
 	return mux
 }
