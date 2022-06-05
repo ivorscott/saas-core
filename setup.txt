@@ -1,0 +1,8 @@
+Pre-requisites
+------------------
+1. Run the kubernetes resources:
+    tilt up
+
+2. In separate terminal run:
+   ./setup.sh
+

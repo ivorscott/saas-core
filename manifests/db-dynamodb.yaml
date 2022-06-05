@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-dynamodb
+spec:
+  selector:
+    matchLabels:
+      app: db-dynamodb
+  template:
+    metadata:
+      labels:
+        app: db-dynamodb
+    spec:
+      volumes:
+        - name: db-dynamodb-volume
+          hostPath:
+            # use your local path, not mine
+            path: "/Users/ivorscott/DevPie/saas-core/data/main"
+      containers:
+        - image: amazon/dynamodb-local
+          name: db-dynamodb
+          ports:
+            - containerPort: 8000
+          args: [
+            "-jar",
+            "DynamoDBLocal.jar",
+            "-sharedDb",
+            "-dbPath",
+            "./data",
+          ]
+          volumeMounts:
+            - mountPath: /home/dynamodblocal/data
+              name: db-dynamodb-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-dynamodb-svc
+spec:
+  type: NodePort
+  selector:
+    app: db-dynamodb
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      nodePort: 30008
