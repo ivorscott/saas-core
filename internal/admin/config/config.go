@@ -5,13 +5,12 @@ import "time"
 // Config represents the application configuration.
 type Config struct {
 	Web struct {
-		DebugPort       string        `conf:"default:6060"`
 		Production      bool          `conf:"default:false"`
 		ReadTimeout     time.Duration `conf:"default:5s"`
 		WriteTimeout    time.Duration `conf:"default:5s"`
 		ShutdownTimeout time.Duration `conf:"default:5s"`
 		Address         string        `conf:"default:localhost"`
-		Port            string        `conf:"default:4001"`
+		Port            string        `conf:"default:4000"`
 	}
 	Cognito struct {
 		AppClientID      string `conf:"required"`
