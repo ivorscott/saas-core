@@ -52,11 +52,16 @@ admin-db-rollback: ;@ ## Rollback admin database. Optional <num> argument.
 	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable down $(val)
 .PHONY: admin-db-rollback
 
+tables:	;@ ## List Dynamodb tables.
+	@aws dynamodb list-tables --endpoint-url http://localhost:30008
+.PHONY: tables
+
 lint: ;@ ## Run linter.
 	@golangci-lint run
 .PHONY: lint
 
 help:
+	@cat ./setup.txt
 	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-17s\033[0m %s\n", $$1, $$2}'
 .PHONY: help

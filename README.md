@@ -16,7 +16,7 @@ This project is a part of "AWS SaaS app in 30 days" - _Proof of Concept_
 - [saas-infra resources](https://github.com/devpies/saas-infra/tree/main/local/saas) 
 
 ## Getting Started
-Print a description of each supported makefile command.
+Print instructions.
 
 ```bash
 > make
@@ -32,7 +32,6 @@ admin-db-rollback Rollback admin database. Optional <num> argument.
 lint              Run linter.
 ...
 ```
-
 
 ## Environment Variables
 
