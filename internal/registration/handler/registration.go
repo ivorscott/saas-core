@@ -48,7 +48,7 @@ func (reg *RegistrationHandler) RegisterTenant(w http.ResponseWriter, r *http.Re
 
 	id, err := uuid.NewUUID()
 	if err != nil {
-		return err
+		return web.NewShutdownError(err.Error())
 	}
 	err = reg.registrationService.PublishTenantMessages(r.Context(), id.String(), payload)
 	if err != nil {
