@@ -29,14 +29,16 @@ const (
 
 // TenantRegisteredEvent represents a TenantRegistered Message.
 type TenantRegisteredEvent struct {
-	Metadata Metadata             `json:"metadata"`
-	Type     TenantRegisteredType `json:"type"`
-	Data     struct {
-		ID         string `json:"id"`
-		Email      string `json:"email"`
-		FullName   string `json:"fullName"`
-		Company    string `json:"company"`
-		Plan       string `json:"plan"`
-		UserPoolID string `json:"userPoolId"`
-	} `json:"data"`
+	Metadata Metadata                  `json:"metadata"`
+	Type     TenantRegisteredType      `json:"type"`
+	Data     TenantRegisteredEventData `json:"data"`
+}
+
+type TenantRegisteredEventData struct {
+	ID         string `json:"id"`
+	Email      string `json:"email"`
+	FullName   string `json:"fullName"`
+	Company    string `json:"company"`
+	Plan       string `json:"plan"`
+	UserPoolID string `json:"userPoolId"`
 }

@@ -65,6 +65,9 @@ spec:
               value: admin
             - name: ADMIN_POSTGRES_DISABLE_TLS
               value: "true"
+              
+            - name: ADMIN_DYNAMODB_TENANT_TABLE
+              value: tenants
 ---
 apiVersion: v1
 kind: Service

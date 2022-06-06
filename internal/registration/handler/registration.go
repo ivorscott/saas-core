@@ -46,7 +46,10 @@ func (reg *RegistrationHandler) RegisterTenant(w http.ResponseWriter, r *http.Re
 
 	reg.logger.Info(fmt.Sprintf("%v", payload))
 
-	// publish messages
+	err = reg.registrationService.PublishTenantMessages(r.Context(), payload)
+	if err != nil {
+		reg.logger.Info("event publishing failed", zap.Error(err))
+	}
 
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }

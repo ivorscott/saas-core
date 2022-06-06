@@ -3,6 +3,7 @@ package registration
 import (
 	"context"
 	"fmt"
+	"github.com/devpies/saas-core/internal/registration/nats"
 	"net/http"
 	"os"
 	"os/signal"
@@ -51,8 +52,12 @@ func Run() error {
 	}
 	defer logger.Sync()
 
+	js := nats.NewJetStreamContext(logger, cfg.Nats.Address, cfg.Nats.Port)
+
+	_ = js.Create(cfg.Nats.TenantsStream)
+
 	// Initialize 3-layered architecture.
-	registrationService := service.NewRegistrationService(logger)
+	registrationService := service.NewRegistrationService(logger, js)
 
 	registrationHandler := handler.NewRegistrationHandler(logger, registrationService)
 	shutdown := make(chan os.Signal, 1)

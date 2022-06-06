@@ -39,7 +39,7 @@ admin-db: ;@ ## Enter admin database.
 .PHONY: admin-db
 
 admin-db-gen: ;@ ## Generate migration files. Required <name> argument.
-	@migrate create -ext sql -dir ./internal/admin/res/migrations $(val)
+	@migrate create -ext sql -dir ./internal/admin/res/migrations -seq $(val)
 .PHONY: admin-db-gen
 
 admin-db-migrate: ;@ ## Migrate admin database. Optional <num> argument.
@@ -61,7 +61,10 @@ registration: ;@ ## Run registration api with live reload.
 	--web-address=${REGISTRATION_WEB_ADDRESS} \
 	--web-port=${REGISTRATION_WEB_PORT} \
 	--cognito-app-client-id=${ADMIN_COGNITO_APP_CLIENT_ID} \
-	--cognito-user-pool-client-id=${ADMIN_COGNITO_USER_POOL_CLIENT_ID}" \
+	--cognito-user-pool-client-id=${ADMIN_COGNITO_USER_POOL_CLIENT_ID} \
+	--dynamodb-tenant-table/${REGISTRATION_DYNAMODB_TENANT_TABLE} \
+	--dynamodb-auth-table/${REGISTRATION_DYNAMODB_AUTH_TABLE} \
+	--dynamodb-config-table/${REGISTRATION_DYNAMODB_CONFIG_TABLE }" \
 	-log-prefix=false
 .PHONY: registration
 
