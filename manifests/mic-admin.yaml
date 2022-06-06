@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mic-admin
+spec:
+  selector:
+    matchLabels:
+      app: mic-admin
+  template:
+    metadata:
+      labels:
+        app: mic-admin
+    spec:
+      containers:
+        - image: admin:latest
+          name: mic-admin
+          ports:
+            - containerPort: 4000
+          env:
+            - name: ADMIN_WEB_PORT
+              value: "4000"
+            - name: ADMIN_WEB_ADDRESS
+              value: "http://localhost"
+
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: aws_access_key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: aws_secret_access_key
+            - name: AWS_DEFAULT_REGION
+              value: "eu-central-1"
+
+            - name: ADMIN_COGNITO_APP_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: cognito_app_client_id
+            - name: ADMIN_COGNITO_USER_POOL_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: cognito_user_pool_client_id
+            - name: ADMIN_COGNITO_REGION
+              value: "eu-central-1"
+
+            - name: ADMIN_REGISTRATION_SERVICE_ADDRESS
+              value: "http://mic-registration-svc"
+            - name: ADMIN_REGISTRATION_SERVICE_PORT
+              value: "4001"
+
+            - name: ADMIN_POSTGRES_USER
+              value: postgres
+            - name: ADMIN_POSTGRES_PASSWORD
+              value: postgres
+            - name: ADMIN_POSTGRES_HOST
+              value: db-admin-svc
+            - name: ADMIN_POSTGRES_PORT
+              value: "5432"
+            - name: ADMIN_POSTGRES_DB
+              value: admin
+            - name: ADMIN_POSTGRES_DISABLE_TLS
+              value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mic-admin-svc
+spec:
+  selector:
+    app: mic-admin
+  ports:
+    - port: 4000
+      targetPort: 4000

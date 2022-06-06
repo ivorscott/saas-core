@@ -5,6 +5,10 @@ issues:
       path: "internal/admin/handler/handler_test"
       linters:
         - gosec
+    - text: "G107: Potential HTTP request made with variable url"
+      path: "internal/admin/service/registration.go"
+      linters:
+        - gosec
 
 linters:
   disable-all: true

@@ -19,10 +19,6 @@ func Auth(log *zap.Logger, region string, userPoolClientID string) web.Middlewar
 			err := verifyToken(w, r, region, userPoolClientID)
 			if err != nil {
 				log.Info("api authentication failed", zap.Error(err))
-				// If verification fails log out the user. This is ok to do because the admin app
-				// frontend is the only client supported. In other words, we don't expect
-				// additional clients to make requests to the admin api.
-				web.Redirect(w, r, "/admin/logout", http.StatusSeeOther)
 				return web.NewRequestError(err, http.StatusUnauthorized)
 			}
 			return after(w, r)

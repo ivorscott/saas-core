@@ -384,6 +384,10 @@ github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 h1:YLtO71vCjJRCBcrPMtQ9nqBsqpA1
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1/go.mod h1:hyedUtir6IdtD/7lIxGeCxkaw7y45JueMRL4DIyJDKs=
 github.com/denisenkom/go-mssqldb v0.10.0/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/denverdino/aliyungo v0.0.0-20190125010748-a747050bb1ba/go.mod h1:dV8lFg6daOBZbT6/BDGIz6Y3WFGn8juu6G+CQ6LHtl0=
+github.com/devpies/saas-core/pkg/log v0.0.0-20220605224346-efd5e99fa5dd h1:P5zr3MvRWqx1bw/r8CcYXR7yq1OBgSWDNldX0Mly1PE=
+github.com/devpies/saas-core/pkg/log v0.0.0-20220605224346-efd5e99fa5dd/go.mod h1:MNN5OJ630Vj5GNChqu/ojZMSxziDsR2DxAT6cKKNU8o=
+github.com/devpies/saas-core/pkg/web v0.0.0-20220605224346-efd5e99fa5dd h1:7OUxqNcJh5YmG2d+qAhTWqMygr4CFo0XFE8gkZdkDOY=
+github.com/devpies/saas-core/pkg/web v0.0.0-20220605224346-efd5e99fa5dd/go.mod h1:HznQUxkLoZxToAsuiSnX8GokQj6VGqHCNUnu/5xeFNE=
 github.com/dgrijalva/jwt-go v0.0.0-20170104182250-a601269ab70c/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
