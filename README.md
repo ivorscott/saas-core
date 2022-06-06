@@ -75,3 +75,14 @@ OPTIONS
 > complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' ?akefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
 > ```
 
+## Debugging NATS 
+
+```bash
+kubectl port-forward statefulset.apps/nats 4222
+nats account info
+nats stream info my_stream
+nats consumer info
+nats stream view my_stream # view messages
+```
+https://docs.nats.io/nats-concepts/jetstream/js_walkthrough
+
