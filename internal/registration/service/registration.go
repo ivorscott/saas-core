@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"fmt"
+
 	"github.com/devpies/saas-core/internal/registration/model"
 	"github.com/devpies/saas-core/pkg/msg"
+
 	"go.uber.org/zap"
 )
 

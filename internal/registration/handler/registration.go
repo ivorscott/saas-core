@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/devpies/saas-core/pkg/web"
-	"github.com/google/uuid"
 	"net/http"
 
 	"github.com/devpies/saas-core/internal/registration/model"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
