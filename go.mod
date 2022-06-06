@@ -10,8 +10,6 @@ require (
 	github.com/aws/aws-sdk-go v1.44.17
 	github.com/aws/aws-sdk-go-v2/config v1.15.7
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5
-	github.com/devpies/saas-core/pkg/log v0.0.0-20220519154201-382d963b2ca0
-	github.com/devpies/saas-core/pkg/web v0.0.0-20220519154201-382d963b2ca0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
 	github.com/go-playground/validator/v10 v10.11.0
@@ -37,6 +35,8 @@ require (
 	github.com/aws/smithy-go v1.11.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
+	github.com/devpies/saas-core/pkg/log v0.0.0-20220605224346-efd5e99fa5dd // indirect
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220605224346-efd5e99fa5dd // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/goccy/go-json v0.9.7 // indirect
@@ -60,7 +60,3 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
-
-replace github.com/devpies/saas-core/pkg/web v0.0.0-20220519154201-382d963b2ca0 => ./pkg/web
-
-replace github.com/devpies/saas-core/pkg/log v0.0.0-20220519154201-382d963b2ca0 => ./pkg/log

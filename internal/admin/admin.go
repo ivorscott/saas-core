@@ -106,7 +106,7 @@ func Run(staticFS embed.FS) error {
 
 	// Initialize 3-layered architecture.
 	authService := service.NewAuthService(logger, cfg, cognitoClient, session)
-	registrationService := service.NewRegistrationService(logger)
+	registrationService := service.NewRegistrationService(logger, cfg.Registration.ServiceAddress, cfg.Registration.ServicePort)
 
 	renderEngine := render.New(logger, cfg, templateFS, session)
 	authHandler := handler.NewAuthHandler(logger, cfg, renderEngine, session, authService)

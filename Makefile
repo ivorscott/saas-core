@@ -10,6 +10,8 @@ admin: ;@ ## Run admin app with live reload.
 	--web-port=${ADMIN_WEB_PORT} \
 	--cognito-app-client-id=${ADMIN_COGNITO_APP_CLIENT_ID} \
 	--cognito-user-pool-client-id=${ADMIN_COGNITO_USER_POOL_CLIENT_ID} \
+	--registration-service-address=${ADMIN_REGISTRATION_SERVICE_ADDRESS} \
+	--registration-service-port=${ADMIN_REGISTRATION_SERVICE_PORT} \
 	--postgres-user=${ADMIN_POSTGRES_USER} \
 	--postgres-password=${ADMIN_POSTGRES_PASSWORD} \
 	--postgres-host=${ADMIN_POSTGRES_HOST} \
@@ -19,6 +21,17 @@ admin: ;@ ## Run admin app with live reload.
 	-include="*.gohtml" \
 	-log-prefix=false
 .PHONY: admin
+
+registration: ;@ ## Run registration app with live reload.
+	@CompileDaemon \
+	-build="go build -o ./bin/registration ./cmd/registration" \
+	-command="./bin/registration \
+	--web-address=${REGISTRATION_WEB_ADDRESS} \
+	--web-port=${REGISTRATION_WEB_PORT} \
+	--cognito-app-client-id=${ADMIN_COGNITO_APP_CLIENT_ID} \
+	--cognito-user-pool-client-id=${ADMIN_COGNITO_USER_POOL_CLIENT_ID}" \
+	-log-prefix=false
+.PHONY: registration
 
 admin-end:	;@ ## Run end-to-end admin tests with Cypress.
 	@cypress run --project e2e/admin/

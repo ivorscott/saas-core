@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: db-admin-depl
+  name: db-admin
 spec:
   selector:
     matchLabels:

@@ -14,16 +14,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: registration-svc
+                name: mic-registration-svc
                 port:
                   number: 4001
-#          - path: /api/tenants
-#            pathType: Prefix
-#            backend:
-#              service:
-#                name: tenants-svc
-#                port:
-#                  number: 4002
 #          - path: /api/users
 #            pathType: Prefix
 #            backend:
@@ -38,17 +31,10 @@ spec:
 #                name: projects-svc
 #                port:
 #                  number: 4004
-          - path: /nats
-            pathType: Prefix
-            backend:
-              service:
-                name: nats-svc
-                port:
-                  number: 4222
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: admin-svc
+                name: mic-admin-svc
                 port:
                   number: 4000
