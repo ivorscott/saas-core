@@ -64,6 +64,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-replace (
-		github.com/devpies/saas-core/pkg/web v0.0.0-20220606054834-5b1814eb8497 => ./pkg/msg
-)
+replace github.com/devpies/saas-core/pkg/msg v0.0.0 => ../pkg/msg

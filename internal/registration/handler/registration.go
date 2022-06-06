@@ -3,16 +3,16 @@ package handler
 import (
 	"context"
 	"fmt"
+	"github.com/devpies/saas-core/pkg/web"
+	"github.com/google/uuid"
 	"net/http"
 
 	"github.com/devpies/saas-core/internal/registration/model"
-	"github.com/devpies/saas-core/pkg/web"
-
 	"go.uber.org/zap"
 )
 
 type registrationService interface {
-	PublishTenantMessages(ctx context.Context, tenant model.NewTenant) error
+	PublishTenantMessages(ctx context.Context, id string, tenant model.NewTenant) error
 }
 
 // RegistrationHandler handles the new tenant request from the admin app.
@@ -46,7 +46,11 @@ func (reg *RegistrationHandler) RegisterTenant(w http.ResponseWriter, r *http.Re
 
 	reg.logger.Info(fmt.Sprintf("%v", payload))
 
-	err = reg.registrationService.PublishTenantMessages(r.Context(), payload)
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+	err = reg.registrationService.PublishTenantMessages(r.Context(), id.String(), payload)
 	if err != nil {
 		reg.logger.Info("event publishing failed", zap.Error(err))
 	}

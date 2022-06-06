@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/devpies/saas-core/internal/registration/model"
-	"github.com/devpies/saas-core/pkg/web"
-	"github.com/google/uuid"
-
+	"github.com/devpies/saas-core/pkg/msg"
 	"go.uber.org/zap"
 )
 
@@ -41,14 +39,9 @@ func NewRegistrationService(logger *zap.Logger, js publisher, appClientID string
 }
 
 // PublishTenantMessages publishes messages in response to a new tenant being onboarded.
-func (rs *RegistrationService) PublishTenantMessages(ctx context.Context, tenant model.NewTenant) error {
-	// create uuid for tenant
-	id, err := uuid.NewUUID()
-	if err != nil {
-		return err
-	}
+func (rs *RegistrationService) PublishTenantMessages(ctx context.Context, id string, tenant model.NewTenant) error {
 	// construct tenant message
-	event := newTenantRegisteredMessage(id.String(), tenant)
+	event := newTenantRegisteredMessage(id, tenant)
 	subject := fmt.Sprintf("%s.registered", rs.tenantsStream)
 	bytes, err := event.Marshal()
 	if err != nil {

@@ -57,7 +57,7 @@ func Run() error {
 	_ = js.Create(cfg.Nats.TenantsStream)
 
 	// Initialize 3-layered architecture.
-	registrationService := service.NewRegistrationService(logger, js)
+	registrationService := service.NewRegistrationService(logger, js, cfg.Cognito.AppClientID, cfg.Cognito.UserPoolClientID)
 
 	registrationHandler := handler.NewRegistrationHandler(logger, registrationService)
 	shutdown := make(chan os.Signal, 1)
