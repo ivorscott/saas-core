@@ -34,6 +34,13 @@ spec:
                   key: cognito_user_pool_client_id
             - name: REGISTRATION_COGNITO_REGION
               value: "eu-central-1"
+
+            - name: REGISTRATION_DYNAMODB_TENANT_TABLE
+              value: tenants
+            - name: REGISTRATION_DYNAMODB_AUTH_TABLE
+              value: auth-info
+            - name: REGISTRATION_DYNAMODB_CONFIG_TABLE
+              value: tenant-config
 ---
 apiVersion: v1
 kind: Service

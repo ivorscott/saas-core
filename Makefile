@@ -22,17 +22,6 @@ admin: ;@ ## Run admin app with live reload.
 	-log-prefix=false
 .PHONY: admin
 
-registration: ;@ ## Run registration app with live reload.
-	@CompileDaemon \
-	-build="go build -o ./bin/registration ./cmd/registration" \
-	-command="./bin/registration \
-	--web-address=${REGISTRATION_WEB_ADDRESS} \
-	--web-port=${REGISTRATION_WEB_PORT} \
-	--cognito-app-client-id=${ADMIN_COGNITO_APP_CLIENT_ID} \
-	--cognito-user-pool-client-id=${ADMIN_COGNITO_USER_POOL_CLIENT_ID}" \
-	-log-prefix=false
-.PHONY: registration
-
 admin-end:	;@ ## Run end-to-end admin tests with Cypress.
 	@cypress run --project e2e/admin/
 .PHONY: admin-end
@@ -50,7 +39,7 @@ admin-db: ;@ ## Enter admin database.
 .PHONY: admin-db
 
 admin-db-gen: ;@ ## Generate migration files. Required <name> argument.
-	@migrate create -ext sql -dir ./internal/admin/res/migrations $(val)
+	@migrate create -ext sql -dir ./internal/admin/res/migrations -seq $(val)
 .PHONY: admin-db-gen
 
 admin-db-migrate: ;@ ## Migrate admin database. Optional <num> argument.
@@ -64,6 +53,28 @@ admin-db-version: ;@ ## Print migration version for admin database.
 admin-db-rollback: ;@ ## Rollback admin database. Optional <num> argument.
 	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable down $(val)
 .PHONY: admin-db-rollback
+
+registration: ;@ ## Run registration api with live reload.
+	@CompileDaemon \
+	-build="go build -o ./bin/registration ./cmd/registration" \
+	-command="./bin/registration \
+	--web-address=${REGISTRATION_WEB_ADDRESS} \
+	--web-port=${REGISTRATION_WEB_PORT} \
+	--cognito-app-client-id=${ADMIN_COGNITO_APP_CLIENT_ID} \
+	--cognito-user-pool-client-id=${ADMIN_COGNITO_USER_POOL_CLIENT_ID} \
+	--dynamodb-tenant-table/${REGISTRATION_DYNAMODB_TENANT_TABLE} \
+	--dynamodb-auth-table/${REGISTRATION_DYNAMODB_AUTH_TABLE} \
+	--dynamodb-config-table/${REGISTRATION_DYNAMODB_CONFIG_TABLE }" \
+	-log-prefix=false
+.PHONY: registration
+
+registration-test: registration-mock	;@ ## Run registration tests. Add " -- -v" for verbosity.
+	go test $(val) -cover ./internal/registration/...
+.PHONY: admin-test
+
+registration-mock: ;@ ## Generate registration mocks.
+	go generate ./internal/registration/...
+.PHONY: registration-mock
 
 tables:	;@ ## List Dynamodb tables.
 	@aws dynamodb list-tables --endpoint-url http://localhost:30008
@@ -80,7 +91,7 @@ help:
 .PHONY: help
 
 # http://bit.ly/37TR1r2
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test admin-db-gen admin-db-migrate admin-db-rollback))
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test admin-db-gen admin-db-migrate admin-db-rollback registration-test))
   val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(val):;@:)
 endif

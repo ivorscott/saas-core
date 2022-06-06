@@ -17,4 +17,17 @@ type Config struct {
 		UserPoolClientID string `conf:"required"`
 		Region           string `conf:"default:eu-central-1"`
 	}
+	Dynamodb struct {
+		TenantTable string `conf:"required"`
+		AuthTable   string `conf:"required"`
+		ConfigTable string `conf:"required"`
+	}
+	Nats struct {
+		TenantsStream string `conf:"default:TENANTS"`
+		Address       string `conf:"default:localhost"`
+		Port          string `conf:"default:4222"`
+	}
+	AWS struct {
+		Region string `conf:"default:eu-central-1"`
+	}
 }

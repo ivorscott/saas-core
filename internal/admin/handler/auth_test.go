@@ -73,7 +73,7 @@ func TestAuthHandler_Logout(t *testing.T) {
 
 		deps.session.AssertExpectations(t)
 
-		assert.Equal(t, http.StatusTemporaryRedirect, w.Code)
+		assert.Equal(t, http.StatusSeeOther, w.Code)
 	})
 
 	t.Run("500 on logout", func(t *testing.T) {
