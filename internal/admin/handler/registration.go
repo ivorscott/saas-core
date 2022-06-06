@@ -43,8 +43,6 @@ func (reg *RegistrationHandler) ProcessRegistration(w http.ResponseWriter, r *ht
 		return err
 	}
 
-	// TODO: Check if tenant exists first.
-
 	err = reg.registrationService.RegisterTenant(r.Context(), payload)
 	if err != nil {
 		return err

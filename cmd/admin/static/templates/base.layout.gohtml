@@ -20,7 +20,7 @@
                 localStorage.removeItem("id_token")
             } else {
                 if(localStorage.getItem("id_token")){
-                    fetch("/api/verify",{
+                    fetch("/admin/api/verify",{
                         method: "get",
                         headers: {
                             "Accept": "application/json",

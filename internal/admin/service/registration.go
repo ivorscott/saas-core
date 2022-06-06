@@ -22,6 +22,5 @@ func NewRegistrationService(logger *zap.Logger) *RegistrationService {
 
 // RegisterTenant sends new tenant to registration microservice.
 func (rs *RegistrationService) RegisterTenant(ctx context.Context, tenant model.NewTenant) error {
-	// TODO: Call registration microservice.
 	return nil
 }

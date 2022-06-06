@@ -10,22 +10,20 @@ import (
 	"strings"
 )
 
-// APIAuth middleware verifies the id_token.
-func APIAuth(log *zap.Logger, region string, userPoolClientID string) web.Middleware {
+// Auth middleware verifies the id_token.
+func Auth(log *zap.Logger, region string, userPoolClientID string) web.Middleware {
 	// this is the actual middleware function to be executed.
 	f := func(after web.Handler) web.Handler {
 		// create the handler that will be attached in the middleware chain.
 		h := func(w http.ResponseWriter, r *http.Request) error {
-			if strings.Contains(r.URL.Path, "/api/") {
-				err := verifyToken(w, r, region, userPoolClientID)
-				if err != nil {
-					log.Info("api authentication failed", zap.Error(err))
-					// If verification fails log out the user. This is ok to do because the admin app
-					// frontend is the only client supported. In other words, we don't expect
-					// additional clients to make requests to the admin api.
-					web.Redirect(w, r, "/admin/logout", http.StatusSeeOther)
-					return web.NewRequestError(err, http.StatusUnauthorized)
-				}
+			err := verifyToken(w, r, region, userPoolClientID)
+			if err != nil {
+				log.Info("api authentication failed", zap.Error(err))
+				// If verification fails log out the user. This is ok to do because the admin app
+				// frontend is the only client supported. In other words, we don't expect
+				// additional clients to make requests to the admin api.
+				web.Redirect(w, r, "/admin/logout", http.StatusSeeOther)
+				return web.NewRequestError(err, http.StatusUnauthorized)
 			}
 			return after(w, r)
 		}

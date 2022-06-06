@@ -39,7 +39,7 @@ func Routes(
 	middleware := []web.Middleware{
 		mid.Logger(log),
 		mid.Errors(log),
-		mid.APIAuth(log, config.Cognito.Region, config.Cognito.UserPoolClientID),
+		withAuth(log, config.Cognito.Region, config.Cognito.UserPoolClientID),
 		mid.Panics(log),
 	}
 
@@ -58,8 +58,8 @@ func Routes(
 	app.Handle(http.MethodGet, "/admin/logout", withSession()(authHandler.Logout))
 	app.Handle(http.MethodGet, "/*", withSession()(webPageHandler.E404Page))
 
-	app.Handle(http.MethodGet, "/api/verify", authHandler.VerifyTokenNoop)
-	app.Handle(http.MethodPost, "/api/send-registration", registrationHandler.ProcessRegistration)
+	app.Handle(http.MethodGet, "/admin/api/verify", authHandler.VerifyTokenNoop)
+	app.Handle(http.MethodPost, "/admin/api/send-registration", registrationHandler.ProcessRegistration)
 
 	return mux
 }

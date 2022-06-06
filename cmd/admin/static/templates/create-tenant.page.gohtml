@@ -83,7 +83,7 @@
                 body: JSON.stringify(payload),
             };
 
-            fetch("/api/send-registration", options).then(()=> {
+            fetch("/admin/api/send-registration", options).then(()=> {
                 location.href = "/admin/tenants"
             })
         }
