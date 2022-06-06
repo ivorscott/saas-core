@@ -28,12 +28,14 @@ const (
 type CreateTenantConfigType string
 
 type CreateTenantConfigCommand struct {
-	Metadata Metadata               `json:"metadata"`
-	Type     CreateTenantConfigType `json:"type"`
-	Data     struct {
-		TenantName       string `json:"tenantName"`
-		UserPoolID       string `json:"userPoolId"`
-		AppClientID      string `json:"appClientId"`
-		DeploymentStatus string `json:"deploymentStatus"`
-	} `json:"data"`
+	Metadata Metadata                      `json:"metadata"`
+	Type     CreateTenantConfigType        `json:"type"`
+	Data     CreateTenantConfigCommandData `json:"data"`
+}
+
+type CreateTenantConfigCommandData struct {
+	TenantName       string `json:"tenantName"`
+	UserPoolID       string `json:"userPoolId"`
+	AppClientID      string `json:"appClientId"`
+	DeploymentStatus string `json:"deploymentStatus"`
 }
