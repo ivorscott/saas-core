@@ -4,10 +4,14 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"io/fs"
+	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/devpies/saas-core/internal/admin/clients"
 	"github.com/devpies/saas-core/internal/admin/config"
 	"github.com/devpies/saas-core/internal/admin/db"
 	"github.com/devpies/saas-core/internal/admin/handler"
@@ -23,10 +27,6 @@ import (
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"go.uber.org/zap"
-
-	"io/fs"
-	"net/http"
-	"os"
 )
 
 var session *scs.SessionManager
@@ -104,9 +104,11 @@ func Run(staticFS embed.FS) error {
 	}
 	cognitoClient := cip.NewFromConfig(awsCfg)
 
+	registrationClient := clients.NewHTTPRegistrationClient(logger, cfg.Registration.ServiceAddress, cfg.Registration.ServicePort)
+
 	// Initialize 3-layered architecture.
 	authService := service.NewAuthService(logger, cfg, cognitoClient, session)
-	registrationService := service.NewRegistrationService(logger, cfg.Registration.ServiceAddress, cfg.Registration.ServicePort)
+	registrationService := service.NewRegistrationService(logger, registrationClient)
 
 	renderEngine := render.New(logger, cfg, templateFS, session)
 	authHandler := handler.NewAuthHandler(logger, cfg, renderEngine, session, authService)

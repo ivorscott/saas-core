@@ -3,7 +3,6 @@ package registration
 import (
 	"context"
 	"fmt"
-	"github.com/devpies/saas-core/internal/registration/nats"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/devpies/saas-core/internal/registration/config"
 	"github.com/devpies/saas-core/internal/registration/handler"
+	"github.com/devpies/saas-core/internal/registration/nats"
 	"github.com/devpies/saas-core/internal/registration/service"
 	"github.com/devpies/saas-core/pkg/log"
 
@@ -52,12 +52,18 @@ func Run() error {
 	}
 	defer logger.Sync()
 
-	js := nats.NewJetStreamContext(logger, cfg.Nats.Address, cfg.Nats.Port)
+	jetStream := nats.NewJetStreamContext(logger, cfg.Nats.Address, cfg.Nats.Port)
 
-	_ = js.Create(cfg.Nats.TenantsStream)
+	_ = jetStream.Create(cfg.Nats.TenantsStream)
 
 	// Initialize 3-layered architecture.
-	registrationService := service.NewRegistrationService(logger, js, cfg.Cognito.AppClientID, cfg.Cognito.UserPoolClientID)
+	registrationService := service.NewRegistrationService(
+		logger,
+		jetStream,
+		cfg.Cognito.AppClientID,
+		cfg.Cognito.UserPoolClientID,
+		cfg.Nats.TenantsStream,
+	)
 
 	registrationHandler := handler.NewRegistrationHandler(logger, registrationService)
 	shutdown := make(chan os.Signal, 1)

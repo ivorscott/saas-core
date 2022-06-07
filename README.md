@@ -67,11 +67,21 @@ OPTIONS
 > 1. Using `make` is the easiest way to get started. However, if you choose to run go binaries directly, you can export the `.env` file variables to avoid using CLI flags:  
 > ```bash
 > export $(grep -v '^#' .env | xargs)
-> go run ./cmd/{PROGRAM}
 >```
-> 
 > 2. Enable bash-completion of the makefile targets. Add this in your `~/.bash_profile` file or `~/.bashrc` file.
 > ```bash
 > complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' ?akefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
 > ```
+
+## Debugging NATS 
+
+```bash
+kubectl port-forward statefulset.apps/nats 4222
+nats account info
+nats stream info my_stream
+nats consumer info
+nats stream view my_stream # view messages
+nats stream rmm # remove message
+```
+https://docs.nats.io/nats-concepts/jetstream/js_walkthrough
 
