@@ -26,18 +26,6 @@ type Handler func(http.ResponseWriter, *http.Request) error
 // Middleware runs some code before and/or after another Handler.
 type Middleware func(Handler) Handler
 
-// ctxKey represents the type of value for the context key.
-type ctxKey int
-
-// KeyValues is how request values or stored/retrieved.
-const KeyValues ctxKey = 1
-
-// Values carries information about each request.
-type Values struct {
-	StatusCode int
-	Start      time.Time
-}
-
 // NewApp returns a new Web framework equipped with built-in middleware required for every handler.
 func NewApp(router *chi.Mux, shutdown chan os.Signal, logger *zap.Logger, middleware ...Middleware) *App {
 	return &App{
