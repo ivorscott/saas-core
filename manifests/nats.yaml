@@ -112,7 +112,7 @@ spec:
             - name: pid
               mountPath: /var/run/nats
             - name: nats-file-volume
-              mountPath: /var/data
+              mountPath: /var/nats
 
           # Liveness/Readiness probes against the monitoring
           #
