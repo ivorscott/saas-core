@@ -10,13 +10,12 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nats
+  name: nats-svc
   labels:
     app: nats
 spec:
   selector:
     app: nats
-  clusterIP: None
   ports:
     - name: client
       port: 4222
