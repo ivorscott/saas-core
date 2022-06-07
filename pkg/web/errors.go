@@ -37,7 +37,7 @@ func NewShutdownError(message string) error {
 }
 
 // CtxErr returns an error for cases when values cannot be accessed from context.
-func CtxErr(message string) error {
+func CtxErr() error {
 	return NewShutdownError("cannot access values from context")
 }
 
