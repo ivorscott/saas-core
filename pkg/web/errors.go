@@ -36,6 +36,11 @@ func NewShutdownError(message string) error {
 	return &shutdown{message}
 }
 
+// CtxErr returns an error for cases when values cannot be accessed from context.
+func CtxErr(message string) error {
+	return NewShutdownError("cannot access values from context")
+}
+
 // IsShutdown checks to see if the shutdown error exists.
 func IsShutdown(err error) bool {
 	var targetErr *shutdown
