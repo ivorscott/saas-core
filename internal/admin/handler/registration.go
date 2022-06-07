@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/devpies/saas-core/internal/admin/model"
@@ -12,7 +11,7 @@ import (
 )
 
 type registrationService interface {
-	RegisterTenant(ctx context.Context, tenant model.NewTenant) error
+	RegisterTenant(ctx context.Context, tenant model.NewTenant) (*web.ErrorResponse, int, error)
 }
 
 // RegistrationHandler handles the new tenant request from the admin app.
@@ -32,7 +31,7 @@ func NewRegistrationHandler(
 	}
 }
 
-// ProcessRegistration submits a new tenant to the registration service.
+// ProcessRegistration submits a new tenant to the registration service and responds with nil on success.
 func (reg *RegistrationHandler) ProcessRegistration(w http.ResponseWriter, r *http.Request) error {
 	var (
 		payload model.NewTenant
@@ -44,12 +43,18 @@ func (reg *RegistrationHandler) ProcessRegistration(w http.ResponseWriter, r *ht
 		return err
 	}
 
-	reg.logger.Info(fmt.Sprintf("%v", payload))
-
-	err = reg.registrationService.RegisterTenant(r.Context(), payload)
+	webErrResp, status, err := reg.registrationService.RegisterTenant(r.Context(), payload)
 	if err != nil {
-		reg.logger.Info("registration failed", zap.Error(err))
-		return web.NewRequestError(err, http.StatusBadRequest)
+		reg.logger.Info("registration client request failed", zap.Error(err))
+		return err
+	}
+	if webErrResp != nil {
+		switch status {
+		case http.StatusBadRequest:
+			return web.Respond(r.Context(), w, webErrResp, http.StatusBadRequest)
+		default:
+			return err
+		}
 	}
 
 	return web.Respond(r.Context(), w, nil, http.StatusOK)

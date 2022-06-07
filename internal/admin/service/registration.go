@@ -1,48 +1,74 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/devpies/saas-core/internal/admin/model"
+	"github.com/devpies/saas-core/pkg/web"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
+type registrationClient interface {
+	Register(ctx context.Context, tenant []byte) (*http.Response, error)
+}
+
 // RegistrationService is responsible for triggering tenant registration.
 type RegistrationService struct {
-	logger         *zap.Logger
-	serviceAddress string
-	servicePort    string
+	logger     *zap.Logger
+	httpClient registrationClient
 }
 
 // NewRegistrationService returns a new registration service.
-func NewRegistrationService(logger *zap.Logger, serviceAddress string, servicePort string) *RegistrationService {
+func NewRegistrationService(logger *zap.Logger, httpClient registrationClient) *RegistrationService {
 	return &RegistrationService{
-		logger:         logger,
-		serviceAddress: serviceAddress,
-		servicePort:    servicePort,
+		logger:     logger,
+		httpClient: httpClient,
 	}
 }
 
-// RegisterTenant sends new tenant to tenant registration microservice.
-func (rs *RegistrationService) RegisterTenant(ctx context.Context, tenant model.NewTenant) error {
+// RegisterTenant sends new tenant to tenant registration microservice and return a nil ErrorResponse on success.
+func (rs *RegistrationService) RegisterTenant(ctx context.Context, newTenant model.NewTenant) (*web.ErrorResponse, int, error) {
+	var (
+		resp *http.Response
+		err  error
+	)
+
+	tenant := model.Tenant{
+		ID:       uuid.New().String(),
+		Email:    newTenant.Email,
+		FullName: newTenant.FullName,
+		Company:  newTenant.Company,
+		Plan:     newTenant.Plan,
+	}
+
 	data, err := json.Marshal(tenant)
 	if err != nil {
-		return err
+		return nil, http.StatusInternalServerError, err
 	}
 
-	payload := bytes.NewReader(data)
-	url := fmt.Sprintf("%s:%s/register", rs.serviceAddress, rs.servicePort)
-
-	resp, err := http.Post(url, "application/json", payload)
+	resp, err = rs.httpClient.Register(ctx, data)
 	if err != nil {
-		rs.logger.Info("registration failed", zap.Error(err))
+		return nil, http.StatusInternalServerError, err
 	}
-	defer resp.Body.Close()
 
-	return err
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		var webErrResp web.ErrorResponse
+		err = json.Unmarshal(bodyBytes, &webErrResp)
+		if err != nil {
+			return nil, resp.StatusCode, err
+		}
+		return &webErrResp, resp.StatusCode, err
+	}
+
+	return nil, resp.StatusCode, nil
 }

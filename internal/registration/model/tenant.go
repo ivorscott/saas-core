@@ -11,6 +11,7 @@ func init() {
 
 // NewTenant represents the new tenant.
 type NewTenant struct {
+	ID       string `json:"id" validate:"required"`
 	Email    string `json:"email" validate:"required"`
 	FullName string `json:"fullName" validate:"required"`
 	Company  string `json:"companyName" validate:"required"`

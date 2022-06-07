@@ -1,9 +1,11 @@
 package model_test
 
 import (
-	"github.com/devpies/saas-core/internal/admin/model"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/devpies/saas-core/internal/admin/model"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewTenant_Validate(t *testing.T) {

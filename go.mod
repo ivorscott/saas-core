@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5
 	github.com/devpies/saas-core/pkg/log v0.0.0-20220605224346-efd5e99fa5dd
 	github.com/devpies/saas-core/pkg/msg v0.0.0-20220606212832-3d9c1beb5ad8
-	github.com/devpies/saas-core/pkg/web v0.0.0-20220606054834-5b1814eb8497
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220607210905-4322950feba6
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
 	github.com/go-playground/validator/v10 v10.11.0

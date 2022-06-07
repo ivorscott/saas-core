@@ -2,10 +2,12 @@ package nats
 
 import (
 	"fmt"
+
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
+// JetStreamContext manages the JetStreamContext.
 type JetStreamContext struct {
 	logger *zap.Logger
 	js     nats.JetStreamContext

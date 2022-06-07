@@ -5,7 +5,6 @@
 {{end}}
 
 {{define "content"}}
-
     <form id="create-tenant-form" name="login-form"
           class="d-block needs-validation login-form col-md-4 offset-md-4" autocomplete="off" novalidate>
 
@@ -83,7 +82,13 @@
                 body: JSON.stringify(payload),
             };
 
-            fetch("/admin/api/send-registration", options).then(()=> {
+            fetch("/admin/api/send-registration", options)
+                .then(res => res.json())
+                .then(res => {
+                    if (res && res.error) {
+                        showError(res.error)
+                        return
+                    }
                 location.href = "/admin/tenants"
             })
         }

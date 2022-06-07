@@ -2,11 +2,11 @@ package handler
 
 import (
 	"context"
-	"fmt"
-	"github.com/devpies/saas-core/pkg/web"
 	"net/http"
 
 	"github.com/devpies/saas-core/internal/registration/model"
+	"github.com/devpies/saas-core/pkg/web"
+
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -43,8 +43,6 @@ func (reg *RegistrationHandler) RegisterTenant(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
-
-	reg.logger.Info(fmt.Sprintf("%v", payload))
 
 	id, err := uuid.NewUUID()
 	if err != nil {
