@@ -7,3 +7,4 @@ log
 e2e/*/cypress/downloads
 e2e/*/cypress/videos
 manifests/secrets.yaml
+.run
