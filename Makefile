@@ -60,8 +60,8 @@ registration: ;@ ## Run registration api with live reload.
 	-command="./bin/registration \
 	--web-address=${REGISTRATION_WEB_ADDRESS} \
 	--web-port=${REGISTRATION_WEB_PORT} \
-	--cognito-app-client-id=${ADMIN_COGNITO_APP_CLIENT_ID} \
-	--cognito-user-pool-client-id=${ADMIN_COGNITO_USER_POOL_CLIENT_ID} \
+	--cognito-app-client-id=${REGISTRATION_COGNITO_APP_CLIENT_ID} \
+	--cognito-user-pool-client-id=${REGISTRATION_COGNITO_USER_POOL_CLIENT_ID} \
 	--dynamodb-tenant-table=${REGISTRATION_DYNAMODB_TENANT_TABLE} \
 	--dynamodb-auth-table=${REGISTRATION_DYNAMODB_AUTH_TABLE} \
 	--dynamodb-config-table=${REGISTRATION_DYNAMODB_CONFIG_TABLE}" \
@@ -70,11 +70,33 @@ registration: ;@ ## Run registration api with live reload.
 
 registration-test: registration-mock	;@ ## Run registration tests. Add " -- -v" for verbosity.
 	go test $(val) -cover ./internal/registration/...
-.PHONY: admin-test
+.PHONY: registration-test
 
 registration-mock: ;@ ## Generate registration mocks.
 	go generate ./internal/registration/...
 .PHONY: registration-mock
+
+tenant: ;@ ## Run tenant api with live reload.
+	@CompileDaemon \
+	-build="go build -o ./bin/tenant ./cmd/tenant" \
+	-command="./bin/tenant \
+	--web-address=${TENANT_WEB_ADDRESS} \
+	--web-port=${TENANT_WEB_PORT} \
+	--cognito-app-client-id=${TENANT_COGNITO_APP_CLIENT_ID} \
+	--cognito-user-pool-client-id=${TENANT_COGNITO_USER_POOL_CLIENT_ID} \
+	--dynamodb-tenant-table=${TENANT_DYNAMODB_TENANT_TABLE} \
+	--dynamodb-auth-table=${TENANT_DYNAMODB_AUTH_TABLE} \
+	--dynamodb-config-table=${TENANT_DYNAMODB_CONFIG_TABLE}" \
+	-log-prefix=false
+.PHONY: tenant
+
+tenant-test: tenant-mock	;@ ## Run tenant tests. Add " -- -v" for verbosity.
+	go test $(val) -cover ./internal/tenant/...
+.PHONY: tenant-test
+
+tenant-mock: ;@ ## Generate tenant mocks.
+	go generate ./internal/tenant/...
+.PHONY: tenant-mock
 
 tables:	;@ ## List Dynamodb tables.
 	@aws dynamodb list-tables --endpoint-url http://localhost:30008
