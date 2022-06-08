@@ -1,4 +1,4 @@
-package tenant
+package user
 
 import (
 	"context"
@@ -8,32 +8,30 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/devpies/saas-core/internal/tenant/config"
-	"github.com/devpies/saas-core/internal/tenant/db"
-	"github.com/devpies/saas-core/internal/tenant/handler"
-	"github.com/devpies/saas-core/internal/tenant/repository"
-	"github.com/devpies/saas-core/internal/tenant/service"
+	"github.com/devpies/saas-core/internal/user/config"
+	"github.com/devpies/saas-core/internal/user/service"
 	"github.com/devpies/saas-core/pkg/log"
 
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+
 	"github.com/ardanlabs/conf"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"go.uber.org/zap"
 )
 
 // Run contains the app setup.
 func Run() error {
 	var (
-		cfg      config.Config
-		logger   *zap.Logger
-		dbClient *dynamodb.Client
-		logPath  = "log/out.log"
-		err      error
+		cfg     config.Config
+		logger  *zap.Logger
+		logPath = "log/out.log"
+		err     error
 	)
 
-	if err = conf.Parse(os.Args[1:], "TENANT", &cfg); err != nil {
+	if err = conf.Parse(os.Args[1:], "USER", &cfg); err != nil {
 		if err == conf.ErrHelpWanted {
 			var usage string
-			usage, err = conf.Usage("TENANT", &cfg)
+			usage, err = conf.Usage("USER", &cfg)
 			if err != nil {
 				logger.Error("error generating config usage", zap.Error(err))
 				return err
@@ -45,14 +43,10 @@ func Run() error {
 		return err
 	}
 
-	ctx := context.Background()
-
 	if cfg.Web.Production {
 		logger, err = log.NewProductionLogger(logPath)
-		dbClient = db.NewProductionDynamoDBClient(ctx)
 	} else {
 		logger, err = zap.NewDevelopment()
-		dbClient = db.NewDevelopmentDynamoDBClient(ctx, cfg.Dynamodb.Port)
 	}
 	if err != nil {
 		logger.Error("error creating logger", zap.Error(err))
@@ -60,13 +54,20 @@ func Run() error {
 	}
 	defer logger.Sync()
 
-	// Initialize 3-layered architecture.
-	tenantRepository := repository.NewTenantRepository(dbClient)
-	tenantConfigRepository := repository.NewTenantConfigRepository(dbClient)
-	authInfoRepository := repository.NewAuthInfoRepository(dbClient)
+	// Initialize AWS clients.
+	awsCfg, err := awsConfig.LoadDefaultConfig(context.Background())
+	if err != nil {
+		logger.Error("error loading aws config", zap.Error(err))
+		return err
+	}
+	cognitoClient := cip.NewFromConfig(awsCfg)
 
-	tenantService := service.NewTenantService(logger, cfg, tenantRepository, tenantConfigRepository, authInfoRepository)
-	tenantHandler := handler.NewTenantHandler(logger, tenantService)
+	// Initialize 3-layered architecture.
+	_ = service.NewUserService(
+		logger,
+		cfg.Cognito.UserPoolClientID,
+		cognitoClient,
+	)
 
 	go func() {
 		// listen for messages
@@ -80,11 +81,11 @@ func Run() error {
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, tenantHandler, cfg),
+		Handler:      Routes(logger, shutdown, cfg),
 	}
 
 	go func() {
-		logger.Info(fmt.Sprintf("Starting tenant api on %s:%s", cfg.Web.Address, cfg.Web.Port))
+		logger.Info(fmt.Sprintf("Starting user api on %s:%s", cfg.Web.Address, cfg.Web.Port))
 		serverErrors <- srv.ListenAndServe()
 	}()
 

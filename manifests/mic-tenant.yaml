@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mic-registration
+  name: mic-tenant
 spec:
   selector:
     matchLabels:
-      app: mic-registration
+      app: mic-tenant
   template:
     metadata:
       labels:
-        app: mic-registration
+        app: mic-tenant
     spec:
       containers:
-        - image: registration:latest
-          name: mic-registration
+        - image: tenant:latest
+          name: mic-tenant
           ports:
-            - containerPort: 4001
+            - containerPort: 4002
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
@@ -30,43 +30,43 @@ spec:
             - name: AWS_DEFAULT_REGION
               value: "eu-central-1"
 
-            - name: REGISTRATION_WEB_PORT
-              value: "4001"
-            - name: REGISTRATION_WEB_ADDRESS
+            - name: TENANT_WEB_PORT
+              value: "4002"
+            - name: TENANT_WEB_ADDRESS
               value: "http://localhost"
 
-            - name: REGISTRATION_COGNITO_APP_CLIENT_ID
+            - name: TENANT_COGNITO_APP_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets
                   key: cognito_app_client_id
-            - name: REGISTRATION_COGNITO_USER_POOL_CLIENT_ID
+            - name: TENANT_COGNITO_USER_POOL_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets
                   key: cognito_user_pool_client_id
-            - name: REGISTRATION_COGNITO_REGION
+            - name: TENANT_COGNITO_REGION
               value: "eu-central-1"
 
-            - name: REGISTRATION_DYNAMODB_TENANT_TABLE
+            - name: TENANT_DYNAMODB_TENANT_TABLE
               value: tenants
-            - name: REGISTRATION_DYNAMODB_AUTH_TABLE
+            - name: TENANT_DYNAMODB_AUTH_TABLE
               value: auth-info
-            - name: REGISTRATION_DYNAMODB_CONFIG_TABLE
+            - name: TENANT_DYNAMODB_CONFIG_TABLE
               value: tenant-config
 
-            - name: REGISTRATION_NATS_ADDRESS
+            - name: TENANT_NATS_ADDRESS
               value: "nats-svc"
-            - name: REGISTRATION_NATS_PORT
+            - name: TENANT_NATS_PORT
               value: "4222"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mic-registration-svc
+  name: mic-tenant-svc
 spec:
   selector:
-    app: mic-registration
+    app: mic-tenant
   ports:
-    - port: 4001
-      targetPort: 4001
+    - port: 4002
+      targetPort: 4002

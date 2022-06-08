@@ -17,11 +17,6 @@ spec:
           ports:
             - containerPort: 4000
           env:
-            - name: ADMIN_WEB_PORT
-              value: "4000"
-            - name: ADMIN_WEB_ADDRESS
-              value: "http://localhost"
-
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -34,6 +29,11 @@ spec:
                   key: aws_secret_access_key
             - name: AWS_DEFAULT_REGION
               value: "eu-central-1"
+
+            - name: ADMIN_WEB_PORT
+              value: "4000"
+            - name: ADMIN_WEB_ADDRESS
+              value: "http://localhost"
 
             - name: ADMIN_COGNITO_APP_CLIENT_ID
               valueFrom:

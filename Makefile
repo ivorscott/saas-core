@@ -98,6 +98,24 @@ tenant-mock: ;@ ## Generate tenant mocks.
 	go generate ./internal/tenant/...
 .PHONY: tenant-mock
 
+user: ;@ ## Run user api with live reload.
+	@CompileDaemon \
+	-build="go build -o ./bin/user ./cmd/user" \
+	-command="./bin/user \
+	--web-address=${USER_WEB_ADDRESS} \
+	--web-port=${USER_WEB_PORT} \
+	--cognito-user-pool-client-id=${USER_COGNITO_USER_POOL_CLIENT_ID}" \
+	-log-prefix=false
+.PHONY: user
+
+user-test: user-mock	;@ ## Run user tests. Add " -- -v" for verbosity.
+	go test $(val) -cover ./internal/user/...
+.PHONY: user-test
+
+user-mock: ;@ ## Generate user mocks.
+	go generate ./internal/user/...
+.PHONY: user-mock
+
 tables:	;@ ## List Dynamodb tables.
 	@aws dynamodb list-tables --endpoint-url http://localhost:30008
 .PHONY: tables
