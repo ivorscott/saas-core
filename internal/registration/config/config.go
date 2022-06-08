@@ -21,6 +21,7 @@ type Config struct {
 		TenantTable string `conf:"required"`
 		AuthTable   string `conf:"required"`
 		ConfigTable string `conf:"required"`
+		Port        string `conf:"default:30008"`
 	}
 	Nats struct {
 		TenantsStream string `conf:"default:TENANTS"`
