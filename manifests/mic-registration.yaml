@@ -35,16 +35,16 @@ spec:
             - name: REGISTRATION_WEB_ADDRESS
               value: "http://localhost"
 
-            - name: REGISTRATION_COGNITO_APP_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: secrets
-                  key: cognito_app_client_id
             - name: REGISTRATION_COGNITO_USER_POOL_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: cognito_user_pool_client_id
+                  key: cognito_shared_user_pool_client_id
+            - name: REGISTRATION_COGNITO_SHARED_USER_POOL_CLIENT_ID
+              valueFrom:
+               secretKeyRef:
+                 name: secrets
+                 key: cognito_shared_user_pool_client_id
             - name: REGISTRATION_COGNITO_REGION
               value: "eu-central-1"
 
