@@ -21,19 +21,19 @@ func NewRequestError(err error, status int) error {
 	return &Error{Err: err, Status: status}
 }
 
-// shutdown is a type used to help with the graceful termination of the service.
-type shutdown struct {
+// Shutdown is a type used to help with the graceful termination of the service.
+type Shutdown struct {
 	Message string
 }
 
-func (s *shutdown) Error() string {
+func (s *Shutdown) Error() string {
 	return s.Message
 }
 
 // NewShutdownError returns an error that causes the framework to signal
 // a graceful shutdown.
 func NewShutdownError(message string) error {
-	return &shutdown{message}
+	return &Shutdown{message}
 }
 
 // CtxErr returns an error for cases when values cannot be accessed from context.
@@ -43,7 +43,7 @@ func CtxErr() error {
 
 // IsShutdown checks to see if the shutdown error exists.
 func IsShutdown(err error) bool {
-	var targetErr *shutdown
+	var targetErr *Shutdown
 	return errors.Is(err, targetErr)
 }
 
