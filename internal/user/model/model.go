@@ -2,6 +2,7 @@
 package model
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 
@@ -21,4 +22,12 @@ func jsonTagName(fld reflect.StructField) string {
 		return ""
 	}
 	return name
+}
+
+func Recast(a, b interface{}) error {
+	js, err := json.Marshal(a)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(js, b)
 }

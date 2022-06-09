@@ -6,16 +6,18 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 
 	"github.com/devpies/saas-core/internal/user/config"
 	"github.com/devpies/saas-core/internal/user/service"
 	"github.com/devpies/saas-core/pkg/log"
-
-	awsConfig "github.com/aws/aws-sdk-go-v2/config"
-	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/devpies/saas-core/pkg/msg"
 
 	"github.com/ardanlabs/conf"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
@@ -61,21 +63,33 @@ func Run() error {
 		return err
 	}
 	cognitoClient := cip.NewFromConfig(awsCfg)
+	userService := service.NewUserService(logger, cfg.Cognito.UserPoolClientID, cognitoClient)
 
-	// Initialize 3-layered architecture.
-	_ = service.NewUserService(
-		logger,
-		cfg.Cognito.UserPoolClientID,
-		cognitoClient,
-	)
-
-	go func() {
-		// listen for messages
-	}()
-
+	// Initialize channels for graceful shutdown.
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	serverErrors := make(chan error, 1)
+
+	// Initialize NATS JetStream.
+	js := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
+	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("listener panic: %v", r)
+				logger.Error(fmt.Sprintf("%s", debug.Stack()), zap.Error(err))
+			}
+		}()
+
+		js.Listen(
+			string(msg.TypeTenantRegistered),
+			cfg.Nats.RegisteredSubject,
+			cfg.Nats.QueueGroup,
+			userService.CreateTenantUserFromMessage,
+			opts...,
+		)
+	}()
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
