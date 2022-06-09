@@ -8,11 +8,14 @@ require (
 	github.com/alexedwards/scs/v2 v2.5.0
 	github.com/ardanlabs/conf v1.5.0
 	github.com/aws/aws-sdk-go v1.44.17
+	github.com/aws/aws-sdk-go-v2 v1.16.5
 	github.com/aws/aws-sdk-go-v2/config v1.15.7
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.2
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.6
 	github.com/devpies/saas-core/pkg/log v0.0.0-20220605224346-efd5e99fa5dd
-	github.com/devpies/saas-core/pkg/msg v0.0.0-20220607210905-4322950feba6
-	github.com/devpies/saas-core/pkg/web v0.0.0-20220607232303-308cf7414b57
+	github.com/devpies/saas-core/pkg/msg v0.0.0-20220609095005-525b33285586
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220609095005-525b33285586
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
 	github.com/go-playground/validator/v10 v10.11.0
@@ -28,13 +31,10 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.16.5 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.2 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.5 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.6 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.12 // indirect
-	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.5 // indirect
@@ -69,7 +69,7 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+	golang.org/x/sys v0.0.0-20220608164250-635b8c9b7f68 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220607140733-d738665f6195 // indirect
 	google.golang.org/grpc v1.47.0 // indirect
