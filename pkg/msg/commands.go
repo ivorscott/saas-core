@@ -15,11 +15,6 @@ func (m *CreateTenantConfigCommand) Marshal() ([]byte, error) {
 }
 
 const (
-	// CreateTenantConfig represents a valid MessageType.
-	CreateTenantConfig MessageType = "CreateTenantConfig"
-)
-
-const (
 	// TypeCreateTenantConfig represents a concrete value for the CreateTenantConfigType.
 	TypeCreateTenantConfig CreateTenantConfigType = "CreateTenantConfig"
 )

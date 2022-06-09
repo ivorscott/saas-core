@@ -14,11 +14,6 @@ func (m *TenantRegisteredEvent) Marshal() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-const (
-	// TenantRegistered represents a valid MessageType.
-	TenantRegistered MessageType = "TenantRegistered"
-)
-
 // TenantRegisteredType represents a TenantRegistered event type.
 type TenantRegisteredType string
 

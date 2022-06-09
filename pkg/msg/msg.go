@@ -1,7 +1,9 @@
-// Package msg defines all the events/commands sent or received by services.
 package msg
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // UnmarshalMsg parses the JSON-encoded data and returns Msg.
 func UnmarshalMsg(data []byte) (Msg, error) {
@@ -15,16 +17,16 @@ func (m *Msg) Marshal() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-// UnmarshalMetadata parses the JSON-encoded data and returns Metadata.
-func UnmarshalMetadata(data []byte) (Metadata, error) {
-	var m Metadata
-	err := json.Unmarshal(data, &m)
-	return m, err
-}
-
-// Marshal JSON encodes Metadata.
-func (m *Metadata) Marshal() ([]byte, error) {
-	return json.Marshal(m)
+func Bytes(message interface{}) ([]byte, error) {
+	v, ok := message.(*Msg)
+	if !ok {
+		return []byte{}, fmt.Errorf("not a message")
+	}
+	data, err := v.Marshal()
+	if err != nil {
+		return []byte{}, fmt.Errorf("mashalling failed")
+	}
+	return data, nil
 }
 
 // Metadata represents additional data about the request.
@@ -33,13 +35,9 @@ type Metadata struct {
 	UserID  string `json:"userId"`
 }
 
-// MessageType is a type of message: a command or an event.
-type MessageType string
-
 // Msg represents a message in being sent or received.
 type Msg struct {
-	Data     []byte      `json:"data"`
-	ID       string      `json:"id"`
+	Data     interface{} `json:"data"`
 	Metadata Metadata    `json:"metadata"`
-	Type     MessageType `json:"type"`
+	Type     string      `json:"type"`
 }
