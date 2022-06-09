@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"net/http"
+
 	"github.com/devpies/saas-core/pkg/msg"
 	"github.com/devpies/saas-core/pkg/web"
+
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 // UserService is responsible for managing users.
