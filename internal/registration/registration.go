@@ -10,9 +10,9 @@ import (
 
 	"github.com/devpies/saas-core/internal/registration/config"
 	"github.com/devpies/saas-core/internal/registration/handler"
-	"github.com/devpies/saas-core/internal/registration/nats"
 	"github.com/devpies/saas-core/internal/registration/service"
 	"github.com/devpies/saas-core/pkg/log"
+	"github.com/devpies/saas-core/pkg/msg"
 
 	"github.com/ardanlabs/conf"
 	"go.uber.org/zap"
@@ -52,7 +52,11 @@ func Run() error {
 	}
 	defer logger.Sync()
 
-	jetStream := nats.NewJetStreamContext(logger, cfg.Nats.Address, cfg.Nats.Port)
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+	serverErrors := make(chan error, 1)
+
+	jetStream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 
 	_ = jetStream.Create(cfg.Nats.TenantsStream)
 
@@ -66,9 +70,6 @@ func Run() error {
 	)
 
 	registrationHandler := handler.NewRegistrationHandler(logger, registrationService)
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-	serverErrors := make(chan error, 1)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),

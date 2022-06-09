@@ -2,8 +2,11 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
-	"github.com/devpies/saas-core/internal/user/model"
+	"github.com/devpies/saas-core/pkg/msg"
+	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"go.uber.org/zap"
@@ -32,7 +35,16 @@ func NewUserService(logger *zap.Logger, userPoolID string, cognitoClient cognito
 	}
 }
 
-// CreateTenantUser creates a new user.
-func (rs *UserService) CreateTenantUser(ctx context.Context, user model.NewUser) error {
+// CreateTenantUserFromMessage creates a new user from a NATS Message.
+func (rs *UserService) CreateTenantUserFromMessage(ctx context.Context, message interface{}) error {
+	data, err := msg.Bytes(message)
+	if err != nil {
+		return web.NewRequestError(err, http.StatusBadRequest)
+	}
+	m, err := msg.UnmarshalTenantRegisteredEvent(data)
+	if err != nil {
+		return web.NewRequestError(err, http.StatusBadRequest)
+	}
+	rs.logger.Info(fmt.Sprintf("%+v", m))
 	return nil
 }
