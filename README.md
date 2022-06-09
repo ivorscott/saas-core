@@ -42,23 +42,24 @@ Program requirements are also documented in help text.
 Usage: admin [options] [arguments]
 
 OPTIONS
-  --web-debug-port/$ADMIN_WEB_DEBUG_PORT                            <string>    (default: 6060)
-  --web-production/$ADMIN_WEB_PRODUCTION                            <bool>      (default: false)
-  --web-read-timeout/$ADMIN_WEB_READ_TIMEOUT                        <duration>  (default: 5s)
-  --web-write-timeout/$ADMIN_WEB_WRITE_TIMEOUT                      <duration>  (default: 5s)
-  --web-shutdown-timeout/$ADMIN_WEB_SHUTDOWN_TIMEOUT                <duration>  (default: 5s)
-  --web-address/$ADMIN_WEB_ADDRESS                                  <string>    (default: localhost)
-  --web-port/$ADMIN_WEB_PORT                                        <string>    (default: 4001)
-  --cognito-app-client-id/$ADMIN_COGNITO_APP_CLIENT_ID              <string>    (required)
-  --cognito-user-pool-client-id/$ADMIN_COGNITO_USER_POOL_CLIENT_ID  <string>    (required)
-  --cognito-region/$ADMIN_COGNITO_REGION                            <string>    (default: eu-central-1)
-  --postgres-user/$ADMIN_POSTGRES_USER                              <string>    (required)
-  --postgres-password/$ADMIN_POSTGRES_PASSWORD                      <string>    (required)
-  --postgres-host/$ADMIN_POSTGRES_HOST                              <string>    (required)
-  --postgres-port/$ADMIN_POSTGRES_PORT                              <int>       (required)
-  --postgres-db/$ADMIN_POSTGRES_DB                                  <string>    (required)
-  --postgres-disable-tls/$ADMIN_POSTGRES_DISABLE_TLS                <bool>      (default: false)
-  --help/-h                                                         
+  --web-production/$ADMIN_WEB_PRODUCTION                              <bool>      (default: false)
+  --web-read-timeout/$ADMIN_WEB_READ_TIMEOUT                          <duration>  (default: 5s)
+  --web-write-timeout/$ADMIN_WEB_WRITE_TIMEOUT                        <duration>  (default: 5s)
+  --web-shutdown-timeout/$ADMIN_WEB_SHUTDOWN_TIMEOUT                  <duration>  (default: 5s)
+  --web-address/$ADMIN_WEB_ADDRESS                                    <string>    (default: localhost)
+  --web-port/$ADMIN_WEB_PORT                                          <string>    (default: 4000)
+  --cognito-app-client-id/$ADMIN_COGNITO_APP_CLIENT_ID                <string>    (required)
+  --cognito-user-pool-client-id/$ADMIN_COGNITO_USER_POOL_CLIENT_ID    <string>    (required)
+  --cognito-region/$ADMIN_COGNITO_REGION                              <string>    (default: eu-central-1)
+  --postgres-user/$ADMIN_POSTGRES_USER                                <string>    (required)
+  --postgres-password/$ADMIN_POSTGRES_PASSWORD                        <string>    (required)
+  --postgres-host/$ADMIN_POSTGRES_HOST                                <string>    (required)
+  --postgres-port/$ADMIN_POSTGRES_PORT                                <int>       (required)
+  --postgres-db/$ADMIN_POSTGRES_DB                                    <string>    (required)
+  --postgres-disable-tls/$ADMIN_POSTGRES_DISABLE_TLS                  <bool>      (default: false)
+  --registration-service-address/$ADMIN_REGISTRATION_SERVICE_ADDRESS  <string>    (default: localhost)
+  --registration-service-port/$ADMIN_REGISTRATION_SERVICE_PORT        <string>    (default: 4001)
+  --help/-h                                                           
   display this help message
 ```
 
@@ -82,6 +83,7 @@ nats stream info my_stream
 nats consumer info
 nats stream view my_stream # view messages
 nats stream rmm # remove message
+nats stream purge # remove all messages
 ```
 https://docs.nats.io/nats-concepts/jetstream/js_walkthrough
 
