@@ -60,8 +60,8 @@ registration: ;@ ## Run registration api with live reload.
 	-command="./bin/registration \
 	--web-address=${REGISTRATION_WEB_ADDRESS} \
 	--web-port=${REGISTRATION_WEB_PORT} \
-	--cognito-app-client-id=${REGISTRATION_COGNITO_APP_CLIENT_ID} \
 	--cognito-user-pool-client-id=${REGISTRATION_COGNITO_USER_POOL_CLIENT_ID} \
+	--cognito-shared-user-pool-client-id=${REGISTRATION_COGNITO_SHARED_USER_POOL_CLIENT_ID} \
 	--dynamodb-tenant-table=${REGISTRATION_DYNAMODB_TENANT_TABLE} \
 	--dynamodb-auth-table=${REGISTRATION_DYNAMODB_AUTH_TABLE} \
 	--dynamodb-config-table=${REGISTRATION_DYNAMODB_CONFIG_TABLE}" \
@@ -82,7 +82,6 @@ tenant: ;@ ## Run tenant api with live reload.
 	-command="./bin/tenant \
 	--web-address=${TENANT_WEB_ADDRESS} \
 	--web-port=${TENANT_WEB_PORT} \
-	--cognito-app-client-id=${TENANT_COGNITO_APP_CLIENT_ID} \
 	--cognito-user-pool-client-id=${TENANT_COGNITO_USER_POOL_CLIENT_ID} \
 	--dynamodb-tenant-table=${TENANT_DYNAMODB_TENANT_TABLE} \
 	--dynamodb-auth-table=${TENANT_DYNAMODB_AUTH_TABLE} \
