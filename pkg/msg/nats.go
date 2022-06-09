@@ -62,7 +62,7 @@ func (jctx *StreamContext) Publish(subject string, message []byte) {
 type listenHandlerFunc func(ctx context.Context, message interface{}) error
 
 func (jctx *StreamContext) Listen(messageType string, subject, queueGroup string, handler listenHandlerFunc, opts ...nats.SubOpt) *nats.Subscription {
-	fn := jctx.setupMsgHandler(handler, messageType)
+	fn := jctx.setupMsgHandler(messageType, handler)
 	s, err := jctx.js.QueueSubscribe(subject, queueGroup, fn, opts...)
 	if err != nil {
 		jctx.logger.Info("subscription failed", zap.Error(err))
@@ -70,15 +70,16 @@ func (jctx *StreamContext) Listen(messageType string, subject, queueGroup string
 	return s
 }
 
-func (jctx *StreamContext) setupMsgHandler(handler listenHandlerFunc, messageType string) func(msg *nats.Msg) {
-	return func(originalMsg *nats.Msg) {
-		message, err := UnmarshalMsg(originalMsg.Data)
+func (jctx *StreamContext) setupMsgHandler(messageType string, handler listenHandlerFunc) func(msg *nats.Msg) {
+	return func(m *nats.Msg) {
+		message, err := UnmarshalMsg(m.Data)
 		if err != nil {
-			jctx.logger.Error("error decoding message", zap.Error(err), zap.String("message", string(originalMsg.Data)))
+			jctx.logger.Error("error decoding message", zap.Error(err), zap.String("message", string(m.Data)))
 			return
 		}
 
 		if message.Type != messageType {
+			jctx.logger.Info("warning message type was not expected", zap.String("type", message.Type))
 			return
 		}
 
@@ -86,7 +87,7 @@ func (jctx *StreamContext) setupMsgHandler(handler listenHandlerFunc, messageTyp
 
 		switch err.(type) {
 		case nil:
-			//err = m.Ack()
+			err = m.Ack()
 			if err != nil {
 				jctx.logger.Error("error acknowledging message", zap.Error(err))
 			}
