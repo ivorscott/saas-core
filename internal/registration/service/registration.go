@@ -20,7 +20,6 @@ type RegistrationService struct {
 	logger            *zap.Logger
 	js                publisher
 	tenantsStream     string
-	appClientID       string
 	defaultUserPoolID string
 }
 
@@ -35,11 +34,10 @@ const (
 )
 
 // NewRegistrationService returns a new registration service.
-func NewRegistrationService(logger *zap.Logger, js publisher, appClientID, defaultUserPoolID, tenantsStream string) *RegistrationService {
+func NewRegistrationService(logger *zap.Logger, js publisher, defaultUserPoolID, tenantsStream string) *RegistrationService {
 	return &RegistrationService{
 		logger:            logger,
 		js:                js,
-		appClientID:       appClientID,
 		defaultUserPoolID: defaultUserPoolID,
 		tenantsStream:     tenantsStream,
 	}
@@ -66,15 +64,6 @@ func (rs *RegistrationService) PublishTenantMessages(ctx context.Context, id str
 		if err = rs.provision(ctx); err != nil {
 			return err
 		}
-
-		command := newCreateConfigMessage(values, tenant, rs.appClientID, rs.defaultUserPoolID)
-		subject = fmt.Sprintf("%s.configure", rs.tenantsStream)
-		bytes, err = command.Marshal()
-		if err != nil {
-			return nil
-		}
-
-		rs.js.Publish(subject, bytes)
 	}
 
 	return err
@@ -99,22 +88,6 @@ func newTenantRegisteredMessage(values *web.Values, id string, tenant model.NewT
 			Email:      tenant.Email,
 			Plan:       tenant.Plan,
 			UserPoolID: userPoolID,
-		},
-	}
-}
-
-func newCreateConfigMessage(values *web.Values, tenant model.NewTenant, appClientID, userPoolID string) msg.CreateTenantConfigCommand {
-	return msg.CreateTenantConfigCommand{
-		Metadata: msg.Metadata{
-			TraceID: values.Metadata.TraceID,
-			UserID:  values.Metadata.UserID,
-		},
-		Type: msg.TypeCreateTenantConfig,
-		Data: msg.CreateTenantConfigCommandData{
-			TenantName:       tenant.Company,
-			AppClientID:      appClientID,
-			UserPoolID:       userPoolID,
-			DeploymentStatus: "provisioned",
 		},
 	}
 }
