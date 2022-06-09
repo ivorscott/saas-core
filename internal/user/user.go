@@ -63,7 +63,7 @@ func Run() error {
 		return err
 	}
 	cognitoClient := cip.NewFromConfig(awsCfg)
-	userService := service.NewUserService(logger, cfg.Cognito.UserPoolClientID, cognitoClient)
+	userService := service.NewUserService(logger, cognitoClient)
 
 	// Initialize channels for graceful shutdown.
 	shutdown := make(chan os.Signal, 1)

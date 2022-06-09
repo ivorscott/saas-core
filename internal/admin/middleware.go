@@ -58,11 +58,11 @@ func withPasswordChallengeSession() web.Middleware {
 	return f
 }
 
-func withAuth(log *zap.Logger, region string, userPoolClientID string) web.Middleware {
+func withAuth(log *zap.Logger, region string, UserPoolClientID string) web.Middleware {
 	f := func(after web.Handler) web.Handler {
 		h := func(w http.ResponseWriter, r *http.Request) error {
 			if strings.Contains(r.URL.Path, "/admin/api/") {
-				r, err := web.Authenticate(log, r, region, userPoolClientID)
+				r, err := web.Authenticate(log, r, region, UserPoolClientID)
 				if err != nil {
 					web.Redirect(w, r, "/admin/logout", http.StatusSeeOther)
 					return web.NewRequestError(err, http.StatusUnauthorized)

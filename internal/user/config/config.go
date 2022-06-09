@@ -16,9 +16,6 @@ type Config struct {
 		UserPoolClientID string `conf:"required"`
 		Region           string `conf:"default:eu-central-1"`
 	}
-	AWS struct {
-		Region string `conf:"default:eu-central-1"`
-	}
 	Nats struct {
 		TenantsStream     string `conf:"default:TENANTS"`
 		RegisteredSubject string `conf:"default:TENANTS.registered"`

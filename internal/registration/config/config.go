@@ -13,9 +13,9 @@ type Config struct {
 		Port            string        `conf:"default:4001"`
 	}
 	Cognito struct {
-		AppClientID      string `conf:"required"`
-		UserPoolClientID string `conf:"required"`
-		Region           string `conf:"default:eu-central-1"`
+		UserPoolClientID       string `conf:"required"`
+		SharedUserPoolClientID string `conf:"required"`
+		Region                 string `conf:"default:eu-central-1"`
 	}
 	Dynamodb struct {
 		TenantTable string `conf:"required"`
@@ -27,8 +27,5 @@ type Config struct {
 		TenantsStream string `conf:"default:TENANTS"`
 		Address       string `conf:"default:127.0.0.1"`
 		Port          string `conf:"default:4222"`
-	}
-	AWS struct {
-		Region string `conf:"default:eu-central-1"`
 	}
 }

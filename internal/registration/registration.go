@@ -64,7 +64,6 @@ func Run() error {
 	registrationService := service.NewRegistrationService(
 		logger,
 		jetStream,
-		cfg.Cognito.AppClientID,
 		cfg.Cognito.UserPoolClientID,
 		cfg.Nats.TenantsStream,
 	)
