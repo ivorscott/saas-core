@@ -57,8 +57,8 @@ type TenantRegisteredEventData struct {
 const TenantSiloed MessageType = "TenantSiloed"
 
 const (
-	// TypeCreateTenantConfig represents a concrete value for the TenantSiloedType.
-	TypeCreateTenantConfig TenantSiloedType = "TenantSiloed"
+	// TypeTenantSiloed represents a concrete value for the TenantSiloedType.
+	TypeTenantSiloed TenantSiloedType = "TenantSiloed"
 )
 
 // TenantSiloedType represents a TenantSiloed Message.
