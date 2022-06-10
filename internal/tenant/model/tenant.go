@@ -45,6 +45,13 @@ type UpdateTenant struct {
 	TaxNumber *string `json:"taxNumber,omitempty"`
 }
 
+type NewSiloConfig struct {
+	TenantName       string
+	UserPoolID       string
+	AppClientID      string
+	DeploymentStatus string
+}
+
 // Validate validates the NewTenant.
 func (nt *NewTenant) Validate() error {
 	return tenantValidator.Struct(nt)

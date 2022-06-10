@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 
-	"github.com/devpies/saas-core/internal/tenant/config"
 	"github.com/devpies/saas-core/internal/tenant/model"
 	"github.com/devpies/saas-core/pkg/msg"
 
@@ -12,11 +11,10 @@ import (
 
 // TenantService manages tenant business operations.
 type TenantService struct {
-	logger           *zap.Logger
-	config           config.Config
-	tenantRepo       tenantRepository
-	tenantConfigRepo tenantConfigRepository
-	authInfoRepo     authInfoRepository
+	logger         *zap.Logger
+	tenantRepo     tenantRepository
+	siloConfigRepo siloConfigRepository
+	authInfoRepo   authInfoRepository
 }
 
 type tenantRepository interface {
@@ -27,8 +25,8 @@ type tenantRepository interface {
 	Delete(ctx context.Context, tenantID string) error
 }
 
-type tenantConfigRepository interface {
-	InsertConfiguration(ctx context.Context, tenantConfig model.NewTenantConfig) error
+type siloConfigRepository interface {
+	Insert(ctx context.Context, siloConfig model.NewSiloConfig) error
 }
 
 type authInfoRepository interface {
@@ -36,17 +34,16 @@ type authInfoRepository interface {
 }
 
 // NewTenantService returns a new TenantService.
-func NewTenantService(logger *zap.Logger, config config.Config, tenantRepo tenantRepository, tenantConfigRepo tenantConfigRepository, authInfoRepo authInfoRepository) *TenantService {
+func NewTenantService(logger *zap.Logger, tenantRepo tenantRepository, siloConfigRepo siloConfigRepository, authInfoRepo authInfoRepository) *TenantService {
 	return &TenantService{
-		logger:           logger,
-		config:           config,
-		tenantRepo:       tenantRepo,
-		tenantConfigRepo: tenantConfigRepo,
-		authInfoRepo:     authInfoRepo,
+		logger:         logger,
+		tenantRepo:     tenantRepo,
+		siloConfigRepo: siloConfigRepo,
+		authInfoRepo:   authInfoRepo,
 	}
 }
 
-// Create creates a tenant.
+// CreateFromMessage creates a tenant from a message.
 func (ts *TenantService) CreateFromMessage(ctx context.Context, message interface{}) error {
 	m, err := msg.Bytes(message)
 	if err != nil {
@@ -68,6 +65,28 @@ func (ts *TenantService) CreateFromMessage(ctx context.Context, message interfac
 	return nil
 }
 
+// StoreConfigFromMessage stores tenant silo configuration from a message.
+func (ts *TenantService) StoreConfigFromMessage(ctx context.Context, message interface{}) error {
+	m, err := msg.Bytes(message)
+	if err != nil {
+		return err
+	}
+
+	event, err := msg.UnmarshalTenantSiloedEvent(m)
+	if err != nil {
+		return err
+	}
+
+	config := newSiloConfig(event.Data)
+
+	err = ts.siloConfigRepo.Insert(ctx, config)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func newTenant(data msg.TenantRegisteredEventData) model.NewTenant {
 	return model.NewTenant{
 		ID:       data.ID,
@@ -75,6 +94,15 @@ func newTenant(data msg.TenantRegisteredEventData) model.NewTenant {
 		FullName: data.FullName,
 		Company:  data.Company,
 		Plan:     data.Plan,
+	}
+}
+
+func newSiloConfig(data msg.TenantSiloedEventData) model.NewSiloConfig {
+	return model.NewSiloConfig{
+		TenantName:       data.TenantName,
+		UserPoolID:       data.UserPoolID,
+		AppClientID:      data.AppClientID,
+		DeploymentStatus: data.DeploymentStatus,
 	}
 }
 

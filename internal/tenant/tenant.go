@@ -65,10 +65,10 @@ func Run() error {
 
 	// Initialize 3-layered architecture.
 	tenantRepository := repository.NewTenantRepository(dbClient, cfg.Dynamodb.TenantTable)
-	tenantConfigRepository := repository.NewTenantConfigRepository(dbClient)
+	siloConfigRepository := repository.NewSiloConfigRepository(dbClient, cfg.Dynamodb.ConfigTable)
 	authInfoRepository := repository.NewAuthInfoRepository(dbClient)
 
-	tenantService := service.NewTenantService(logger, cfg, tenantRepository, tenantConfigRepository, authInfoRepository)
+	tenantService := service.NewTenantService(logger, tenantRepository, siloConfigRepository, authInfoRepository)
 	tenantHandler := handler.NewTenantHandler(logger, tenantService)
 
 	shutdown := make(chan os.Signal, 1)
@@ -90,8 +90,16 @@ func Run() error {
 		js.Listen(
 			string(msg.TypeTenantRegistered),
 			msg.SubjectRegistered,
-			cfg.Nats.QueueGroup,
+			"tenant_consumer",
 			tenantService.CreateFromMessage,
+			opts...,
+		)
+
+		js.Listen(
+			string(msg.TypeTenantSiloed),
+			msg.SubjectSiloed,
+			"config_consumer",
+			tenantService.StoreConfigFromMessage,
 			opts...,
 		)
 	}()

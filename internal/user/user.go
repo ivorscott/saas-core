@@ -85,7 +85,7 @@ func Run() error {
 		js.Listen(
 			string(msg.TypeTenantRegistered),
 			msg.SubjectRegistered,
-			cfg.Nats.QueueGroup,
+			"user_consumer",
 			userService.CreateTenantUserFromMessage,
 			opts...,
 		)

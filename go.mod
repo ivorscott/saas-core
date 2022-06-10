@@ -14,8 +14,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.6
 	github.com/devpies/saas-core/pkg/log v0.0.0-20220605224346-efd5e99fa5dd
-	github.com/devpies/saas-core/pkg/msg v0.0.0-20220610222844-8a2b2b8f724e
-	github.com/devpies/saas-core/pkg/web v0.0.0-20220610222844-8a2b2b8f724e
+	github.com/devpies/saas-core/pkg/msg v0.0.0-20220610230130-5f484ffa030f
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220610230130-5f484ffa030f
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
 	github.com/go-playground/validator/v10 v10.11.0
