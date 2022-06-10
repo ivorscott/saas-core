@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -68,7 +67,6 @@ func Run() error {
 	// Initialize channels for graceful shutdown.
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-	serverErrors := make(chan error, 1)
 
 	// Initialize NATS JetStream.
 	js := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
@@ -91,43 +89,16 @@ func Run() error {
 		)
 	}()
 
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
-		WriteTimeout: cfg.Web.WriteTimeout,
-		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, cfg),
-	}
-
-	go func() {
-		logger.Info(fmt.Sprintf("Starting user api on %s:%s", cfg.Web.Address, cfg.Web.Port))
-		serverErrors <- srv.ListenAndServe()
-	}()
-
 	select {
-	case err = <-serverErrors:
-		logger.Error("error on startup", zap.Error(err))
-		return err
 	case sig := <-shutdown:
 		logger.Info(fmt.Sprintf("Start shutdown due to %s signal", sig))
 
-		// Give on going tasks a deadline for completion.
-		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
-		defer cancel()
-
-		err = srv.Shutdown(ctx)
-		if err != nil {
-			err = srv.Close()
-		}
-
 		switch {
 		case sig == syscall.SIGSTOP:
-			logger.Error("error on integrity issue caused shutdown", zap.Error(err))
-			return err
-		case err != nil:
-			logger.Error("error on gracefully shutdown", zap.Error(err))
-			return err
+			logger.Error("error on integrity issue caused shutdown")
+		default:
 		}
 	}
 
-	return err
+	return nil
 }

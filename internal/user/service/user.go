@@ -2,10 +2,8 @@ package service
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/devpies/saas-core/pkg/msg"
-	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -39,12 +37,12 @@ func NewUserService(logger *zap.Logger, cognitoClient cognitoClient) *UserServic
 func (rs *UserService) CreateTenantUserFromMessage(ctx context.Context, message interface{}) error {
 	m, err := msg.Bytes(message)
 	if err != nil {
-		return web.NewRequestError(err, http.StatusBadRequest)
+		return err
 	}
 
 	event, err := msg.UnmarshalTenantRegisteredEvent(m)
 	if err != nil {
-		return web.NewRequestError(err, http.StatusBadRequest)
+		return err
 	}
 
 	d := event.Data
@@ -55,12 +53,13 @@ func (rs *UserService) CreateTenantUserFromMessage(ctx context.Context, message 
 		UserAttributes: []types.AttributeType{
 			{Name: aws.String("custom:tenant-id"), Value: aws.String(d.ID)},
 			{Name: aws.String("custom:company-name"), Value: aws.String(d.Company)},
+			{Name: aws.String("custom:full-name"), Value: aws.String(d.FullName)},
 			{Name: aws.String("email"), Value: aws.String(d.Email)},
-			{Name: aws.String("email-verified"), Value: aws.String("true")},
+			{Name: aws.String("email_verified"), Value: aws.String("true")},
 		},
 	})
 	if err != nil {
-		return web.NewRequestError(err, http.StatusBadRequest)
+		return err
 	}
 	rs.logger.Info("successfully added user")
 	return nil
