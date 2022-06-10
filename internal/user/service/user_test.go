@@ -49,7 +49,6 @@ func TestUserService_CreateTenantUserFromMessage(t *testing.T) {
 			{Name: aws.String("email"), Value: aws.String(event.Data.Email)},
 			{Name: aws.String("email_verified"), Value: aws.String("true")},
 		},
-		MessageAction: types.MessageActionTypeSuppress,
 	}
 
 	t.Run("400 error on create tenant", func(t *testing.T) {
