@@ -3,9 +3,12 @@ package tenant
 import (
 	"context"
 	"fmt"
+	"github.com/devpies/saas-core/pkg/msg"
+	"github.com/nats-io/nats.go"
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 
 	"github.com/devpies/saas-core/internal/tenant/config"
@@ -61,20 +64,37 @@ func Run() error {
 	defer logger.Sync()
 
 	// Initialize 3-layered architecture.
-	tenantRepository := repository.NewTenantRepository(dbClient)
+	tenantRepository := repository.NewTenantRepository(dbClient, cfg.Dynamodb.TenantTable)
 	tenantConfigRepository := repository.NewTenantConfigRepository(dbClient)
 	authInfoRepository := repository.NewAuthInfoRepository(dbClient)
 
 	tenantService := service.NewTenantService(logger, cfg, tenantRepository, tenantConfigRepository, authInfoRepository)
 	tenantHandler := handler.NewTenantHandler(logger, tenantService)
 
-	go func() {
-		// listen for messages
-	}()
-
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	serverErrors := make(chan error, 1)
+
+	// Initialize NATS JetStream.
+	js := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
+	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("listener panic: %v", r)
+				logger.Error(fmt.Sprintf("%s", debug.Stack()), zap.Error(err))
+			}
+		}()
+
+		js.Listen(
+			string(msg.TypeTenantRegistered),
+			cfg.Nats.RegisteredSubject,
+			cfg.Nats.QueueGroup,
+			tenantService.CreateFromMessage,
+			opts...,
+		)
+	}()
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),

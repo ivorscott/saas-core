@@ -5,6 +5,7 @@ import (
 
 	"github.com/devpies/saas-core/internal/tenant/config"
 	"github.com/devpies/saas-core/internal/tenant/model"
+	"github.com/devpies/saas-core/pkg/msg"
 
 	"go.uber.org/zap"
 )
@@ -46,8 +47,35 @@ func NewTenantService(logger *zap.Logger, config config.Config, tenantRepo tenan
 }
 
 // Create creates a tenant.
-func (ts *TenantService) Create(ctx context.Context, tenant model.NewTenant) error {
+func (ts *TenantService) CreateFromMessage(ctx context.Context, message interface{}) error {
+	m, err := msg.Bytes(message)
+	if err != nil {
+		return err
+	}
+
+	event, err := msg.UnmarshalTenantRegisteredEvent(m)
+	if err != nil {
+		return err
+	}
+
+	tenant := newTenant(event.Data)
+
+	err = ts.tenantRepo.Insert(ctx, tenant)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func newTenant(data msg.TenantRegisteredEventData) model.NewTenant {
+	return model.NewTenant{
+		ID:       data.ID,
+		Email:    data.Email,
+		FullName: data.FullName,
+		Company:  data.Company,
+		Plan:     data.Plan,
+	}
 }
 
 // AddConfiguration adds tenant configuration for premium tenants.

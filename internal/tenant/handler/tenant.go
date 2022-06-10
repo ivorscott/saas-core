@@ -10,7 +10,6 @@ import (
 )
 
 type tenantService interface {
-	Create(ctx context.Context, tenant model.NewTenant) error
 	AddConfiguration(ctx context.Context, tenantConfig model.NewTenantConfig) error
 	GetAuthInfo(ctx context.Context, referer string) (model.AuthInfo, error)
 	FindOne(ctx context.Context, tenantID string) (model.Tenant, error)
