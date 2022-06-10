@@ -78,8 +78,12 @@ func (jctx *StreamContext) setupMsgHandler(messageType string, handler listenHan
 			return
 		}
 
-		if message.Type != messageType {
-			jctx.logger.Info("warning message type was not expected", zap.String("type", message.Type))
+		if string(message.Type) != messageType {
+			jctx.logger.Info(
+				"warning message type was not expected",
+				zap.String("wanted", messageType),
+				zap.String("got", string(message.Type)),
+			)
 			return
 		}
 

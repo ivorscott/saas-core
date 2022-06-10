@@ -14,6 +14,9 @@ func (m *CreateTenantConfigCommand) Marshal() ([]byte, error) {
 	return json.Marshal(m)
 }
 
+// CreateTenantConfig is a valid MessageType.
+const CreateTenantConfig MessageType = "CreateTenantConfig"
+
 const (
 	// TypeCreateTenantConfig represents a concrete value for the CreateTenantConfigType.
 	TypeCreateTenantConfig CreateTenantConfigType = "CreateTenantConfig"
