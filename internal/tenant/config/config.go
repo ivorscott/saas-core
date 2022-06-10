@@ -22,4 +22,11 @@ type Config struct {
 		ConfigTable string `conf:"required"`
 		Port        string `conf:"default:30008"`
 	}
+	Nats struct {
+		TenantsStream     string `conf:"default:TENANTS"`
+		RegisteredSubject string `conf:"default:TENANTS.registered"`
+		QueueGroup        string `conf:"default:tenant"`
+		Address           string `conf:"default:127.0.0.1"`
+		Port              string `conf:"default:4222"`
+	}
 }
