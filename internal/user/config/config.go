@@ -17,10 +17,8 @@ type Config struct {
 		Region           string `conf:"default:eu-central-1"`
 	}
 	Nats struct {
-		TenantsStream     string `conf:"default:TENANTS"`
-		RegisteredSubject string `conf:"default:TENANTS.registered"`
-		QueueGroup        string `conf:"default:user"`
-		Address           string `conf:"default:127.0.0.1"`
-		Port              string `conf:"default:4222"`
+		QueueGroup string `conf:"default:user"`
+		Address    string `conf:"default:127.0.0.1"`
+		Port       string `conf:"default:4222"`
 	}
 }

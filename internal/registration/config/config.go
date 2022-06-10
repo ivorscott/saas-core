@@ -24,8 +24,7 @@ type Config struct {
 		Port        string `conf:"default:30008"`
 	}
 	Nats struct {
-		TenantsStream string `conf:"default:TENANTS"`
-		Address       string `conf:"default:127.0.0.1"`
-		Port          string `conf:"default:4222"`
+		Address string `conf:"default:127.0.0.1"`
+		Port    string `conf:"default:4222"`
 	}
 }

@@ -89,7 +89,7 @@ func Run() error {
 
 		js.Listen(
 			string(msg.TypeTenantRegistered),
-			cfg.Nats.RegisteredSubject,
+			msg.SubjectRegistered,
 			cfg.Nats.QueueGroup,
 			tenantService.CreateFromMessage,
 			opts...,
@@ -104,7 +104,7 @@ func Run() error {
 	}
 
 	go func() {
-		logger.Info(fmt.Sprintf("Starting tenant api on %s:%s", cfg.Web.Address, cfg.Web.Port))
+		logger.Info(fmt.Sprintf("Starting tenant service on %s:%s", cfg.Web.Address, cfg.Web.Port))
 		serverErrors <- srv.ListenAndServe()
 	}()
 
