@@ -5,6 +5,12 @@ import (
 	"fmt"
 )
 
+const (
+	StreamTenants     = "TENANTS"
+	SubjectRegistered = "TENANTS.registered"
+	SubjectSiloed     = "TENANTS.siloed"
+)
+
 // UnmarshalMsg parses the JSON-encoded data and returns Msg.
 func UnmarshalMsg(data []byte) (Msg, error) {
 	var m Msg
