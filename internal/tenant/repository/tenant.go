@@ -73,8 +73,6 @@ func (tr *TenantRepository) SelectOne(ctx context.Context, tenantID string) (mod
 
 // SelectAll retrieves all tenants.
 func (tr *TenantRepository) SelectAll(ctx context.Context) ([]model.Tenant, error) {
-	var tenants []model.Tenant
-
 	out, err := tr.client.Scan(ctx, &dynamodb.ScanInput{
 		TableName: aws.String(tr.table),
 	})
@@ -82,6 +80,7 @@ func (tr *TenantRepository) SelectAll(ctx context.Context) ([]model.Tenant, erro
 		return nil, err
 	}
 
+	var tenants = make([]model.Tenant, 0, len(out.Items))
 	for _, v := range out.Items {
 		var item model.Tenant
 		err = attributevalue.UnmarshalMap(v, &item)
@@ -90,7 +89,6 @@ func (tr *TenantRepository) SelectAll(ctx context.Context) ([]model.Tenant, erro
 		}
 		tenants = append(tenants, item)
 	}
-
 	return tenants, nil
 }
 

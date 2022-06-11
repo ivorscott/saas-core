@@ -2,10 +2,10 @@ package handler
 
 import (
 	"context"
-	"github.com/devpies/saas-core/pkg/web"
 	"net/http"
 
 	"github.com/devpies/saas-core/internal/tenant/model"
+	"github.com/devpies/saas-core/pkg/web"
 
 	"go.uber.org/zap"
 )

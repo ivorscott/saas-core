@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
-	"github.com/devpies/saas-core/internal/tenant/model"
-	"go.uber.org/zap"
 	"regexp"
+
+	"github.com/devpies/saas-core/internal/tenant/model"
+
+	"go.uber.org/zap"
 )
 
 // AuthInfoService retrieves tenant auth information.

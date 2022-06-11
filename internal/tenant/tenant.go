@@ -3,8 +3,6 @@ package tenant
 import (
 	"context"
 	"fmt"
-	"github.com/devpies/saas-core/pkg/msg"
-	"github.com/nats-io/nats.go"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,9 +15,11 @@ import (
 	"github.com/devpies/saas-core/internal/tenant/repository"
 	"github.com/devpies/saas-core/internal/tenant/service"
 	"github.com/devpies/saas-core/pkg/log"
+	"github.com/devpies/saas-core/pkg/msg"
 
 	"github.com/ardanlabs/conf"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 

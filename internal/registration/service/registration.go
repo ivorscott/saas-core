@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+
 	"github.com/devpies/saas-core/internal/registration/model"
 	"github.com/devpies/saas-core/pkg/msg"
 	"github.com/devpies/saas-core/pkg/web"

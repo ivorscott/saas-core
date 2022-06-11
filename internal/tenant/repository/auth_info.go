@@ -2,13 +2,13 @@ package repository
 
 import (
 	"context"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/devpies/saas-core/internal/tenant/model"
-
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
 // AuthInfoRepository manages data access to tenant authentication information.
