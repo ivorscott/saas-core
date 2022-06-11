@@ -48,7 +48,7 @@ spec:
             - name: TENANT_DYNAMODB_AUTH_TABLE
               value: auth-info
             - name: TENANT_DYNAMODB_CONFIG_TABLE
-              value: tenant-config
+              value: silo-config
 
             - name: TENANT_NATS_ADDRESS
               value: "nats-svc"

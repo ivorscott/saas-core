@@ -34,22 +34,15 @@ type Tenant struct {
 
 // UpdateTenant represents a request to Tenant data.
 type UpdateTenant struct {
-	Email     string  `json:"email" validate:"required"`
-	FullName  string  `json:"fullName" validate:"required"`
-	Company   string  `json:"companyName" validate:"required"`
-	Plan      string  `json:"plan"  validate:"required,oneof=basic premium"`
+	Email     *string `json:"email,omitempty"`
+	FullName  *string `json:"fullName,omitempty"`
+	Company   *string `json:"company,omitempty"`
+	Plan      *string `json:"plan,omitempty"  validate:"required,oneof=basic premium"`
 	Address   *string `json:"address,omitempty"`
 	City      *string `json:"city,omitempty"`
 	Zipcode   *string `json:"zipcode,omitempty"`
 	Country   *string `json:"country,omitempty"`
 	TaxNumber *string `json:"taxNumber,omitempty"`
-}
-
-type NewSiloConfig struct {
-	TenantName       string
-	UserPoolID       string
-	AppClientID      string
-	DeploymentStatus string
 }
 
 // Validate validates the NewTenant.

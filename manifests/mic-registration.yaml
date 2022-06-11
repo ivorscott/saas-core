@@ -53,7 +53,7 @@ spec:
             - name: REGISTRATION_DYNAMODB_AUTH_TABLE
               value: auth-info
             - name: REGISTRATION_DYNAMODB_CONFIG_TABLE
-              value: tenant-config
+              value: silo-config
 
             - name: REGISTRATION_NATS_ADDRESS
               value: "nats-svc"

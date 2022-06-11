@@ -29,10 +29,10 @@ func (sr *SiloConfigRepository) Insert(ctx context.Context, siloConfig model.New
 	input := dynamodb.PutItemInput{
 		TableName: aws.String(sr.table),
 		Item: map[string]types.AttributeValue{
-			"tenant_name":       &types.AttributeValueMemberS{Value: siloConfig.TenantName},
-			"user_pool_id":      &types.AttributeValueMemberS{Value: siloConfig.UserPoolID},
-			"app_client_id":     &types.AttributeValueMemberS{Value: siloConfig.AppClientID},
-			"deployment_status": &types.AttributeValueMemberS{Value: siloConfig.DeploymentStatus},
+			"tenantName":       &types.AttributeValueMemberS{Value: siloConfig.TenantName},
+			"userPoolId":       &types.AttributeValueMemberS{Value: siloConfig.UserPoolID},
+			"appClientId":      &types.AttributeValueMemberS{Value: siloConfig.AppClientID},
+			"deploymentStatus": &types.AttributeValueMemberS{Value: siloConfig.DeploymentStatus},
 		},
 	}
 	_, err := sr.client.PutItem(ctx, &input)

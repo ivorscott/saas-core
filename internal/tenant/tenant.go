@@ -66,10 +66,14 @@ func Run() error {
 	// Initialize 3-layered architecture.
 	tenantRepository := repository.NewTenantRepository(dbClient, cfg.Dynamodb.TenantTable)
 	siloConfigRepository := repository.NewSiloConfigRepository(dbClient, cfg.Dynamodb.ConfigTable)
-	authInfoRepository := repository.NewAuthInfoRepository(dbClient)
+	authInfoRepository := repository.NewAuthInfoRepository(dbClient, cfg.Dynamodb.AuthTable)
 
-	tenantService := service.NewTenantService(logger, tenantRepository, siloConfigRepository, authInfoRepository)
+	tenantService := service.NewTenantService(logger, tenantRepository)
+	authInfoService := service.NewAuthInfoService(logger, authInfoRepository, cfg.Cognito.Region)
+	siloConfigService := service.NewSiloConfigService(logger, siloConfigRepository)
+
 	tenantHandler := handler.NewTenantHandler(logger, tenantService)
+	authInfoHandler := handler.NewAuthInfoHandler(logger, authInfoService)
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
@@ -91,7 +95,7 @@ func Run() error {
 			string(msg.TypeTenantRegistered),
 			msg.SubjectRegistered,
 			"tenant_consumer",
-			tenantService.CreateFromMessage,
+			tenantService.CreateTenantFromMessage,
 			opts...,
 		)
 
@@ -99,7 +103,7 @@ func Run() error {
 			string(msg.TypeTenantSiloed),
 			msg.SubjectSiloed,
 			"config_consumer",
-			tenantService.StoreConfigFromMessage,
+			siloConfigService.StoreConfigFromMessage,
 			opts...,
 		)
 	}()
@@ -108,7 +112,7 @@ func Run() error {
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, tenantHandler, cfg),
+		Handler:      Routes(logger, shutdown, tenantHandler, authInfoHandler, cfg),
 	}
 
 	go func() {
