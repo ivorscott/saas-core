@@ -3,23 +3,26 @@ package repository
 import (
 	"context"
 
+	"github.com/devpies/saas-core/internal/tenant/model"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-
-	"github.com/devpies/saas-core/internal/tenant/model"
+	"go.uber.org/zap"
 )
 
 // AuthInfoRepository manages data access to tenant authentication information.
 type AuthInfoRepository struct {
 	client *dynamodb.Client
+	logger *zap.Logger
 	table  string
 }
 
 // NewAuthInfoRepository returns a new AuthInfoRepository.
-func NewAuthInfoRepository(client *dynamodb.Client, table string) *AuthInfoRepository {
+func NewAuthInfoRepository(logger *zap.Logger, client *dynamodb.Client, table string) *AuthInfoRepository {
 	return &AuthInfoRepository{
+		logger: logger,
 		client: client,
 		table:  table,
 	}

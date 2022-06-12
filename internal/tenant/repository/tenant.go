@@ -55,7 +55,7 @@ func (tr *TenantRepository) SelectOne(ctx context.Context, tenantID string) (mod
 	input := dynamodb.GetItemInput{
 		TableName: aws.String(tr.table),
 		Key: map[string]types.AttributeValue{
-			"tenantId": &types.AttributeValueMemberS{Value: tenant.ID},
+			"tenantId": &types.AttributeValueMemberS{Value: tenantID},
 		},
 	}
 	output, err := tr.client.GetItem(ctx, &input)
@@ -96,7 +96,7 @@ func (tr *TenantRepository) SelectAll(ctx context.Context) ([]model.Tenant, erro
 func (tr *TenantRepository) Update(ctx context.Context, id string, update model.UpdateTenant) error {
 	var (
 		updateExp = "set"
-		av        map[string]types.AttributeValue
+		av        = make(map[string]types.AttributeValue)
 	)
 
 	if update.Email != nil {
@@ -109,9 +109,9 @@ func (tr *TenantRepository) Update(ctx context.Context, id string, update model.
 		av[":fullName"] = &types.AttributeValueMemberS{Value: *update.FullName}
 	}
 
-	if update.Company != nil {
+	if update.CompanyName != nil {
 		updateExp = updateExp + " companyName = :companyName,"
-		av[":companyName"] = &types.AttributeValueMemberS{Value: *update.Company}
+		av[":companyName"] = &types.AttributeValueMemberS{Value: *update.CompanyName}
 	}
 
 	if update.Plan != nil {

@@ -66,7 +66,7 @@ func Run() error {
 	// Initialize 3-layered architecture.
 	tenantRepository := repository.NewTenantRepository(dbClient, cfg.Dynamodb.TenantTable)
 	siloConfigRepository := repository.NewSiloConfigRepository(dbClient, cfg.Dynamodb.ConfigTable)
-	authInfoRepository := repository.NewAuthInfoRepository(dbClient, cfg.Dynamodb.AuthTable)
+	authInfoRepository := repository.NewAuthInfoRepository(logger, dbClient, cfg.Dynamodb.AuthTable)
 
 	tenantService := service.NewTenantService(logger, tenantRepository)
 	authInfoService := service.NewAuthInfoService(logger, authInfoRepository, cfg.Cognito.Region)
@@ -102,7 +102,7 @@ func Run() error {
 		js.Listen(
 			string(msg.TypeTenantSiloed),
 			msg.SubjectSiloed,
-			"config_consumer",
+			"silo_consumer",
 			siloConfigService.StoreConfigFromMessage,
 			opts...,
 		)
