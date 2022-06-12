@@ -13,6 +13,14 @@ func init() {
 
 // AuthInfo represents tenant authentication information.
 type AuthInfo struct {
+	TenantPath       string `json:"tenantPath"`
+	UserPoolType     string `json:"userPoolType"`
+	UserPoolID       string `json:"userPoolId"`
+	UserPoolClientID string `json:"userPoolClientId"`
+}
+
+// AuthInfoAndRegion represents tenant authentication and region information.
+type AuthInfoAndRegion struct {
 	ProjectRegion    string `json:"projectRegion"`
 	CognitoRegion    string `json:"cognitoRegion"`
 	UserPoolID       string `json:"userPoolId"`

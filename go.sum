@@ -149,6 +149,8 @@ github.com/aws/aws-sdk-go-v2/credentials v1.3.2/go.mod h1:PACKuTJdt6AlXvEq8rFI4e
 github.com/aws/aws-sdk-go-v2/credentials v1.4.3/go.mod h1:FNNC6nQZQUuyhq5aE5c7ata8o9e4ECGmS4lAXC7o1mQ=
 github.com/aws/aws-sdk-go-v2/credentials v1.12.2 h1:tX4EHQFU4+O9at5QjnwIKb/Qgv7MbgbUNtqTRF0Vu2M=
 github.com/aws/aws-sdk-go-v2/credentials v1.12.2/go.mod h1:/XWqDVuzclEKvzileqtD7/t+wIhOogv//6JFlKEe0Wc=
+github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.9.3 h1:a42+8kEY6a8PSvti5Nmu+4YlMnPGZrREWiOEwy9KGOs=
+github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.9.3/go.mod h1:7qQXLcdOjO+g20BcavAQ0jdcxElZUkbkY8zdMn0DS1c=
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.4.0/go.mod h1:Mj/U8OpDbcVcoctrYwA2bak8k/HFPdcLzI/vaiXMwuM=
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.6.0/go.mod h1:gqlclDEZp4aqJOancXK6TN24aKhT0W0Ae9MHk3wzTMM=
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.5 h1:YPxclBeE07HsLQE8vtjC8T2emcTjM9nzqsnDi2fv5UM=
@@ -169,6 +171,8 @@ github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5 h1:3Vese5V6
 github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5/go.mod h1:k1bjVVQIn8G0YNH4ixxferJWyzFClFa2DidiMwpT3ik=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.6 h1:0LwLWAtBywOtCm7/fIMX26YN4CWk3cxGp74wQ67CpW8=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.6/go.mod h1:+v2jeT4/39fCXUQ0ZfHQHMMiJljnmiuj16F03uAd9DY=
+github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.13.6 h1:eQ7sKtfSq1L6puSpeeUpWAwfLszqub8xzuK9hwdgZ5E=
+github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.13.6/go.mod h1:FAVtDKEl/8WxRDQ33e2fz16RO1t4zeEwWIU5kR29xXs=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.2.2/go.mod h1:EASdTcM1lGhUe1/p4gkojHwlGJkeoRjjr1sRCzup3Is=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.3.0/go.mod h1:v8ygadNyATSm6elwJ/4gzJwcFhri9RqS8skgHKiwXPU=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.2 h1:T/ywkX1ed+TsZVQccu/8rRJGxKZF/t0Ivgrb4MHTSeo=
@@ -403,12 +407,20 @@ github.com/devpies/saas-core/pkg/msg v0.0.0-20220609103345-c8b5c0bbe75a h1:aXEQp
 github.com/devpies/saas-core/pkg/msg v0.0.0-20220609103345-c8b5c0bbe75a/go.mod h1:VR0f825NYyAo20l6YxZ1i6fDI4uI/pt0gwZdRFzNjYE=
 github.com/devpies/saas-core/pkg/msg v0.0.0-20220610014655-dd217a16f426 h1:S3yRUs4xo1Tq7fHMPOsMRZDPplherhjPufbU6u/HCgU=
 github.com/devpies/saas-core/pkg/msg v0.0.0-20220610014655-dd217a16f426/go.mod h1:VR0f825NYyAo20l6YxZ1i6fDI4uI/pt0gwZdRFzNjYE=
+github.com/devpies/saas-core/pkg/msg v0.0.0-20220610222844-8a2b2b8f724e h1:UpTDTrkkRTNTFTmP7CgPtkm+XwQiw3Ipc5FS0q+bAQM=
+github.com/devpies/saas-core/pkg/msg v0.0.0-20220610222844-8a2b2b8f724e/go.mod h1:VR0f825NYyAo20l6YxZ1i6fDI4uI/pt0gwZdRFzNjYE=
+github.com/devpies/saas-core/pkg/msg v0.0.0-20220610230130-5f484ffa030f h1:wpGRGLltDntmIgkvmuHI6pWJuAobczjEGQ3nd9xphGI=
+github.com/devpies/saas-core/pkg/msg v0.0.0-20220610230130-5f484ffa030f/go.mod h1:VR0f825NYyAo20l6YxZ1i6fDI4uI/pt0gwZdRFzNjYE=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220609095005-525b33285586 h1:zDi5OSd4xTBrsrxFYsAqEl5iY63Fi9eet3zv2e1qo50=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220609095005-525b33285586/go.mod h1:ziV0cfnDYb/u8fTAbx1EbXkB88tCXA8TQckAgXDpbqg=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220609103345-c8b5c0bbe75a h1:WMkW+5+QBGzTozOlmp+/2kq8TujIumusQa4wxJZZO+I=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220609103345-c8b5c0bbe75a/go.mod h1:ziV0cfnDYb/u8fTAbx1EbXkB88tCXA8TQckAgXDpbqg=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220610014655-dd217a16f426 h1:3l1eFhugrGg5n8kSEl9GjrOhjxgKkYCDF4lUR6s3uag=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220610014655-dd217a16f426/go.mod h1:ziV0cfnDYb/u8fTAbx1EbXkB88tCXA8TQckAgXDpbqg=
+github.com/devpies/saas-core/pkg/web v0.0.0-20220610222844-8a2b2b8f724e h1:rLY8nAMRdhDj77IoAuIqD6IqCsupozzHFK4GTAmghXA=
+github.com/devpies/saas-core/pkg/web v0.0.0-20220610222844-8a2b2b8f724e/go.mod h1:ziV0cfnDYb/u8fTAbx1EbXkB88tCXA8TQckAgXDpbqg=
+github.com/devpies/saas-core/pkg/web v0.0.0-20220610230130-5f484ffa030f h1:wz7CxPEauKON6Ew1BRIMy0NnRirsEFuPhTKbSMcMuN0=
+github.com/devpies/saas-core/pkg/web v0.0.0-20220610230130-5f484ffa030f/go.mod h1:ziV0cfnDYb/u8fTAbx1EbXkB88tCXA8TQckAgXDpbqg=
 github.com/dgrijalva/jwt-go v0.0.0-20170104182250-a601269ab70c/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
@@ -1558,6 +1570,8 @@ golang.org/x/sys v0.0.0-20220111092808-5a964db01320/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.0.0-20220317061510-51cd9980dadf/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220608164250-635b8c9b7f68 h1:z8Hj/bl9cOV2grsOpEaQFUaly0JWN3i97mo3jXKJNp0=
 golang.org/x/sys v0.0.0-20220608164250-635b8c9b7f68/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d h1:Zu/JngovGLVi6t2J3nmAf3AoTDwuzw85YZ3b9o4yU7s=
+golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=

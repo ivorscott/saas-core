@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 
 	"github.com/devpies/saas-core/internal/tenant/config"
@@ -14,9 +15,11 @@ import (
 	"github.com/devpies/saas-core/internal/tenant/repository"
 	"github.com/devpies/saas-core/internal/tenant/service"
 	"github.com/devpies/saas-core/pkg/log"
+	"github.com/devpies/saas-core/pkg/msg"
 
 	"github.com/ardanlabs/conf"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
@@ -61,30 +64,59 @@ func Run() error {
 	defer logger.Sync()
 
 	// Initialize 3-layered architecture.
-	tenantRepository := repository.NewTenantRepository(dbClient)
-	tenantConfigRepository := repository.NewTenantConfigRepository(dbClient)
-	authInfoRepository := repository.NewAuthInfoRepository(dbClient)
+	tenantRepository := repository.NewTenantRepository(dbClient, cfg.Dynamodb.TenantTable)
+	siloConfigRepository := repository.NewSiloConfigRepository(dbClient, cfg.Dynamodb.ConfigTable)
+	authInfoRepository := repository.NewAuthInfoRepository(logger, dbClient, cfg.Dynamodb.AuthTable)
 
-	tenantService := service.NewTenantService(logger, cfg, tenantRepository, tenantConfigRepository, authInfoRepository)
+	tenantService := service.NewTenantService(logger, tenantRepository)
+	authInfoService := service.NewAuthInfoService(logger, authInfoRepository, cfg.Cognito.Region)
+	siloConfigService := service.NewSiloConfigService(logger, siloConfigRepository)
+
 	tenantHandler := handler.NewTenantHandler(logger, tenantService)
-
-	go func() {
-		// listen for messages
-	}()
+	authInfoHandler := handler.NewAuthInfoHandler(logger, authInfoService)
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	serverErrors := make(chan error, 1)
 
+	// Initialize NATS JetStream.
+	js := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
+	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("listener panic: %v", r)
+				logger.Error(fmt.Sprintf("%s", debug.Stack()), zap.Error(err))
+			}
+		}()
+
+		js.Listen(
+			string(msg.TypeTenantRegistered),
+			msg.SubjectRegistered,
+			"tenant_consumer",
+			tenantService.CreateTenantFromMessage,
+			opts...,
+		)
+
+		js.Listen(
+			string(msg.TypeTenantSiloed),
+			msg.SubjectSiloed,
+			"silo_consumer",
+			siloConfigService.StoreConfigFromMessage,
+			opts...,
+		)
+	}()
+
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, tenantHandler, cfg),
+		Handler:      Routes(logger, shutdown, tenantHandler, authInfoHandler, cfg),
 	}
 
 	go func() {
-		logger.Info(fmt.Sprintf("Starting tenant api on %s:%s", cfg.Web.Address, cfg.Web.Port))
+		logger.Info(fmt.Sprintf("Starting tenant service on %s:%s", cfg.Web.Address, cfg.Web.Port))
 		serverErrors <- srv.ListenAndServe()
 	}()
 

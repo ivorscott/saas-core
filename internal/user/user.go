@@ -72,6 +72,8 @@ func Run() error {
 	js := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
 
+	logger.Info(fmt.Sprintf("Starting user service on %s:%s", cfg.Web.Address, cfg.Web.Port))
+
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -82,8 +84,8 @@ func Run() error {
 
 		js.Listen(
 			string(msg.TypeTenantRegistered),
-			cfg.Nats.RegisteredSubject,
-			cfg.Nats.QueueGroup,
+			msg.SubjectRegistered,
+			"user_consumer",
 			userService.CreateTenantUserFromMessage,
 			opts...,
 		)

@@ -19,6 +19,7 @@ func Routes(
 	log *zap.Logger,
 	shutdown chan os.Signal,
 	tenantHandler *handler.TenantHandler,
+	authInfoHandler *handler.AuthInfoHandler,
 	config config.Config,
 ) http.Handler {
 	mux := chi.NewRouter()
@@ -43,7 +44,7 @@ func Routes(
 	app.Handle(http.MethodGet, "/{id}", tenantHandler.FindOne)
 	app.Handle(http.MethodPatch, "/{id}", tenantHandler.Update)
 	app.Handle(http.MethodDelete, "/{id}", tenantHandler.Delete)
-	app.Handle(http.MethodGet, "/auth-info", tenantHandler.GetAuthInfo)
+	app.Handle(http.MethodGet, "/auth-info", authInfoHandler.GetAuthInfo)
 
 	return mux
 }

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/devpies/saas-core/internal/registration/model"
 	"github.com/devpies/saas-core/pkg/msg"
@@ -19,7 +18,6 @@ type publisher interface {
 type RegistrationService struct {
 	logger            *zap.Logger
 	js                publisher
-	tenantsStream     string
 	defaultUserPoolID string
 }
 
@@ -34,31 +32,28 @@ const (
 )
 
 // NewRegistrationService returns a new registration service.
-func NewRegistrationService(logger *zap.Logger, js publisher, defaultUserPoolID, tenantsStream string) *RegistrationService {
+func NewRegistrationService(logger *zap.Logger, js publisher, defaultUserPoolID string) *RegistrationService {
 	return &RegistrationService{
 		logger:            logger,
 		js:                js,
 		defaultUserPoolID: defaultUserPoolID,
-		tenantsStream:     tenantsStream,
 	}
 }
 
 // PublishTenantMessages publishes messages in response to a new tenant being onboarded.
 func (rs *RegistrationService) PublishTenantMessages(ctx context.Context, id string, tenant model.NewTenant) error {
-	// construct tenant message
 	values, ok := web.FromContext(ctx)
 	if !ok {
 		return web.CtxErr()
 	}
 
 	event := newTenantRegisteredMessage(values, id, tenant, rs.defaultUserPoolID)
-	subject := fmt.Sprintf("%s.registered", rs.tenantsStream)
 	bytes, err := event.Marshal()
 	if err != nil {
 		return nil
 	}
 
-	rs.js.Publish(subject, bytes)
+	rs.js.Publish(msg.SubjectRegistered, bytes)
 
 	if Plan(tenant.Plan) == PlanPremium {
 		if err = rs.provision(ctx); err != nil {

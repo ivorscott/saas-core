@@ -58,14 +58,13 @@ func Run() error {
 
 	jetStream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 
-	_ = jetStream.Create(cfg.Nats.TenantsStream)
+	_ = jetStream.Create(msg.StreamTenants)
 
 	// Initialize 3-layered architecture.
 	registrationService := service.NewRegistrationService(
 		logger,
 		jetStream,
 		cfg.Cognito.SharedUserPoolClientID,
-		cfg.Nats.TenantsStream,
 	)
 
 	registrationHandler := handler.NewRegistrationHandler(logger, registrationService)
@@ -78,7 +77,7 @@ func Run() error {
 	}
 
 	go func() {
-		logger.Info(fmt.Sprintf("Starting registration app on %s:%s", cfg.Web.Address, cfg.Web.Port))
+		logger.Info(fmt.Sprintf("Starting registration service on %s:%s", cfg.Web.Address, cfg.Web.Port))
 		serverErrors <- srv.ListenAndServe()
 	}()
 

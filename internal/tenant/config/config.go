@@ -22,4 +22,8 @@ type Config struct {
 		ConfigTable string `conf:"required"`
 		Port        string `conf:"default:30008"`
 	}
+	Nats struct {
+		Address string `conf:"default:127.0.0.1"`
+		Port    string `conf:"default:4222"`
+	}
 }
