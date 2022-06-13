@@ -9,22 +9,28 @@ import (
 	"syscall"
 
 	"github.com/devpies/saas-core/internal/registration/config"
+	"github.com/devpies/saas-core/internal/registration/db"
 	"github.com/devpies/saas-core/internal/registration/handler"
+	"github.com/devpies/saas-core/internal/registration/repository"
 	"github.com/devpies/saas-core/internal/registration/service"
 	"github.com/devpies/saas-core/pkg/log"
 	"github.com/devpies/saas-core/pkg/msg"
 
 	"github.com/ardanlabs/conf"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"go.uber.org/zap"
 )
 
 // Run contains the app setup.
 func Run() error {
 	var (
-		cfg     config.Config
-		logger  *zap.Logger
-		logPath = "log/out.log"
-		err     error
+		cfg      config.Config
+		logger   *zap.Logger
+		dbClient *dynamodb.Client
+		logPath  = "log/out.log"
+		err      error
 	)
 
 	if err = conf.Parse(os.Args[1:], "REGISTRATION", &cfg); err != nil {
@@ -42,9 +48,14 @@ func Run() error {
 		return err
 	}
 
-	logger, err = zap.NewDevelopment()
+	ctx := context.Background()
+
 	if cfg.Web.Production {
 		logger, err = log.NewProductionLogger(logPath)
+		dbClient = db.NewProductionDynamoDBClient(ctx)
+	} else {
+		logger, err = zap.NewDevelopment()
+		dbClient = db.NewDevelopmentDynamoDBClient(ctx, cfg.Dynamodb.Port)
 	}
 	if err != nil {
 		logger.Error("error creating logger", zap.Error(err))
@@ -56,17 +67,23 @@ func Run() error {
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	serverErrors := make(chan error, 1)
 
+	// Initialize AWS clients.
+	awsCfg, err := awsConfig.LoadDefaultConfig(context.Background())
+	if err != nil {
+		logger.Error("error loading aws config", zap.Error(err))
+		return err
+	}
+	cognitoClient := cip.NewFromConfig(awsCfg)
+
 	jetStream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 
 	_ = jetStream.Create(msg.StreamTenants)
 
 	// Initialize 3-layered architecture.
-	registrationService := service.NewRegistrationService(
-		logger,
-		jetStream,
-		cfg.Cognito.SharedUserPoolClientID,
-	)
+	authInfoRepo := repository.NewAuthInfoRepository(logger, dbClient, cfg.Dynamodb.AuthTable)
 
+	idpService := service.NewIDPService(logger, cfg, cognitoClient, authInfoRepo, jetStream)
+	registrationService := service.NewRegistrationService(logger, cfg.Cognito.Region, idpService, jetStream)
 	registrationHandler := handler.NewRegistrationHandler(logger, registrationService)
 
 	srv := &http.Server{
