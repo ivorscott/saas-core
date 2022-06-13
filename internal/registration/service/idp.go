@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// IDPService manages the identity provider configuration.
 type IDPService struct {
 	logger        *zap.Logger
 	config        config.Config
@@ -35,11 +36,15 @@ type authInfoRepository interface {
 }
 
 const (
-	UserPoolSiloed    = "siloed"
-	UserPoolPooled    = "pooled"
+	// UserPoolSiloed represents the user pool type for premium tenants.
+	UserPoolSiloed = "siloed"
+	// UserPoolPooled represents a shared user pool for basic tier tenants.
+	UserPoolPooled = "pooled"
+	// DefaultTenantPath represents the tenant path for basic tier tenants in a shared pool.
 	DefaultTenantPath = "/app"
 )
 
+// NewIDPService returns a new IDPService.
 func NewIDPService(logger *zap.Logger, config config.Config, cognitoClient cognitoClient, authInfoRepo authInfoRepository, js publisher) *IDPService {
 	return &IDPService{
 		logger:        logger,
@@ -50,6 +55,8 @@ func NewIDPService(logger *zap.Logger, config config.Config, cognitoClient cogni
 	}
 }
 
+// GetPlanBasedUserPool either retrieves an existing user pool (shared pool) or creates a new pool (siloed). In both cases,
+// the user pool id is returned. If a new user pool is required a user pool client will also be created.
 func (idps *IDPService) GetPlanBasedUserPool(ctx context.Context, tenant model.NewTenant, path string) (string, error) {
 	var (
 		poolType  = UserPoolPooled
@@ -68,12 +75,12 @@ func (idps *IDPService) GetPlanBasedUserPool(ctx context.Context, tenant model.N
 	}
 
 	// Fetch existing pool id and exit if one exists.
-	existingPoolId, err := idps.fetchPoolId(ctx, pathToUse)
+	existingPoolID, err := idps.fetchPoolID(ctx, pathToUse)
 	if err != nil {
 		return "", err
 	}
-	if existingPoolId != "" {
-		return existingPoolId, nil
+	if existingPoolID != "" {
+		return existingPoolID, nil
 	}
 
 	// Otherwise, create a user pool.
@@ -118,7 +125,7 @@ func newCreateTenantSiloedEvent(values *web.Values, path string, clientID, userP
 	}
 }
 
-func (idps *IDPService) fetchPoolId(ctx context.Context, path string) (string, error) {
+func (idps *IDPService) fetchPoolID(ctx context.Context, path string) (string, error) {
 	info, err := idps.authInfoRepo.SelectAuthInfo(ctx, path)
 	if err != nil {
 		return "", err
@@ -212,9 +219,9 @@ func (idps *IDPService) createUserPool(ctx context.Context, poolName, path strin
 	return output.UserPool, err
 }
 
-func (idps *IDPService) createUserPoolClient(ctx context.Context, tenantId string, userPoolID *string) (*types.UserPoolClientType, error) {
+func (idps *IDPService) createUserPoolClient(ctx context.Context, tenantID string, userPoolID *string) (*types.UserPoolClientType, error) {
 	input := cognitoidentityprovider.CreateUserPoolClientInput{
-		ClientName: aws.String(tenantId),
+		ClientName: aws.String(tenantID),
 		UserPoolId: userPoolID,
 		ExplicitAuthFlows: []types.ExplicitAuthFlowsType{
 			types.ExplicitAuthFlowsTypeAllowAdminUserPasswordAuth,

@@ -3,8 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/codepipeline"
 	"strings"
 	"time"
 
@@ -12,6 +10,8 @@ import (
 	"github.com/devpies/saas-core/pkg/msg"
 	"github.com/devpies/saas-core/pkg/web"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/codepipeline"
 	"go.uber.org/zap"
 )
 
@@ -47,9 +47,13 @@ func NewRegistrationService(logger *zap.Logger, region string, idpService identi
 	}
 }
 
+// CreateRegistration starts the tenant registration process.
 func (rs *RegistrationService) CreateRegistration(ctx context.Context, id string, tenant model.NewTenant) error {
 	var err error
 	userPoolID, err := rs.idpService.GetPlanBasedUserPool(ctx, tenant, formatPath(tenant.Company))
+	if err != nil {
+		return nil
+	}
 	err = rs.publishTenantRegisteredEvent(ctx, id, tenant, userPoolID)
 	if err != nil {
 		return nil

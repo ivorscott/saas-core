@@ -50,7 +50,6 @@ func Run() error {
 
 	ctx := context.Background()
 
-	logger, err = zap.NewDevelopment()
 	if cfg.Web.Production {
 		logger, err = log.NewProductionLogger(logPath)
 		dbClient = db.NewProductionDynamoDBClient(ctx)

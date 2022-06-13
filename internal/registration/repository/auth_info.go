@@ -48,6 +48,7 @@ func (ar *AuthInfoRepository) SelectAuthInfo(ctx context.Context, path string) (
 	return authInfo, nil
 }
 
+// InsertAuthInfo stores authentication information required for the tenant login.
 func (ar *AuthInfoRepository) InsertAuthInfo(ctx context.Context, info model.AuthInfo) error {
 	input := dynamodb.PutItemInput{
 		TableName: aws.String(ar.table),
