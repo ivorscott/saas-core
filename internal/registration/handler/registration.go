@@ -12,7 +12,7 @@ import (
 )
 
 type registrationService interface {
-	PublishTenantMessages(ctx context.Context, id string, tenant model.NewTenant) error
+	CreateRegistration(ctx context.Context, id string, tenant model.NewTenant) error
 }
 
 // RegistrationHandler handles the new tenant request from the admin app.
@@ -48,7 +48,7 @@ func (reg *RegistrationHandler) RegisterTenant(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return web.NewShutdownError(err.Error())
 	}
-	err = reg.registrationService.PublishTenantMessages(r.Context(), id.String(), payload)
+	err = reg.registrationService.CreateRegistration(r.Context(), id.String(), payload)
 	if err != nil {
 		reg.logger.Info("event publishing failed", zap.Error(err))
 	}

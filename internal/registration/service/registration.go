@@ -2,6 +2,11 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/codepipeline"
+	"strings"
+	"time"
 
 	"github.com/devpies/saas-core/internal/registration/model"
 	"github.com/devpies/saas-core/pkg/msg"
@@ -10,15 +15,16 @@ import (
 	"go.uber.org/zap"
 )
 
-type publisher interface {
-	Publish(subject string, message []byte)
-}
-
 // RegistrationService is responsible for managing tenant registration.
 type RegistrationService struct {
-	logger            *zap.Logger
-	js                publisher
-	defaultUserPoolID string
+	logger     *zap.Logger
+	region     string
+	idpService identityService
+	js         publisher
+}
+
+type identityService interface {
+	GetPlanBasedUserPool(ctx context.Context, tenant model.NewTenant, path string) (string, error)
 }
 
 // Plan represents the type of subscription plan.
@@ -32,44 +38,68 @@ const (
 )
 
 // NewRegistrationService returns a new registration service.
-func NewRegistrationService(logger *zap.Logger, js publisher, defaultUserPoolID string) *RegistrationService {
+func NewRegistrationService(logger *zap.Logger, region string, idpService identityService, js publisher) *RegistrationService {
 	return &RegistrationService{
-		logger:            logger,
-		js:                js,
-		defaultUserPoolID: defaultUserPoolID,
+		logger:     logger,
+		region:     region,
+		idpService: idpService,
+		js:         js,
 	}
 }
 
-// PublishTenantMessages publishes messages in response to a new tenant being onboarded.
-func (rs *RegistrationService) PublishTenantMessages(ctx context.Context, id string, tenant model.NewTenant) error {
+func (rs *RegistrationService) CreateRegistration(ctx context.Context, id string, tenant model.NewTenant) error {
+	var err error
+	userPoolID, err := rs.idpService.GetPlanBasedUserPool(ctx, tenant, formatPath(tenant.Company))
+	err = rs.publishTenantRegisteredEvent(ctx, id, tenant, userPoolID)
+	if err != nil {
+		return nil
+	}
+	if err = rs.provision(ctx, Plan(tenant.Plan)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func formatPath(company string) string {
+	return strings.ToLower(strings.Replace(company, " ", "", -1))
+}
+
+func (rs *RegistrationService) publishTenantRegisteredEvent(ctx context.Context, id string, tenant model.NewTenant, userPoolID string) error {
 	values, ok := web.FromContext(ctx)
 	if !ok {
 		return web.CtxErr()
 	}
-
-	event := newTenantRegisteredMessage(values, id, tenant, rs.defaultUserPoolID)
+	event := newTenantRegisteredEvent(values, id, tenant, userPoolID)
 	bytes, err := event.Marshal()
 	if err != nil {
 		return nil
 	}
-
 	rs.js.Publish(msg.SubjectRegistered, bytes)
-
-	if Plan(tenant.Plan) == PlanPremium {
-		if err = rs.provision(ctx); err != nil {
-			return err
-		}
-	}
-
-	return err
-}
-
-func (rs *RegistrationService) provision(_ context.Context) error {
-	// start aws codepipeline
 	return nil
 }
 
-func newTenantRegisteredMessage(values *web.Values, id string, tenant model.NewTenant, userPoolID string) msg.TenantRegisteredEvent {
+func (rs *RegistrationService) provision(ctx context.Context, plan Plan) error {
+	if plan != PlanPremium {
+		return nil
+	}
+	client := codepipeline.New(codepipeline.Options{
+		Region: rs.region,
+	})
+
+	input := codepipeline.StartPipelineExecutionInput{
+		Name:               aws.String("tenant-onboarding-pipeline"),
+		ClientRequestToken: aws.String(fmt.Sprintf("requestToken-%s", time.Now().UTC())),
+	}
+
+	output, err := client.StartPipelineExecution(ctx, &input)
+	if err != nil {
+		return err
+	}
+	rs.logger.Info(fmt.Sprintf("successfully started pipeline - response: %+v", output))
+	return nil
+}
+
+func newTenantRegisteredEvent(values *web.Values, id string, tenant model.NewTenant, userPoolID string) msg.TenantRegisteredEvent {
 	return msg.TenantRegisteredEvent{
 		Metadata: msg.Metadata{
 			TraceID: values.Metadata.TraceID,
