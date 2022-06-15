@@ -80,3 +80,8 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
+
+replace (
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220610230130-5f484ffa030f => ./pkg/web
+	github.com/devpies/saas-core/pkg/msg v0.0.0-20220610230130-5f484ffa030f => ./pkg/msg
+)

@@ -17,9 +17,10 @@ type Values struct {
 
 // Metadata is the type of value stored in the Context.
 type Metadata struct {
-	TraceID string
-	UserID  string
-	Token   string
+	TraceID  string
+	UserID   string
+	Token    string
+	TenantID string
 }
 
 // ctxKey represents the type of value for the context key.
@@ -40,7 +41,7 @@ func FromContext(ctx context.Context) (*Values, bool) {
 }
 
 // addContextMetadata adds Metadata to context.
-func addContextMetadata(r *http.Request, token string, sub string) *http.Request {
+func addContextMetadata(r *http.Request, token string, sub string, tenantID string) *http.Request {
 	traceID := r.Header.Get("TraceID")
 	if traceID == "" {
 		traceID = uuid.New().String()
@@ -48,9 +49,10 @@ func addContextMetadata(r *http.Request, token string, sub string) *http.Request
 
 	if v, ok := FromContext(r.Context()); ok {
 		v.Metadata = &Metadata{
-			TraceID: traceID,
-			UserID:  sub,
-			Token:   token,
+			TraceID:  traceID,
+			UserID:   sub,
+			Token:    token,
+			TenantID: tenantID,
 		}
 		ctx := NewContext(r.Context(), v)
 		r = r.WithContext(ctx)

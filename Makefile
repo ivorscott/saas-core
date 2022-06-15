@@ -115,6 +115,26 @@ user-mock: ;@ ## Generate user mocks.
 	go generate ./internal/user/...
 .PHONY: user-mock
 
+project-db: ;@ ## Enter project database.
+	@pgcli postgres://$(PROJECT_POSTGRES_USER):$(PROJECT_POSTGRES_PASSWORD)@$(PROJECT_POSTGRES_HOST):$(PROJECT_POSTGRES_PORT)/$(PROJECT_POSTGRES_DB)
+.PHONY: project-db
+
+project-db-gen: ;@ ## Generate migration files. Required <name> argument.
+	@migrate create -ext sql -dir ./internal/project/res/migrations -seq $(val)
+.PHONY: project-db-gen
+
+project-db-migrate: ;@ ## Migrate project database. Optional <num> argument.
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_POSTGRES_USER):$(PROJECT_POSTGRES_PASSWORD)@$(PROJECT_POSTGRES_HOST):$(PROJECT_POSTGRES_PORT)/$(PROJECT_POSTGRES_DB)?sslmode=disable up $(val)
+.PHONY: project-db-migrate
+
+project-db-version: ;@ ## Print migration version for project database.
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_POSTGRES_USER):$(PROJECT_POSTGRES_PASSWORD)@$(PROJECT_POSTGRES_HOST):$(PROJECT_POSTGRES_PORT)/$(PROJECT_POSTGRES_DB)?sslmode=disable up $(val)
+.PHONY: project-db-version
+
+project-db-rollback: ;@ ## Rollback project database. Optional <num> argument.
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_POSTGRES_USER):$(PROJECT_POSTGRES_PASSWORD)@$(PROJECT_POSTGRES_HOST):$(PROJECT_POSTGRES_PORT)/$(PROJECT_POSTGRES_DB)?sslmode=disable down $(val)
+.PHONY: project-db-rollback
+
 tables:	;@ ## List Dynamodb tables.
 	@aws dynamodb list-tables --endpoint-url http://localhost:30008
 .PHONY: tables
@@ -126,7 +146,7 @@ lint: ;@ ## Run linter.
 help:
 	@cat ./setup.txt
 	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-17s\033[0m %s\n", $$1, $$2}'
+	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
 # http://bit.ly/37TR1r2
