@@ -9,6 +9,16 @@ const (
 	StreamTenants     = "TENANTS"
 	SubjectRegistered = "TENANTS.registered"
 	SubjectSiloed     = "TENANTS.siloed"
+
+	StreamMemberships        = "MEMBERSHIPS"
+	SubjectMembershipCreated = "MEMBERSHIPS.created"
+	SubjectMembershipUpdated = "MEMBERSHIPS.updated"
+	SubjectMembershipDeleted = "MEMBERSHIPS.deleted"
+
+	StreamProjects        = "PROJECTS"
+	SubjectProjectCreated = "PROJECTS.created"
+	SubjectProjectUpdated = "PROJECTS.updated"
+	SubjectProjectDeleted = "PROJECTS.deleted"
 )
 
 // UnmarshalMsg parses the JSON-encoded data and returns Msg.

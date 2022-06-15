@@ -115,6 +115,43 @@ user-mock: ;@ ## Generate user mocks.
 	go generate ./internal/user/...
 .PHONY: user-mock
 
+
+project: ;@ ## Run project api with live reload.
+	@CompileDaemon \
+	-build="go build -o ./bin/project ./cmd/project" \
+	-command="./bin/project \
+	--web-address=${PROJECT_WEB_ADDRESS} \
+	--web-port=${PROJECT_WEB_PORT} \
+	--cognito-shared-user-pool-client-id=${PROJECT_COGNITO_SHARED_USER_POOL_CLIENT_ID} \
+	--db-user=${PROJECT_DB_USER} \
+	--db-password=${PROJECT_DB_PASSWORD} \
+	--db-host=${PROJECT_DB_HOST} \
+	--db-port=${PROJECT_DB_PORT} \
+	--db-name=${PROJECT_DB_NAME} \
+	--db-disable-tls=true" \
+	-log-prefix=false
+.PHONY: project
+
+project-db: ;@ ## Enter project database.
+	@pgcli postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)
+.PHONY: project-db
+
+project-db-gen: ;@ ## Generate migration files. Required <name> argument.
+	@migrate create -ext sql -dir ./internal/project/res/migrations -seq $(val)
+.PHONY: project-db-gen
+
+project-db-migrate: ;@ ## Migrate project database. Optional <num> argument.
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)?sslmode=disable up $(val)
+.PHONY: project-db-migrate
+
+project-db-version: ;@ ## Print migration version for project database.
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)?sslmode=disable up $(val)
+.PHONY: project-db-version
+
+project-db-rollback: ;@ ## Rollback project database. Optional <num> argument.
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)?sslmode=disable down $(val)
+.PHONY: project-db-rollback
+
 tables:	;@ ## List Dynamodb tables.
 	@aws dynamodb list-tables --endpoint-url http://localhost:30008
 .PHONY: tables
@@ -126,11 +163,11 @@ lint: ;@ ## Run linter.
 help:
 	@cat ./setup.txt
 	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-17s\033[0m %s\n", $$1, $$2}'
+	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
 # http://bit.ly/37TR1r2
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test admin-db-gen admin-db-migrate admin-db-rollback registration-test))
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test admin-db-gen admin-db-migrate admin-db-rollback registration-test project-test project-db-gen project-db-migrate project-db-rollback))
   val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(val):;@:)
 endif

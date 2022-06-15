@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mic-project
+spec:
+  selector:
+    matchLabels:
+      app: mic-project
+  template:
+    metadata:
+      labels:
+        app: mic-project
+    spec:
+      containers:
+        - image: project:latest
+          name: mic-project
+          ports:
+            - containerPort: 4004
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: aws_access_key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: aws_secret_access_key
+            - name: AWS_DEFAULT_REGION
+              value: "eu-central-1"
+
+            - name: PROJECT_WEB_PORT
+              value: "4004"
+            - name: PROJECT_WEB_ADDRESS
+              value: "http://localhost"
+
+            - name: PROJECT_COGNITO_SHARED_USER_POOL_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: cognito_shared_user_pool_client_id
+            - name: PROJECT_COGNITO_REGION
+              value: "eu-central-1"
+
+            - name: PROJECT_NATS_ADDRESS
+              value: "nats-svc"
+            - name: PROJECT_NATS_PORT
+              value: "4222"
+
+            - name: PROJECT_DB_USER
+              value: postgres
+            - name: PROJECT_DB_PASSWORD
+              value: postgres
+            - name: PROJECT_DB_HOST
+              value: db-project-svc
+            - name: PROJECT_DB_PORT
+              value: "5432"
+            - name: PROJECT_DB_NAME
+              value: project
+            - name: PROJECT_POSTGRES_DISABLE_TLS
+              value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mic-project-svc
+spec:
+  selector:
+    app: mic-project
+  ports:
+    - port: 4004
+      targetPort: 4004

@@ -24,13 +24,13 @@ spec:
 #                name: users-svc
 #                port:
 #                  number: 4003
-#          - path: /api/projects
-#            pathType: Prefix
-#            backend:
-#              service:
-#                name: projects-svc
-#                port:
-#                  number: 4004
+          - path: /api/projects
+            pathType: Prefix
+            backend:
+              service:
+                name: projects-svc
+                port:
+                  number: 4004
           - path: /
             pathType: Prefix
             backend:
