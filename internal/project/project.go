@@ -3,13 +3,13 @@ package project
 import (
 	"context"
 	"fmt"
-	"github.com/devpies/saas-core/internal/project/db"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/devpies/saas-core/internal/project/config"
+	"github.com/devpies/saas-core/internal/project/db"
 	"github.com/devpies/saas-core/internal/project/handler"
 	"github.com/devpies/saas-core/internal/project/repository"
 	"github.com/devpies/saas-core/internal/project/service"
@@ -29,10 +29,10 @@ func Run() error {
 		err     error
 	)
 
-	if err = conf.Parse(os.Args[1:], "REGISTRATION", &cfg); err != nil {
+	if err = conf.Parse(os.Args[1:], "PROJECT", &cfg); err != nil {
 		if err == conf.ErrHelpWanted {
 			var usage string
-			usage, err = conf.Usage("REGISTRATION", &cfg)
+			usage, err = conf.Usage("PROJECT", &cfg)
 			if err != nil {
 				logger.Error("error generating config usage", zap.Error(err))
 				return err
@@ -90,7 +90,7 @@ func Run() error {
 	}
 
 	go func() {
-		logger.Info(fmt.Sprintf("Starting registration service on %s:%s", cfg.Web.Address, cfg.Web.Port))
+		logger.Info(fmt.Sprintf("Starting project service on %s:%s", cfg.Web.Address, cfg.Web.Port))
 		serverErrors <- srv.ListenAndServe()
 	}()
 

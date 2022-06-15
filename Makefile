@@ -115,6 +115,23 @@ user-mock: ;@ ## Generate user mocks.
 	go generate ./internal/user/...
 .PHONY: user-mock
 
+
+project: ;@ ## Run project api with live reload.
+	@CompileDaemon \
+	-build="go build -o ./bin/project ./cmd/project" \
+	-command="./bin/project \
+	--web-address=${PROJECT_WEB_ADDRESS} \
+	--web-port=${PROJECT_WEB_PORT} \
+	--cognito-shared-user-pool-client-id=${PROJECT_COGNITO_SHARED_USER_POOL_CLIENT_ID} \
+	--db-user=${PROJECT_DB_USER} \
+	--db-password=${PROJECT_DB_PASSWORD} \
+	--db-host=${PROJECT_DB_HOST} \
+	--db-port=${PROJECT_DB_PORT} \
+	--db-name=${PROJECT_DB_NAME} \
+	--db-disable-tls=true" \
+	-log-prefix=false
+.PHONY: project
+
 project-db: ;@ ## Enter project database.
 	@pgcli postgres://$(PROJECT_POSTGRES_USER):$(PROJECT_POSTGRES_PASSWORD)@$(PROJECT_POSTGRES_HOST):$(PROJECT_POSTGRES_PORT)/$(PROJECT_POSTGRES_DB)
 .PHONY: project-db

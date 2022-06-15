@@ -2,12 +2,21 @@ package service
 
 import (
 	"context"
-	"github.com/devpies/saas-core/internal/project/model"
-	"go.uber.org/zap"
 	"time"
+
+	"github.com/devpies/saas-core/internal/project/model"
+
+	"go.uber.org/zap"
 )
 
-type columnRepository interface{}
+type columnRepository interface {
+	Create(ctx context.Context, nc model.NewColumn, now time.Time) (model.Column, error)
+	Retrieve(ctx context.Context, cid string) (model.Column, error)
+	List(ctx context.Context, pid string) ([]model.Column, error)
+	Update(ctx context.Context, cid string, uc model.UpdateColumn, now time.Time) error
+	Delete(ctx context.Context, cid string) error
+	DeleteAll(ctx context.Context, pid string) error
+}
 
 // ColumnService is responsible for managing column business logic.
 type ColumnService struct {
@@ -23,32 +32,32 @@ func NewColumnService(logger *zap.Logger, repo columnRepository) *ColumnService 
 	}
 }
 
-func (c ColumnService) Create(ctx context.Context, column model.NewColumn, now time.Time) (model.Column, error) {
-	//TODO implement me
-	panic("implement me")
+// Create creates a new project column.
+func (cs *ColumnService) Create(ctx context.Context, column model.NewColumn, now time.Time) (model.Column, error) {
+	return cs.repo.Create(ctx, column, now)
 }
 
-func (c ColumnService) List(ctx context.Context, projectID string) ([]model.Column, error) {
-	//TODO implement me
-	panic("implement me")
+// List lists all project columns.
+func (cs *ColumnService) List(ctx context.Context, projectID string) ([]model.Column, error) {
+	return cs.repo.List(ctx, projectID)
 }
 
-func (c ColumnService) Retrieve(ctx context.Context, columnID string) (model.Column, error) {
-	//TODO implement me
-	panic("implement me")
+// Retrieve retrieves a project column.
+func (cs *ColumnService) Retrieve(ctx context.Context, columnID string) (model.Column, error) {
+	return cs.repo.Retrieve(ctx, columnID)
 }
 
-func (c ColumnService) Update(ctx context.Context, columnID string, update model.UpdateColumn, now time.Time) error {
-	//TODO implement me
-	panic("implement me")
+// Update updates a project column.
+func (cs *ColumnService) Update(ctx context.Context, columnID string, update model.UpdateColumn, now time.Time) error {
+	return cs.repo.Update(ctx, columnID, update, now)
 }
 
-func (c ColumnService) Delete(ctx context.Context, columnID string) error {
-	//TODO implement me
-	panic("implement me")
+// Delete deletes a project column.
+func (cs *ColumnService) Delete(ctx context.Context, columnID string) error {
+	return cs.repo.Delete(ctx, columnID)
 }
 
-func (c ColumnService) DeleteAll(ctx context.Context, projectID string) error {
-	//TODO implement me
-	panic("implement me")
+// DeleteAll deletes all project columns.
+func (cs *ColumnService) DeleteAll(ctx context.Context, projectID string) error {
+	return cs.repo.DeleteAll(ctx, projectID)
 }

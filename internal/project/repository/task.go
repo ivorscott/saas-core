@@ -4,17 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/devpies/saas-core/internal/project"
-	"github.com/devpies/saas-core/internal/project/db"
-	"github.com/devpies/saas-core/internal/project/model"
-	"go.uber.org/zap"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/devpies/saas-core/internal/project/db"
+	"github.com/devpies/saas-core/internal/project/fail"
+	"github.com/devpies/saas-core/internal/project/model"
+
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 // TaskRepository manages data access to project tasks.
@@ -31,6 +31,7 @@ func NewTaskRepository(logger *zap.Logger, pg *db.PostgresDatabase) *TaskReposit
 	}
 }
 
+// Retrieve retrieves a specific task from the database.
 func (tr *TaskRepository) Retrieve(ctx context.Context, tid string) (model.Task, error) {
 	var (
 		t   model.Task
@@ -38,12 +39,12 @@ func (tr *TaskRepository) Retrieve(ctx context.Context, tid string) (model.Task,
 	)
 
 	if _, err = uuid.Parse(tid); err != nil {
-		return t, project.ErrInvalidID
+		return t, fail.ErrInvalidID
 	}
 
 	conn, Close, err := tr.pg.GetConnection(ctx)
 	if err != nil {
-		return t, project.ErrConnectionFailed
+		return t, fail.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -58,7 +59,7 @@ func (tr *TaskRepository) Retrieve(ctx context.Context, tid string) (model.Task,
 	err = conn.QueryRowxContext(ctx, stmt, tid).Scan(&t.ID, &t.Key, &t.Seq, &t.Title, &t.Points, &t.Content, &t.AssignedTo, (*pq.StringArray)(&t.Attachments), (*pq.StringArray)(&t.Comments), &t.ProjectID, &t.UpdatedAt, &t.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return t, project.ErrNotFound
+			return t, fail.ErrNotFound
 		}
 		return t, err
 	}
@@ -66,6 +67,7 @@ func (tr *TaskRepository) Retrieve(ctx context.Context, tid string) (model.Task,
 	return t, nil
 }
 
+// List lists all tasks asscociated to a project.
 func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, error) {
 	var (
 		t   model.Task
@@ -75,7 +77,7 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 
 	conn, Close, err := tr.pg.GetConnection(ctx)
 	if err != nil {
-		return ts, project.ErrConnectionFailed
+		return ts, fail.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -89,12 +91,12 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 
 	rows, err := conn.QueryxContext(ctx, stmt, pid)
 	if err != nil {
-		return nil, errors.Wrap(err, "selecting tasks")
+		return nil, fmt.Errorf("error selecting tasks: %w", err)
 	}
 	for rows.Next() {
 		err = rows.Scan(&t.ID, &t.Key, &t.Seq, &t.Title, &t.Points, &t.Content, &t.AssignedTo, (*pq.StringArray)(&t.Attachments), (*pq.StringArray)(&t.Comments), &t.ProjectID, &t.UpdatedAt, &t.CreatedAt)
 		if err != nil {
-			return nil, errors.Wrap(err, "scanning row into Struct")
+			return nil, fmt.Errorf("error scanning row into struct: %w", err)
 		}
 		ts = append(ts, t)
 	}
@@ -102,6 +104,7 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 	return ts, nil
 }
 
+// Create creates a project task in the database.
 func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid, uid string, now time.Time) (model.Task, error) {
 	var (
 		t    model.Task
@@ -121,7 +124,7 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid, uid
 
 	conn, Close, err := tr.pg.GetConnection(ctx)
 	if err != nil {
-		return t, project.ErrConnectionFailed
+		return t, fail.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -178,12 +181,13 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid, uid
 		now.UTC(),
 		now.UTC(),
 	); err != nil {
-		return t, errors.Wrapf(err, "inserting tasks: %v", nt)
+		return t, fmt.Errorf("error inserting tasks: %v: %w", nt, err)
 	}
 
 	return t, nil
 }
 
+// Update updates a specific project task in the database.
 func (tr *TaskRepository) Update(ctx context.Context, tid string, update model.UpdateTask, now time.Time) (model.Task, error) {
 	var (
 		t   model.Task
@@ -197,7 +201,7 @@ func (tr *TaskRepository) Update(ctx context.Context, tid string, update model.U
 
 	conn, Close, err := tr.pg.GetConnection(ctx)
 	if err != nil {
-		return t, project.ErrConnectionFailed
+		return t, fail.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -239,51 +243,53 @@ func (tr *TaskRepository) Update(ctx context.Context, tid string, update model.U
 		pq.Array(t.Attachments),
 		now.UTC(),
 	); err != nil {
-		return t, errors.Wrapf(err, "updating task: %s", tid)
+		return t, fmt.Errorf("error updating task: %s: %w", tid, err)
 	}
 
 	return t, nil
 }
 
+// Delete deletes a specific project task from the database.
 func (tr *TaskRepository) Delete(ctx context.Context, tid string) error {
 	var err error
 
 	if _, err = uuid.Parse(tid); err != nil {
-		return project.ErrInvalidID
+		return fail.ErrInvalidID
 	}
 
 	conn, Close, err := tr.pg.GetConnection(ctx)
 	if err != nil {
-		return project.ErrConnectionFailed
+		return fail.ErrConnectionFailed
 	}
 	defer Close()
 
 	stmt := `delete from tasks where task_id = ?`
 
 	if _, err = conn.ExecContext(ctx, stmt, tid); err != nil {
-		return errors.Wrapf(err, "deleting task %s", tid)
+		return fmt.Errorf("error deleting task %s: %w", tid, err)
 	}
 
 	return nil
 }
 
+// DeleteAll deletes all project tasks from the database.
 func (tr *TaskRepository) DeleteAll(ctx context.Context, pid string) error {
 	var err error
 
 	if _, err = uuid.Parse(pid); err != nil {
-		return project.ErrInvalidID
+		return fail.ErrInvalidID
 	}
 
 	conn, Close, err := tr.pg.GetConnection(ctx)
 	if err != nil {
-		return project.ErrConnectionFailed
+		return fail.ErrConnectionFailed
 	}
 	defer Close()
 
 	stmt := `delete from tasks where project_id = ?`
 
 	if _, err = conn.ExecContext(ctx, stmt, pid); err != nil {
-		return errors.Wrapf(err, "deleting all tasks")
+		return fmt.Errorf("error deleting all tasks: %w", err)
 	}
 
 	return nil

@@ -4,17 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/devpies/saas-core/internal/project"
-	"github.com/devpies/saas-core/internal/project/model"
 	"net/http"
 	"time"
 
+	"github.com/devpies/saas-core/internal/project/fail"
+	"github.com/devpies/saas-core/internal/project/model"
 	"github.com/devpies/saas-core/pkg/msg"
 	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -53,6 +52,7 @@ func NewProjectHandler(
 	}
 }
 
+// List handles project list requests.
 func (ph *ProjectHandler) List(w http.ResponseWriter, r *http.Request) error {
 	values, ok := web.FromContext(r.Context())
 	if !ok {
@@ -67,6 +67,7 @@ func (ph *ProjectHandler) List(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, list, http.StatusOK)
 }
 
+// Retrieve handles project retrieval requests.
 func (ph *ProjectHandler) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	values, ok := web.FromContext(r.Context())
 	if !ok {
@@ -83,22 +84,22 @@ func (ph *ProjectHandler) Retrieve(w http.ResponseWriter, r *http.Request) error
 	spr, err := ph.projectService.RetrieveShared(r.Context(), pid, values.Metadata.UserID)
 	if err != nil {
 		switch err {
-		case project.ErrNotFound:
+		case fail.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case project.ErrInvalidID:
+		case fail.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return errors.Wrapf(err, "updating project %q", pid)
+			return fmt.Errorf("error updating project %q: %w", pid, err)
 		}
 	}
 
 	return web.Respond(r.Context(), w, spr, http.StatusOK)
 }
 
+// Create handles project create requests.
 func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	var (
 		np  model.NewProject
-		uid string
 		err error
 	)
 
@@ -106,14 +107,13 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	if !ok {
 		return web.CtxErr()
 	}
-	uid = values.Metadata.UserID
 
 	if err = web.Decode(r, &np); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 
-	pr, err := ph.projectService.Create(r.Context(), np, uid, time.Now())
+	pr, err := ph.projectService.Create(r.Context(), np, values.Metadata.UserID, time.Now())
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 			CreatedAt:   pr.CreatedAt.String(),
 		},
 		Type:     msg.TypeProjectCreated,
-		Metadata: msg.Metadata{UserID: uid, TraceID: uuid.New().String()},
+		Metadata: msg.Metadata{UserID: values.Metadata.UserID, TraceID: uuid.New().String()},
 	}
 
 	bytes, err := json.Marshal(e)
@@ -160,33 +160,30 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, pr, http.StatusCreated)
 }
 
+// Update handles project update requests.
 func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
-	var (
-		update model.UpdateProject
-		uid    string
-	)
+	var update model.UpdateProject
 
 	values, ok := web.FromContext(r.Context())
 	if !ok {
 		return web.CtxErr()
 	}
-	uid = values.Metadata.UserID
 
 	pid := chi.URLParam(r, "pid")
 
 	if err := web.Decode(r, &update); err != nil {
-		return errors.Wrap(err, "decoding project update")
+		return fmt.Errorf("error decoding project update: %w", err)
 	}
 
-	up, err := ph.projectService.Update(r.Context(), pid, uid, update, time.Now())
+	up, err := ph.projectService.Update(r.Context(), pid, values.Metadata.UserID, update, time.Now())
 	if err != nil {
 		switch err {
-		case project.ErrNotFound:
+		case fail.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case project.ErrInvalidID:
+		case fail.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return errors.Wrapf(err, "updating project %q", pid)
+			return fmt.Errorf("error updating project %q: %w", pid, err)
 		}
 	}
 
@@ -203,7 +200,7 @@ func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 			UpdatedAt:   up.UpdatedAt.String(),
 		},
 		Metadata: msg.Metadata{
-			UserID:  uid,
+			UserID:  values.Metadata.UserID,
 			TraceID: uuid.New().String(),
 		},
 	}
@@ -218,21 +215,18 @@ func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, up, http.StatusOK)
 }
 
+// Delete handles project delete requests.
 func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
-	var (
-		uid string
-		err error
-	)
+	var err error
 	pid := chi.URLParam(r, "pid")
 
 	values, ok := web.FromContext(r.Context())
 	if !ok {
 		return web.CtxErr()
 	}
-	uid = values.Metadata.UserID
 
-	if _, err = ph.projectService.Retrieve(r.Context(), pid, uid); err != nil {
-		_, err = ph.projectService.RetrieveShared(r.Context(), pid, uid)
+	if _, err = ph.projectService.Retrieve(r.Context(), pid, values.Metadata.UserID); err != nil {
+		_, err = ph.projectService.RetrieveShared(r.Context(), pid, values.Metadata.UserID)
 		if err == nil {
 			return web.NewRequestError(err, http.StatusUnauthorized)
 		}
@@ -243,12 +237,12 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	if err = ph.columnService.DeleteAll(r.Context(), pid); err != nil {
 		return err
 	}
-	if err = ph.projectService.Delete(r.Context(), pid, uid); err != nil {
+	if err = ph.projectService.Delete(r.Context(), pid, values.Metadata.UserID); err != nil {
 		switch err {
-		case project.ErrInvalidID:
+		case fail.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return errors.Wrapf(err, "deleting project %q", pid)
+			return fmt.Errorf("error deleting project %q: %w", pid, err)
 		}
 	}
 
@@ -256,7 +250,7 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 		Type: msg.TypeProjectDeleted,
 		Metadata: msg.Metadata{
 			TraceID: uuid.New().String(),
-			UserID:  uid,
+			UserID:  values.Metadata.UserID,
 		},
 		Data: msg.ProjectDeletedEventData{
 			ProjectID: pid,

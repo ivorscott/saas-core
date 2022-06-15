@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Project represents a tenant Project.
 type Project struct {
 	ID          string    `db:"project_id" json:"id"`
 	Name        string    `db:"name" json:"name"`
@@ -18,11 +19,13 @@ type Project struct {
 	CreatedAt   time.Time `db:"created_at" json:"createdAt"`
 }
 
+// NewProject represents a new Project.
 type NewProject struct {
 	Name   string `json:"name" validate:"required"`
 	TeamID string `json:"teamId"`
 }
 
+// UpdateProject represents a Project update.
 type UpdateProject struct {
 	Name        *string  `json:"name"`
 	Active      *bool    `json:"active"`

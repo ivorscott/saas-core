@@ -13,7 +13,6 @@ type Config struct {
 		Port            string        `conf:"default:4001"`
 	}
 	Cognito struct {
-		UserPoolClientID       string `conf:"required"`
 		SharedUserPoolClientID string `conf:"required"`
 		Region                 string `conf:"default:eu-central-1"`
 	}

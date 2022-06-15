@@ -1,17 +1,16 @@
 package handler
 
 import (
-	"github.com/devpies/saas-core/internal/project"
-	"github.com/devpies/saas-core/internal/project/model"
-	"go.uber.org/zap"
+	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-
-	"github.com/pkg/errors"
-
+	"github.com/devpies/saas-core/internal/project/fail"
+	"github.com/devpies/saas-core/internal/project/model"
 	"github.com/devpies/saas-core/pkg/web"
+
+	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 // TaskHandler handles the task requests.
@@ -34,6 +33,7 @@ func NewTaskHandler(
 	}
 }
 
+// List handles list task requests.
 func (th *TaskHandler) List(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 
@@ -49,27 +49,28 @@ func (th *TaskHandler) List(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, list, http.StatusOK)
 }
 
+// Retrieve handles retrieve task requests.
 func (th *TaskHandler) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 
 	t, err := th.taskService.Retrieve(r.Context(), tid)
 	if err != nil {
 		switch err {
-		case project.ErrNotFound:
+		case fail.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case project.ErrInvalidID:
+		case fail.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return errors.Wrapf(err, "looking for tasks %q", tid)
+			return fmt.Errorf("error looking for tasks %q :%w", tid, err)
 		}
 	}
 
 	return web.Respond(r.Context(), w, t, http.StatusOK)
 }
 
+// Create handles create task requests.
 func (th *TaskHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	var (
-		uid string
 		err error
 	)
 	pid := chi.URLParam(r, "pid")
@@ -79,7 +80,6 @@ func (th *TaskHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	if !ok {
 		return web.CtxErr()
 	}
-	uid = values.Metadata.UserID
 
 	var nt model.NewTask
 	if err = web.Decode(r, &nt); err != nil {
@@ -87,7 +87,7 @@ func (th *TaskHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	task, err := th.taskService.Create(r.Context(), nt, pid, uid, time.Now())
+	task, err := th.taskService.Create(r.Context(), nt, pid, values.Metadata.UserID, time.Now())
 	if err != nil {
 		return err
 	}
@@ -110,29 +110,31 @@ func (th *TaskHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, task, http.StatusCreated)
 }
 
+// Update handles update task requests.
 func (th *TaskHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 
 	var ut model.UpdateTask
 	if err := web.Decode(r, &ut); err != nil {
-		return errors.Wrap(err, "decoding task update")
+		return fmt.Errorf("error decoding task update : %w", err)
 	}
 
 	update, err := th.taskService.Update(r.Context(), tid, ut, time.Now())
 	if err != nil {
 		switch err {
-		case project.ErrNotFound:
+		case fail.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case project.ErrInvalidID:
+		case fail.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return errors.Wrapf(err, "updating task %v", ut)
+			return fmt.Errorf("updating task %v :%w", ut, err)
 		}
 	}
 
 	return web.Respond(r.Context(), w, update, http.StatusOK)
 }
 
+// Delete handles delete task requests.
 func (th *TaskHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	var err error
 
@@ -144,7 +146,7 @@ func (th *TaskHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	i := SliceIndex(len(c.TaskIDS), func(i int) bool { return c.TaskIDS[i] == tid })
+	i := sliceIndex(len(c.TaskIDS), func(i int) bool { return c.TaskIDS[i] == tid })
 
 	if i >= 0 {
 		newTaskIds := append(c.TaskIDS[:i], c.TaskIDS[i+1:]...)
@@ -156,10 +158,10 @@ func (th *TaskHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 
 		if err = th.taskService.Delete(r.Context(), tid); err != nil {
 			switch err {
-			case project.ErrInvalidID:
+			case fail.ErrInvalidID:
 				return web.NewRequestError(err, http.StatusBadRequest)
 			default:
-				return errors.Wrapf(err, "deleting task %q", tid)
+				return fmt.Errorf("error deleting task %q :%w", tid, err)
 			}
 		}
 	}
@@ -167,12 +169,13 @@ func (th *TaskHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
+// Move handles move task requests.
 func (th *TaskHandler) Move(w http.ResponseWriter, r *http.Request) error {
 	tid := chi.URLParam(r, "tid")
 
 	var mt model.MoveTask
 	if err := web.Decode(r, &mt); err != nil {
-		return errors.Wrap(err, "decoding task move")
+		return fmt.Errorf("decoding task move :%w", err)
 	}
 
 	cF, err := th.columnService.Retrieve(r.Context(), mt.From)
@@ -185,7 +188,7 @@ func (th *TaskHandler) Move(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	i := SliceIndex(len(cF.TaskIDS), func(i int) bool { return cF.TaskIDS[i] == tid })
+	i := sliceIndex(len(cF.TaskIDS), func(i int) bool { return cF.TaskIDS[i] == tid })
 
 	if i >= 0 {
 		newFromTaskIds := append(cF.TaskIDS[:i], cF.TaskIDS[i+1:]...)
@@ -197,24 +200,24 @@ func (th *TaskHandler) Move(w http.ResponseWriter, r *http.Request) error {
 		err = th.columnService.Update(r.Context(), mt.From, foc, time.Now())
 		if err != nil {
 			switch err {
-			case project.ErrNotFound:
+			case fail.ErrNotFound:
 				return web.NewRequestError(err, http.StatusNotFound)
-			case project.ErrInvalidID:
+			case fail.ErrInvalidID:
 				return web.NewRequestError(err, http.StatusBadRequest)
 			default:
-				return errors.Wrapf(err, "updating column taskIds from:%q, to:%q", mt.From, mt.To)
+				return fmt.Errorf("error updating column taskIds from:%q, to:%q : %w", mt.From, mt.To, err)
 			}
 		}
 
 		err = th.columnService.Update(r.Context(), mt.To, toc, time.Now())
 		if err != nil {
 			switch err {
-			case project.ErrNotFound:
+			case fail.ErrNotFound:
 				return web.NewRequestError(err, http.StatusNotFound)
-			case project.ErrInvalidID:
+			case fail.ErrInvalidID:
 				return web.NewRequestError(err, http.StatusBadRequest)
 			default:
-				return errors.Wrapf(err, "updating column taskIds from:%q, to:%q", mt.From, mt.To)
+				return fmt.Errorf("error updating column taskIds from:%q, to:%q :%w", mt.From, mt.To, err)
 			}
 		}
 	}
@@ -222,7 +225,7 @@ func (th *TaskHandler) Move(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
-func SliceIndex(limit int, predicate func(i int) bool) int {
+func sliceIndex(limit int, predicate func(i int) bool) int {
 	for i := 0; i < limit; i++ {
 		if predicate(i) {
 			return i

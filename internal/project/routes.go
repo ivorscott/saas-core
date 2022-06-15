@@ -46,17 +46,17 @@ func Routes(
 
 	app := web.NewApp(mux, shutdown, log, middleware...)
 
-	app.Handle(http.MethodGet, "/api/v1/projects", projectHandler.List)
-	app.Handle(http.MethodPost, "/api/v1/projects", projectHandler.Create)
-	app.Handle(http.MethodGet, "/api/v1/projects/{pid}", projectHandler.Retrieve)
-	app.Handle(http.MethodPatch, "/api/v1/projects/{pid}", projectHandler.Update)
-	app.Handle(http.MethodDelete, "/api/v1/projects/{pid}", projectHandler.Delete)
-	app.Handle(http.MethodGet, "/api/v1/projects/{pid}/columns", columnHandler.List)
-	app.Handle(http.MethodGet, "/api/v1/projects/{pid}/tasks", taskHandler.List)
-	app.Handle(http.MethodPost, "/api/v1/projects/{pid}/columns/{cid}/tasks", taskHandler.Create)
-	app.Handle(http.MethodPatch, "/api/v1/projects/tasks/{tid}", taskHandler.Update)
-	app.Handle(http.MethodPatch, "/api/v1/projects/tasks/{tid}/move", taskHandler.Move)
-	app.Handle(http.MethodDelete, "/api/v1/projects/columns/{cid}/tasks/{tid}", taskHandler.Delete)
+	app.Handle(http.MethodGet, "/", projectHandler.List)
+	app.Handle(http.MethodPost, "/", projectHandler.Create)
+	app.Handle(http.MethodGet, "/{pid}", projectHandler.Retrieve)
+	app.Handle(http.MethodPatch, "/{pid}", projectHandler.Update)
+	app.Handle(http.MethodDelete, "/{pid}", projectHandler.Delete)
+	app.Handle(http.MethodGet, "/{pid}/columns", columnHandler.List)
+	app.Handle(http.MethodGet, "/{pid}/tasks", taskHandler.List)
+	app.Handle(http.MethodPost, "/{pid}/columns/{cid}/tasks", taskHandler.Create)
+	app.Handle(http.MethodPatch, "/tasks/{tid}", taskHandler.Update)
+	app.Handle(http.MethodPatch, "/tasks/{tid}/move", taskHandler.Move)
+	app.Handle(http.MethodDelete, "/columns/{cid}/tasks/{tid}", taskHandler.Delete)
 
 	return mux
 }

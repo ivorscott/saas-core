@@ -3,14 +3,15 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"github.com/devpies/saas-core/internal/project"
-	"github.com/devpies/saas-core/internal/project/db"
-	"github.com/devpies/saas-core/internal/project/model"
-	"go.uber.org/zap"
+	"fmt"
 	"log"
 
+	"github.com/devpies/saas-core/internal/project/db"
+	"github.com/devpies/saas-core/internal/project/fail"
+	"github.com/devpies/saas-core/internal/project/model"
+
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 // MembershipRepository manages data access to team memberships.
@@ -27,12 +28,13 @@ func NewMembershipRepository(logger *zap.Logger, pg *db.PostgresDatabase) *Membe
 	}
 }
 
+// Create creates a membership to a team in the database.
 func (mr *MembershipRepository) Create(ctx context.Context, nm model.MembershipCopy) error {
 	var err error
 
 	conn, Close, err := mr.pg.GetConnection(ctx)
 	if err != nil {
-		return project.ErrConnectionFailed
+		return fail.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -41,26 +43,27 @@ func (mr *MembershipRepository) Create(ctx context.Context, nm model.MembershipC
 		values (?,?,?,?,?,?)
 	`
 
-	if _, err := conn.ExecContext(ctx, stmt, nm.ID, nm.UserID, nm.TeamID, nm.Role, nm.UpdatedAt, nm.CreatedAt); err != nil {
-		return errors.Wrapf(err, "inserting membership: %v", err)
+	if _, err = conn.ExecContext(ctx, stmt, nm.ID, nm.UserID, nm.TeamID, nm.Role, nm.UpdatedAt, nm.CreatedAt); err != nil {
+		return fmt.Errorf("error inserting membership: %w", err)
 	}
 
 	return nil
 }
 
-func (mr *MembershipRepository) RetrieveById(ctx context.Context, mid string) (model.MembershipCopy, error) {
+// RetrieveByID retrieves a membership by membership id in the database.
+func (mr *MembershipRepository) RetrieveByID(ctx context.Context, mid string) (model.MembershipCopy, error) {
 	var (
 		m   model.MembershipCopy
 		err error
 	)
 
 	if _, err = uuid.Parse(mid); err != nil {
-		return m, project.ErrInvalidID
+		return m, fail.ErrInvalidID
 	}
 
 	conn, Close, err := mr.pg.GetConnection(ctx)
 	if err != nil {
-		return m, project.ErrConnectionFailed
+		return m, fail.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -72,7 +75,7 @@ func (mr *MembershipRepository) RetrieveById(ctx context.Context, mid string) (m
 
 	if err = conn.SelectContext(ctx, &m, stmt, mid); err != nil {
 		if err == sql.ErrNoRows {
-			return m, project.ErrNotFound
+			return m, fail.ErrNotFound
 		}
 		return m, err
 	}
@@ -80,6 +83,7 @@ func (mr *MembershipRepository) RetrieveById(ctx context.Context, mid string) (m
 	return m, nil
 }
 
+// Retrieve retrieves a specific membership in the database.
 func (mr *MembershipRepository) Retrieve(ctx context.Context, uid, tid string) (model.MembershipCopy, error) {
 	var (
 		m   model.MembershipCopy
@@ -87,15 +91,15 @@ func (mr *MembershipRepository) Retrieve(ctx context.Context, uid, tid string) (
 	)
 
 	if _, err = uuid.Parse(uid); err != nil {
-		return m, project.ErrInvalidID
+		return m, fail.ErrInvalidID
 	}
 	if _, err = uuid.Parse(tid); err != nil {
-		return m, project.ErrInvalidID
+		return m, fail.ErrInvalidID
 	}
 
 	conn, Close, err := mr.pg.GetConnection(ctx)
 	if err != nil {
-		return m, project.ErrConnectionFailed
+		return m, fail.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -109,23 +113,24 @@ func (mr *MembershipRepository) Retrieve(ctx context.Context, uid, tid string) (
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Println(err)
-			return m, project.ErrNotFound
+			return m, fail.ErrNotFound
 		}
 		return m, err
 	}
 	return m, nil
 }
 
+// Update updates a membership in the database.
 func (mr *MembershipRepository) Update(ctx context.Context, mid string, update model.UpdateMembershipCopy) error {
 	var err error
 
-	if _, err = mr.RetrieveById(ctx, mid); err != nil {
+	if _, err = mr.RetrieveByID(ctx, mid); err != nil {
 		return err
 	}
 
 	conn, Close, err := mr.pg.GetConnection(ctx)
 	if err != nil {
-		return project.ErrConnectionFailed
+		return fail.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -138,29 +143,30 @@ func (mr *MembershipRepository) Update(ctx context.Context, mid string, update m
 	`
 
 	if _, err = conn.ExecContext(ctx, stmt, update.Role, update.UpdatedAt, mid); err != nil {
-		return errors.Wrap(err, "updating membership")
+		return fmt.Errorf("error updating membership :%w", err)
 	}
 
 	return nil
 }
 
+// Delete deletes a membership in the database.
 func (mr *MembershipRepository) Delete(ctx context.Context, mid string) error {
 	var err error
 
 	if _, err = uuid.Parse(mid); err != nil {
-		return project.ErrInvalidID
+		return fail.ErrInvalidID
 	}
 
 	conn, Close, err := mr.pg.GetConnection(ctx)
 	if err != nil {
-		return project.ErrConnectionFailed
+		return fail.ErrConnectionFailed
 	}
 	defer Close()
 
 	stmt := `delete from memberships where membership_id = ?`
 
 	if _, err = conn.ExecContext(ctx, stmt, mid); err != nil {
-		return errors.Wrap(err, "deleting membership")
+		return fmt.Errorf("error deleting membership :%w", err)
 	}
 
 	return nil

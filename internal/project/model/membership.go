@@ -2,6 +2,7 @@ package model
 
 import "time"
 
+// MembershipCopy represents a Membership from the users service.
 type MembershipCopy struct {
 	ID        string    `db:"membership_id" json:"membershipId"`
 	UserID    string    `db:"user_id" json:"userId"`
@@ -11,6 +12,7 @@ type MembershipCopy struct {
 	CreatedAt time.Time `db:"created_at" json:"createdAt"`
 }
 
+// UpdateMembershipCopy represents a Membership update from the users service.
 type UpdateMembershipCopy struct {
 	Role      string    `json:"role"`
 	UpdatedAt time.Time `json:"updatedAt"`

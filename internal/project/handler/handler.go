@@ -2,8 +2,9 @@ package handler
 
 import (
 	"context"
-	"github.com/devpies/saas-core/internal/project/model"
 	"time"
+
+	"github.com/devpies/saas-core/internal/project/model"
 )
 
 type columnService interface {

@@ -10,7 +10,7 @@ import (
 	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // The database driver in use.
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -66,7 +66,7 @@ func (r *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func(
 	conn, err := r.dB.Connx(ctx)
 	if err != nil {
 		r.logger.Error("connection failed", zap.Error(err))
-		conn.Close()
+		_ = conn.Close()
 		return nil, nil, err
 	}
 
@@ -75,7 +75,7 @@ func (r *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func(
 	_, err = conn.ExecContext(ctx, stmt)
 	if err != nil {
 		r.logger.Error("setting session variable failed", zap.Error(err))
-		conn.Close()
+		_ = conn.Close()
 		return nil, nil, err
 	}
 	return conn, conn.Close, nil

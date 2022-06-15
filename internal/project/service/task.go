@@ -2,12 +2,21 @@ package service
 
 import (
 	"context"
-	"github.com/devpies/saas-core/internal/project/model"
-	"go.uber.org/zap"
 	"time"
+
+	"github.com/devpies/saas-core/internal/project/model"
+
+	"go.uber.org/zap"
 )
 
-type taskRepository interface{}
+type taskRepository interface {
+	Create(ctx context.Context, nt model.NewTask, pid, uid string, now time.Time) (model.Task, error)
+	Retrieve(ctx context.Context, tid string) (model.Task, error)
+	List(ctx context.Context, pid string) ([]model.Task, error)
+	Update(ctx context.Context, tid string, update model.UpdateTask, now time.Time) (model.Task, error)
+	Delete(ctx context.Context, tid string) error
+	DeleteAll(ctx context.Context, pid string) error
+}
 
 // TaskService is responsible for managing task business logic.
 type TaskService struct {
@@ -23,32 +32,32 @@ func NewTaskService(logger *zap.Logger, repo taskRepository) *TaskService {
 	}
 }
 
-func (t TaskService) Create(ctx context.Context, task model.NewTask, projectID string, userID string, now time.Time) (model.Task, error) {
-	//TODO implement me
-	panic("implement me")
+// Create creates a task.
+func (ts *TaskService) Create(ctx context.Context, task model.NewTask, projectID string, userID string, now time.Time) (model.Task, error) {
+	return ts.repo.Create(ctx, task, projectID, userID, now)
 }
 
-func (t TaskService) List(ctx context.Context, projectID string) ([]model.Task, error) {
-	//TODO implement me
-	panic("implement me")
+// List lists a task.
+func (ts *TaskService) List(ctx context.Context, projectID string) ([]model.Task, error) {
+	return ts.List(ctx, projectID)
 }
 
-func (t TaskService) Retrieve(ctx context.Context, taskID string) (model.Task, error) {
-	//TODO implement me
-	panic("implement me")
+// Retrieve retrieves a task.
+func (ts *TaskService) Retrieve(ctx context.Context, taskID string) (model.Task, error) {
+	return ts.repo.Retrieve(ctx, taskID)
 }
 
-func (t TaskService) Update(ctx context.Context, taskID string, update model.UpdateTask, now time.Time) (model.Task, error) {
-	//TODO implement me
-	panic("implement me")
+// Update updates a task.
+func (ts *TaskService) Update(ctx context.Context, taskID string, update model.UpdateTask, now time.Time) (model.Task, error) {
+	return ts.repo.Update(ctx, taskID, update, now)
 }
 
-func (t TaskService) Delete(ctx context.Context, taskID string) error {
-	//TODO implement me
-	panic("implement me")
+// Delete deletes a task.
+func (ts *TaskService) Delete(ctx context.Context, taskID string) error {
+	return ts.repo.Delete(ctx, taskID)
 }
 
-func (t TaskService) DeleteAll(ctx context.Context, projectID string) error {
-	//TODO implement me
-	panic("implement me")
+// DeleteAll deletes all tasks.
+func (ts *TaskService) DeleteAll(ctx context.Context, projectID string) error {
+	return ts.repo.DeleteAll(ctx, projectID)
 }

@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Task represents a Project Task.
 type Task struct {
 	ID          string    `db:"task_id" json:"id"`
 	Key         string    `db:"key" json:"key"`
@@ -19,10 +20,12 @@ type Task struct {
 	CreatedAt   time.Time `db:"created_at" json:"createdAt"`
 }
 
+// NewTask represents a new Task.
 type NewTask struct {
 	Title string `json:"title" validate:"required"`
 }
 
+// UpdateTask represents a Task being updated.
 type UpdateTask struct {
 	Title       *string   `json:"title"`
 	Key         *string   `json:"key"`
@@ -34,6 +37,7 @@ type UpdateTask struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
+// MoveTask represents a Task being moved between columns.
 type MoveTask struct {
 	To      string   `json:"to"`
 	From    string   `json:"from"`
