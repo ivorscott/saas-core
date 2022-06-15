@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 
-	"github.com/devpies/saas-core/internal/user/mocks"
-	"github.com/devpies/saas-core/internal/user/service"
+	"github.com/devpies/saas-core/internal/identity/mocks"
+	"github.com/devpies/saas-core/internal/identity/service"
 	"github.com/devpies/saas-core/pkg/msg"
 
 	"github.com/stretchr/testify/assert"

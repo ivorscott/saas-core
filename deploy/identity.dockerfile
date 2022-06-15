@@ -8,7 +8,7 @@ WORKDIR /core
 
 COPY ../go.* ./
 
-COPY ../cmd/user ./cmd/user
+COPY ../cmd/identity ./cmd/user
 COPY ../internal/user ./internal/user
 COPY ../pkg ./pkg
 

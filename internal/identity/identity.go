@@ -1,4 +1,4 @@
-package user
+package identity
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 	"runtime/debug"
 	"syscall"
 
-	"github.com/devpies/saas-core/internal/user/config"
-	"github.com/devpies/saas-core/internal/user/service"
+	"github.com/devpies/saas-core/internal/identity/config"
+	"github.com/devpies/saas-core/internal/identity/service"
 	"github.com/devpies/saas-core/pkg/log"
 	"github.com/devpies/saas-core/pkg/msg"
 
@@ -29,10 +29,10 @@ func Run() error {
 		err     error
 	)
 
-	if err = conf.Parse(os.Args[1:], "USER", &cfg); err != nil {
+	if err = conf.Parse(os.Args[1:], "IDENTITY", &cfg); err != nil {
 		if err == conf.ErrHelpWanted {
 			var usage string
-			usage, err = conf.Usage("USER", &cfg)
+			usage, err = conf.Usage("IDENTITY", &cfg)
 			if err != nil {
 				logger.Error("error generating config usage", zap.Error(err))
 				return err
