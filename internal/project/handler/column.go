@@ -1,19 +1,17 @@
 package handler
 
 import (
+	"github.com/devpies/saas-core/internal/project"
+	"github.com/devpies/saas-core/internal/project/model"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/devpies/devpie-client-core/projects/domain/columns"
 	"github.com/devpies/saas-core/pkg/web"
 	"github.com/pkg/errors"
 )
-
-type columnService interface {
-}
 
 // ColumnHandler handles the column requests.
 type ColumnHandler struct {
@@ -34,7 +32,7 @@ func NewColumnHandler(
 
 func (ch *ColumnHandler) List(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
-	list, err := columns.List(r.Context(), c.repo, pid)
+	list, err := ch.service.List(r.Context(), pid)
 	if err != nil {
 		return err
 	}
@@ -45,12 +43,12 @@ func (ch *ColumnHandler) List(w http.ResponseWriter, r *http.Request) error {
 func (ch *ColumnHandler) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 
-	col, err := columns.Retrieve(r.Context(), c.repo, id)
+	col, err := ch.service.Retrieve(r.Context(), id)
 	if err != nil {
 		switch err {
-		case columns.ErrNotFound:
+		case project.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case columns.ErrInvalidID:
+		case project.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "looking for columns %q", id)
@@ -61,13 +59,13 @@ func (ch *ColumnHandler) Retrieve(w http.ResponseWriter, r *http.Request) error 
 }
 
 func (ch *ColumnHandler) Create(w http.ResponseWriter, r *http.Request) error {
-	var nc columns.NewColumn
+	var nc model.NewColumn
 	if err := web.Decode(r, &nc); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 
-	col, err := columns.Create(r.Context(), c.repo, nc, time.Now())
+	col, err := ch.service.Create(r.Context(), nc, time.Now())
 	if err != nil {
 		return err
 	}
@@ -78,16 +76,16 @@ func (ch *ColumnHandler) Create(w http.ResponseWriter, r *http.Request) error {
 func (ch *ColumnHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 
-	var update columns.UpdateColumn
+	var update model.UpdateColumn
 	if err := web.Decode(r, &update); err != nil {
 		return errors.Wrap(err, "decoding column update")
 	}
 
-	if err := columns.Update(r.Context(), c.repo, id, update, time.Now()); err != nil {
+	if err := ch.service.Update(r.Context(), id, update, time.Now()); err != nil {
 		switch err {
-		case columns.ErrNotFound:
+		case project.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case columns.ErrInvalidID:
+		case project.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "updating column %q", id)
@@ -100,9 +98,9 @@ func (ch *ColumnHandler) Update(w http.ResponseWriter, r *http.Request) error {
 func (ch *ColumnHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 
-	if err := columns.Delete(r.Context(), c.repo, id); err != nil {
+	if err := ch.service.Delete(r.Context(), id); err != nil {
 		switch err {
-		case columns.ErrInvalidID:
+		case project.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "deleting column %q", id)

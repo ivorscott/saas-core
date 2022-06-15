@@ -3,56 +3,45 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"github.com/devpies/saas-core/internal/project"
+	"github.com/devpies/saas-core/internal/project/db"
 	"github.com/devpies/saas-core/internal/project/model"
-	"github.com/devpies/saas-core/pkg/web"
 	"go.uber.org/zap"
 	"log"
 
-	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-
-	"github.com/devpies/devpie-client-core/projects/platform/database"
 )
 
 // MembershipRepository manages data access to team memberships.
 type MembershipRepository struct {
 	logger *zap.Logger
-	sq     sq.StatementBuilderType
+	pg     *db.PostgresDatabase
 }
 
 // NewMembershipRepository returns a new MembershipRepository. The database connection is in the context.
-func NewMembershipRepository(logger *zap.Logger, sq sq.StatementBuilderType) *MembershipRepository {
+func NewMembershipRepository(logger *zap.Logger, pg *db.PostgresDatabase) *MembershipRepository {
 	return &MembershipRepository{
 		logger: logger,
-		sq:     sq,
+		pg:     pg,
 	}
 }
 
-var (
-	ErrNotFound  = errors.New("membership not found")
-	ErrInvalidID = errors.New("id provided was not a valid UUID")
-)
-
 func (mr *MembershipRepository) Create(ctx context.Context, nm model.MembershipCopy) error {
-	values, ok := web.FromContext(ctx)
-	if !ok {
-		return web.CtxErr()
+	var err error
+
+	conn, Close, err := mr.pg.GetConnection(ctx)
+	if err != nil {
+		return project.ErrConnectionFailed
 	}
-	conn := values.Conn
+	defer Close()
 
-	stmt := mr.sq.Insert(
-		"memberships",
-	).SetMap(map[string]interface{}{
-		"membership_id": nm.ID,
-		"user_id":       nm.UserID,
-		"team_id":       nm.TeamID,
-		"role":          nm.Role,
-		"updated_at":    nm.UpdatedAt,
-		"created_at":    nm.CreatedAt,
-	})
+	stmt := `
+		insert into memberships (membership_id, user_id, team_id, role, updated_at, created_at)
+		values (?,?,?,?,?,?)
+	`
 
-	if _, err := stmt.ExecContext(ctx); err != nil {
+	if _, err := conn.ExecContext(ctx, stmt, nm.ID, nm.UserID, nm.TeamID, nm.Role, nm.UpdatedAt, nm.CreatedAt); err != nil {
 		return errors.Wrapf(err, "inserting membership: %v", err)
 	}
 
@@ -60,31 +49,30 @@ func (mr *MembershipRepository) Create(ctx context.Context, nm model.MembershipC
 }
 
 func (mr *MembershipRepository) RetrieveById(ctx context.Context, mid string) (model.MembershipCopy, error) {
-	var m model.MembershipCopy
+	var (
+		m   model.MembershipCopy
+		err error
+	)
 
-	if _, err := uuid.Parse(mid); err != nil {
-		return m, ErrInvalidID
+	if _, err = uuid.Parse(mid); err != nil {
+		return m, project.ErrInvalidID
 	}
 
-	stmt := mr.sq.Select(
-		"membership_id",
-		"user_id",
-		"team_id",
-		"role",
-		"updated_at",
-		"created_at",
-	).From(
-		"memberships",
-	).Where(sq.Eq{"membership_id": "?"})
-
-	q, args, err := stmt.ToSql()
+	conn, Close, err := mr.pg.GetConnection(ctx)
 	if err != nil {
-		return m, errors.Wrapf(err, "building query: %v", args)
+		return m, project.ErrConnectionFailed
 	}
+	defer Close()
 
-	if err := repo.SelectContext(ctx, &m, q, mid); err != nil {
+	stmt := `
+		select membership_id, user_id, team_id, role, updated_at, created_at
+		from memberships
+		where membership_id = ?
+	`
+
+	if err = conn.SelectContext(ctx, &m, stmt, mid); err != nil {
 		if err == sql.ErrNoRows {
-			return m, ErrNotFound
+			return m, project.ErrNotFound
 		}
 		return m, err
 	}
@@ -92,37 +80,36 @@ func (mr *MembershipRepository) RetrieveById(ctx context.Context, mid string) (m
 	return m, nil
 }
 
-func (mr *MembershipRepository) Retrieve(ctx context.Context, repo database.Storer, uid, tid string) (MembershipCopy, error) {
-	var m MembershipCopy
+func (mr *MembershipRepository) Retrieve(ctx context.Context, uid, tid string) (model.MembershipCopy, error) {
+	var (
+		m   model.MembershipCopy
+		err error
+	)
 
-	if _, err := uuid.Parse(uid); err != nil {
-		return m, ErrInvalidID
+	if _, err = uuid.Parse(uid); err != nil {
+		return m, project.ErrInvalidID
 	}
-	if _, err := uuid.Parse(tid); err != nil {
-		return m, ErrInvalidID
+	if _, err = uuid.Parse(tid); err != nil {
+		return m, project.ErrInvalidID
 	}
 
-	stmt := repo.Select(
-		"membership_id",
-		"user_id",
-		"team_id",
-		"role",
-		"updated_at",
-		"created_at",
-	).From(
-		"memberships",
-	).Where("user_id = ? AND team_id = ?")
-
-	q, args, err := stmt.ToSql()
+	conn, Close, err := mr.pg.GetConnection(ctx)
 	if err != nil {
-		return m, errors.Wrapf(err, "building query: %v", args)
+		return m, project.ErrConnectionFailed
 	}
+	defer Close()
 
-	err = repo.QueryRowxContext(ctx, q, uid, tid).StructScan(&m)
+	stmt := `
+		select membership_id, user_id, team_id, role, updated_at, created_at
+		from memberships
+		where user_id = ? AND team_id = ?
+	`
+
+	err = conn.QueryRowxContext(ctx, stmt, uid, tid).StructScan(&m)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Println(err)
-			return m, ErrNotFound
+			return m, project.ErrNotFound
 		}
 		return m, err
 	}
@@ -130,33 +117,49 @@ func (mr *MembershipRepository) Retrieve(ctx context.Context, repo database.Stor
 }
 
 func (mr *MembershipRepository) Update(ctx context.Context, mid string, update model.UpdateMembershipCopy) error {
-	if _, err := mr.RetrieveById(ctx, mid); err != nil {
+	var err error
+
+	if _, err = mr.RetrieveById(ctx, mid); err != nil {
 		return err
 	}
 
-	stmt := mr.sq.Update(
-		"memberships",
-	).SetMap(map[string]interface{}{
-		"role":       update.Role,
-		"updated_at": update.UpdatedAt,
-	}).Where(sq.Eq{"membership_id": mid})
+	conn, Close, err := mr.pg.GetConnection(ctx)
+	if err != nil {
+		return project.ErrConnectionFailed
+	}
+	defer Close()
 
-	if _, err := stmt.ExecContext(ctx); err != nil {
+	stmt := `
+		update memberships
+		set 
+			role = ?,
+			updated_at = ?
+		where memberships_id = ?
+	`
+
+	if _, err = conn.ExecContext(ctx, stmt, update.Role, update.UpdatedAt, mid); err != nil {
 		return errors.Wrap(err, "updating membership")
 	}
 
 	return nil
 }
 
-func (mr *MembershipRepository) Delete(ctx context.Context, repo database.Storer, mid string) error {
-	if _, err := uuid.Parse(mid); err != nil {
-		return ErrInvalidID
-	}
-	stmt := repo.Delete(
-		"memberships",
-	).Where(sq.Eq{"membership_id": mid})
+func (mr *MembershipRepository) Delete(ctx context.Context, mid string) error {
+	var err error
 
-	if _, err := stmt.ExecContext(ctx); err != nil {
+	if _, err = uuid.Parse(mid); err != nil {
+		return project.ErrInvalidID
+	}
+
+	conn, Close, err := mr.pg.GetConnection(ctx)
+	if err != nil {
+		return project.ErrConnectionFailed
+	}
+	defer Close()
+
+	stmt := `delete from memberships where membership_id = ?`
+
+	if _, err = conn.ExecContext(ctx, stmt, mid); err != nil {
 		return errors.Wrap(err, "deleting membership")
 	}
 

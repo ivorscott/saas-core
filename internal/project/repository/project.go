@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/devpies/saas-core/internal/project"
 	"github.com/devpies/saas-core/internal/project/db"
 	"github.com/devpies/saas-core/internal/project/model"
 	"go.uber.org/zap"
@@ -12,8 +13,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
-
-	"github.com/devpies/devpie-client-core/projects/domain/memberships"
 )
 
 // ProjectRepository manages data access to projects.
@@ -30,13 +29,6 @@ func NewProjectRepository(logger *zap.Logger, pg *db.PostgresDatabase) *ProjectR
 	}
 }
 
-var (
-	ErrNotFound         = errors.New("project not found")
-	ErrInvalidID        = errors.New("id provided was not a valid UUID")
-	ErrNotAuthorized    = errors.New("user does not have correct membership")
-	ErrConnectionFailed = errors.New("connection failed")
-)
-
 func (pr *ProjectRepository) RetrieveTeamID(ctx context.Context, pid string) (string, error) {
 	var (
 		teamID string
@@ -44,25 +36,21 @@ func (pr *ProjectRepository) RetrieveTeamID(ctx context.Context, pid string) (st
 	)
 
 	if _, err = uuid.Parse(pid); err != nil {
-		return "", ErrInvalidID
+		return "", project.ErrInvalidID
 	}
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return "", ErrConnectionFailed
+		return "", project.ErrConnectionFailed
 	}
 	defer Close()
 
-	stmt := `
-		select team_id,
-		from projects
-		where project_id: ?
-	`
+	stmt := `select team_id from projects where project_id = ?`
 	row := conn.QueryRowxContext(ctx, stmt, pid)
 	err = row.Scan(&teamID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", ErrNotFound
+			return "", project.ErrNotFound
 		}
 		return "", err
 	}
@@ -77,12 +65,12 @@ func (pr *ProjectRepository) Retrieve(ctx context.Context, pid, uid string) (mod
 	)
 
 	if _, err = uuid.Parse(pid); err != nil {
-		return p, ErrInvalidID
+		return p, project.ErrInvalidID
 	}
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return p, ErrConnectionFailed
+		return p, project.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -97,7 +85,7 @@ func (pr *ProjectRepository) Retrieve(ctx context.Context, pid, uid string) (mod
 	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return p, ErrNotFound
+			return p, project.ErrNotFound
 		}
 		return p, err
 	}
@@ -109,12 +97,12 @@ func (pr *ProjectRepository) RetrieveShared(ctx context.Context, pid, uid string
 	var p model.Project
 
 	if _, err := uuid.Parse(pid); err != nil {
-		return p, ErrInvalidID
+		return p, project.ErrInvalidID
 	}
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return p, ErrConnectionFailed
+		return p, project.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -123,9 +111,10 @@ func (pr *ProjectRepository) RetrieveShared(ctx context.Context, pid, uid string
 		return p, err
 	}
 
-	m, err := memberships.Retrieve(ctx, uid, tid)
+	membershipRepo := NewMembershipRepository(pr.logger, pr.pg)
+	m, err := membershipRepo.Retrieve(ctx, uid, tid)
 	if err != nil {
-		return p, ErrNotAuthorized
+		return p, project.ErrNotAuthorized
 	}
 
 	stmt := `
@@ -140,7 +129,7 @@ func (pr *ProjectRepository) RetrieveShared(ctx context.Context, pid, uid string
 	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return p, ErrNotFound
+			return p, project.ErrNotFound
 		}
 		return p, err
 	}
@@ -154,7 +143,7 @@ func (pr *ProjectRepository) List(ctx context.Context, uid string) ([]model.Proj
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return ps, ErrConnectionFailed
+		return ps, project.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -191,7 +180,7 @@ func (pr *ProjectRepository) Create(ctx context.Context, np model.NewProject, ui
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return p, ErrConnectionFailed
+		return p, project.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -240,7 +229,7 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid, uid string, update
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return p, ErrConnectionFailed
+		return p, project.ErrConnectionFailed
 	}
 	defer Close()
 
@@ -307,20 +296,16 @@ func (pr *ProjectRepository) Delete(ctx context.Context, pid, uid string) error 
 	var err error
 
 	if _, err = uuid.Parse(pid); err != nil {
-		return ErrInvalidID
+		return project.ErrInvalidID
 	}
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return ErrConnectionFailed
+		return project.ErrConnectionFailed
 	}
 	defer Close()
 
-	stmt := `
-			delete 
-			from projects
-			where project_id = ?, user_id = ?
-	`
+	stmt := `delete from projects where project_id = ?, user_id = ?`
 
 	if _, err = conn.ExecContext(ctx, stmt, pid, uid); err != nil {
 		return errors.Wrapf(err, "deleting project %s", pid)

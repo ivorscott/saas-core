@@ -74,13 +74,13 @@ func Run() error {
 	columnRepo := repository.NewColumnRepository(logger, pg)
 	projectRepo := repository.NewProjectRepository(logger, pg)
 
-	taskService := service.NewTaskService(logger, jetStream, taskRepo)
-	columnService := service.NewColumnService(logger, jetStream, columnRepo)
-	projectService := service.NewProjectService(logger, jetStream, projectRepo)
+	taskService := service.NewTaskService(logger, taskRepo)
+	columnService := service.NewColumnService(logger, columnRepo)
+	projectService := service.NewProjectService(logger, projectRepo)
 
-	taskHandler := handler.NewTaskHandler(logger, taskService)
+	taskHandler := handler.NewTaskHandler(logger, taskService, columnService)
 	columnHandler := handler.NewColumnHandler(logger, columnService)
-	projectHandler := handler.NewProjectHandler(logger, projectService)
+	projectHandler := handler.NewProjectHandler(logger, jetStream, projectService, columnService, taskService)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),

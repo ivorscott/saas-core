@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/devpies/saas-core/internal/project"
+	"github.com/devpies/saas-core/internal/project/model"
 	"net/http"
 	"time"
 
@@ -16,28 +19,47 @@ import (
 )
 
 type projectService interface {
+	List(ctx context.Context, userID string) ([]model.Project, error)
+	Retrieve(ctx context.Context, projectID string, userID string) (model.Project, error)
+	RetrieveShared(ctx context.Context, projectID string, userID string) (model.Project, error)
+	Create(ctx context.Context, project model.NewProject, userID string, now time.Time) (model.Project, error)
+	Update(ctx context.Context, projectID string, userID string, update model.UpdateProject, now time.Time) (model.Project, error)
+	Delete(ctx context.Context, projectID string, userID string) error
 }
 
 // ProjectHandler handles the project requests.
 type ProjectHandler struct {
-	logger  *zap.Logger
-	service projectService
+	logger         *zap.Logger
+	js             publisher
+	projectService projectService
+	columnService  columnService
+	taskService    taskService
 }
 
 // NewProjectHandler returns a new project handler.
 func NewProjectHandler(
 	logger *zap.Logger,
-	service projectService,
+	js publisher,
+	projectService projectService,
+	columnService columnService,
+	taskService taskService,
 ) *ProjectHandler {
 	return &ProjectHandler{
-		logger:  logger,
-		service: service,
+		logger:         logger,
+		js:             js,
+		projectService: projectService,
+		columnService:  columnService,
+		taskService:    taskService,
 	}
 }
 
 func (ph *ProjectHandler) List(w http.ResponseWriter, r *http.Request) error {
-	uid := p.auth0.UserByID(r.Context())
-	list, err := projects.List(r.Context(), p.repo, uid)
+	values, ok := web.FromContext(r.Context())
+	if !ok {
+		return web.CtxErr()
+	}
+
+	list, err := ph.projectService.List(r.Context(), values.Metadata.UserID)
 	if err != nil {
 		return err
 	}
@@ -46,20 +68,24 @@ func (ph *ProjectHandler) List(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (ph *ProjectHandler) Retrieve(w http.ResponseWriter, r *http.Request) error {
-	uid := p.auth0.UserByID(r.Context())
+	values, ok := web.FromContext(r.Context())
+	if !ok {
+		return web.CtxErr()
+	}
+
 	pid := chi.URLParam(r, "pid")
 
-	opr, err := projects.Retrieve(r.Context(), p.repo, pid, uid)
+	opr, err := ph.projectService.Retrieve(r.Context(), pid, values.Metadata.UserID)
 	if err == nil {
 		return web.Respond(r.Context(), w, opr, http.StatusOK)
 	}
 
-	spr, err := projects.RetrieveShared(r.Context(), p.repo, pid, uid)
+	spr, err := ph.projectService.RetrieveShared(r.Context(), pid, values.Metadata.UserID)
 	if err != nil {
 		switch err {
-		case projects.ErrNotFound:
+		case project.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case projects.ErrInvalidID:
+		case project.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "updating project %q", pid)
@@ -70,16 +96,24 @@ func (ph *ProjectHandler) Retrieve(w http.ResponseWriter, r *http.Request) error
 }
 
 func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
-	var np projects.NewProject
+	var (
+		np  model.NewProject
+		uid string
+		err error
+	)
 
-	uid := p.auth0.UserByID(r.Context())
+	values, ok := web.FromContext(r.Context())
+	if !ok {
+		return web.CtxErr()
+	}
+	uid = values.Metadata.UserID
 
-	if err := web.Decode(r, &np); err != nil {
+	if err = web.Decode(r, &np); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 
-	pr, err := projects.Create(r.Context(), p.repo, np, uid, time.Now())
+	pr, err := ph.projectService.Create(r.Context(), np, uid, time.Now())
 	if err != nil {
 		return err
 	}
@@ -110,26 +144,33 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	titles := [4]string{"To Do", "In Progress", "Review", "Done"}
 
 	for i, title := range titles {
-		nt := columns.NewColumn{
+		nt := model.NewColumn{
 			ProjectID:  pr.ID,
 			Title:      title,
 			ColumnName: fmt.Sprintf(`column-%d`, i+1),
 		}
-		_, err := columns.Create(r.Context(), p.repo, nt, time.Now())
+		_, err = ph.columnService.Create(r.Context(), nt, time.Now())
 		if err != nil {
 			return err
 		}
 	}
 
-	p.nats.Publish(string(msg.TypeProjectCreated), bytes)
+	ph.js.Publish(string(msg.TypeProjectCreated), bytes)
 
 	return web.Respond(r.Context(), w, pr, http.StatusCreated)
 }
 
 func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
-	var update projects.UpdateProject
+	var (
+		update model.UpdateProject
+		uid    string
+	)
 
-	uid := p.auth0.UserByID(r.Context())
+	values, ok := web.FromContext(r.Context())
+	if !ok {
+		return web.CtxErr()
+	}
+	uid = values.Metadata.UserID
 
 	pid := chi.URLParam(r, "pid")
 
@@ -137,12 +178,12 @@ func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return errors.Wrap(err, "decoding project update")
 	}
 
-	up, err := projects.Update(r.Context(), p.repo, pid, uid, update, time.Now())
+	up, err := ph.projectService.Update(r.Context(), pid, uid, update, time.Now())
 	if err != nil {
 		switch err {
-		case projects.ErrNotFound:
+		case project.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case projects.ErrInvalidID:
+		case project.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "updating project %q", pid)
@@ -172,30 +213,39 @@ func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	p.nats.Publish(string(msg.EventsProjectUpdated), bytes)
+	ph.js.Publish(string(msg.EventsProjectUpdated), bytes)
 
 	return web.Respond(r.Context(), w, up, http.StatusOK)
 }
 
 func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
+	var (
+		uid string
+		err error
+	)
 	pid := chi.URLParam(r, "pid")
-	uid := p.auth0.UserByID(r.Context())
 
-	if _, err := projects.Retrieve(r.Context(), p.repo, pid, uid); err != nil {
-		_, err := projects.RetrieveShared(r.Context(), p.repo, pid, uid)
+	values, ok := web.FromContext(r.Context())
+	if !ok {
+		return web.CtxErr()
+	}
+	uid = values.Metadata.UserID
+
+	if _, err = ph.projectService.Retrieve(r.Context(), pid, uid); err != nil {
+		_, err = ph.projectService.RetrieveShared(r.Context(), pid, uid)
 		if err == nil {
 			return web.NewRequestError(err, http.StatusUnauthorized)
 		}
 	}
-	if err := tasks.DeleteAll(r.Context(), p.repo, pid); err != nil {
+	if err = ph.taskService.DeleteAll(r.Context(), pid); err != nil {
 		return err
 	}
-	if err := columns.DeleteAll(r.Context(), p.repo, pid); err != nil {
+	if err = ph.columnService.DeleteAll(r.Context(), pid); err != nil {
 		return err
 	}
-	if err := projects.Delete(r.Context(), p.repo, pid, uid); err != nil {
+	if err = ph.projectService.Delete(r.Context(), pid, uid); err != nil {
 		switch err {
-		case projects.ErrInvalidID:
+		case project.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "deleting project %q", pid)
@@ -218,7 +268,7 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	p.nats.Publish(string(msg.EventsProjectDeleted), bytes)
+	ph.js.Publish(string(msg.EventsProjectDeleted), bytes)
 
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
