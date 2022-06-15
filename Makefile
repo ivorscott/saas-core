@@ -133,7 +133,7 @@ project: ;@ ## Run project api with live reload.
 .PHONY: project
 
 project-db: ;@ ## Enter project database.
-	@pgcli postgres://$(PROJECT_POSTGRES_USER):$(PROJECT_POSTGRES_PASSWORD)@$(PROJECT_POSTGRES_HOST):$(PROJECT_POSTGRES_PORT)/$(PROJECT_POSTGRES_DB)
+	@pgcli postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)
 .PHONY: project-db
 
 project-db-gen: ;@ ## Generate migration files. Required <name> argument.
@@ -141,15 +141,15 @@ project-db-gen: ;@ ## Generate migration files. Required <name> argument.
 .PHONY: project-db-gen
 
 project-db-migrate: ;@ ## Migrate project database. Optional <num> argument.
-	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_POSTGRES_USER):$(PROJECT_POSTGRES_PASSWORD)@$(PROJECT_POSTGRES_HOST):$(PROJECT_POSTGRES_PORT)/$(PROJECT_POSTGRES_DB)?sslmode=disable up $(val)
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)?sslmode=disable up $(val)
 .PHONY: project-db-migrate
 
 project-db-version: ;@ ## Print migration version for project database.
-	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_POSTGRES_USER):$(PROJECT_POSTGRES_PASSWORD)@$(PROJECT_POSTGRES_HOST):$(PROJECT_POSTGRES_PORT)/$(PROJECT_POSTGRES_DB)?sslmode=disable up $(val)
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)?sslmode=disable up $(val)
 .PHONY: project-db-version
 
 project-db-rollback: ;@ ## Rollback project database. Optional <num> argument.
-	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_POSTGRES_USER):$(PROJECT_POSTGRES_PASSWORD)@$(PROJECT_POSTGRES_HOST):$(PROJECT_POSTGRES_PORT)/$(PROJECT_POSTGRES_DB)?sslmode=disable down $(val)
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)?sslmode=disable down $(val)
 .PHONY: project-db-rollback
 
 tables:	;@ ## List Dynamodb tables.
@@ -167,7 +167,7 @@ help:
 .PHONY: help
 
 # http://bit.ly/37TR1r2
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test admin-db-gen admin-db-migrate admin-db-rollback registration-test))
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test admin-db-gen admin-db-migrate admin-db-rollback registration-test project-test project-db-gen project-db-migrate project-db-rollback))
   val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(val):;@:)
 endif
