@@ -13,7 +13,6 @@ import (
 	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -132,8 +131,11 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 			UpdatedAt:   pr.UpdatedAt.String(),
 			CreatedAt:   pr.CreatedAt.String(),
 		},
-		Type:     msg.TypeProjectCreated,
-		Metadata: msg.Metadata{UserID: values.Metadata.UserID, TraceID: uuid.New().String()},
+		Type: msg.TypeProjectCreated,
+		Metadata: msg.Metadata{
+			UserID:  values.Metadata.UserID,
+			TraceID: values.Metadata.TraceID,
+		},
 	}
 
 	bytes, err := json.Marshal(e)
@@ -155,7 +157,7 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	ph.js.Publish(string(msg.TypeProjectCreated), bytes)
+	ph.js.Publish(msg.SubjectProjectCreated, bytes)
 
 	return web.Respond(r.Context(), w, pr, http.StatusCreated)
 }
@@ -201,7 +203,7 @@ func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		},
 		Metadata: msg.Metadata{
 			UserID:  values.Metadata.UserID,
-			TraceID: uuid.New().String(),
+			TraceID: values.Metadata.TraceID,
 		},
 	}
 
@@ -210,7 +212,7 @@ func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	ph.js.Publish(string(msg.EventsProjectUpdated), bytes)
+	ph.js.Publish(msg.SubjectProjectUpdated, bytes)
 
 	return web.Respond(r.Context(), w, up, http.StatusOK)
 }
@@ -249,7 +251,7 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	e := msg.ProjectDeletedEvent{
 		Type: msg.TypeProjectDeleted,
 		Metadata: msg.Metadata{
-			TraceID: uuid.New().String(),
+			TraceID: values.Metadata.TraceID,
 			UserID:  values.Metadata.UserID,
 		},
 		Data: msg.ProjectDeletedEventData{
@@ -262,7 +264,7 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	ph.js.Publish(string(msg.EventsProjectDeleted), bytes)
+	ph.js.Publish(msg.SubjectProjectDeleted, bytes)
 
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }

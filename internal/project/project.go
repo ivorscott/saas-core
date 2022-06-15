@@ -67,7 +67,7 @@ func Run() error {
 
 	jetStream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 
-	_ = jetStream.Create(msg.StreamTenants)
+	_ = jetStream.Create(msg.StreamProjects)
 
 	// Initialize 3-layered architecture.
 	taskRepo := repository.NewTaskRepository(logger, pg)
