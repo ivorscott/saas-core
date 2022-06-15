@@ -82,6 +82,10 @@ func Run() error {
 	columnHandler := handler.NewColumnHandler(logger, columnService)
 	projectHandler := handler.NewProjectHandler(logger, jetStream, projectService, columnService, taskService)
 
+	go func() {
+		// Listen to membership events to save a redundant copy in the database.
+	}()
+
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
