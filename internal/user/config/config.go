@@ -16,6 +16,9 @@ type Config struct {
 		SharedUserPoolClientID string `conf:"required"`
 		Region                 string `conf:"default:eu-central-1"`
 	}
+	Sendgrid struct {
+		APIKey string `conf:"default:none"`
+	}
 	DB struct {
 		User       string `conf:"default:postgres,noprint"`
 		Password   string `conf:"default:postgres,noprint"`

@@ -37,11 +37,11 @@ func (ms *MembershipService) Create(ctx context.Context, nm model.NewMembership,
 }
 
 func (ms *MembershipService) RetrieveMemberships(ctx context.Context, uid, tid string) ([]model.MembershipEnhanced, error) {
-	return ms.RetrieveMemberships(ctx, uid, tid)
+	return ms.membershipRepo.RetrieveMemberships(ctx, uid, tid)
 }
 
 func (ms *MembershipService) RetrieveMembership(ctx context.Context, uid, tid string) (model.Membership, error) {
-	return ms.RetrieveMembership(ctx, uid, tid)
+	return ms.membershipRepo.RetrieveMembership(ctx, uid, tid)
 }
 
 func (ms *MembershipService) Update(ctx context.Context, tid string, update model.UpdateMembership, uid string, now time.Time) error {

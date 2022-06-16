@@ -9,9 +9,8 @@ import (
 
 type userRepository interface {
 	Create(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error)
-	RetrieveByEmail(email string) (model.User, error)
+	RetrieveByEmail(ctx context.Context, email string) (model.User, error)
 	RetrieveMe(ctx context.Context, uid string) (model.User, error)
-	RetrieveMeByAuthID(ctx context.Context, aid string) (model.User, error)
 }
 
 // UserService manages the user business operations.
@@ -31,18 +30,15 @@ func NewUserService(
 	}
 }
 
-func (us *UserService) Create(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error) {
+func (us *UserService) AddSeat(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error) {
+	// Add user to user pool in AWS Cognito
 	return us.userRepo.Create(ctx, nu, now)
 }
 
-func (us *UserService) RetrieveByEmail(email string) (model.User, error) {
-	return us.userRepo.RetrieveByEmail(email)
+func (us *UserService) RetrieveByEmail(ctx context.Context, email string) (model.User, error) {
+	return us.userRepo.RetrieveByEmail(ctx, email)
 }
 
 func (us *UserService) RetrieveMe(ctx context.Context, uid string) (model.User, error) {
 	return us.userRepo.RetrieveMe(ctx, uid)
-}
-
-func (us *UserService) RetrieveMeByAuthID(ctx context.Context, aid string) (model.User, error) {
-	return us.userRepo.RetrieveMeByAuthID(ctx, aid)
 }

@@ -2,7 +2,11 @@ package handler
 
 import (
 	"context"
+	"fmt"
+	"github.com/devpies/saas-core/internal/user/fail"
 	"github.com/devpies/saas-core/internal/user/model"
+	"github.com/devpies/saas-core/pkg/web"
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
@@ -33,6 +37,26 @@ func NewMembershipHandler(
 	}
 }
 
+// RetrieveMemberships retrieves all memberships for the authenticated user.
 func (mh *MembershipHandler) RetrieveMemberships(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	values, ok := web.FromContext(r.Context())
+	if !ok {
+		return web.CtxErr()
+	}
+
+	tid := chi.URLParam(r, "tid")
+
+	ms, err := mh.membershipService.RetrieveMemberships(r.Context(), values.Metadata.UserID, tid)
+	if err != nil {
+		switch err {
+		case fail.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusBadRequest)
+		case fail.ErrNotFound:
+			return web.NewRequestError(err, http.StatusNotFound)
+		default:
+		}
+		return fmt.Errorf("failed to retrieve memberships: %w", err)
+	}
+
+	return web.Respond(r.Context(), w, ms, http.StatusOK)
 }

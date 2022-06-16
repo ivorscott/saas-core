@@ -10,10 +10,11 @@ const (
 	SubjectRegistered = "TENANTS.registered"
 	SubjectSiloed     = "TENANTS.siloed"
 
-	StreamMemberships        = "MEMBERSHIPS"
-	SubjectMembershipCreated = "MEMBERSHIPS.created"
-	SubjectMembershipUpdated = "MEMBERSHIPS.updated"
-	SubjectMembershipDeleted = "MEMBERSHIPS.deleted"
+	StreamMemberships           = "MEMBERSHIPS"
+	SubjectMembershipCreated    = "MEMBERSHIPS.created"
+	SubjectMembershipUpdated    = "MEMBERSHIPS.updated"
+	SubjectMembershipDeleted    = "MEMBERSHIPS.deleted"
+	SubjectMembershipForProject = "MEMBERSHIPS.forProject"
 
 	StreamProjects        = "PROJECTS"
 	SubjectProjectCreated = "PROJECTS.created"

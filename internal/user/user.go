@@ -74,20 +74,23 @@ func Run() error {
 
 	jetStream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 
-	_ = jetStream.Create(msg.StreamProjects)
+	_ = jetStream.Create(msg.StreamMemberships)
 
 	// Initialize 3-layered architecture.
 	inviteRepo := repository.NewInviteRepository(logger, pg)
 	userRepo := repository.NewUserRepository(logger, pg)
 	teamRepo := repository.NewTeamRepository(logger, pg)
 	membershipRepo := repository.NewMembershipRepository(logger, pg)
+	projectRepo := repository.NewProjectRepository(logger, pg)
 
 	userService := service.NewUserService(logger, userRepo)
 	teamService := service.NewTeamService(logger, teamRepo, inviteRepo)
 	membershipService := service.NewMembershipService(logger, membershipRepo)
+	projectService := service.NewProjectService(logger, projectRepo)
+	inviteService := service.NewInviteService(logger, inviteRepo)
 
 	userHandler := handler.NewUserHandler(logger, userService)
-	teamHandler := handler.NewTeamHandler(logger, teamService)
+	teamHandler := handler.NewTeamHandler(logger, jetStream, cfg.Sendgrid.APIKey, teamService, projectService, membershipService, inviteService)
 	membershipHandler := handler.NewMembershipHandler(logger, membershipService)
 
 	go func() {

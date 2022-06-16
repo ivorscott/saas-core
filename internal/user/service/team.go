@@ -13,13 +13,6 @@ type teamRepository interface {
 	List(ctx context.Context, uid string) ([]model.Team, error)
 }
 
-type inviteRepository interface {
-	Create(ctx context.Context, ni model.NewInvite, now time.Time) (model.Invite, error)
-	RetrieveInvite(ctx context.Context, uid string, iid string) (model.Invite, error)
-	RetrieveInvites(ctx context.Context, uid string) ([]model.Invite, error)
-	Update(ctx context.Context, update model.UpdateInvite, uid, iid string, now time.Time) (model.Invite, error)
-}
-
 // TeamService manages the team business operations.
 type TeamService struct {
 	logger     *zap.Logger
@@ -46,7 +39,7 @@ func (ts *TeamService) Create(ctx context.Context, nt model.NewTeam, uid string,
 }
 
 func (ts *TeamService) Retrieve(ctx context.Context, tid string) (model.Team, error) {
-	return ts.Retrieve(ctx, tid)
+	return ts.teamRepo.Retrieve(ctx, tid)
 }
 
 func (ts *TeamService) List(ctx context.Context, uid string) ([]model.Team, error) {
