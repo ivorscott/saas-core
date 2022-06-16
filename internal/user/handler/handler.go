@@ -8,7 +8,7 @@ import (
 )
 
 type userService interface {
-	AddSeat(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error)
+	AddSeat(ctx context.Context, nu model.NewUser, now time.Time) error
 	RetrieveByEmail(ctx context.Context, email string) (model.User, error)
 	RetrieveMe(ctx context.Context, uid string) (model.User, error)
 }

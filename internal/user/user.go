@@ -90,7 +90,16 @@ func Run() error {
 	inviteService := service.NewInviteService(logger, inviteRepo)
 
 	userHandler := handler.NewUserHandler(logger, userService)
-	teamHandler := handler.NewTeamHandler(logger, jetStream, cfg.Sendgrid.APIKey, teamService, projectService, membershipService, inviteService)
+	teamHandler := handler.NewTeamHandler(
+		logger,
+		jetStream,
+		cfg.Sendgrid.APIKey,
+		teamService,
+		projectService,
+		membershipService,
+		inviteService,
+		userService,
+	)
 	membershipHandler := handler.NewMembershipHandler(logger, membershipService)
 
 	go func() {

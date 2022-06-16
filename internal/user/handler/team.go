@@ -334,16 +334,13 @@ func (th *TeamHandler) CreateInvite(w http.ResponseWriter, r *http.Request) erro
 				FirstName: &name[0],
 			}
 
-			user, err = th.userService.AddSeat(r.Context(), nu, time.Now())
+			err = th.userService.AddSeat(r.Context(), nu, time.Now())
 			if err != nil {
 				return err
 			}
-
-			ni.UserID = user.ID
-
-		} else {
-			ni.UserID = user.ID
+			return web.Respond(r.Context(), w, nil, http.StatusAccepted)
 		}
+		ni.UserID = user.ID
 
 		from := mail.NewEmail("DevPie", "people@devpie.io")
 		subject := "You've been invited to a Team on DevPie!"
@@ -373,10 +370,137 @@ func (th *TeamHandler) CreateInvite(w http.ResponseWriter, r *http.Request) erro
 	return web.Respond(r.Context(), w, nil, http.StatusCreated)
 }
 
+// RetrieveInvites returns invitations for the authenticated user.
 func (th *TeamHandler) RetrieveInvites(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	var (
+		is  []model.Invite
+		err error
+	)
+
+	values, ok := web.FromContext(r.Context())
+	if !ok {
+		return web.CtxErr()
+	}
+
+	is, err = th.inviteService.RetrieveInvites(r.Context(), values.Metadata.UserID)
+	if err != nil {
+		switch err {
+		case fail.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusBadRequest)
+		case fail.ErrNotFound:
+			return web.NewRequestError(err, http.StatusNotFound)
+		default:
+			return fmt.Errorf("failed to retrieve invites: %w", err)
+		}
+	}
+
+	var result []model.InviteEnhanced
+
+	for _, invite := range is {
+		var team model.Team
+
+		team, err = th.teamService.Retrieve(r.Context(), invite.TeamID)
+		if err != nil {
+			switch err {
+			case fail.ErrInvalidID:
+				return web.NewRequestError(err, http.StatusBadRequest)
+			case fail.ErrNotFound:
+				return web.NewRequestError(err, http.StatusNotFound)
+			default:
+				return fmt.Errorf("failed to retrieve team: %w", err)
+			}
+		}
+
+		ie := model.InviteEnhanced{
+			ID:         invite.ID,
+			UserID:     invite.UserID,
+			TeamID:     invite.TeamID,
+			TeamName:   team.Name,
+			Read:       invite.Read,
+			Accepted:   invite.Accepted,
+			Expiration: invite.Expiration,
+			UpdatedAt:  invite.UpdatedAt,
+			CreatedAt:  invite.CreatedAt,
+		}
+
+		result = append(result, ie)
+	}
+
+	return web.Respond(r.Context(), w, result, http.StatusOK)
 }
 
+// UpdateInvite updates an existing invitation.
 func (th *TeamHandler) UpdateInvite(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	var (
+		update model.UpdateInvite
+		role   model.Role = model.Editor
+		err    error
+	)
+
+	if err = web.Decode(r, &update); err != nil {
+		return err
+	}
+
+	values, ok := web.FromContext(r.Context())
+	if !ok {
+		return web.CtxErr()
+	}
+
+	uid := values.Metadata.UserID
+	tid := chi.URLParam(r, "tid")
+	iid := chi.URLParam(r, "iid")
+
+	iv, err := th.inviteService.Update(r.Context(), update, uid, iid, time.Now())
+	if err != nil {
+		switch err {
+		case fail.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusBadRequest)
+		case fail.ErrNotFound:
+			return web.NewRequestError(err, http.StatusNotFound)
+		default:
+			return fmt.Errorf("failed to update invite: %w", err)
+		}
+	}
+
+	if update.Accepted {
+		var m model.Membership
+
+		nm := model.NewMembership{
+			UserID: uid,
+			TeamID: tid,
+			Role:   role.String(),
+		}
+
+		m, err = th.membershipService.Create(r.Context(), nm, time.Now())
+		if err != nil {
+			return fmt.Errorf("failed to insert membership: %w", err)
+		}
+
+		e := msg.MembershipCreatedEvent{
+			Type: msg.TypeMembershipCreated,
+			Data: msg.MembershipCreatedEventData{
+				MembershipID: m.ID,
+				TeamID:       m.TeamID,
+				Role:         m.Role,
+				UserID:       m.UserID,
+				UpdatedAt:    m.UpdatedAt.String(),
+				CreatedAt:    m.CreatedAt.String(),
+			},
+			Metadata: msg.Metadata{
+				TraceID: values.Metadata.TraceID,
+				UserID:  uid,
+			},
+		}
+
+		var bytes []byte
+
+		bytes, err = json.Marshal(e)
+		if err != nil {
+			return err
+		}
+
+		th.js.Publish(msg.SubjectMembershipCreated, bytes)
+	}
+
+	return web.Respond(r.Context(), w, iv, http.StatusOK)
 }

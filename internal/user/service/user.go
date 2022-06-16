@@ -8,7 +8,7 @@ import (
 )
 
 type userRepository interface {
-	Create(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error)
+	Create(ctx context.Context, nu model.NewUser, now time.Time) error
 	RetrieveByEmail(ctx context.Context, email string) (model.User, error)
 	RetrieveMe(ctx context.Context, uid string) (model.User, error)
 }
@@ -30,9 +30,9 @@ func NewUserService(
 	}
 }
 
-func (us *UserService) AddSeat(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error) {
-	// Add user to user pool in AWS Cognito
-	return us.userRepo.Create(ctx, nu, now)
+// AddSeat publishes a message to create a user in the identity service.
+func (us *UserService) AddSeat(ctx context.Context, nu model.NewUser, now time.Time) error {
+	return nil
 }
 
 func (us *UserService) RetrieveByEmail(ctx context.Context, email string) (model.User, error) {
