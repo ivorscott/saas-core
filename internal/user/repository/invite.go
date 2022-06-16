@@ -8,34 +8,39 @@ import (
 	"time"
 )
 
-// TeamRepository manages team data access.
-type TeamRepository struct {
+// InviteRepository manages invite data access.
+type InviteRepository struct {
 	logger *zap.Logger
 	pg     *db.PostgresDatabase
 }
 
-// NewTeamRepository returns a new team repository.
-func NewTeamRepository(
+// NewInviteRepository returns a new invite repository.
+func NewInviteRepository(
 	logger *zap.Logger,
 	pg *db.PostgresDatabase,
-) *TeamRepository {
-	return &TeamRepository{
+) *InviteRepository {
+	return &InviteRepository{
 		logger: logger,
 		pg:     pg,
 	}
 }
 
-func (tr *TeamRepository) Create(ctx context.Context, nt model.NewTeam, uid string, now time.Time) (model.Team, error) {
+func (i InviteRepository) Create(ctx context.Context, ni model.NewInvite, now time.Time) (model.Invite, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (tr *TeamRepository) Retrieve(ctx context.Context, tid string) (model.Team, error) {
+func (i InviteRepository) RetrieveInvite(ctx context.Context, uid string, iid string) (model.Invite, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (tr *TeamRepository) List(ctx context.Context, uid string) ([]model.Team, error) {
+func (i InviteRepository) RetrieveInvites(ctx context.Context, uid string) ([]model.Invite, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (i InviteRepository) Update(ctx context.Context, update model.UpdateInvite, uid, iid string, now time.Time) (model.Invite, error) {
 	//TODO implement me
 	panic("implement me")
 }

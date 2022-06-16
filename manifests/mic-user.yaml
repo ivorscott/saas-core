@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mic-project
+  name: mic-user
 spec:
   selector:
     matchLabels:
-      app: mic-project
+      app: mic-user
   template:
     metadata:
       labels:
-        app: mic-project
+        app: mic-user
     spec:
       containers:
-        - image: project:latest
-          name: mic-project
+        - image: user:latest
+          name: mic-user
           ports:
-            - containerPort: 4004
+            - containerPort: 4005
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
@@ -30,44 +30,44 @@ spec:
             - name: AWS_DEFAULT_REGION
               value: "eu-central-1"
 
-            - name: PROJECT_WEB_PORT
-              value: "4004"
-            - name: PROJECT_WEB_ADDRESS
+            - name: USER_WEB_PORT
+              value: "4005"
+            - name: USER_WEB_ADDRESS
               value: "http://localhost"
 
-            - name: PROJECT_COGNITO_SHARED_USER_POOL_CLIENT_ID
+            - name: USER_COGNITO_SHARED_USER_POOL_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets
                   key: cognito_shared_user_pool_client_id
-            - name: PROJECT_COGNITO_REGION
+            - name: USER_COGNITO_REGION
               value: "eu-central-1"
 
-            - name: PROJECT_NATS_ADDRESS
+            - name: USER_NATS_ADDRESS
               value: "nats-svc"
-            - name: PROJECT_NATS_PORT
+            - name: USER_NATS_PORT
               value: "4222"
 
-            - name: PROJECT_DB_USER
+            - name: USER_DB_USER
               value: postgres
-            - name: PROJECT_DB_PASSWORD
+            - name: USER_DB_PASSWORD
               value: postgres
-            - name: PROJECT_DB_HOST
-              value: db-project-svc
-            - name: PROJECT_DB_PORT
+            - name: USER_DB_HOST
+              value: db-user-svc
+            - name: USER_DB_PORT
               value: "5432"
-            - name: PROJECT_DB_NAME
-              value: project
-            - name: PROJECT_POSTGRES_DISABLE_TLS
+            - name: USER_DB_NAME
+              value: user
+            - name: USER_POSTGRES_DISABLE_TLS
               value: "true"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mic-project-svc
+  name: mic-user-svc
 spec:
   selector:
-    app: mic-project
+    app: mic-user
   ports:
-    - port: 4004
-      targetPort: 4004
+    - port: 4005
+      targetPort: 4005

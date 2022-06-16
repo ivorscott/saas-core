@@ -17,13 +17,13 @@ spec:
                 name: mic-registration-svc
                 port:
                   number: 4001
-#          - path: /api/users
-#            pathType: Prefix
-#            backend:
-#              service:
-#                name: users-svc
-#                port:
-#                  number: 4003
+          - path: /api/users
+            pathType: Prefix
+            backend:
+              service:
+                name: users-svc
+                port:
+                  number: 4005
           - path: /api/projects
             pathType: Prefix
             backend:

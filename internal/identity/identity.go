@@ -72,7 +72,7 @@ func Run() error {
 	js := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
 
-	logger.Info(fmt.Sprintf("Starting user service on %s:%s", cfg.Web.Address, cfg.Web.Port))
+	logger.Info(fmt.Sprintf("Starting identity service on %s:%s", cfg.Web.Address, cfg.Web.Port))
 
 	go func() {
 		defer func() {

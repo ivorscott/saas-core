@@ -1,4 +1,4 @@
-package project
+package user
 
 import (
 	"context"
@@ -8,11 +8,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/devpies/saas-core/internal/project/config"
-	"github.com/devpies/saas-core/internal/project/db"
-	"github.com/devpies/saas-core/internal/project/handler"
-	"github.com/devpies/saas-core/internal/project/repository"
-	"github.com/devpies/saas-core/internal/project/service"
+	"github.com/devpies/saas-core/internal/user/config"
+	"github.com/devpies/saas-core/internal/user/db"
+	"github.com/devpies/saas-core/internal/user/handler"
+	"github.com/devpies/saas-core/internal/user/repository"
+	"github.com/devpies/saas-core/internal/user/res"
+	"github.com/devpies/saas-core/internal/user/service"
 	"github.com/devpies/saas-core/pkg/log"
 	"github.com/devpies/saas-core/pkg/msg"
 
@@ -29,10 +30,10 @@ func Run() error {
 		err     error
 	)
 
-	if err = conf.Parse(os.Args[1:], "PROJECT", &cfg); err != nil {
+	if err = conf.Parse(os.Args[1:], "USER", &cfg); err != nil {
 		if err == conf.ErrHelpWanted {
 			var usage string
-			usage, err = conf.Usage("PROJECT", &cfg)
+			usage, err = conf.Usage("USER", &cfg)
 			if err != nil {
 				logger.Error("error generating config usage", zap.Error(err))
 				return err
@@ -65,36 +66,43 @@ func Run() error {
 	}
 	defer Close()
 
+	// Execute latest migration.
+	if err = res.MigrateUp(pg.URL.String()); err != nil {
+		logger.Error("error connecting to admin database", zap.Error(err))
+		return err
+	}
+
 	jetStream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 
 	_ = jetStream.Create(msg.StreamProjects)
 
 	// Initialize 3-layered architecture.
-	taskRepo := repository.NewTaskRepository(logger, pg)
-	columnRepo := repository.NewColumnRepository(logger, pg)
-	projectRepo := repository.NewProjectRepository(logger, pg)
+	inviteRepo := repository.NewInviteRepository(logger, pg)
+	userRepo := repository.NewUserRepository(logger, pg)
+	teamRepo := repository.NewTeamRepository(logger, pg)
+	membershipRepo := repository.NewMembershipRepository(logger, pg)
 
-	taskService := service.NewTaskService(logger, taskRepo)
-	columnService := service.NewColumnService(logger, columnRepo)
-	projectService := service.NewProjectService(logger, projectRepo)
+	userService := service.NewUserService(logger, userRepo)
+	teamService := service.NewTeamService(logger, teamRepo, inviteRepo)
+	membershipService := service.NewMembershipService(logger, membershipRepo)
 
-	taskHandler := handler.NewTaskHandler(logger, taskService, columnService)
-	columnHandler := handler.NewColumnHandler(logger, columnService)
-	projectHandler := handler.NewProjectHandler(logger, jetStream, projectService, columnService, taskService)
+	userHandler := handler.NewUserHandler(logger, userService)
+	teamHandler := handler.NewTeamHandler(logger, teamService)
+	membershipHandler := handler.NewMembershipHandler(logger, membershipService)
 
 	go func() {
-		// Listen to membership events to save a redundant copy in the database.
+		// Listen to project events to save a redundant copy in the database.
 	}()
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, taskHandler, columnHandler, projectHandler, cfg),
+		Handler:      Routes(logger, shutdown, userHandler, teamHandler, membershipHandler, cfg),
 	}
 
 	go func() {
-		logger.Info(fmt.Sprintf("Starting project service on %s:%s", cfg.Web.Address, cfg.Web.Port))
+		logger.Info(fmt.Sprintf("Starting user service on %s:%s", cfg.Web.Address, cfg.Web.Port))
 		serverErrors <- srv.ListenAndServe()
 	}()
 

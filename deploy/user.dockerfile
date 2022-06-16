@@ -8,10 +8,10 @@ WORKDIR /core
 
 COPY ../go.* ./
 
-COPY ../cmd/project ./cmd/project
-COPY ../internal/project ./internal/project
+COPY ../cmd/user ./cmd/user
+COPY ../internal/user ./internal/user
 COPY ../pkg ./pkg
 
-RUN go mod download && go build ./cmd/project
+RUN go mod download && go build ./cmd/user
 
-CMD ["./project"]
+CMD ["./user"]

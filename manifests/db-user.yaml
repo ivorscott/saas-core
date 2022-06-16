@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: db-project
+  name: db-user
 spec:
   selector:
     matchLabels:
-      app: db-project
+      app: db-user
   template:
     metadata:
       labels:
-        app: db-project
+        app: db-user
     spec:
       volumes:
-        - name: db-project-volume
+        - name: db-user-volume
           hostPath:
             # use your local path, not mine
-            path: "/Users/ivorscott/DevPie/saas-core/data/project"
+            path: "/Users/ivorscott/DevPie/saas-core/data/user"
       containers:
-        - name: db-project
+        - name: db-user
           image: postgres:11.6
           imagePullPolicy: "IfNotPresent"
           ports:
@@ -31,25 +31,25 @@ spec:
               memory: "250Mi"
           env:
             - name: POSTGRES_DB
-              value: project
+              value: user
             - name: POSTGRES_USER
               value: postgres
             - name: POSTGRES_PASSWORD
               value: postgres
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
-              name: db-project-volume
+              name: db-user-volume
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: db-project-svc
+  name: db-user-svc
 spec:
   type: NodePort
   selector:
-    app: db-project
+    app: db-user
   ports:
     - port: 5432
       targetPort: 5432
       protocol: TCP
-      nodePort: 30009
+      nodePort: 30010

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/devpies/saas-core/internal/project/config"
+	"github.com/devpies/saas-core/internal/user/config"
 	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/jmoiron/sqlx"

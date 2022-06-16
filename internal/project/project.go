@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 	"fmt"
+	"github.com/devpies/saas-core/internal/project/res"
 	"net/http"
 	"os"
 	"os/signal"
@@ -64,6 +65,12 @@ func Run() error {
 		return err
 	}
 	defer Close()
+
+	// Execute latest migration.
+	if err = res.MigrateUp(pg.URL.String()); err != nil {
+		logger.Error("error connecting to admin database", zap.Error(err))
+		return err
+	}
 
 	jetStream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 

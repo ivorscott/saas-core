@@ -21,7 +21,7 @@ type Config struct {
 		Password   string `conf:"default:postgres,noprint"`
 		Host       string `conf:"default:localhost,noprint"`
 		Port       int    `conf:"default:5432,noprint"`
-		Name       string `conf:"default:project,noprint"`
+		Name       string `conf:"default:user,noprint"`
 		DisableTLS bool   `conf:"default:false"`
 	}
 	Nats struct {
