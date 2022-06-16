@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mic-user
+  name: mic-identity
 spec:
   selector:
     matchLabels:
-      app: mic-user
+      app: mic-identity
   template:
     metadata:
       labels:
-        app: mic-user
+        app: mic-identity
     spec:
       containers:
-        - image: user:latest
-          name: mic-user
+        - image: identity:latest
+          name: mic-identity
           ports:
             - containerPort: 4003
           env:
@@ -30,31 +30,31 @@ spec:
             - name: AWS_DEFAULT_REGION
               value: "eu-central-1"
 
-            - name: USER_WEB_PORT
+            - name: IDENTITY_WEB_PORT
               value: "4003"
-            - name: USER_WEB_ADDRESS
+            - name: IDENTITY_WEB_ADDRESS
               value: "http://localhost"
 
-            - name: USER_COGNITO_USER_POOL_CLIENT_ID
+            - name: IDENTITY_COGNITO_USER_POOL_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets
                   key: cognito_user_pool_client_id
-            - name: USER_COGNITO_REGION
+            - name: IDENTITY_COGNITO_REGION
               value: "eu-central-1"
 
-            - name: USER_NATS_ADDRESS
+            - name: IDENTITY_NATS_ADDRESS
               value: "nats-svc"
-            - name: USER_NATS_PORT
+            - name: IDENTITY_NATS_PORT
               value: "4222"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mic-user-svc
+  name: mic-identity-svc
 spec:
   selector:
-    app: mic-user
+    app: mic-identity
   ports:
     - port: 4003
       targetPort: 4003
