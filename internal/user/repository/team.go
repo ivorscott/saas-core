@@ -2,10 +2,16 @@ package repository
 
 import (
 	"context"
-	"github.com/devpies/saas-core/internal/user/db"
-	"github.com/devpies/saas-core/internal/user/model"
-	"go.uber.org/zap"
+	"database/sql"
 	"time"
+
+	"github.com/devpies/saas-core/internal/user/db"
+	"github.com/devpies/saas-core/internal/user/fail"
+	"github.com/devpies/saas-core/internal/user/model"
+	"github.com/devpies/saas-core/pkg/web"
+
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 // TeamRepository manages team data access.
@@ -25,17 +31,111 @@ func NewTeamRepository(
 	}
 }
 
+// Create inserts a new team into the database.
 func (tr *TeamRepository) Create(ctx context.Context, nt model.NewTeam, uid string, now time.Time) (model.Team, error) {
-	//TODO implement me
-	panic("implement me")
+	var (
+		t   model.Team
+		err error
+	)
+
+	if _, err = uuid.Parse(uid); err != nil {
+		return t, fail.ErrInvalidID
+	}
+
+	conn, Close, err := tr.pg.GetConnection(ctx)
+	if err != nil {
+		return t, fail.ErrConnectionFailed
+	}
+	defer Close()
+
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return t, web.CtxErr()
+	}
+
+	stmt := `
+		insert into teams (team_id, tenant_id, name, user_id, updated_at, created_at)
+		values (?,?,?,?,?,?)
+	`
+	if _, err = conn.ExecContext(
+		ctx,
+		stmt,
+		uuid.New().String(),
+		values.Metadata.TenantID,
+		nt.Name,
+		uid,
+		now.UTC(),
+		now.UTC(),
+	); err != nil {
+		return t, err
+	}
+
+	return t, nil
 }
 
+// Retrieve retrieves a single team from the database.
 func (tr *TeamRepository) Retrieve(ctx context.Context, tid string) (model.Team, error) {
-	//TODO implement me
-	panic("implement me")
+	var (
+		t   model.Team
+		err error
+	)
+
+	if _, err = uuid.Parse(tid); err != nil {
+		return t, fail.ErrInvalidID
+	}
+
+	conn, Close, err := tr.pg.GetConnection(ctx)
+	if err != nil {
+		return t, fail.ErrConnectionFailed
+	}
+	defer Close()
+	stmt := `
+		select 
+		    team_id, tenant_id, user_id, name, updated_at, created_at
+		from teams
+		where team_id = ?
+	`
+
+	if err = conn.SelectContext(ctx, &t, stmt, tid); err != nil {
+		if err == sql.ErrNoRows {
+			return t, fail.ErrNotFound
+		}
+		return t, err
+	}
+
+	return t, nil
 }
 
+// List retrieves a set of teams from the database.
 func (tr *TeamRepository) List(ctx context.Context, uid string) ([]model.Team, error) {
-	//TODO implement me
-	panic("implement me")
+	var (
+		ts  []model.Team
+		err error
+	)
+
+	if _, err = uuid.Parse(uid); err != nil {
+		return ts, fail.ErrInvalidID
+	}
+
+	conn, Close, err := tr.pg.GetConnection(ctx)
+	if err != nil {
+		return ts, fail.ErrConnectionFailed
+	}
+	defer Close()
+
+	stmt := `
+			select 
+			    team_id, tenant_id, user_id, name, updated_at, created_at
+			from teams
+			where team_id IN (SELECT team_id FROM memberships WHERE user_id = ?)
+	`
+
+	if err = conn.SelectContext(ctx, &ts, stmt, uid); err != nil {
+		if err == sql.ErrNoRows {
+			return ts, fail.ErrNotFound
+		}
+		return ts, err
+	}
+
+	return ts, nil
 }

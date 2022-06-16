@@ -5,6 +5,7 @@ import "time"
 // Membership represents a membership to a team
 type Membership struct {
 	ID        string    `db:"membership_id" json:"id"`
+	TenantID  string    `db:"tenant_id" json:"tenantId"`
 	UserID    string    `db:"user_id" json:"userId"`
 	TeamID    string    `db:"team_id" json:"teamId"`
 	Role      string    `db:"role" json:"role"`

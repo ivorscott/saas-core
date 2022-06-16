@@ -5,6 +5,7 @@ import "time"
 // Team represents a group of members
 type Team struct {
 	ID        string    `db:"team_id" json:"id"`
+	TenantID  string    `db:"tenant_id" json:"tenantId"`
 	Name      string    `db:"name" json:"name"`
 	UserID    string    `db:"user_id" json:"userId"`
 	UpdatedAt time.Time `db:"updated_at" json:"updatedAt"`

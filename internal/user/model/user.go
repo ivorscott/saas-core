@@ -5,7 +5,7 @@ import "time"
 // User represent a user profile
 type User struct {
 	ID            string    `db:"user_id" json:"id"`
-	Auth0ID       string    `db:"auth0_id" json:"auth0Id"`
+	TenantID      string    `db:"tenant_id" json:"tenantId"`
 	Email         string    `db:"email" json:"email"`
 	EmailVerified bool      `db:"email_verified" json:"emailVerified"`
 	FirstName     *string   `db:"first_name" json:"firstName"`
@@ -18,7 +18,6 @@ type User struct {
 
 // NewUser represents a new user request
 type NewUser struct {
-	Auth0ID       string  `json:"auth0Id" validate:"required"`
 	Email         string  `json:"email" validate:"required"`
 	FirstName     *string `json:"firstName" validate:"required"`
 	EmailVerified bool    `json:"emailVerified"`

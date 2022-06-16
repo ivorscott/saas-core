@@ -5,6 +5,7 @@ import "time"
 // Invite represents a team invitation
 type Invite struct {
 	ID         string    `db:"invite_id" json:"id"`
+	TenantID   string    `db:"tenant_id" json:"tenantId"`
 	UserID     string    `db:"user_id" json:"userId"`
 	TeamID     string    `db:"team_id" json:"teamId"`
 	Read       bool      `db:"read" json:"read"`
