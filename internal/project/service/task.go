@@ -39,7 +39,7 @@ func (ts *TaskService) Create(ctx context.Context, task model.NewTask, projectID
 
 // List lists a task.
 func (ts *TaskService) List(ctx context.Context, projectID string) ([]model.Task, error) {
-	return ts.List(ctx, projectID)
+	return ts.repo.List(ctx, projectID)
 }
 
 // Retrieve retrieves a task.

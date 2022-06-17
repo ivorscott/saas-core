@@ -83,7 +83,7 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 	defer Close()
 
 	stmt := `
-		select 
+		select
 			task_id, key, seq, title, points, content, assigned_to,
 			attachments, comments, project_id, updated_at, created_at
 		from tasks
@@ -94,8 +94,22 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 	if err != nil {
 		return nil, fmt.Errorf("error selecting tasks: %w", err)
 	}
+
 	for rows.Next() {
-		err = rows.Scan(&t.ID, &t.Key, &t.Seq, &t.Title, &t.Points, &t.Content, &t.AssignedTo, (*pq.StringArray)(&t.Attachments), (*pq.StringArray)(&t.Comments), &t.ProjectID, &t.UpdatedAt, &t.CreatedAt)
+		err = rows.Scan(
+			&t.ID,
+			&t.Key,
+			&t.Seq,
+			&t.Title,
+			&t.Points,
+			&t.Content,
+			&t.AssignedTo,
+			(*pq.StringArray)(&t.Attachments),
+			(*pq.StringArray)(&t.Comments),
+			&t.ProjectID,
+			&t.UpdatedAt,
+			&t.CreatedAt,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row into struct: %w", err)
 		}
@@ -172,7 +186,7 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid stri
 		insert into tasks (
 			task_id, tenant_id, key, title, content, assigned_to, 
 			attachments, comments, project_id, updated_at, created_at
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $0)
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 
 	if _, err = conn.ExecContext(
@@ -251,6 +265,7 @@ func (tr *TaskRepository) Update(ctx context.Context, tid string, update model.U
 		pq.Array(t.Comments),
 		pq.Array(t.Attachments),
 		now.UTC(),
+		t.ID,
 	); err != nil {
 		return t, fmt.Errorf("error updating task: %s: %w", tid, err)
 	}

@@ -42,10 +42,6 @@ func (th *TaskHandler) List(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if list == nil {
-		list = make([]model.Task, 0)
-	}
-
 	return web.Respond(r.Context(), w, list, http.StatusOK)
 }
 
