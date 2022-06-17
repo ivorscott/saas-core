@@ -17,7 +17,7 @@ var ErrMissingTenantID = errors.New("missing tenant id")
 
 func Authenticate(log *zap.Logger, r *http.Request, region string, userPoolClientID string) (*http.Request, error) {
 	authHeader := r.Header.Get("Authorization")
-	token, sub, tenantID, err := verifyToken(r.Context(), authHeader, region, userPoolClientID)
+	token, sub, tenantID, err := verifyToken(r.Context(), log, authHeader, region, userPoolClientID)
 	if err != nil {
 		log.Info("api authentication failed", zap.Error(err))
 		return nil, NewRequestError(err, http.StatusUnauthorized)
@@ -33,7 +33,7 @@ func getToken(authHeader string) (string, error) {
 	return "", ErrInvalidAuthorizationHeader
 }
 
-func verifyToken(ctx context.Context, authHeader string, region string, userPoolClientID string) (token string, sub string, tenantID string, err error) {
+func verifyToken(ctx context.Context, logger *zap.Logger, authHeader string, region string, userPoolClientID string) (token string, sub string, tenantID string, err error) {
 	token, err = getToken(authHeader)
 	if err != nil {
 		return
@@ -52,14 +52,16 @@ func verifyToken(ctx context.Context, authHeader string, region string, userPool
 		jwt.WithKeySet(keySet),
 		jwt.WithValidate(true),
 	)
+	if err != nil {
+		logger.Error("", zap.Error(err))
+		return
+	}
 	sub = parsedToken.Subject()
 
 	val, ok := parsedToken.Get("custom:tenant-id")
-	if !ok {
-		err = ErrMissingTenantID
-		return
+	if ok {
+		tenantID = val.(string)
 	}
-	tenantID = val.(string)
 
 	return
 }
