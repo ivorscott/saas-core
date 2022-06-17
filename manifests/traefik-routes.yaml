@@ -1,0 +1,61 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: stripprefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /api
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: admin
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`admin.devpie.io`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: mic-admin-svc
+          port: 4000
+  tls:
+    secretName: tls-secret
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`api.devpie.io`) && PathPrefix(`/api/registration`)
+      kind: Rule
+      services:
+      - name: mic-registration-svc
+        port: 4001
+      middlewares:
+        - name: headers
+        - name: stripprefix
+    - match: Host(`api.devpie.io`) && PathPrefix(`/api/users`)
+      kind: Rule
+      services:
+        - name: mic-user-svc
+          port: 4005
+      middlewares:
+        - name: headers
+        - name: stripprefix
+    - match: Host(`api.devpie.io`) && PathPrefix(`/api/projects`)
+      kind: Rule
+      services:
+        - name: mic-project-svc
+          port: 4004
+      middlewares:
+        - name: headers
+        - name: stripprefix
+  tls:
+    secretName: tls-secret

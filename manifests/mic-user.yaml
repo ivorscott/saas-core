@@ -58,7 +58,7 @@ spec:
               value: "5432"
             - name: USER_DB_NAME
               value: user
-            - name: USER_POSTGRES_DISABLE_TLS
+            - name: USER_DB_DISABLE_TLS
               value: "true"
 ---
 apiVersion: v1

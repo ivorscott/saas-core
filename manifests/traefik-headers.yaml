@@ -1,0 +1,24 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: headers
+spec:
+  headers:
+    accessControlAllowMethods:
+      - "GET"
+      - "OPTIONS"
+      - "POST"
+      - "PUT"
+      - "PATCH"
+      - "DELETE"
+    accessControlAllowOriginList:
+      - "http://localhost:3000"
+    accessControlAllowHeaders:
+      - "Accept"
+      - "Authorization"
+      - "Cache-Control"
+      - "Content-Type"
+      - "Strict-Transport-Security"
+    accessControlMaxAge: 100
+    addVaryHeader: true
+---
