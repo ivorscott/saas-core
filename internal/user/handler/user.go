@@ -46,7 +46,7 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) error {
 
 	user, err := uh.userService.RetrieveMe(r.Context(), values.Metadata.UserID)
 	if err != nil {
-		user, err = uh.userService.AddSeat(r.Context(), nu, time.Now())
+		err = uh.userService.AddSeat(r.Context(), nu, time.Now())
 		if err != nil {
 			return fmt.Errorf("failed to create user: %w", err)
 		}

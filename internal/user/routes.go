@@ -46,17 +46,17 @@ func Routes(
 
 	app := web.NewApp(mux, shutdown, log, middleware...)
 
-	app.Handle(http.MethodPost, "/", userHandler.Create)
-	app.Handle(http.MethodGet, "/me", userHandler.RetrieveMe)
-	app.Handle(http.MethodPost, "/teams", teamHandler.Create)
-	app.Handle(http.MethodPost, "/teams/{tid}/project/{pid}", teamHandler.AssignExistingTeam)
-	app.Handle(http.MethodPost, "/teams/{tid}/leave", teamHandler.LeaveTeam)
-	app.Handle(http.MethodGet, "/teams", teamHandler.List)
-	app.Handle(http.MethodGet, "/teams/{tid}", teamHandler.Retrieve)
-	app.Handle(http.MethodPost, "/teams/{tid}/invites", teamHandler.CreateInvite)
-	app.Handle(http.MethodGet, "/teams/invites", teamHandler.RetrieveInvites)
-	app.Handle(http.MethodGet, "/teams/{tid}/members", membershipHandler.RetrieveMemberships)
-	app.Handle(http.MethodPatch, "/teams/{tid}/invites/{iid}", teamHandler.UpdateInvite)
+	app.Handle(http.MethodPost, "/users/", userHandler.Create)
+	app.Handle(http.MethodGet, "/users/me", userHandler.RetrieveMe)
+	app.Handle(http.MethodPost, "/users/teams", teamHandler.Create)
+	app.Handle(http.MethodPost, "/users/teams/{tid}/project/{pid}", teamHandler.AssignExistingTeam)
+	app.Handle(http.MethodPost, "/users/teams/{tid}/leave", teamHandler.LeaveTeam)
+	app.Handle(http.MethodGet, "/users/teams", teamHandler.List)
+	app.Handle(http.MethodGet, "/users/teams/{tid}", teamHandler.Retrieve)
+	app.Handle(http.MethodPost, "/users/teams/{tid}/invites", teamHandler.CreateInvite)
+	app.Handle(http.MethodGet, "/users/teams/invites", teamHandler.RetrieveInvites)
+	app.Handle(http.MethodGet, "/users/teams/{tid}/members", membershipHandler.RetrieveMemberships)
+	app.Handle(http.MethodPatch, "/users/teams/{tid}/invites/{iid}", teamHandler.UpdateInvite)
 
 	return mux
 }

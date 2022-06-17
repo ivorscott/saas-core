@@ -11,12 +11,12 @@ import (
 
 type projectRepository interface {
 	RetrieveTeamID(ctx context.Context, pid string) (string, error)
-	Retrieve(ctx context.Context, pid, uid string) (model.Project, error)
-	RetrieveShared(ctx context.Context, pid, uid string) (model.Project, error)
-	List(ctx context.Context, uid string) ([]model.Project, error)
-	Create(ctx context.Context, np model.NewProject, uid string, now time.Time) (model.Project, error)
-	Update(ctx context.Context, pid, uid string, update model.UpdateProject, now time.Time) (model.Project, error)
-	Delete(ctx context.Context, pid, uid string) error
+	Retrieve(ctx context.Context, pid string) (model.Project, error)
+	RetrieveShared(ctx context.Context, pid string) (model.Project, error)
+	List(ctx context.Context) ([]model.Project, error)
+	Create(ctx context.Context, np model.NewProject, now time.Time) (model.Project, error)
+	Update(ctx context.Context, pid string, update model.UpdateProject, now time.Time) (model.Project, error)
+	Delete(ctx context.Context, pid string) error
 }
 
 // ProjectService is responsible for managing project business logic.
@@ -34,31 +34,31 @@ func NewProjectService(logger *zap.Logger, repo projectRepository) *ProjectServi
 }
 
 // List lists projects.
-func (ps *ProjectService) List(ctx context.Context, userID string) ([]model.Project, error) {
-	return ps.repo.List(ctx, userID)
+func (ps *ProjectService) List(ctx context.Context) ([]model.Project, error) {
+	return ps.repo.List(ctx)
 }
 
 // Retrieve retrieves an owned project.
-func (ps *ProjectService) Retrieve(ctx context.Context, projectID string, userID string) (model.Project, error) {
-	return ps.repo.Retrieve(ctx, projectID, userID)
+func (ps *ProjectService) Retrieve(ctx context.Context, projectID string) (model.Project, error) {
+	return ps.repo.Retrieve(ctx, projectID)
 }
 
 // RetrieveShared retrieves shared a project.
-func (ps *ProjectService) RetrieveShared(ctx context.Context, projectID string, userID string) (model.Project, error) {
-	return ps.repo.RetrieveShared(ctx, projectID, userID)
+func (ps *ProjectService) RetrieveShared(ctx context.Context, projectID string) (model.Project, error) {
+	return ps.repo.RetrieveShared(ctx, projectID)
 }
 
 // Create creates a project.
-func (ps *ProjectService) Create(ctx context.Context, project model.NewProject, userID string, now time.Time) (model.Project, error) {
-	return ps.repo.Create(ctx, project, userID, now)
+func (ps *ProjectService) Create(ctx context.Context, project model.NewProject, now time.Time) (model.Project, error) {
+	return ps.repo.Create(ctx, project, now)
 }
 
 // Update updates a project.
-func (ps *ProjectService) Update(ctx context.Context, projectID string, userID string, update model.UpdateProject, now time.Time) (model.Project, error) {
-	return ps.repo.Update(ctx, projectID, userID, update, now)
+func (ps *ProjectService) Update(ctx context.Context, projectID string, update model.UpdateProject, now time.Time) (model.Project, error) {
+	return ps.repo.Update(ctx, projectID, update, now)
 }
 
 // Delete deletes a project.
-func (ps *ProjectService) Delete(ctx context.Context, projectID string, userID string) error {
-	return ps.repo.Delete(ctx, projectID, userID)
+func (ps *ProjectService) Delete(ctx context.Context, projectID string) error {
+	return ps.repo.Delete(ctx, projectID)
 }

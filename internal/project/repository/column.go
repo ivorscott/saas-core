@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/devpies/saas-core/pkg/web"
 
 	"time"
 
@@ -50,7 +51,7 @@ func (cr *ColumnRepository) Retrieve(ctx context.Context, cid string) (model.Col
 	stmt := `
 		select column_id, project_id, title, column_name, task_ids, updated_at, created_at
 		from columns
-		where column_id = ?
+		where column_id = $1
 	`
 
 	err = conn.QueryRowxContext(ctx, stmt, cid).Scan(&c.ID, &c.ProjectID, &c.Title, &c.ColumnName, (*pq.StringArray)(&c.TaskIDS), &c.UpdatedAt, &c.CreatedAt)
@@ -82,7 +83,7 @@ func (cr *ColumnRepository) List(ctx context.Context, pid string) ([]model.Colum
 		select 
 			column_id, project_id, title, column_name, task_ids, updated_at, created_at	
 		from columns
-		where project_id = ?
+		where project_id = $1
 	`
 
 	rows, err := conn.QueryxContext(ctx, stmt, pid)
@@ -107,14 +108,9 @@ func (cr *ColumnRepository) Create(ctx context.Context, nc model.NewColumn, now 
 		err error
 	)
 
-	c = model.Column{
-		ID:         uuid.New().String(),
-		Title:      nc.Title,
-		ColumnName: nc.ColumnName,
-		TaskIDS:    make([]string, 0),
-		ProjectID:  nc.ProjectID,
-		UpdatedAt:  now.UTC(),
-		CreatedAt:  now.UTC(),
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return c, web.CtxErr()
 	}
 
 	conn, Close, err := cr.pg.GetConnection(ctx)
@@ -124,12 +120,25 @@ func (cr *ColumnRepository) Create(ctx context.Context, nc model.NewColumn, now 
 	defer Close()
 
 	stmt := `
-		insert into columns (column_id, title, column_name, task_ids, project_ids, project_id, updated_at, created_at)
-		values (?,?,?,?,?,?,?,?)
+		insert into columns (
+			column_id, tenant_id, title, column_name, task_ids,
+			project_id, updated_at, created_at
+	 	) values ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 
-	if _, err = conn.ExecContext(ctx, stmt, c.ID, c.Title, c.ColumnName, pq.Array(c.TaskIDS), c.ProjectID, c.UpdatedAt, c.CreatedAt); err != nil {
-		return c, fmt.Errorf("error inserting column: %v :%w", nc, err)
+	if _, err = conn.ExecContext(
+		ctx,
+		stmt,
+		uuid.New().String(),
+		values.Metadata.TenantID,
+		nc.Title,
+		nc.ColumnName,
+		pq.Array(make([]string, 0)),
+		nc.ProjectID,
+		now.UTC(),
+		now.UTC(),
+	); err != nil {
+		return c, fmt.Errorf("error inserting column: %+v :%w", nc, err)
 	}
 
 	return c, nil
@@ -165,10 +174,10 @@ func (cr *ColumnRepository) Update(ctx context.Context, cid string, uc model.Upd
 	stmt := `
 		update columns
 		set
-			title = ?,
-			task_ids = ?,
-			updated_at = ?
-		where column_id = ?
+			title = $1,
+			task_ids = $2,
+			updated_at = $3
+		where column_id = $4
 	`
 
 	_, err = conn.ExecContext(ctx, stmt, c.Title, pq.Array(c.TaskIDS), now.UTC(), cid)
@@ -193,7 +202,7 @@ func (cr *ColumnRepository) Delete(ctx context.Context, cid string) error {
 	}
 	defer Close()
 
-	stmt := `delete from columns where column_id = ?`
+	stmt := `delete from columns where column_id = $1`
 
 	if _, err = conn.ExecContext(ctx, stmt, cid); err != nil {
 		return fmt.Errorf("error deleting column %s :%w", cid, err)
@@ -216,7 +225,7 @@ func (cr *ColumnRepository) DeleteAll(ctx context.Context, pid string) error {
 	}
 	defer Close()
 
-	stmt := `delete from columns where project_id = ?`
+	stmt := `delete from columns where project_id = $1`
 
 	if _, err = conn.ExecContext(ctx, stmt, pid); err != nil {
 		return fmt.Errorf("error deleting all columns :%w", err)

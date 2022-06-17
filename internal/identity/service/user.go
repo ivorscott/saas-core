@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 
 	"github.com/devpies/saas-core/pkg/msg"
 
@@ -52,7 +53,8 @@ func (rs *UserService) CreateTenantUserFromMessage(ctx context.Context, message 
 		Username:   aws.String(d.Email),
 		UserAttributes: []types.AttributeType{
 			{Name: aws.String("custom:tenant-id"), Value: aws.String(d.ID)},
-			{Name: aws.String("custom:company-name"), Value: aws.String(d.Company)},
+			{Name: aws.String("custom:account-owner"), Value: aws.String("1")},
+			{Name: aws.String("custom:company-name"), Value: aws.String(formatPath(d.Company))},
 			{Name: aws.String("custom:full-name"), Value: aws.String(d.FullName)},
 			{Name: aws.String("email"), Value: aws.String(d.Email)},
 			{Name: aws.String("email_verified"), Value: aws.String("true")},
@@ -63,4 +65,8 @@ func (rs *UserService) CreateTenantUserFromMessage(ctx context.Context, message 
 	}
 	rs.logger.Info("successfully added user")
 	return nil
+}
+
+func formatPath(company string) string {
+	return strings.ToLower(strings.Replace(company, " ", "", -1))
 }

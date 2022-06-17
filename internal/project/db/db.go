@@ -69,8 +69,8 @@ func (r *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func(
 		_ = conn.Close()
 		return nil, nil, err
 	}
-
-	stmt := fmt.Sprintf("set_config('app.current_tenant', %s, false);", values.Metadata.TenantID)
+	r.logger.Info(fmt.Sprintf("tenant-id= %s", values.Metadata.TenantID))
+	stmt := fmt.Sprintf("select set_config('app.current_tenant', '%s', false);", values.Metadata.TenantID)
 
 	_, err = conn.ExecContext(ctx, stmt)
 	if err != nil {

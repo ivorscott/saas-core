@@ -40,7 +40,7 @@ func (mr *MembershipRepository) Create(ctx context.Context, nm model.MembershipC
 
 	stmt := `
 		insert into memberships (membership_id, user_id, team_id, role, updated_at, created_at)
-		values (?,?,?,?,?,?)
+		values ($1, $2, $3, $4, $5, $6)
 	`
 
 	if _, err = conn.ExecContext(ctx, stmt, nm.ID, nm.UserID, nm.TeamID, nm.Role, nm.UpdatedAt, nm.CreatedAt); err != nil {
@@ -70,7 +70,7 @@ func (mr *MembershipRepository) RetrieveByID(ctx context.Context, mid string) (m
 	stmt := `
 		select membership_id, user_id, team_id, role, updated_at, created_at
 		from memberships
-		where membership_id = ?
+		where membership_id = $1
 	`
 
 	if err = conn.SelectContext(ctx, &m, stmt, mid); err != nil {
@@ -106,7 +106,7 @@ func (mr *MembershipRepository) Retrieve(ctx context.Context, uid, tid string) (
 	stmt := `
 		select membership_id, user_id, team_id, role, updated_at, created_at
 		from memberships
-		where user_id = ? AND team_id = ?
+		where user_id = $1 AND team_id = $2
 	`
 
 	err = conn.QueryRowxContext(ctx, stmt, uid, tid).StructScan(&m)
@@ -137,9 +137,9 @@ func (mr *MembershipRepository) Update(ctx context.Context, mid string, update m
 	stmt := `
 		update memberships
 		set 
-			role = ?,
-			updated_at = ?
-		where memberships_id = ?
+			role = $1,
+			updated_at = $2
+		where memberships_id = $3
 	`
 
 	if _, err = conn.ExecContext(ctx, stmt, update.Role, update.UpdatedAt, mid); err != nil {
@@ -163,7 +163,7 @@ func (mr *MembershipRepository) Delete(ctx context.Context, mid string) error {
 	}
 	defer Close()
 
-	stmt := `delete from memberships where membership_id = ?`
+	stmt := `delete from memberships where membership_id = $1`
 
 	if _, err = conn.ExecContext(ctx, stmt, mid); err != nil {
 		return fmt.Errorf("error deleting membership :%w", err)

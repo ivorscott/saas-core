@@ -84,3 +84,4 @@ require (
 )
 
 replace github.com/devpies/saas-core/pkg/msg v0.0.0-20220615105442-b996c3802f91 => ./pkg/msg
+replace github.com/devpies/saas-core/pkg/web v0.0.0-20220615105442-b996c3802f91 => ./pkg/web

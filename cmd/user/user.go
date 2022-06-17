@@ -1,4 +1,4 @@
-package user
+package main
 
 import "github.com/devpies/saas-core/internal/user"
 

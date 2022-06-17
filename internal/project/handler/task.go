@@ -76,18 +76,13 @@ func (th *TaskHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 	cid := chi.URLParam(r, "cid")
 
-	values, ok := web.FromContext(r.Context())
-	if !ok {
-		return web.CtxErr()
-	}
-
 	var nt model.NewTask
 	if err = web.Decode(r, &nt); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
 	}
 
-	task, err := th.taskService.Create(r.Context(), nt, pid, values.Metadata.UserID, time.Now())
+	task, err := th.taskService.Create(r.Context(), nt, pid, time.Now())
 	if err != nil {
 		return err
 	}

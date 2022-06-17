@@ -68,7 +68,7 @@ func Run() error {
 
 	// Execute latest migration.
 	if err = res.MigrateUp(pg.URL.String()); err != nil {
-		logger.Error("error connecting to admin database", zap.Error(err))
+		logger.Error("error connecting to project database", zap.Error(err))
 		return err
 	}
 
