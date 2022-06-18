@@ -10,7 +10,7 @@ import (
 type userRepository interface {
 	Create(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error)
 	RetrieveByEmail(ctx context.Context, email string) (model.User, error)
-	RetrieveMe(ctx context.Context, uid string) (model.User, error)
+	RetrieveMe(ctx context.Context) (model.User, error)
 }
 
 // UserService manages the user business operations.
@@ -39,6 +39,6 @@ func (us *UserService) RetrieveByEmail(ctx context.Context, email string) (model
 	return us.userRepo.RetrieveByEmail(ctx, email)
 }
 
-func (us *UserService) RetrieveMe(ctx context.Context, uid string) (model.User, error) {
-	return us.userRepo.RetrieveMe(ctx, uid)
+func (us *UserService) RetrieveMe(ctx context.Context) (model.User, error) {
+	return us.userRepo.RetrieveMe(ctx)
 }

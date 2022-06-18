@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"github.com/devpies/saas-core/internal/user/model"
+	"github.com/devpies/saas-core/pkg/msg"
 	"go.uber.org/zap"
 )
 
@@ -44,4 +45,76 @@ func (ps *ProjectService) Update(ctx context.Context, pid string, update model.U
 
 func (ps *ProjectService) Delete(ctx context.Context, pid string) error {
 	return ps.projectRepo.Delete(ctx, pid)
+}
+
+func (ps *ProjectService) CreateFromEvent(ctx context.Context, message interface{}) error {
+	m, err := msg.Bytes(message)
+	if err != nil {
+		return err
+	}
+	event, err := msg.UnmarshalProjectCreatedEvent(m)
+	if err != nil {
+		return err
+	}
+
+	data := newProject(event.Data)
+
+	return ps.projectRepo.Create(ctx, data)
+}
+
+func (ps *ProjectService) UpdateFromEvent(ctx context.Context, message interface{}) error {
+	m, err := msg.Bytes(message)
+	if err != nil {
+		return err
+	}
+	event, err := msg.UnmarshalProjectUpdatedEvent(m)
+	if err != nil {
+		return err
+	}
+
+	data := newUpdateProject(event.Data)
+
+	return ps.projectRepo.Update(ctx, event.Data.ProjectID, data)
+}
+
+func (ps *ProjectService) DeleteFromEvent(ctx context.Context, message interface{}) error {
+	m, err := msg.Bytes(message)
+	if err != nil {
+		return err
+	}
+	event, err := msg.UnmarshalProjectDeletedEvent(m)
+	if err != nil {
+		return err
+	}
+
+	return ps.projectRepo.Delete(ctx, event.Data.ProjectID)
+}
+
+func newProject(data msg.ProjectCreatedEventData) model.ProjectCopy {
+	return model.ProjectCopy{
+		ID:          data.ProjectID,
+		TenantID:    data.TenantID,
+		Name:        data.Name,
+		Prefix:      data.Prefix,
+		Description: data.Description,
+		TeamID:      data.TeamID,
+		UserID:      data.UserID,
+		Active:      data.Active,
+		Public:      data.Public,
+		ColumnOrder: data.ColumnOrder,
+		UpdatedAt:   msg.ParseTime(data.UpdatedAt),
+		CreatedAt:   msg.ParseTime(data.CreatedAt),
+	}
+}
+
+func newUpdateProject(data msg.ProjectUpdatedEventData) model.UpdateProjectCopy {
+	return model.UpdateProjectCopy{
+		Name:        data.Name,
+		Active:      data.Active,
+		Public:      data.Public,
+		TeamID:      data.TeamID,
+		ColumnOrder: data.ColumnOrder,
+		Description: data.Description,
+		UpdatedAt:   msg.ParseTime(data.UpdatedAt),
+	}
 }

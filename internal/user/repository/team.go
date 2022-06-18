@@ -32,13 +32,18 @@ func NewTeamRepository(
 }
 
 // Create inserts a new team into the database.
-func (tr *TeamRepository) Create(ctx context.Context, nt model.NewTeam, uid string, now time.Time) (model.Team, error) {
+func (tr *TeamRepository) Create(ctx context.Context, nt model.NewTeam, now time.Time) (model.Team, error) {
 	var (
 		t   model.Team
 		err error
 	)
 
-	if _, err = uuid.Parse(uid); err != nil {
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return t, web.CtxErr()
+	}
+
+	if _, err = uuid.Parse(values.Metadata.UserID); err != nil {
 		return t, fail.ErrInvalidID
 	}
 
@@ -48,14 +53,9 @@ func (tr *TeamRepository) Create(ctx context.Context, nt model.NewTeam, uid stri
 	}
 	defer Close()
 
-	values, ok := web.FromContext(ctx)
-	if !ok {
-		return t, web.CtxErr()
-	}
-
 	stmt := `
 		insert into teams (team_id, tenant_id, name, user_id, updated_at, created_at)
-		values (?,?,?,?,?,?)
+		values ($1, $2, $3, $4, $5, $6)
 	`
 	if _, err = conn.ExecContext(
 		ctx,
@@ -63,7 +63,7 @@ func (tr *TeamRepository) Create(ctx context.Context, nt model.NewTeam, uid stri
 		uuid.New().String(),
 		values.Metadata.TenantID,
 		nt.Name,
-		uid,
+		values.Metadata.UserID,
 		now.UTC(),
 		now.UTC(),
 	); err != nil {
@@ -93,7 +93,7 @@ func (tr *TeamRepository) Retrieve(ctx context.Context, tid string) (model.Team,
 		select 
 		    team_id, tenant_id, user_id, name, updated_at, created_at
 		from teams
-		where team_id = ?
+		where team_id = $1
 	`
 
 	if err = conn.SelectContext(ctx, &t, stmt, tid); err != nil {
@@ -127,7 +127,7 @@ func (tr *TeamRepository) List(ctx context.Context, uid string) ([]model.Team, e
 			select 
 			    team_id, tenant_id, user_id, name, updated_at, created_at
 			from teams
-			where team_id IN (SELECT team_id FROM memberships WHERE user_id = ?)
+			where team_id IN (SELECT team_id FROM memberships WHERE user_id = $1)
 	`
 
 	if err = conn.SelectContext(ctx, &ts, stmt, uid); err != nil {

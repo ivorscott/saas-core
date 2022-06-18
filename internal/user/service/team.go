@@ -8,7 +8,7 @@ import (
 )
 
 type teamRepository interface {
-	Create(ctx context.Context, nt model.NewTeam, uid string, now time.Time) (model.Team, error)
+	Create(ctx context.Context, nt model.NewTeam, now time.Time) (model.Team, error)
 	Retrieve(ctx context.Context, tid string) (model.Team, error)
 	List(ctx context.Context, uid string) ([]model.Team, error)
 }
@@ -34,8 +34,8 @@ func NewTeamService(
 	}
 }
 
-func (ts *TeamService) Create(ctx context.Context, nt model.NewTeam, uid string, now time.Time) (model.Team, error) {
-	return ts.teamRepo.Create(ctx, nt, uid, now)
+func (ts *TeamService) Create(ctx context.Context, nt model.NewTeam, now time.Time) (model.Team, error) {
+	return ts.teamRepo.Create(ctx, nt, now)
 }
 
 func (ts *TeamService) Retrieve(ctx context.Context, tid string) (model.Team, error) {

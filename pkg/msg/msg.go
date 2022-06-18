@@ -3,6 +3,7 @@ package msg
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 const (
@@ -62,4 +63,13 @@ type Msg struct {
 	Data     interface{} `json:"data"`
 	Metadata Metadata    `json:"metadata"`
 	Type     MessageType `json:"type"`
+}
+
+// ParseTime converts a time string to time.Time.
+func ParseTime(ts string) time.Time {
+	t, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", ts)
+	if err != nil {
+		panic("failed to parse time")
+	}
+	return t
 }

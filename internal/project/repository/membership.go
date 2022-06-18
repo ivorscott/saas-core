@@ -39,11 +39,21 @@ func (mr *MembershipRepository) Create(ctx context.Context, nm model.MembershipC
 	defer Close()
 
 	stmt := `
-		insert into memberships (membership_id, user_id, team_id, role, updated_at, created_at)
+		insert into memberships (membership_id, tenant_id, user_id, team_id, role, updated_at, created_at)
 		values ($1, $2, $3, $4, $5, $6)
 	`
 
-	if _, err = conn.ExecContext(ctx, stmt, nm.ID, nm.UserID, nm.TeamID, nm.Role, nm.UpdatedAt, nm.CreatedAt); err != nil {
+	if _, err = conn.ExecContext(
+		ctx,
+		stmt,
+		nm.ID,
+		nm.TenantID,
+		nm.UserID,
+		nm.TeamID,
+		nm.Role,
+		nm.UpdatedAt,
+		nm.CreatedAt,
+	); err != nil {
 		return fmt.Errorf("error inserting membership: %w", err)
 	}
 
@@ -68,7 +78,7 @@ func (mr *MembershipRepository) RetrieveByID(ctx context.Context, mid string) (m
 	defer Close()
 
 	stmt := `
-		select membership_id, user_id, team_id, role, updated_at, created_at
+		select membership_id, tenant_id, user_id, team_id, role, updated_at, created_at
 		from memberships
 		where membership_id = $1
 	`
@@ -104,7 +114,7 @@ func (mr *MembershipRepository) Retrieve(ctx context.Context, uid, tid string) (
 	defer Close()
 
 	stmt := `
-		select membership_id, user_id, team_id, role, updated_at, created_at
+		select membership_id, tenant_id, user_id, team_id, role, updated_at, created_at
 		from memberships
 		where user_id = $1 AND team_id = $2
 	`
@@ -118,6 +128,29 @@ func (mr *MembershipRepository) Retrieve(ctx context.Context, uid, tid string) (
 		return m, err
 	}
 	return m, nil
+}
+
+// Delete deletes a membership in the database.
+func (mr *MembershipRepository) Delete(ctx context.Context, mid string) error {
+	var err error
+
+	if _, err = uuid.Parse(mid); err != nil {
+		return fail.ErrInvalidID
+	}
+
+	conn, Close, err := mr.pg.GetConnection(ctx)
+	if err != nil {
+		return fail.ErrConnectionFailed
+	}
+	defer Close()
+
+	stmt := `delete from memberships where membership_id = $1`
+
+	if _, err = conn.ExecContext(ctx, stmt, mid); err != nil {
+		return fmt.Errorf("error deleting membership :%w", err)
+	}
+
+	return nil
 }
 
 // Update updates a membership in the database.
@@ -144,29 +177,6 @@ func (mr *MembershipRepository) Update(ctx context.Context, mid string, update m
 
 	if _, err = conn.ExecContext(ctx, stmt, update.Role, update.UpdatedAt, mid); err != nil {
 		return fmt.Errorf("error updating membership :%w", err)
-	}
-
-	return nil
-}
-
-// Delete deletes a membership in the database.
-func (mr *MembershipRepository) Delete(ctx context.Context, mid string) error {
-	var err error
-
-	if _, err = uuid.Parse(mid); err != nil {
-		return fail.ErrInvalidID
-	}
-
-	conn, Close, err := mr.pg.GetConnection(ctx)
-	if err != nil {
-		return fail.ErrConnectionFailed
-	}
-	defer Close()
-
-	stmt := `delete from memberships where membership_id = $1`
-
-	if _, err = conn.ExecContext(ctx, stmt, mid); err != nil {
-		return fmt.Errorf("error deleting membership :%w", err)
 	}
 
 	return nil

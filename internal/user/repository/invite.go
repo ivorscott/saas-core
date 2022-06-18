@@ -49,7 +49,7 @@ func (ir *InviteRepository) Create(ctx context.Context, ni model.NewInvite, now 
 
 	stmt := `
 			insert into invites (invite_id, tenant_id, user_id, team_id, read, accepted, expiration, updated_at, created_at)
-			values (?,?,?,?,?,?,?,?,?)
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
 	if _, err = conn.ExecContext(
@@ -96,7 +96,7 @@ func (ir *InviteRepository) RetrieveInvite(ctx context.Context, uid string, iid 
 		select 
 		    invite_id, tenant_id, user_id, team_id, read, accepted, expiration, updated_at, created_at
 		from invites
-		where user_id = ? AND invites = ?
+		where user_id = $1 and invites = $2
 	`
 
 	err = conn.QueryRowxContext(ctx, stmt, uid, iid).StructScan(&i)
@@ -130,7 +130,7 @@ func (ir *InviteRepository) RetrieveInvites(ctx context.Context, uid string) ([]
 	stmt := `
 			select invite_id, tenant_id, user_id, team_id, read, accepted, expiration, updated_at, created_at
 			from invites
-			where user_id = ? and expiration > now()
+			where user_id = $1 and expiration > now()
 	`
 
 	if err = conn.SelectContext(ctx, &is, stmt, uid); err != nil {
@@ -164,7 +164,7 @@ func (ir *InviteRepository) Update(ctx context.Context, update model.UpdateInvit
 	i.Accepted = update.Accepted
 	i.UpdatedAt = now.UTC()
 
-	stmt := `update invites set read = true, accepted = ?, updated_at = ? where user_id = ? and invite_id = ?`
+	stmt := `update invites set read = true, accepted = $1, updated_at = $2 where user_id = $3 and invite_id = $4`
 
 	_, err = conn.ExecContext(
 		ctx,

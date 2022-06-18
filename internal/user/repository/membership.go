@@ -49,7 +49,7 @@ func (mr *MembershipRepository) Create(ctx context.Context, nm model.NewMembersh
 
 	stmt := `
 			insert into memberships (membership_id, tenant_id, user_id, team_id, role, updated_at, created_at)
-			values (?,?,?,?,?,?,?)
+			values ($1, $2, $3, $4, $5, $6, $7)
 	`
 
 	if _, err = conn.ExecContext(
@@ -86,12 +86,12 @@ func (mr *MembershipRepository) RetrieveMemberships(ctx context.Context, uid, ti
 	}
 
 	stmt := `
-			select 
-			    membership_id, tenant_id, user_id, team_id, email,
-			    first_name, last_name, picture, role, m.updated_at, m.created_at
-			from memberships m
-			join users using(user_id)
-			where team_id = ? 
+		select 
+			membership_id, tenant_id, user_id, team_id, email,
+			first_name, last_name, picture, role, m.updated_at, m.created_at
+		from memberships m
+		join users using(user_id)
+		where team_id = $1 
 	`
 
 	if err = conn.SelectContext(ctx, &ms, stmt, tid); err != nil {
@@ -128,7 +128,7 @@ func (mr *MembershipRepository) RetrieveMembership(ctx context.Context, uid, tid
 	stmt := `
 			select membership_id, tenant_id, user_id, team_id, role, updated_at, created_at 
 			from memberships
-			where team_id = ? AND user_id = ?
+			where team_id = $1 and user_id = $2
 	`
 
 	err = conn.QueryRowxContext(ctx, stmt, tid, uid).StructScan(&m)
@@ -161,7 +161,7 @@ func (mr *MembershipRepository) Update(ctx context.Context, tid string, update m
 		m.Role = *update.Role
 	}
 
-	stmt := `update memberships set role = ?, updated_at = ? where team_id = ? AND user_id = ?`
+	stmt := `update memberships set role = $1, updated_at = $2 where team_id = $3 and user_id = $4`
 
 	_, err = conn.ExecContext(
 		ctx,
@@ -196,7 +196,7 @@ func (mr *MembershipRepository) Delete(ctx context.Context, tid, uid string) (st
 		return id, fail.ErrNotFound
 	}
 
-	stmt := `delete from memberships where team_id = ? AND user_id = ? returning membership_id`
+	stmt := `delete from memberships where team_id = $1 and user_id = $2 returning membership_id`
 
 	row := conn.QueryRowxContext(ctx, stmt, tid, uid)
 

@@ -21,7 +21,7 @@ import (
 )
 
 type teamService interface {
-	Create(ctx context.Context, nt model.NewTeam, uid string, now time.Time) (model.Team, error)
+	Create(ctx context.Context, nt model.NewTeam, now time.Time) (model.Team, error)
 	Retrieve(ctx context.Context, tid string) (model.Team, error)
 	List(ctx context.Context, uid string) ([]model.Team, error)
 }
@@ -105,7 +105,7 @@ func (th *TeamHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	tm, err := th.teamService.Create(r.Context(), nt, values.Metadata.UserID, time.Now())
+	tm, err := th.teamService.Create(r.Context(), nt, time.Now())
 	if err != nil {
 		return err
 	}

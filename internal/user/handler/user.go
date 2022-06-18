@@ -39,12 +39,7 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	values, ok := web.FromContext(r.Context())
-	if !ok {
-		return web.CtxErr()
-	}
-
-	user, err := uh.userService.RetrieveMe(r.Context(), values.Metadata.UserID)
+	user, err := uh.userService.RetrieveMe(r.Context())
 	if err != nil {
 		err = uh.userService.AddSeat(r.Context(), nu, time.Now())
 		if err != nil {
@@ -68,7 +63,7 @@ func (uh *UserHandler) RetrieveMe(w http.ResponseWriter, r *http.Request) error 
 	if values.Metadata.UserID == "" {
 		return web.NewRequestError(fail.ErrNotFound, http.StatusNotFound)
 	}
-	us, err := uh.userService.RetrieveMe(r.Context(), values.Metadata.UserID)
+	us, err := uh.userService.RetrieveMe(r.Context())
 	if err != nil {
 		switch err {
 		case fail.ErrInvalidID:

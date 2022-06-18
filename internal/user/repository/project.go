@@ -43,10 +43,10 @@ func (pr *ProjectRepository) Create(ctx context.Context, p model.ProjectCopy) er
 	defer Close()
 
 	stmt := `
-			insert into projects (
-				  project_id, tenant_id, name, prefix, description, team_id,
-				  user_id, active, public, column_order, updated_at, created_at
-			) values (?,?,?,?,?,?,?,?,?,?,?,?)
+		insert into projects (
+			  project_id, tenant_id, name, prefix, description, team_id,
+			  user_id, active, public, column_order, updated_at, created_at
+		) values ($1, $2, $3, $4, $5, $6, $7, $7, $8, $9, $10, $11)
 	`
 
 	if _, err = conn.ExecContext(
@@ -89,15 +89,15 @@ func (pr *ProjectRepository) Retrieve(ctx context.Context, pid string) (model.Pr
 	defer Close()
 
 	stmt := `
-			select
-			    project_id, tenant_id, name, prefix,description,
-			    team_id, user_id, active, public, column_order, updated_at, created_at 
-			from projects
-			where project_id = ?
+		select
+			project_id, tenant_id, name, prefix, description,
+			team_id, user_id, active, public, column_order, updated_at, created_at 
+		from projects
+		where project_id = $1
 	`
 
 	row := conn.QueryRowxContext(ctx, stmt, pid)
-	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
+	err = row.Scan(&p.ID, &p.TenantID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return p, fail.ErrNotFound
@@ -141,16 +141,16 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 	}
 
 	stmt := `
-			update projects
-			set 
-			    name = ?,
-			    description = ?,
-			    active = ?,
-			    public = ?,
-			    column_order = ?,
-			    team_id = ?,
-			    updated_at = ?
-			where project_id = ?
+		update projects
+		set 
+			name = $1,
+			description = $2,
+			active = $3,
+			public = $4,
+			column_order = $5,
+			team_id = $6,
+			updated_at = $7
+		where project_id = $8
 	`
 
 	_, err = conn.ExecContext(
@@ -186,7 +186,7 @@ func (pr *ProjectRepository) Delete(ctx context.Context, pid string) error {
 	}
 	defer Close()
 
-	stmt := `delete from projects where project_id = ?`
+	stmt := `delete from projects where project_id = $1`
 
 	if _, err = conn.ExecContext(ctx, stmt, pid); err != nil {
 		return err

@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"github.com/nats-io/nats.go"
 	"net/http"
 	"os"
 	"os/signal"
@@ -101,9 +102,31 @@ func Run() error {
 		userService,
 	)
 	membershipHandler := handler.NewMembershipHandler(logger, membershipService)
+	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
 
 	go func() {
-		// Listen to project events to save a redundant copy in the database.
+		//Listen to project events to save a redundant copy in the database.
+		jetStream.Listen(
+			string(msg.TypeProjectCreated),
+			msg.SubjectProjectCreated,
+			"project_consumer",
+			projectService.CreateFromEvent,
+			opts...,
+		)
+		jetStream.Listen(
+			string(msg.TypeProjectUpdated),
+			msg.SubjectProjectUpdated,
+			"project_consumer",
+			projectService.UpdateFromEvent,
+			opts...,
+		)
+		jetStream.Listen(
+			string(msg.TypeProjectDeleted),
+			msg.SubjectProjectDeleted,
+			"project_consumer",
+			projectService.DeleteFromEvent,
+			opts...,
+		)
 	}()
 
 	srv := &http.Server{

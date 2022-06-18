@@ -99,6 +99,7 @@ type MembershipCreatedEvent struct {
 }
 
 type MembershipCreatedEventData struct {
+	TenantID     string `json:"tenantId"`
 	CreatedAt    string `json:"createdAt"`
 	MembershipID string `json:"membershipId"`
 	Role         string `json:"role"`
@@ -114,6 +115,7 @@ type MembershipCreatedForProjectEvent struct {
 }
 
 type MembershipCreatedForProjectEventData struct {
+	TenantID     string `json:"tenantId"`
 	CreatedAt    string `json:"createdAt"`
 	MembershipID string `json:"membershipId"`
 	ProjectID    string `json:"projectId"`
@@ -152,6 +154,7 @@ type ProjectCreatedEvent struct {
 }
 
 type ProjectCreatedEventData struct {
+	TenantID    string   `json:"tenantId"`
 	Active      bool     `json:"active"`
 	ColumnOrder []string `json:"columnOrder"`
 	CreatedAt   string   `json:"createdAt"`
