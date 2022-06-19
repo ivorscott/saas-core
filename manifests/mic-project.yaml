@@ -58,7 +58,7 @@ spec:
               value: "5432"
             - name: PROJECT_DB_NAME
               value: project
-            - name: PROJECT_POSTGRES_DISABLE_TLS
+            - name: PROJECT_DB_DISABLE_TLS
               value: "true"
 ---
 apiVersion: v1

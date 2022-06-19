@@ -13,8 +13,19 @@ type Config struct {
 		Port            string        `conf:"default:4001"`
 	}
 	Cognito struct {
-		UserPoolClientID string `conf:"required"`
-		Region           string `conf:"default:eu-central-1"`
+		SharedUserPoolClientID string `conf:"required"`
+		Region                 string `conf:"default:eu-central-1"`
+	}
+	Sendgrid struct {
+		APIKey string `conf:"default:none"`
+	}
+	DB struct {
+		User       string `conf:"default:postgres,noprint"`
+		Password   string `conf:"default:postgres,noprint"`
+		Host       string `conf:"default:localhost,noprint"`
+		Port       int    `conf:"default:5432,noprint"`
+		Name       string `conf:"default:user,noprint"`
+		DisableTLS bool   `conf:"default:false"`
 	}
 	Nats struct {
 		Address string `conf:"default:127.0.0.1"`

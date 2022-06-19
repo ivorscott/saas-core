@@ -17,12 +17,12 @@ import (
 )
 
 type projectService interface {
-	List(ctx context.Context, userID string) ([]model.Project, error)
-	Retrieve(ctx context.Context, projectID string, userID string) (model.Project, error)
-	RetrieveShared(ctx context.Context, projectID string, userID string) (model.Project, error)
-	Create(ctx context.Context, project model.NewProject, userID string, now time.Time) (model.Project, error)
-	Update(ctx context.Context, projectID string, userID string, update model.UpdateProject, now time.Time) (model.Project, error)
-	Delete(ctx context.Context, projectID string, userID string) error
+	List(ctx context.Context) ([]model.Project, error)
+	Retrieve(ctx context.Context, projectID string) (model.Project, error)
+	RetrieveShared(ctx context.Context, projectID string) (model.Project, error)
+	Create(ctx context.Context, project model.NewProject, now time.Time) (model.Project, error)
+	Update(ctx context.Context, projectID string, update model.UpdateProject, now time.Time) (model.Project, error)
+	Delete(ctx context.Context, projectID string) error
 }
 
 // ProjectHandler handles the project requests.
@@ -53,12 +53,7 @@ func NewProjectHandler(
 
 // List handles project list requests.
 func (ph *ProjectHandler) List(w http.ResponseWriter, r *http.Request) error {
-	values, ok := web.FromContext(r.Context())
-	if !ok {
-		return web.CtxErr()
-	}
-
-	list, err := ph.projectService.List(r.Context(), values.Metadata.UserID)
+	list, err := ph.projectService.List(r.Context())
 	if err != nil {
 		return err
 	}
@@ -68,19 +63,14 @@ func (ph *ProjectHandler) List(w http.ResponseWriter, r *http.Request) error {
 
 // Retrieve handles project retrieval requests.
 func (ph *ProjectHandler) Retrieve(w http.ResponseWriter, r *http.Request) error {
-	values, ok := web.FromContext(r.Context())
-	if !ok {
-		return web.CtxErr()
-	}
-
 	pid := chi.URLParam(r, "pid")
 
-	opr, err := ph.projectService.Retrieve(r.Context(), pid, values.Metadata.UserID)
+	opr, err := ph.projectService.Retrieve(r.Context(), pid)
 	if err == nil {
 		return web.Respond(r.Context(), w, opr, http.StatusOK)
 	}
 
-	spr, err := ph.projectService.RetrieveShared(r.Context(), pid, values.Metadata.UserID)
+	spr, err := ph.projectService.RetrieveShared(r.Context(), pid)
 	if err != nil {
 		switch err {
 		case fail.ErrNotFound:
@@ -88,7 +78,7 @@ func (ph *ProjectHandler) Retrieve(w http.ResponseWriter, r *http.Request) error
 		case fail.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return fmt.Errorf("error updating project %q: %w", pid, err)
+			return fmt.Errorf("error retrieving project %q: %w", pid, err)
 		}
 	}
 
@@ -112,42 +102,17 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	pr, err := ph.projectService.Create(r.Context(), np, values.Metadata.UserID, time.Now())
-	if err != nil {
-		return err
-	}
-
-	e := msg.ProjectCreatedEvent{
-		Data: msg.ProjectCreatedEventData{
-			ProjectID:   pr.ID,
-			Name:        pr.Name,
-			Prefix:      pr.Prefix,
-			Description: pr.Description,
-			TeamID:      pr.TeamID,
-			UserID:      pr.UserID,
-			Active:      pr.Active,
-			Public:      pr.Public,
-			ColumnOrder: pr.ColumnOrder,
-			UpdatedAt:   pr.UpdatedAt.String(),
-			CreatedAt:   pr.CreatedAt.String(),
-		},
-		Type: msg.TypeProjectCreated,
-		Metadata: msg.Metadata{
-			UserID:  values.Metadata.UserID,
-			TraceID: values.Metadata.TraceID,
-		},
-	}
-
-	bytes, err := json.Marshal(e)
+	project, err := ph.projectService.Create(r.Context(), np, time.Now())
 	if err != nil {
 		return err
 	}
 
 	titles := [4]string{"To Do", "In Progress", "Review", "Done"}
 
+	ph.logger.Info(project.ID)
 	for i, title := range titles {
 		nt := model.NewColumn{
-			ProjectID:  pr.ID,
+			ProjectID:  project.ID,
 			Title:      title,
 			ColumnName: fmt.Sprintf(`column-%d`, i+1),
 		}
@@ -157,9 +122,37 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
+	e := msg.ProjectCreatedEvent{
+		Data: msg.ProjectCreatedEventData{
+			ProjectID:   project.ID,
+			TenantID:    project.TenantID,
+			Name:        project.Name,
+			Prefix:      project.Prefix,
+			Description: project.Description,
+			TeamID:      project.TeamID,
+			UserID:      project.UserID,
+			Active:      project.Active,
+			Public:      project.Public,
+			ColumnOrder: project.ColumnOrder,
+			UpdatedAt:   project.UpdatedAt.String(),
+			CreatedAt:   project.CreatedAt.String(),
+		},
+		Type: msg.TypeProjectCreated,
+		Metadata: msg.Metadata{
+			TenantID: values.TenantID,
+			UserID:   values.UserID,
+			TraceID:  values.TraceID,
+		},
+	}
+
+	bytes, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+
 	ph.js.Publish(msg.SubjectProjectCreated, bytes)
 
-	return web.Respond(r.Context(), w, pr, http.StatusCreated)
+	return web.Respond(r.Context(), w, project, http.StatusCreated)
 }
 
 // Update handles project update requests.
@@ -177,7 +170,7 @@ func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("error decoding project update: %w", err)
 	}
 
-	up, err := ph.projectService.Update(r.Context(), pid, values.Metadata.UserID, update, time.Now())
+	up, err := ph.projectService.Update(r.Context(), pid, update, time.Now())
 	if err != nil {
 		switch err {
 		case fail.ErrNotFound:
@@ -202,8 +195,9 @@ func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 			UpdatedAt:   up.UpdatedAt.String(),
 		},
 		Metadata: msg.Metadata{
-			UserID:  values.Metadata.UserID,
-			TraceID: values.Metadata.TraceID,
+			TenantID: values.TenantID,
+			UserID:   values.UserID,
+			TraceID:  values.TraceID,
 		},
 	}
 
@@ -227,8 +221,8 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 		return web.CtxErr()
 	}
 
-	if _, err = ph.projectService.Retrieve(r.Context(), pid, values.Metadata.UserID); err != nil {
-		_, err = ph.projectService.RetrieveShared(r.Context(), pid, values.Metadata.UserID)
+	if _, err = ph.projectService.Retrieve(r.Context(), pid); err != nil {
+		_, err = ph.projectService.RetrieveShared(r.Context(), pid)
 		if err == nil {
 			return web.NewRequestError(err, http.StatusUnauthorized)
 		}
@@ -239,7 +233,7 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	if err = ph.columnService.DeleteAll(r.Context(), pid); err != nil {
 		return err
 	}
-	if err = ph.projectService.Delete(r.Context(), pid, values.Metadata.UserID); err != nil {
+	if err = ph.projectService.Delete(r.Context(), pid); err != nil {
 		switch err {
 		case fail.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
@@ -251,8 +245,9 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	e := msg.ProjectDeletedEvent{
 		Type: msg.TypeProjectDeleted,
 		Metadata: msg.Metadata{
-			TraceID: values.Metadata.TraceID,
-			UserID:  values.Metadata.UserID,
+			TenantID: values.TenantID,
+			TraceID:  values.TraceID,
+			UserID:   values.UserID,
 		},
 		Data: msg.ProjectDeletedEventData{
 			ProjectID: pid,

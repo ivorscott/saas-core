@@ -46,8 +46,8 @@ func (h *HTTPRegistrationClient) Register(ctx context.Context, tenant []byte) (*
 
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
-	request.Header.Set("TraceID", values.Metadata.TraceID)
-	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", values.Metadata.Token))
+	request.Header.Set("TraceID", values.TraceID)
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", values.Token))
 
 	client := &http.Client{}
 	return client.Do(request)

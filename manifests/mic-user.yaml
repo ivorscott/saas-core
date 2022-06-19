@@ -15,7 +15,7 @@ spec:
         - image: user:latest
           name: mic-user
           ports:
-            - containerPort: 4003
+            - containerPort: 4005
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
@@ -31,15 +31,15 @@ spec:
               value: "eu-central-1"
 
             - name: USER_WEB_PORT
-              value: "4003"
+              value: "4005"
             - name: USER_WEB_ADDRESS
               value: "http://localhost"
 
-            - name: USER_COGNITO_USER_POOL_CLIENT_ID
+            - name: USER_COGNITO_SHARED_USER_POOL_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: cognito_user_pool_client_id
+                  key: cognito_shared_user_pool_client_id
             - name: USER_COGNITO_REGION
               value: "eu-central-1"
 
@@ -47,6 +47,19 @@ spec:
               value: "nats-svc"
             - name: USER_NATS_PORT
               value: "4222"
+
+            - name: USER_DB_USER
+              value: postgres
+            - name: USER_DB_PASSWORD
+              value: postgres
+            - name: USER_DB_HOST
+              value: db-user-svc
+            - name: USER_DB_PORT
+              value: "5432"
+            - name: USER_DB_NAME
+              value: user
+            - name: USER_DB_DISABLE_TLS
+              value: "true"
 ---
 apiVersion: v1
 kind: Service
@@ -56,5 +69,5 @@ spec:
   selector:
     app: mic-user
   ports:
-    - port: 4003
-      targetPort: 4003
+    - port: 4005
+      targetPort: 4005

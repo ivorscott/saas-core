@@ -33,13 +33,13 @@ func Routes(
 	middleware := []web.Middleware{
 		mid.Logger(log),
 		mid.Errors(log),
-		mid.Auth(log, config.Cognito.Region, config.Cognito.UserPoolClientID),
+		mid.Auth(log, config.Cognito.Region, config.Cognito.AdminUserPoolClientID),
 		mid.Panics(log),
 	}
 
 	app := web.NewApp(mux, shutdown, log, middleware...)
 
-	app.Handle(http.MethodPost, "/register", registrationHandler.RegisterTenant)
+	app.Handle(http.MethodPost, "/registration/register", registrationHandler.RegisterTenant)
 
 	return mux
 }

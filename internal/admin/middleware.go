@@ -62,7 +62,8 @@ func withAuth(log *zap.Logger, region string, UserPoolClientID string) web.Middl
 	f := func(after web.Handler) web.Handler {
 		h := func(w http.ResponseWriter, r *http.Request) error {
 			if strings.Contains(r.URL.Path, "/admin/api/") {
-				r, err := web.Authenticate(log, r, region, UserPoolClientID)
+				var err error
+				r, err = web.Authenticate(log, r, region, UserPoolClientID)
 				if err != nil {
 					web.Redirect(w, r, "/admin/logout", http.StatusSeeOther)
 					return web.NewRequestError(err, http.StatusUnauthorized)

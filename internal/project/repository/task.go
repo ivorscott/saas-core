@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/devpies/saas-core/pkg/web"
 	"strconv"
 	"strings"
 	"time"
@@ -53,7 +54,7 @@ func (tr *TaskRepository) Retrieve(ctx context.Context, tid string) (model.Task,
 			task_id, key, seq, title, points, content, assigned_to,
 			attachments, comments, project_id, updated_at, created_at
 		from tasks
-		where task_id = ?
+		where task_id = $1
 	`
 
 	err = conn.QueryRowxContext(ctx, stmt, tid).Scan(&t.ID, &t.Key, &t.Seq, &t.Title, &t.Points, &t.Content, &t.AssignedTo, (*pq.StringArray)(&t.Attachments), (*pq.StringArray)(&t.Comments), &t.ProjectID, &t.UpdatedAt, &t.CreatedAt)
@@ -82,19 +83,33 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 	defer Close()
 
 	stmt := `
-		select 
+		select
 			task_id, key, seq, title, points, content, assigned_to,
 			attachments, comments, project_id, updated_at, created_at
 		from tasks
-		where project_id = ?
+		where project_id = $1
 	`
 
 	rows, err := conn.QueryxContext(ctx, stmt, pid)
 	if err != nil {
 		return nil, fmt.Errorf("error selecting tasks: %w", err)
 	}
+
 	for rows.Next() {
-		err = rows.Scan(&t.ID, &t.Key, &t.Seq, &t.Title, &t.Points, &t.Content, &t.AssignedTo, (*pq.StringArray)(&t.Attachments), (*pq.StringArray)(&t.Comments), &t.ProjectID, &t.UpdatedAt, &t.CreatedAt)
+		err = rows.Scan(
+			&t.ID,
+			&t.Key,
+			&t.Seq,
+			&t.Title,
+			&t.Points,
+			&t.Content,
+			&t.AssignedTo,
+			(*pq.StringArray)(&t.Attachments),
+			(*pq.StringArray)(&t.Comments),
+			&t.ProjectID,
+			&t.UpdatedAt,
+			&t.CreatedAt,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row into struct: %w", err)
 		}
@@ -105,7 +120,7 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 }
 
 // Create creates a project task in the database.
-func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid, uid string, now time.Time) (model.Task, error) {
+func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid string, now time.Time) (model.Task, error) {
 	var (
 		t    model.Task
 		last model.Task
@@ -113,10 +128,15 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid, uid
 		err  error
 	)
 
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return t, web.CtxErr()
+	}
+
 	pr := NewProjectRepository(tr.logger, tr.pg)
-	p, err = pr.Retrieve(ctx, pid, uid)
+	p, err = pr.Retrieve(ctx, pid)
 	if err != nil {
-		p, err = pr.RetrieveShared(ctx, pid, uid)
+		p, err = pr.RetrieveShared(ctx, pid)
 		if err != nil {
 			return t, err
 		}
@@ -129,7 +149,7 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid, uid
 	defer Close()
 
 	// Get key from last task created in project.
-	stmt := `select key from tasks where project_id = ? order by created_at desc limit 1`
+	stmt := `select key from tasks where project_id = $1 order by created_at desc limit 1`
 
 	err = conn.QueryRowxContext(ctx, stmt, pid).Scan(&last.Key)
 	if err != nil {
@@ -163,14 +183,17 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid, uid
 	}
 
 	stmt = `
-		insert into tasks (task_id, key, title, content, assigned_to, attachments, comments, project_id, updated_at, created_at)
-		values (?,?,?,?,?,?,?,?,?,?)
+		insert into tasks (
+			task_id, tenant_id, key, title, content, assigned_to, 
+			attachments, comments, project_id, updated_at, created_at
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 
 	if _, err = conn.ExecContext(
 		ctx,
 		stmt,
 		t.ID,
+		values.TenantID,
 		t.Key,
 		t.Title,
 		t.Content,
@@ -224,13 +247,13 @@ func (tr *TaskRepository) Update(ctx context.Context, tid string, update model.U
 	stmt := `
 		update tasks
 		set
-			title = ?,
-			content = ?,
-			assigned_to = ?,
-			comments = ?,
-			attachments = ?,
-			updated_at = ?
-		where task_id = ?
+			title = $1,
+			content = $2,
+			assigned_to = $3,
+			comments = $4,
+			attachments = $5,
+			updated_at = $6
+		where task_id = $7
 	`
 
 	if _, err = conn.ExecContext(
@@ -242,6 +265,7 @@ func (tr *TaskRepository) Update(ctx context.Context, tid string, update model.U
 		pq.Array(t.Comments),
 		pq.Array(t.Attachments),
 		now.UTC(),
+		t.ID,
 	); err != nil {
 		return t, fmt.Errorf("error updating task: %s: %w", tid, err)
 	}
@@ -263,7 +287,7 @@ func (tr *TaskRepository) Delete(ctx context.Context, tid string) error {
 	}
 	defer Close()
 
-	stmt := `delete from tasks where task_id = ?`
+	stmt := `delete from tasks where task_id = $1`
 
 	if _, err = conn.ExecContext(ctx, stmt, tid); err != nil {
 		return fmt.Errorf("error deleting task %s: %w", tid, err)
@@ -286,7 +310,7 @@ func (tr *TaskRepository) DeleteAll(ctx context.Context, pid string) error {
 	}
 	defer Close()
 
-	stmt := `delete from tasks where project_id = ?`
+	stmt := `delete from tasks where project_id = $1`
 
 	if _, err = conn.ExecContext(ctx, stmt, pid); err != nil {
 		return fmt.Errorf("error deleting all tasks: %w", err)

@@ -35,7 +35,7 @@ spec:
             - name: REGISTRATION_WEB_ADDRESS
               value: "http://localhost"
 
-            - name: REGISTRATION_COGNITO_USER_POOL_CLIENT_ID
+            - name: REGISTRATION_COGNITO_ADMIN_USER_POOL_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets

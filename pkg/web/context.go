@@ -10,17 +10,12 @@ import (
 
 // Values carries information about each request.
 type Values struct {
-	Metadata   *Metadata
+	TenantID   string
+	UserID     string
+	Token      string
+	TraceID    string
 	StatusCode int
 	Start      time.Time
-}
-
-// Metadata is the type of value stored in the Context.
-type Metadata struct {
-	TraceID  string
-	UserID   string
-	Token    string
-	TenantID string
 }
 
 // ctxKey represents the type of value for the context key.
@@ -48,12 +43,11 @@ func addContextMetadata(r *http.Request, token string, sub string, tenantID stri
 	}
 
 	if v, ok := FromContext(r.Context()); ok {
-		v.Metadata = &Metadata{
-			TraceID:  traceID,
-			UserID:   sub,
-			Token:    token,
-			TenantID: tenantID,
-		}
+		v.TraceID = traceID
+		v.UserID = sub
+		v.Token = token
+		v.TenantID = tenantID
+
 		ctx := NewContext(r.Context(), v)
 		r = r.WithContext(ctx)
 	}

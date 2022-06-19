@@ -17,7 +17,7 @@ type columnService interface {
 }
 
 type taskService interface {
-	Create(ctx context.Context, task model.NewTask, projectID string, userID string, now time.Time) (model.Task, error)
+	Create(ctx context.Context, task model.NewTask, projectID string, now time.Time) (model.Task, error)
 	List(ctx context.Context, projectID string) ([]model.Task, error)
 	Retrieve(ctx context.Context, taskID string) (model.Task, error)
 	Update(ctx context.Context, taskID string, update model.UpdateTask, now time.Time) (model.Task, error)

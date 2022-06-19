@@ -5,6 +5,7 @@ import "time"
 // MembershipCopy represents a Membership from the users service.
 type MembershipCopy struct {
 	ID        string    `db:"membership_id" json:"membershipId"`
+	TenantID  string    `db:"tenant_id" json:"tenantId"`
 	UserID    string    `db:"user_id" json:"userId"`
 	TeamID    string    `db:"team_id" json:"teamId"`
 	Role      string    `db:"role" json:"role"`

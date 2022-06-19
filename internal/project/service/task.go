@@ -10,7 +10,7 @@ import (
 )
 
 type taskRepository interface {
-	Create(ctx context.Context, nt model.NewTask, pid, uid string, now time.Time) (model.Task, error)
+	Create(ctx context.Context, nt model.NewTask, pid string, now time.Time) (model.Task, error)
 	Retrieve(ctx context.Context, tid string) (model.Task, error)
 	List(ctx context.Context, pid string) ([]model.Task, error)
 	Update(ctx context.Context, tid string, update model.UpdateTask, now time.Time) (model.Task, error)
@@ -33,13 +33,13 @@ func NewTaskService(logger *zap.Logger, repo taskRepository) *TaskService {
 }
 
 // Create creates a task.
-func (ts *TaskService) Create(ctx context.Context, task model.NewTask, projectID string, userID string, now time.Time) (model.Task, error) {
-	return ts.repo.Create(ctx, task, projectID, userID, now)
+func (ts *TaskService) Create(ctx context.Context, task model.NewTask, projectID string, now time.Time) (model.Task, error) {
+	return ts.repo.Create(ctx, task, projectID, now)
 }
 
 // List lists a task.
 func (ts *TaskService) List(ctx context.Context, projectID string) ([]model.Task, error) {
-	return ts.List(ctx, projectID)
+	return ts.repo.List(ctx, projectID)
 }
 
 // Retrieve retrieves a task.
