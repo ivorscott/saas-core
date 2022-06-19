@@ -86,7 +86,7 @@ func Run() error {
 			string(msg.TypeTenantRegistered),
 			msg.SubjectRegistered,
 			"user_consumer",
-			userService.CreateTenantUserFromMessage,
+			userService.CreateTenantUserFromEvent,
 			opts...,
 		)
 	}()

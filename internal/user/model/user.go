@@ -20,8 +20,9 @@ type User struct {
 type NewUser struct {
 	Email         string  `json:"email" validate:"required"`
 	FirstName     *string `json:"firstName" validate:"required"`
-	EmailVerified bool    `json:"emailVerified"`
 	LastName      *string `json:"lastName"`
+	EmailVerified bool    `json:"emailVerified"`
+	Company       string  `json:"company"`
 	Picture       *string `json:"picture"`
 	Locale        *string `json:"locale"`
 }

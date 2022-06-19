@@ -34,8 +34,8 @@ func NewUserService(logger *zap.Logger, cognitoClient cognitoClient) *UserServic
 	}
 }
 
-// CreateTenantUserFromMessage creates a new user from a NATS Message.
-func (rs *UserService) CreateTenantUserFromMessage(ctx context.Context, message interface{}) error {
+// CreateTenantUserFromEvent creates a new user from a NATS Message.
+func (rs *UserService) CreateTenantUserFromEvent(ctx context.Context, message interface{}) error {
 	m, err := msg.Bytes(message)
 	if err != nil {
 		return err

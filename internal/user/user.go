@@ -3,6 +3,8 @@ package user
 import (
 	"context"
 	"fmt"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/nats-io/nats.go"
 	"net/http"
 	"os"
@@ -57,6 +59,13 @@ func Run() error {
 	}
 	defer logger.Sync()
 
+	awsCfg, err := awsConfig.LoadDefaultConfig(context.Background())
+	if err != nil {
+		logger.Error("error loading aws config", zap.Error(err))
+		return err
+	}
+	cognitoClient := cip.NewFromConfig(awsCfg)
+
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	serverErrors := make(chan error, 1)
@@ -84,7 +93,7 @@ func Run() error {
 	membershipRepo := repository.NewMembershipRepository(logger, pg)
 	projectRepo := repository.NewProjectRepository(logger, pg)
 
-	userService := service.NewUserService(logger, userRepo)
+	userService := service.NewUserService(logger, cfg.Cognito.UserPoolClientID, userRepo, cognitoClient)
 	teamService := service.NewTeamService(logger, teamRepo, inviteRepo)
 	membershipService := service.NewMembershipService(logger, membershipRepo)
 	projectService := service.NewProjectService(logger, projectRepo)

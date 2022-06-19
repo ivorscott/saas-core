@@ -27,8 +27,8 @@ func NewUserHandler(
 	}
 }
 
-// Create adds a new seat to the tenant account. The tenant admin is
-// stored automatically through listening to the TENANTS.registered event and a separate concern.
+// Create adds a new seat to the tenant account. Not to be confused with the tenant admin user.
+// The tenant admin user is defined automatically during initial registration of the tenant account.
 func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	var (
 		nu  model.NewUser
@@ -39,16 +39,12 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	user, err := uh.userService.RetrieveMe(r.Context())
+	user, err := uh.userService.AddSeat(r.Context(), nu, time.Now())
 	if err != nil {
-		err = uh.userService.AddSeat(r.Context(), nu, time.Now())
-		if err != nil {
-			return fmt.Errorf("failed to create user: %w", err)
-		}
-		return web.Respond(r.Context(), w, user, http.StatusCreated)
+		return fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return web.Respond(r.Context(), w, nil, http.StatusAccepted)
+	return web.Respond(r.Context(), w, user, http.StatusCreated)
 }
 
 // RetrieveMe retrieves the authenticated user.

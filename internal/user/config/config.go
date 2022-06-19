@@ -13,8 +13,8 @@ type Config struct {
 		Port            string        `conf:"default:4001"`
 	}
 	Cognito struct {
-		SharedUserPoolClientID string `conf:"required"`
-		Region                 string `conf:"default:eu-central-1"`
+		UserPoolClientID string `conf:"required"`
+		Region           string `conf:"default:eu-central-1"`
 	}
 	Sendgrid struct {
 		APIKey string `conf:"default:none"`
