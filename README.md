@@ -87,3 +87,9 @@ nats stream purge # remove all messages
 ```
 https://docs.nats.io/nats-concepts/jetstream/js_walkthrough
 
+
+## Up and Running w/ K8s
+
+1. Start containers: `tilt up`
+2. Port forward traefik ports: `make forward`
+3. Deploy traefik ingress routes`make routes`

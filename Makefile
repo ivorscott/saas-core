@@ -190,6 +190,14 @@ tables:	;@ ## List Dynamodb tables.
 	@aws dynamodb list-tables --endpoint-url http://localhost:30008
 .PHONY: tables
 
+routes: ;@ ##
+	kubectl apply -f ./manifests/traefik-routes.yaml
+.PHONY: routes
+
+forward: ;@ ##
+	kubectl port-forward --address 0.0.0.0 service/traefik 8000:8000 8080:8080 443:4443 -n default
+.PHONY: forward
+
 lint: ;@ ## Run linter.
 	@golangci-lint run
 .PHONY: lint

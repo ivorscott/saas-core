@@ -7,7 +7,6 @@ k8s_yaml([
     './manifests/traefik-crd.yaml',
     './manifests/traefik-depl.yaml',
     './manifests/traefik-svc.yaml',
-    './manifests/traefik-routes.yaml',
     './manifests/traefik-headers.yaml',
     './manifests/mic-identity.yaml',
     './manifests/mic-tenant.yaml',
