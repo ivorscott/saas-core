@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/devpies/saas-core/internal/user/db"
 	"github.com/devpies/saas-core/internal/user/fail"
 	"github.com/devpies/saas-core/internal/user/model"
@@ -56,7 +57,7 @@ func (ir *InviteRepository) Create(ctx context.Context, ni model.NewInvite, now 
 		ctx,
 		stmt,
 		uuid.New().String(),
-		values.Metadata.TenantID,
+		values.TenantID,
 		ni.UserID,
 		ni.TeamID,
 		false,
@@ -72,13 +73,17 @@ func (ir *InviteRepository) Create(ctx context.Context, ni model.NewInvite, now 
 }
 
 // RetrieveInvite retrieves a single invite from the database.
-func (ir *InviteRepository) RetrieveInvite(ctx context.Context, uid string, iid string) (model.Invite, error) {
+func (ir *InviteRepository) RetrieveInvite(ctx context.Context, iid string) (model.Invite, error) {
 	var (
 		i   model.Invite
 		err error
 	)
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return i, web.CtxErr()
+	}
 
-	if _, err = uuid.Parse(uid); err != nil {
+	if _, err = uuid.Parse(values.UserID); err != nil {
 		return i, fail.ErrInvalidID
 	}
 
@@ -99,7 +104,7 @@ func (ir *InviteRepository) RetrieveInvite(ctx context.Context, uid string, iid 
 		where user_id = $1 and invites = $2
 	`
 
-	err = conn.QueryRowxContext(ctx, stmt, uid, iid).StructScan(&i)
+	err = conn.QueryRowxContext(ctx, stmt, values.UserID, iid).StructScan(&i)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return i, fail.ErrNotFound
@@ -111,13 +116,18 @@ func (ir *InviteRepository) RetrieveInvite(ctx context.Context, uid string, iid 
 }
 
 // RetrieveInvites retrieves a set of invites from the database.
-func (ir *InviteRepository) RetrieveInvites(ctx context.Context, uid string) ([]model.Invite, error) {
+func (ir *InviteRepository) RetrieveInvites(ctx context.Context) ([]model.Invite, error) {
 	var (
-		is  []model.Invite
+		i   model.Invite
+		is  = make([]model.Invite, 0)
 		err error
 	)
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return is, web.CtxErr()
+	}
 
-	if _, err = uuid.Parse(uid); err != nil {
+	if _, err = uuid.Parse(values.UserID); err != nil {
 		return is, fail.ErrInvalidID
 	}
 
@@ -133,24 +143,34 @@ func (ir *InviteRepository) RetrieveInvites(ctx context.Context, uid string) ([]
 			where user_id = $1 and expiration > now()
 	`
 
-	if err = conn.SelectContext(ctx, &is, stmt, uid); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fail.ErrNotFound
+	rows, err := conn.QueryContext(ctx, stmt, values.UserID)
+	if err != nil {
+		return is, err
+	}
+	for rows.Next() {
+		err = rows.Scan(&i)
+		if err != nil {
+			return is, fmt.Errorf("error scanning row into struct :%w", err)
 		}
-		return nil, err
+		is = append(is, i)
 	}
 
 	return is, nil
 }
 
 // Update modifies a single invite in the database.
-func (ir *InviteRepository) Update(ctx context.Context, update model.UpdateInvite, uid, iid string, now time.Time) (model.Invite, error) {
+func (ir *InviteRepository) Update(ctx context.Context, update model.UpdateInvite, iid string, now time.Time) (model.Invite, error) {
 	var (
 		i   model.Invite
 		err error
 	)
 
-	i, err = ir.RetrieveInvite(ctx, uid, iid)
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return i, web.CtxErr()
+	}
+
+	i, err = ir.RetrieveInvite(ctx, iid)
 	if err != nil {
 		return i, fail.ErrNotFound
 	}
@@ -171,7 +191,7 @@ func (ir *InviteRepository) Update(ctx context.Context, update model.UpdateInvit
 		stmt,
 		i.Accepted,
 		i.UpdatedAt,
-		uid,
+		values.UserID,
 		i.ID,
 	)
 	if err != nil {

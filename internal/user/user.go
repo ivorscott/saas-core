@@ -73,9 +73,9 @@ func Run() error {
 		return err
 	}
 
-	jetStream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
+	jetstream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 
-	_ = jetStream.Create(msg.StreamMemberships)
+	_ = jetstream.Create(msg.StreamMemberships)
 
 	// Initialize 3-layered architecture.
 	inviteRepo := repository.NewInviteRepository(logger, pg)
@@ -91,40 +91,31 @@ func Run() error {
 	inviteService := service.NewInviteService(logger, inviteRepo)
 
 	userHandler := handler.NewUserHandler(logger, userService)
-	teamHandler := handler.NewTeamHandler(
-		logger,
-		jetStream,
-		cfg.Sendgrid.APIKey,
-		teamService,
-		projectService,
-		membershipService,
-		inviteService,
-		userService,
-	)
+	teamHandler := handler.NewTeamHandler(logger, jetstream, cfg.Sendgrid.APIKey, teamService, projectService, membershipService, inviteService, userService)
 	membershipHandler := handler.NewMembershipHandler(logger, membershipService)
 	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
 
 	go func() {
 		//Listen to project events to save a redundant copy in the database.
-		jetStream.Listen(
+		jetstream.Listen(
 			string(msg.TypeProjectCreated),
 			msg.SubjectProjectCreated,
-			"project_consumer",
-			projectService.CreateFromEvent,
+			"project_created_consumer",
+			projectService.CreateProjectCopyFromEvent,
 			opts...,
 		)
-		jetStream.Listen(
+		jetstream.Listen(
 			string(msg.TypeProjectUpdated),
 			msg.SubjectProjectUpdated,
-			"project_consumer",
-			projectService.UpdateFromEvent,
+			"project_updated_consumer",
+			projectService.UpdateProjectCopyFromEvent,
 			opts...,
 		)
-		jetStream.Listen(
+		jetstream.Listen(
 			string(msg.TypeProjectDeleted),
 			msg.SubjectProjectDeleted,
-			"project_consumer",
-			projectService.DeleteFromEvent,
+			"project_deleted_consumer",
+			projectService.DeleteProjectCopyFromEvent,
 			opts...,
 		)
 	}()

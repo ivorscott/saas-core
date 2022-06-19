@@ -35,20 +35,15 @@ func Routes(
 	middleware := []web.Middleware{
 		mid.Logger(log),
 		mid.Errors(log),
-		//mid.Auth(log, config.Cognito.Region, config.Cognito.SharedUserPoolClientID),
-		func(h web.Handler) web.Handler {
-			// fake auth middleware
-			// set fake tenant id
-			return h
-		},
+		mid.Auth(log, config.Cognito.Region, config.Cognito.SharedUserPoolClientID),
 		mid.Panics(log),
 	}
 
 	app := web.NewApp(mux, shutdown, log, middleware...)
 
-	app.Handle(http.MethodPost, "/users/", userHandler.Create)
+	//app.Handle(http.MethodPost, "/users/", userHandler.Create)
 	app.Handle(http.MethodGet, "/users/me", userHandler.RetrieveMe)
-	app.Handle(http.MethodPost, "/users/teams", teamHandler.Create)
+	app.Handle(http.MethodPost, "/users/teams", teamHandler.CreateTeamForProject)
 	app.Handle(http.MethodPost, "/users/teams/{tid}/project/{pid}", teamHandler.AssignExistingTeam)
 	app.Handle(http.MethodPost, "/users/teams/{tid}/leave", teamHandler.LeaveTeam)
 	app.Handle(http.MethodGet, "/users/teams", teamHandler.List)

@@ -27,12 +27,12 @@ func NewInviteService(
 func (is *InviteService) Create(ctx context.Context, ni model.NewInvite, now time.Time) (model.Invite, error) {
 	return is.inviteRepo.Create(ctx, ni, now)
 }
-func (is *InviteService) RetrieveInvite(ctx context.Context, uid string, iid string) (model.Invite, error) {
-	return is.inviteRepo.RetrieveInvite(ctx, uid, iid)
+func (is *InviteService) RetrieveInvite(ctx context.Context, iid string) (model.Invite, error) {
+	return is.inviteRepo.RetrieveInvite(ctx, iid)
 }
-func (is *InviteService) RetrieveInvites(ctx context.Context, uid string) ([]model.Invite, error) {
-	return is.inviteRepo.RetrieveInvites(ctx, uid)
+func (is *InviteService) RetrieveInvites(ctx context.Context) ([]model.Invite, error) {
+	return is.inviteRepo.RetrieveInvites(ctx)
 }
-func (is *InviteService) Update(ctx context.Context, update model.UpdateInvite, uid, iid string, now time.Time) (model.Invite, error) {
-	return is.inviteRepo.Update(ctx, update, uid, iid, now)
+func (is *InviteService) Update(ctx context.Context, update model.UpdateInvite, iid string, now time.Time) (model.Invite, error) {
+	return is.inviteRepo.Update(ctx, update, iid, now)
 }

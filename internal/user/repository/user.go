@@ -71,7 +71,7 @@ func (ur *UserRepository) Create(ctx context.Context, nu model.NewUser, now time
 		ctx,
 		stmt,
 		u.ID,
-		values.Metadata.TenantID,
+		values.TenantID,
 		u.Email,
 		u.EmailVerified,
 		u.FirstName,
@@ -107,7 +107,7 @@ func (ur *UserRepository) RetrieveByEmail(ctx context.Context, email string) (mo
 	stmt := `
 			select 
 			    user_id, tenant_id, email, first_name, last_name,
-			    email_verification, locale, picture, updated_at, created_at
+			    email_verified, locale, picture, updated_at, created_at
 			from users
 			where email = $1
 	`
@@ -134,7 +134,7 @@ func (ur *UserRepository) RetrieveMe(ctx context.Context) (model.User, error) {
 		return u, web.CtxErr()
 	}
 
-	if _, err = uuid.Parse(values.Metadata.UserID); err != nil {
+	if _, err = uuid.Parse(values.UserID); err != nil {
 		return u, fail.ErrInvalidID
 	}
 
@@ -145,14 +145,14 @@ func (ur *UserRepository) RetrieveMe(ctx context.Context) (model.User, error) {
 	defer Close()
 
 	stmt := `
-			select 
-			    user_id, tenant_id, email, first_name, last_name,
-			    email_verification, locale, picture, updated_at, created_at
-			from users
-			where user_id = $1
+		select 
+			user_id, tenant_id, email, first_name, last_name,
+			email_verified, locale, picture, updated_at, created_at
+		from users
+		where user_id = $1
 	`
 
-	if err = conn.SelectContext(ctx, &u, stmt, values.Metadata.UserID); err != nil {
+	if err = conn.GetContext(ctx, &u, stmt, values.UserID); err != nil {
 		if err == sql.ErrNoRows {
 			return u, fail.ErrNotFound
 		}

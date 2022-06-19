@@ -16,6 +16,7 @@ type Membership struct {
 // MembershipEnhanced represents a membership enhanced with user details
 type MembershipEnhanced struct {
 	ID        string    `db:"membership_id" json:"id"`
+	TenantID  string    `db:"tenant_id" json:"tenantId"`
 	UserID    string    `db:"user_id" json:"userId"`
 	FirstName *string   `db:"first_name" json:"firstName"`
 	LastName  *string   `db:"last_name" json:"lastName"`

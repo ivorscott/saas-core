@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/devpies/saas-core/internal/user/db"
 	"github.com/devpies/saas-core/internal/user/fail"
 	"github.com/devpies/saas-core/internal/user/model"
@@ -52,16 +53,25 @@ func (mr *MembershipRepository) Create(ctx context.Context, nm model.NewMembersh
 			values ($1, $2, $3, $4, $5, $6, $7)
 	`
 
+	m = model.Membership{
+		ID:        uuid.New().String(),
+		TenantID:  values.TenantID,
+		UserID:    nm.UserID,
+		TeamID:    nm.TeamID,
+		Role:      nm.Role,
+		UpdatedAt: now.UTC(),
+		CreatedAt: now.UTC(),
+	}
 	if _, err = conn.ExecContext(
 		ctx,
 		stmt,
-		uuid.New().String(),
-		values.Metadata.TenantID,
-		nm.UserID,
-		nm.TeamID,
-		nm.Role,
-		now.UTC(),
-		now.UTC(),
+		m.ID,
+		m.TenantID,
+		m.UserID,
+		m.TeamID,
+		m.Role,
+		m.UpdatedAt,
+		m.CreatedAt,
 	); err != nil {
 		return m, err
 	}
@@ -70,52 +80,66 @@ func (mr *MembershipRepository) Create(ctx context.Context, nm model.NewMembersh
 }
 
 // RetrieveMemberships retrieves a set of memberships from the database.
-func (mr *MembershipRepository) RetrieveMemberships(ctx context.Context, uid, tid string) ([]model.MembershipEnhanced, error) {
+func (mr *MembershipRepository) RetrieveMemberships(ctx context.Context, tid string) ([]model.MembershipEnhanced, error) {
 	var (
-		ms  []model.MembershipEnhanced
+		m   model.MembershipEnhanced
+		ms  = make([]model.MembershipEnhanced, 0)
 		err error
 	)
+
 	conn, Close, err := mr.pg.GetConnection(ctx)
 	if err != nil {
 		return ms, fail.ErrConnectionFailed
 	}
 	defer Close()
 
-	if _, err = mr.RetrieveMembership(ctx, uid, tid); err != nil {
+	// Verify user has membership first.
+	if _, err = mr.RetrieveMembership(ctx, tid); err != nil {
 		return ms, err
 	}
 
 	stmt := `
 		select 
-			membership_id, tenant_id, user_id, team_id, email,
+			membership_id, m.tenant_id, user_id, team_id, email,
 			first_name, last_name, picture, role, m.updated_at, m.created_at
 		from memberships m
 		join users using(user_id)
 		where team_id = $1 
 	`
-
-	if err = conn.SelectContext(ctx, &ms, stmt, tid); err != nil {
+	rows, err := conn.QueryxContext(ctx, stmt, tid)
+	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fail.ErrNotFound
+			return ms, nil
 		}
-		return nil, err
+		return ms, err
+	}
+	for rows.Next() {
+		err = rows.StructScan(&m)
+		if err != nil {
+			return ms, fmt.Errorf("error decoding struct: %w", err)
+		}
+		ms = append(ms, m)
 	}
 
 	return ms, nil
 }
 
-// RetrieveMembership retrieves a single membership from the database.
-func (mr *MembershipRepository) RetrieveMembership(ctx context.Context, uid, tid string) (model.Membership, error) {
+func (mr *MembershipRepository) RetrieveMembership(ctx context.Context, tid string) (model.Membership, error) {
 	var (
 		m   model.Membership
 		err error
 	)
 
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return m, web.CtxErr()
+	}
+
 	if _, err = uuid.Parse(tid); err != nil {
 		return m, fail.ErrInvalidID
 	}
 
-	if _, err = uuid.Parse(uid); err != nil {
+	if _, err = uuid.Parse(values.UserID); err != nil {
 		return m, fail.ErrInvalidID
 	}
 
@@ -131,10 +155,10 @@ func (mr *MembershipRepository) RetrieveMembership(ctx context.Context, uid, tid
 			where team_id = $1 and user_id = $2
 	`
 
-	err = conn.QueryRowxContext(ctx, stmt, tid, uid).StructScan(&m)
+	err = conn.QueryRowxContext(ctx, stmt, tid, values.UserID).StructScan(&m)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return m, fail.ErrNotFound
+			return m, nil
 		}
 		return m, err
 	}
@@ -143,10 +167,15 @@ func (mr *MembershipRepository) RetrieveMembership(ctx context.Context, uid, tid
 }
 
 // Update modifies a membership in the database.
-func (mr *MembershipRepository) Update(ctx context.Context, tid string, update model.UpdateMembership, uid string, now time.Time) error {
+func (mr *MembershipRepository) Update(ctx context.Context, tid string, update model.UpdateMembership, now time.Time) error {
 	var err error
 
-	m, err := mr.RetrieveMembership(ctx, tid, uid)
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return web.CtxErr()
+	}
+
+	m, err := mr.RetrieveMembership(ctx, tid)
 	if err != nil {
 		return err
 	}
@@ -169,7 +198,7 @@ func (mr *MembershipRepository) Update(ctx context.Context, tid string, update m
 		m.Role,
 		now.UTC(),
 		tid,
-		uid,
+		values.UserID,
 	)
 	if err != nil {
 		return err
@@ -179,11 +208,16 @@ func (mr *MembershipRepository) Update(ctx context.Context, tid string, update m
 }
 
 // Delete removes a membership from the database.
-func (mr *MembershipRepository) Delete(ctx context.Context, tid, uid string) (string, error) {
+func (mr *MembershipRepository) Delete(ctx context.Context, tid string) (string, error) {
 	var (
 		id  string
 		err error
 	)
+
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return id, web.CtxErr()
+	}
 
 	conn, Close, err := mr.pg.GetConnection(ctx)
 	if err != nil {
@@ -191,14 +225,14 @@ func (mr *MembershipRepository) Delete(ctx context.Context, tid, uid string) (st
 	}
 	defer Close()
 
-	_, err = mr.RetrieveMembership(ctx, tid, uid)
+	_, err = mr.RetrieveMembership(ctx, tid)
 	if err != nil {
 		return id, fail.ErrNotFound
 	}
 
 	stmt := `delete from memberships where team_id = $1 and user_id = $2 returning membership_id`
 
-	row := conn.QueryRowxContext(ctx, stmt, tid, uid)
+	row := conn.QueryRowxContext(ctx, stmt, tid, values.UserID)
 
 	if err = row.Scan(&id); err != nil {
 		return id, err

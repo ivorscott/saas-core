@@ -70,8 +70,7 @@ func (r *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func(
 		return nil, nil, err
 	}
 
-	stmt := fmt.Sprintf("set_config('app.current_tenant', %s, false);", values.Metadata.TenantID)
-
+	stmt := fmt.Sprintf("select set_config('app.current_tenant', '%s', false);", values.TenantID)
 	_, err = conn.ExecContext(ctx, stmt)
 	if err != nil {
 		r.logger.Error("setting session variable failed", zap.Error(err))

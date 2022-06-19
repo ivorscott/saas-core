@@ -10,7 +10,7 @@ import (
 type teamRepository interface {
 	Create(ctx context.Context, nt model.NewTeam, now time.Time) (model.Team, error)
 	Retrieve(ctx context.Context, tid string) (model.Team, error)
-	List(ctx context.Context, uid string) ([]model.Team, error)
+	List(ctx context.Context) ([]model.Team, error)
 }
 
 // TeamService manages the team business operations.
@@ -42,6 +42,6 @@ func (ts *TeamService) Retrieve(ctx context.Context, tid string) (model.Team, er
 	return ts.teamRepo.Retrieve(ctx, tid)
 }
 
-func (ts *TeamService) List(ctx context.Context, uid string) ([]model.Team, error) {
-	return ts.teamRepo.List(ctx, uid)
+func (ts *TeamService) List(ctx context.Context) ([]model.Team, error) {
+	return ts.teamRepo.List(ctx)
 }

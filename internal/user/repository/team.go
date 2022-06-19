@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/devpies/saas-core/internal/user/db"
@@ -43,7 +44,7 @@ func (tr *TeamRepository) Create(ctx context.Context, nt model.NewTeam, now time
 		return t, web.CtxErr()
 	}
 
-	if _, err = uuid.Parse(values.Metadata.UserID); err != nil {
+	if _, err = uuid.Parse(values.UserID); err != nil {
 		return t, fail.ErrInvalidID
 	}
 
@@ -53,6 +54,15 @@ func (tr *TeamRepository) Create(ctx context.Context, nt model.NewTeam, now time
 	}
 	defer Close()
 
+	t = model.Team{
+		ID:        uuid.New().String(),
+		TenantID:  values.TenantID,
+		Name:      nt.Name,
+		UserID:    values.UserID,
+		UpdatedAt: now.UTC(),
+		CreatedAt: now.UTC(),
+	}
+
 	stmt := `
 		insert into teams (team_id, tenant_id, name, user_id, updated_at, created_at)
 		values ($1, $2, $3, $4, $5, $6)
@@ -60,12 +70,12 @@ func (tr *TeamRepository) Create(ctx context.Context, nt model.NewTeam, now time
 	if _, err = conn.ExecContext(
 		ctx,
 		stmt,
-		uuid.New().String(),
-		values.Metadata.TenantID,
-		nt.Name,
-		values.Metadata.UserID,
-		now.UTC(),
-		now.UTC(),
+		t.ID,
+		t.TenantID,
+		t.Name,
+		t.UserID,
+		t.UpdatedAt,
+		t.CreatedAt,
 	); err != nil {
 		return t, err
 	}
@@ -89,6 +99,7 @@ func (tr *TeamRepository) Retrieve(ctx context.Context, tid string) (model.Team,
 		return t, fail.ErrConnectionFailed
 	}
 	defer Close()
+
 	stmt := `
 		select 
 		    team_id, tenant_id, user_id, name, updated_at, created_at
@@ -96,7 +107,7 @@ func (tr *TeamRepository) Retrieve(ctx context.Context, tid string) (model.Team,
 		where team_id = $1
 	`
 
-	if err = conn.SelectContext(ctx, &t, stmt, tid); err != nil {
+	if err = conn.GetContext(ctx, &t, stmt, tid); err != nil {
 		if err == sql.ErrNoRows {
 			return t, fail.ErrNotFound
 		}
@@ -107,13 +118,19 @@ func (tr *TeamRepository) Retrieve(ctx context.Context, tid string) (model.Team,
 }
 
 // List retrieves a set of teams from the database.
-func (tr *TeamRepository) List(ctx context.Context, uid string) ([]model.Team, error) {
+func (tr *TeamRepository) List(ctx context.Context) ([]model.Team, error) {
 	var (
-		ts  []model.Team
+		t   model.Team
+		ts  = make([]model.Team, 0)
 		err error
 	)
 
-	if _, err = uuid.Parse(uid); err != nil {
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return ts, web.CtxErr()
+	}
+
+	if _, err = uuid.Parse(values.UserID); err != nil {
 		return ts, fail.ErrInvalidID
 	}
 
@@ -124,17 +141,22 @@ func (tr *TeamRepository) List(ctx context.Context, uid string) ([]model.Team, e
 	defer Close()
 
 	stmt := `
-			select 
-			    team_id, tenant_id, user_id, name, updated_at, created_at
-			from teams
-			where team_id IN (SELECT team_id FROM memberships WHERE user_id = $1)
+		select
+			team_id, tenant_id, user_id, name, updated_at, created_at
+		from teams
+		where team_id in (select team_id from memberships where user_id = $1)
 	`
 
-	if err = conn.SelectContext(ctx, &ts, stmt, uid); err != nil {
-		if err == sql.ErrNoRows {
-			return ts, fail.ErrNotFound
-		}
+	rows, err := conn.QueryxContext(ctx, stmt, values.UserID)
+	if err != nil {
 		return ts, err
+	}
+	for rows.Next() {
+		err = rows.StructScan(&t)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row into struct :%w", err)
+		}
+		ts = append(ts, t)
 	}
 
 	return ts, nil

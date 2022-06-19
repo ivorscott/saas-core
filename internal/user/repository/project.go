@@ -6,7 +6,6 @@ import (
 	"github.com/devpies/saas-core/internal/user/db"
 	"github.com/devpies/saas-core/internal/user/fail"
 	"github.com/devpies/saas-core/internal/user/model"
-	"github.com/devpies/saas-core/pkg/web"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"go.uber.org/zap"
@@ -31,11 +30,6 @@ func NewProjectRepository(
 
 // Create inserts a new project into the database.
 func (pr *ProjectRepository) Create(ctx context.Context, p model.ProjectCopy) error {
-	values, ok := web.FromContext(ctx)
-	if !ok {
-		return web.CtxErr()
-	}
-
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
 		return fail.ErrConnectionFailed
@@ -46,14 +40,14 @@ func (pr *ProjectRepository) Create(ctx context.Context, p model.ProjectCopy) er
 		insert into projects (
 			  project_id, tenant_id, name, prefix, description, team_id,
 			  user_id, active, public, column_order, updated_at, created_at
-		) values ($1, $2, $3, $4, $5, $6, $7, $7, $8, $9, $10, $11)
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
 	if _, err = conn.ExecContext(
 		ctx,
 		stmt,
 		p.ID,
-		values.Metadata.TenantID,
+		p.TenantID,
 		p.Name,
 		p.Prefix,
 		p.Description,

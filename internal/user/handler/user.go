@@ -60,9 +60,10 @@ func (uh *UserHandler) RetrieveMe(w http.ResponseWriter, r *http.Request) error 
 		return web.CtxErr()
 	}
 
-	if values.Metadata.UserID == "" {
+	if values.UserID == "" {
 		return web.NewRequestError(fail.ErrNotFound, http.StatusNotFound)
 	}
+
 	us, err := uh.userService.RetrieveMe(r.Context())
 	if err != nil {
 		switch err {

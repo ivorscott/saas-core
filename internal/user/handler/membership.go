@@ -14,10 +14,10 @@ import (
 
 type membershipService interface {
 	Create(ctx context.Context, nm model.NewMembership, now time.Time) (model.Membership, error)
-	RetrieveMemberships(ctx context.Context, uid, tid string) ([]model.MembershipEnhanced, error)
-	RetrieveMembership(ctx context.Context, uid, tid string) (model.Membership, error)
-	Update(ctx context.Context, tid string, update model.UpdateMembership, uid string, now time.Time) error
-	Delete(ctx context.Context, tid, uid string) (string, error)
+	RetrieveMemberships(ctx context.Context, tid string) ([]model.MembershipEnhanced, error)
+	RetrieveMembership(ctx context.Context, tid string) (model.Membership, error)
+	Update(ctx context.Context, tid string, update model.UpdateMembership, now time.Time) error
+	Delete(ctx context.Context, tid string) (string, error)
 }
 
 // MembershipHandler handles the membership requests.
@@ -39,14 +39,9 @@ func NewMembershipHandler(
 
 // RetrieveMemberships retrieves all memberships for the authenticated user.
 func (mh *MembershipHandler) RetrieveMemberships(w http.ResponseWriter, r *http.Request) error {
-	values, ok := web.FromContext(r.Context())
-	if !ok {
-		return web.CtxErr()
-	}
-
 	tid := chi.URLParam(r, "tid")
 
-	ms, err := mh.membershipService.RetrieveMemberships(r.Context(), values.Metadata.UserID, tid)
+	ms, err := mh.membershipService.RetrieveMemberships(r.Context(), tid)
 	if err != nil {
 		switch err {
 		case fail.ErrInvalidID:
@@ -54,8 +49,8 @@ func (mh *MembershipHandler) RetrieveMemberships(w http.ResponseWriter, r *http.
 		case fail.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
+			return fmt.Errorf("failed to retrieve memberships: %w", err)
 		}
-		return fmt.Errorf("failed to retrieve memberships: %w", err)
 	}
 
 	return web.Respond(r.Context(), w, ms, http.StatusOK)

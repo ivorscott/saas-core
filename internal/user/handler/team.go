@@ -23,7 +23,7 @@ import (
 type teamService interface {
 	Create(ctx context.Context, nt model.NewTeam, now time.Time) (model.Team, error)
 	Retrieve(ctx context.Context, tid string) (model.Team, error)
-	List(ctx context.Context, uid string) ([]model.Team, error)
+	List(ctx context.Context) ([]model.Team, error)
 }
 
 type projectService interface {
@@ -35,9 +35,9 @@ type projectService interface {
 
 type inviteService interface {
 	Create(ctx context.Context, ni model.NewInvite, now time.Time) (model.Invite, error)
-	RetrieveInvite(ctx context.Context, uid string, iid string) (model.Invite, error)
-	RetrieveInvites(ctx context.Context, uid string) ([]model.Invite, error)
-	Update(ctx context.Context, update model.UpdateInvite, uid, iid string, now time.Time) (model.Invite, error)
+	RetrieveInvite(ctx context.Context, iid string) (model.Invite, error)
+	RetrieveInvites(ctx context.Context) ([]model.Invite, error)
+	Update(ctx context.Context, update model.UpdateInvite, iid string, now time.Time) (model.Invite, error)
 }
 
 type publisher interface {
@@ -79,8 +79,8 @@ func NewTeamHandler(
 	}
 }
 
-// Create creates a new team for a project.
-func (th *TeamHandler) Create(w http.ResponseWriter, r *http.Request) error {
+// CreateTeamForProject creates a new team for a project.
+func (th *TeamHandler) CreateTeamForProject(w http.ResponseWriter, r *http.Request) error {
 	values, ok := web.FromContext(r.Context())
 	if !ok {
 		return web.CtxErr()
@@ -111,7 +111,7 @@ func (th *TeamHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	nm := model.NewMembership{
-		UserID: values.Metadata.UserID,
+		UserID: values.UserID,
 		TeamID: tm.ID,
 		Role:   role.String(),
 	}
@@ -129,10 +129,11 @@ func (th *TeamHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	e := msg.MembershipCreatedForProjectEvent{
-		Type: msg.TypeMembershipCreatedForProject,
-		Data: msg.MembershipCreatedForProjectEventData{
+	e := msg.TeamAssignedEvent{
+		Type: msg.TypeTeamAssignedEventType,
+		Data: msg.TeamAssignedEventData{
 			MembershipID: m.ID,
+			TenantID:     values.TenantID,
 			TeamID:       m.TeamID,
 			Role:         m.Role,
 			UserID:       m.UserID,
@@ -141,8 +142,9 @@ func (th *TeamHandler) Create(w http.ResponseWriter, r *http.Request) error {
 			CreatedAt:    m.CreatedAt.String(),
 		},
 		Metadata: msg.Metadata{
-			TraceID: values.Metadata.TraceID,
-			UserID:  values.Metadata.UserID,
+			TenantID: values.TenantID,
+			TraceID:  values.TraceID,
+			UserID:   values.UserID,
 		},
 	}
 
@@ -151,7 +153,7 @@ func (th *TeamHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	th.js.Publish(msg.SubjectMembershipForProject, bytes)
+	th.js.Publish(msg.SubjectProjectTeamAssigned, bytes)
 
 	if err != nil {
 		return err
@@ -169,7 +171,7 @@ func (th *TeamHandler) AssignExistingTeam(w http.ResponseWriter, r *http.Request
 
 	tid := chi.URLParam(r, "tid")
 	pid := chi.URLParam(r, "pid")
-	uid := values.Metadata.UserID
+	uid := values.UserID
 
 	tm, err := th.teamService.Retrieve(r.Context(), tid)
 	if err != nil {
@@ -207,8 +209,9 @@ func (th *TeamHandler) AssignExistingTeam(w http.ResponseWriter, r *http.Request
 			UpdatedAt: time.Now().UTC().String(),
 		},
 		Metadata: msg.Metadata{
-			TraceID: values.Metadata.TraceID,
-			UserID:  uid,
+			TenantID: values.TenantID,
+			TraceID:  values.TraceID,
+			UserID:   uid,
 		},
 	}
 
@@ -230,9 +233,9 @@ func (th *TeamHandler) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	tid := chi.URLParam(r, "tid")
-	uid := values.Metadata.UserID
+	uid := values.UserID
 
-	mid, err := th.membershipService.Delete(r.Context(), tid, uid)
+	mid, err := th.membershipService.Delete(r.Context(), tid)
 	if err != nil {
 		switch err {
 		case fail.ErrInvalidID:
@@ -249,8 +252,9 @@ func (th *TeamHandler) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 			MembershipID: mid,
 		},
 		Metadata: msg.Metadata{
-			TraceID: values.Metadata.TraceID,
-			UserID:  uid,
+			TenantID: values.TenantID,
+			TraceID:  values.TraceID,
+			UserID:   uid,
 		},
 	}
 
@@ -265,14 +269,7 @@ func (th *TeamHandler) LeaveTeam(w http.ResponseWriter, r *http.Request) error {
 
 // List returns all teams associated with the authenticated user.
 func (th *TeamHandler) List(w http.ResponseWriter, r *http.Request) error {
-	values, ok := web.FromContext(r.Context())
-	if !ok {
-		return web.CtxErr()
-	}
-
-	uid := values.Metadata.UserID
-
-	tms, err := th.teamService.List(r.Context(), uid)
+	teams, err := th.teamService.List(r.Context())
 	if err != nil {
 		switch err {
 		case fail.ErrInvalidID:
@@ -284,11 +281,25 @@ func (th *TeamHandler) List(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	return web.Respond(r.Context(), w, tms, http.StatusOK)
+	return web.Respond(r.Context(), w, teams, http.StatusOK)
 }
 
 func (th *TeamHandler) Retrieve(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	tid := chi.URLParam(r, "tid")
+
+	team, err := th.teamService.Retrieve(r.Context(), tid)
+	if err != nil {
+		switch err {
+		case fail.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusBadRequest)
+		case fail.ErrNotFound:
+			return web.NewRequestError(err, http.StatusNotFound)
+		default:
+			return fmt.Errorf("failed to retrieve team: %w", err)
+		}
+	}
+
+	return web.Respond(r.Context(), w, team, http.StatusOK)
 }
 
 // Sender describes the function dependency required by SendMail
@@ -377,12 +388,7 @@ func (th *TeamHandler) RetrieveInvites(w http.ResponseWriter, r *http.Request) e
 		err error
 	)
 
-	values, ok := web.FromContext(r.Context())
-	if !ok {
-		return web.CtxErr()
-	}
-
-	is, err = th.inviteService.RetrieveInvites(r.Context(), values.Metadata.UserID)
+	is, err = th.inviteService.RetrieveInvites(r.Context())
 	if err != nil {
 		switch err {
 		case fail.ErrInvalidID:
@@ -394,7 +400,7 @@ func (th *TeamHandler) RetrieveInvites(w http.ResponseWriter, r *http.Request) e
 		}
 	}
 
-	var result []model.InviteEnhanced
+	var result = make([]model.InviteEnhanced, 0)
 
 	for _, invite := range is {
 		var team model.Team
@@ -446,11 +452,11 @@ func (th *TeamHandler) UpdateInvite(w http.ResponseWriter, r *http.Request) erro
 		return web.CtxErr()
 	}
 
-	uid := values.Metadata.UserID
+	uid := values.UserID
 	tid := chi.URLParam(r, "tid")
 	iid := chi.URLParam(r, "iid")
 
-	iv, err := th.inviteService.Update(r.Context(), update, uid, iid, time.Now())
+	iv, err := th.inviteService.Update(r.Context(), update, iid, time.Now())
 	if err != nil {
 		switch err {
 		case fail.ErrInvalidID:
@@ -480,6 +486,7 @@ func (th *TeamHandler) UpdateInvite(w http.ResponseWriter, r *http.Request) erro
 			Type: msg.TypeMembershipCreated,
 			Data: msg.MembershipCreatedEventData{
 				MembershipID: m.ID,
+				TenantID:     values.TenantID,
 				TeamID:       m.TeamID,
 				Role:         m.Role,
 				UserID:       m.UserID,
@@ -487,8 +494,9 @@ func (th *TeamHandler) UpdateInvite(w http.ResponseWriter, r *http.Request) erro
 				CreatedAt:    m.CreatedAt.String(),
 			},
 			Metadata: msg.Metadata{
-				TraceID: values.Metadata.TraceID,
-				UserID:  uid,
+				TenantID: values.TenantID,
+				TraceID:  values.TraceID,
+				UserID:   uid,
 			},
 		}
 

@@ -47,7 +47,7 @@ func (ps *ProjectService) Delete(ctx context.Context, pid string) error {
 	return ps.projectRepo.Delete(ctx, pid)
 }
 
-func (ps *ProjectService) CreateFromEvent(ctx context.Context, message interface{}) error {
+func (ps *ProjectService) CreateProjectCopyFromEvent(ctx context.Context, message interface{}) error {
 	m, err := msg.Bytes(message)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (ps *ProjectService) CreateFromEvent(ctx context.Context, message interface
 	return ps.projectRepo.Create(ctx, data)
 }
 
-func (ps *ProjectService) UpdateFromEvent(ctx context.Context, message interface{}) error {
+func (ps *ProjectService) UpdateProjectCopyFromEvent(ctx context.Context, message interface{}) error {
 	m, err := msg.Bytes(message)
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func (ps *ProjectService) UpdateFromEvent(ctx context.Context, message interface
 	return ps.projectRepo.Update(ctx, event.Data.ProjectID, data)
 }
 
-func (ps *ProjectService) DeleteFromEvent(ctx context.Context, message interface{}) error {
+func (ps *ProjectService) DeleteProjectCopyFromEvent(ctx context.Context, message interface{}) error {
 	m, err := msg.Bytes(message)
 	if err != nil {
 		return err
