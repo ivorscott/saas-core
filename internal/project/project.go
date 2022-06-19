@@ -83,9 +83,10 @@ func Run() error {
 	columnRepo := repository.NewColumnRepository(logger, pg)
 	projectRepo := repository.NewProjectRepository(logger, pg)
 	membershipRepo := repository.NewMembershipRepository(logger, pg)
+
 	taskService := service.NewTaskService(logger, taskRepo)
 	columnService := service.NewColumnService(logger, columnRepo)
-	projectService := service.NewProjectService(logger, projectRepo)
+	projectService := service.NewProjectService(logger, projectRepo, membershipRepo)
 	membershipService := service.NewMembershipService(logger, membershipRepo)
 
 	taskHandler := handler.NewTaskHandler(logger, taskService, columnService)
@@ -105,22 +106,29 @@ func Run() error {
 		jetStream.Listen(
 			string(msg.TypeMembershipCreated),
 			msg.SubjectMembershipCreated,
-			"membership_consumer",
-			membershipService.CreateMembershipFromEvent,
+			"membership_created_consumer",
+			membershipService.CreateMembershipCopyFromEvent,
 			opts...,
 		)
 		jetStream.Listen(
 			string(msg.TypeMembershipUpdated),
 			msg.SubjectMembershipUpdated,
-			"membership_consumer",
-			membershipService.UpdateMembershipFromEvent,
+			"membership_updated_consumer",
+			membershipService.UpdateMembershipCopyFromEvent,
 			opts...,
 		)
 		jetStream.Listen(
 			string(msg.TypeMembershipDeleted),
 			msg.SubjectMembershipDeleted,
-			"membership_consumer",
-			membershipService.DeleteMembershipFromEvent,
+			"membership_deleted_consumer",
+			membershipService.DeleteMembershipCopyFromEvent,
+			opts...,
+		)
+		jetStream.Listen(
+			string(msg.TypeTeamAssignedEventType),
+			msg.SubjectProjectTeamAssigned,
+			"project_assigned_consumer",
+			projectService.AssignProjectTeamFromEvent,
 			opts...,
 		)
 	}()

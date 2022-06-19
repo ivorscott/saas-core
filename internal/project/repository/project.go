@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/devpies/saas-core/pkg/web"
+	"github.com/jmoiron/sqlx"
 	"time"
 
 	"github.com/devpies/saas-core/internal/project/db"
@@ -20,6 +21,7 @@ import (
 type ProjectRepository struct {
 	logger *zap.Logger
 	pg     *db.PostgresDatabase
+	runTx  func(ctx context.Context, fn func(*sqlx.Tx) error) error
 }
 
 // NewProjectRepository returns a new ProjectRepository. The database connection is in the context.
@@ -27,7 +29,12 @@ func NewProjectRepository(logger *zap.Logger, pg *db.PostgresDatabase) *ProjectR
 	return &ProjectRepository{
 		logger: logger,
 		pg:     pg,
+		runTx:  pg.RunInTransaction,
 	}
+}
+
+func (pr *ProjectRepository) RunTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
+	return pr.runTx(ctx, fn)
 }
 
 // RetrieveTeamID retrieved the teamID associated with a project from the database.
@@ -89,7 +96,7 @@ func (pr *ProjectRepository) Retrieve(ctx context.Context, pid string) (model.Pr
 			from projects
 			where project_id = $1 and user_id = $2
 		`
-	row := conn.QueryRowxContext(ctx, stmt, pid, values.Metadata.UserID)
+	row := conn.QueryRowxContext(ctx, stmt, pid, values.UserID)
 	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -126,7 +133,7 @@ func (pr *ProjectRepository) RetrieveShared(ctx context.Context, pid string) (mo
 	}
 
 	membershipRepo := NewMembershipRepository(pr.logger, pr.pg)
-	m, err := membershipRepo.Retrieve(ctx, values.Metadata.UserID, tid)
+	m, err := membershipRepo.Retrieve(ctx, values.UserID, tid)
 	if err != nil {
 		return p, fail.ErrNotAuthorized
 	}
@@ -167,17 +174,15 @@ func (pr *ProjectRepository) List(ctx context.Context) ([]model.Project, error) 
 	}
 	defer Close()
 
-	q := `
-		select 
-    		project_id, tenant_id, name, prefix, description, team_id,
-			user_id, active, public, column_order, updated_at, created_at
-    	from projects
+	stmt := `
+		select * from projects
 		where team_id in (select team_id from memberships where user_id = $1)
 		union 
-			select * from projects where user_id = $1
+		select * from projects
+	 	where user_id = $1
 		group by project_id`
 
-	rows, err := conn.QueryxContext(ctx, q, values.Metadata.UserID)
+	rows, err := conn.QueryxContext(ctx, stmt, values.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("error selecting projects :%w", err)
 	}
@@ -188,6 +193,8 @@ func (pr *ProjectRepository) List(ctx context.Context) ([]model.Project, error) 
 		}
 		ps = append(ps, p)
 	}
+
+	pr.logger.Info("TEST!!!!!", zap.Any("list", ps))
 
 	return ps, nil
 }
@@ -212,11 +219,11 @@ func (pr *ProjectRepository) Create(ctx context.Context, np model.NewProject, no
 
 	p = model.Project{
 		ID:          uuid.New().String(),
-		TenantID:    values.Metadata.TenantID,
+		TenantID:    values.TenantID,
 		Name:        np.Name,
 		Prefix:      fmt.Sprintf("%s-", np.Name[:3]),
 		Active:      true,
-		UserID:      values.Metadata.UserID,
+		UserID:      values.UserID,
 		TeamID:      np.TeamID,
 		ColumnOrder: []string{"column-1", "column-2", "column-3", "column-4"},
 		UpdatedAt:   now.UTC(),
@@ -238,7 +245,7 @@ func (pr *ProjectRepository) Create(ctx context.Context, np model.NewProject, no
 		p.Prefix,
 		np.TeamID,
 		"",
-		values.Metadata.UserID,
+		values.UserID,
 		pq.Array(p.ColumnOrder),
 		p.UpdatedAt,
 		p.CreatedAt,
@@ -321,6 +328,72 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 	return p, nil
 }
 
+// UpdateTx updates a project in the database.
+func (pr *ProjectRepository) UpdateTx(ctx context.Context, tx *sqlx.Tx, pid string, update model.UpdateProject, now time.Time) (model.Project, error) {
+	var (
+		p   model.Project
+		err error
+	)
+
+	p, err = pr.Retrieve(ctx, pid)
+	if err != nil {
+		p, err = pr.RetrieveShared(ctx, pid)
+		if err != nil {
+			return p, err
+		}
+	}
+
+	if update.Name != nil {
+		p.Name = *update.Name
+	}
+	if update.Description != nil {
+		p.Description = *update.Description
+	}
+	if update.Active != nil {
+		p.Active = *update.Active
+	}
+	if update.Public != nil {
+		p.Public = *update.Public
+	}
+	if update.ColumnOrder != nil {
+		p.ColumnOrder = update.ColumnOrder
+	}
+	if update.TeamID != nil {
+		p.TeamID = *update.TeamID
+	}
+
+	stmt := `
+			update projects
+			set 
+			    name = $1,
+			    description = $2,
+				active = $3,
+				public = $4,
+				column_order = $5,
+				team_id = $6,
+				updated_at = $7
+			where project_id = $8
+			`
+
+	_, err = tx.ExecContext(
+		ctx,
+		stmt,
+		p.Name,
+		p.Description,
+		p.Active,
+		p.Public,
+		pq.Array(p.ColumnOrder),
+		p.TeamID,
+		p.UpdatedAt,
+		pid,
+	)
+	if err != nil {
+		return p, fmt.Errorf("error updating project :%w", err)
+	}
+
+	return p, nil
+}
+
 // Delete deletes a project from the database.
 func (pr *ProjectRepository) Delete(ctx context.Context, pid string) error {
 	var err error
@@ -342,7 +415,7 @@ func (pr *ProjectRepository) Delete(ctx context.Context, pid string) error {
 
 	stmt := `delete from projects where project_id = $1 and user_id = $2`
 
-	if _, err = conn.ExecContext(ctx, stmt, pid, values.Metadata.UserID); err != nil {
+	if _, err = conn.ExecContext(ctx, stmt, pid, values.UserID); err != nil {
 		return fmt.Errorf("error deleting project %s :%w", pid, err)
 	}
 

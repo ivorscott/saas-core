@@ -4,11 +4,13 @@ import (
 	"context"
 	"github.com/devpies/saas-core/internal/project/model"
 	"github.com/devpies/saas-core/pkg/msg"
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
 type membershipRepository interface {
 	Create(ctx context.Context, nm model.MembershipCopy) error
+	CreateTx(ctx context.Context, tx *sqlx.Tx, nm model.MembershipCopy) error
 	Update(ctx context.Context, mid string, update model.UpdateMembershipCopy) error
 	Delete(ctx context.Context, mid string) error
 	Retrieve(ctx context.Context, uid, tid string) (model.MembershipCopy, error)
@@ -29,7 +31,7 @@ func NewMembershipService(logger *zap.Logger, repo membershipRepository) *Member
 	}
 }
 
-func (ms *MembershipService) CreateMembershipFromEvent(ctx context.Context, message interface{}) error {
+func (ms *MembershipService) CreateMembershipCopyFromEvent(ctx context.Context, message interface{}) error {
 	m, err := msg.Bytes(message)
 	if err != nil {
 		return err
@@ -48,7 +50,7 @@ func (ms *MembershipService) CreateMembershipFromEvent(ctx context.Context, mess
 	return nil
 }
 
-func (ms *MembershipService) UpdateMembershipFromEvent(ctx context.Context, message interface{}) error {
+func (ms *MembershipService) UpdateMembershipCopyFromEvent(ctx context.Context, message interface{}) error {
 	m, err := msg.Bytes(message)
 	if err != nil {
 		return err
@@ -67,7 +69,7 @@ func (ms *MembershipService) UpdateMembershipFromEvent(ctx context.Context, mess
 	return nil
 }
 
-func (ms *MembershipService) DeleteMembershipFromEvent(ctx context.Context, message interface{}) error {
+func (ms *MembershipService) DeleteMembershipCopyFromEvent(ctx context.Context, message interface{}) error {
 	m, err := msg.Bytes(message)
 	if err != nil {
 		return err

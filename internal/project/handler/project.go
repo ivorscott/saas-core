@@ -125,6 +125,7 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	e := msg.ProjectCreatedEvent{
 		Data: msg.ProjectCreatedEventData{
 			ProjectID:   project.ID,
+			TenantID:    project.TenantID,
 			Name:        project.Name,
 			Prefix:      project.Prefix,
 			Description: project.Description,
@@ -138,8 +139,9 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		},
 		Type: msg.TypeProjectCreated,
 		Metadata: msg.Metadata{
-			UserID:  values.Metadata.UserID,
-			TraceID: values.Metadata.TraceID,
+			TenantID: values.TenantID,
+			UserID:   values.UserID,
+			TraceID:  values.TraceID,
 		},
 	}
 
@@ -193,8 +195,9 @@ func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 			UpdatedAt:   up.UpdatedAt.String(),
 		},
 		Metadata: msg.Metadata{
-			UserID:  values.Metadata.UserID,
-			TraceID: values.Metadata.TraceID,
+			TenantID: values.TenantID,
+			UserID:   values.UserID,
+			TraceID:  values.TraceID,
 		},
 	}
 
@@ -242,8 +245,9 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	e := msg.ProjectDeletedEvent{
 		Type: msg.TypeProjectDeleted,
 		Metadata: msg.Metadata{
-			TraceID: values.Metadata.TraceID,
-			UserID:  values.Metadata.UserID,
+			TenantID: values.TenantID,
+			TraceID:  values.TraceID,
+			UserID:   values.UserID,
 		},
 		Data: msg.ProjectDeletedEventData{
 			ProjectID: pid,

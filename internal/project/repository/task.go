@@ -193,7 +193,7 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid stri
 		ctx,
 		stmt,
 		t.ID,
-		values.Metadata.TenantID,
+		values.TenantID,
 		t.Key,
 		t.Title,
 		t.Content,

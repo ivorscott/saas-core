@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	"log"
 
 	"github.com/devpies/saas-core/internal/project/db"
@@ -40,10 +41,36 @@ func (mr *MembershipRepository) Create(ctx context.Context, nm model.MembershipC
 
 	stmt := `
 		insert into memberships (membership_id, tenant_id, user_id, team_id, role, updated_at, created_at)
-		values ($1, $2, $3, $4, $5, $6)
+		values ($1, $2, $3, $4, $5, $6, $7)
 	`
 
 	if _, err = conn.ExecContext(
+		ctx,
+		stmt,
+		nm.ID,
+		nm.TenantID,
+		nm.UserID,
+		nm.TeamID,
+		nm.Role,
+		nm.UpdatedAt,
+		nm.CreatedAt,
+	); err != nil {
+		return fmt.Errorf("error inserting membership: %w", err)
+	}
+
+	return nil
+}
+
+// CreateTx creates a membership to a team in the database.
+func (mr *MembershipRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, nm model.MembershipCopy) error {
+	var err error
+
+	stmt := `
+		insert into memberships (membership_id, tenant_id, user_id, team_id, role, updated_at, created_at)
+		values ($1, $2, $3, $4, $5, $6, $7)
+	`
+
+	if _, err = tx.ExecContext(
 		ctx,
 		stmt,
 		nm.ID,

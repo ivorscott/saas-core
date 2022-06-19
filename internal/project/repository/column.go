@@ -130,7 +130,7 @@ func (cr *ColumnRepository) Create(ctx context.Context, nc model.NewColumn, now 
 		ctx,
 		stmt,
 		uuid.New().String(),
-		values.Metadata.TenantID,
+		values.TenantID,
 		nc.Title,
 		nc.ColumnName,
 		pq.Array(make([]string, 0)),
