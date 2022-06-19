@@ -112,8 +112,8 @@ func (idps *IDPService) GetPlanBasedUserPool(ctx context.Context, tenant model.N
 func newCreateTenantSiloedEvent(values *web.Values, path string, clientID, userPoolID *string) msg.TenantSiloedEvent {
 	return msg.TenantSiloedEvent{
 		Metadata: msg.Metadata{
-			TraceID: values.Metadata.TraceID,
-			UserID:  values.Metadata.UserID,
+			TraceID: values.TraceID,
+			UserID:  values.UserID,
 		},
 		Type: msg.TypeTenantSiloed,
 		Data: msg.TenantSiloedEventData{

@@ -106,8 +106,8 @@ func (rs *RegistrationService) provision(ctx context.Context, plan Plan) error {
 func newTenantRegisteredEvent(values *web.Values, id string, tenant model.NewTenant, userPoolID string) msg.TenantRegisteredEvent {
 	return msg.TenantRegisteredEvent{
 		Metadata: msg.Metadata{
-			TraceID: values.Metadata.TraceID,
-			UserID:  values.Metadata.UserID,
+			TraceID: values.TraceID,
+			UserID:  values.UserID,
 		},
 		Type: msg.TypeTenantRegistered,
 		Data: msg.TenantRegisteredEventData{
