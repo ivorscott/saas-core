@@ -11,17 +11,17 @@ const (
 	SubjectRegistered = "TENANTS.registered"
 	SubjectSiloed     = "TENANTS.siloed"
 
-	StreamMemberships               = "MEMBERSHIPS"
-	SubjectMembershipCreated        = "MEMBERSHIPS.created"
-	SubjectMembershipUpdated        = "MEMBERSHIPS.updated"
-	SubjectMembershipDeleted        = "MEMBERSHIPS.deleted"
-	SubjectMembershipForProject     = "MEMBERSHIPS.forProject"
-	SubjectMembershipInviteeCreated = "MEMBERSHIPS.inviteeCreated"
+	StreamMemberships        = "MEMBERSHIPS"
+	SubjectMembershipCreated = "MEMBERSHIPS.created"
+	SubjectMembershipUpdated = "MEMBERSHIPS.updated"
+	SubjectMembershipDeleted = "MEMBERSHIPS.deleted"
+	SubjectMembershipInvited = "MEMBERSHIPS.invited"
 
-	StreamProjects        = "PROJECTS"
-	SubjectProjectCreated = "PROJECTS.created"
-	SubjectProjectUpdated = "PROJECTS.updated"
-	SubjectProjectDeleted = "PROJECTS.deleted"
+	StreamProjects             = "PROJECTS"
+	SubjectProjectCreated      = "PROJECTS.created"
+	SubjectProjectUpdated      = "PROJECTS.updated"
+	SubjectProjectDeleted      = "PROJECTS.deleted"
+	SubjectProjectTeamAssigned = "PROJECTS.assigned"
 )
 
 // UnmarshalMsg parses the JSON-encoded data and returns Msg.
@@ -51,8 +51,9 @@ func Bytes(message interface{}) ([]byte, error) {
 
 // Metadata represents additional data about the request.
 type Metadata struct {
-	TraceID string `json:"traceId"`
-	UserID  string `json:"userId"`
+	TraceID  string `json:"traceId"`
+	UserID   string `json:"userId"`
+	TenantID string `json:"tenantID"`
 }
 
 // MessageType is a type of message.

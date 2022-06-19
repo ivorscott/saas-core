@@ -32,13 +32,13 @@ func (r *MembershipCreatedEvent) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-func UnmarshalMembershipCreatedForProjectEvent(data []byte) (MembershipCreatedForProjectEvent, error) {
-	var r MembershipCreatedForProjectEvent
+func UnmarshalTeamAssignedEvent(data []byte) (TeamAssignedEvent, error) {
+	var r TeamAssignedEvent
 	err := json.Unmarshal(data, &r)
 	return r, err
 }
 
-func (r *MembershipCreatedForProjectEvent) Marshal() ([]byte, error) {
+func (r *TeamAssignedEvent) Marshal() ([]byte, error) {
 	return json.Marshal(r)
 }
 
@@ -108,13 +108,13 @@ type MembershipCreatedEventData struct {
 	UserID       string `json:"userId"`
 }
 
-type MembershipCreatedForProjectEvent struct {
-	Data     MembershipCreatedForProjectEventData `json:"data"`
-	Metadata Metadata                             `json:"metadata"`
-	Type     MembershipCreatedForProjectEventType `json:"type"`
+type TeamAssignedEvent struct {
+	Data     TeamAssignedEventData `json:"data"`
+	Metadata Metadata              `json:"metadata"`
+	Type     TeamAssignedEventType `json:"type"`
 }
 
-type MembershipCreatedForProjectEventData struct {
+type TeamAssignedEventData struct {
 	TenantID     string `json:"tenantId"`
 	CreatedAt    string `json:"createdAt"`
 	MembershipID string `json:"membershipId"`
@@ -192,6 +192,7 @@ type ProjectDeletedEvent struct {
 }
 
 type ProjectDeletedEventData struct {
+	TenantID  string `json:"tenantId"`
 	ProjectID string `json:"projectId"`
 }
 
@@ -232,10 +233,10 @@ const (
 	TypeMembershipCreated MembershipCreatedEventType = "MembershipCreated"
 )
 
-type MembershipCreatedForProjectEventType string
+type TeamAssignedEventType string
 
 const (
-	TypeMembershipCreatedForProject MembershipCreatedForProjectEventType = "MembershipCreatedForProject"
+	TypeTeamAssignedEventType TeamAssignedEventType = "TeamAssigned"
 )
 
 type MembershipUpdatedEventType string

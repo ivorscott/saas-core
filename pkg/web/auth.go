@@ -13,7 +13,6 @@ import (
 )
 
 var ErrInvalidAuthorizationHeader = errors.New("missing or invalid authorization header")
-var ErrMissingTenantID = errors.New("missing tenant id")
 
 func Authenticate(log *zap.Logger, r *http.Request, region string, userPoolClientID string) (*http.Request, error) {
 	authHeader := r.Header.Get("Authorization")

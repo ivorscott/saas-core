@@ -65,7 +65,7 @@ func (jctx *StreamContext) Listen(messageType string, subject, queueGroup string
 	fn := jctx.setupMsgHandler(messageType, handler)
 	s, err := jctx.js.QueueSubscribe(subject, queueGroup, fn, opts...)
 	if err != nil {
-		jctx.logger.Info("subscription failed", zap.Error(err))
+		jctx.logger.Info("subscription failed", zap.Error(err), zap.Any("data", jctx.js))
 	}
 	return s
 }
@@ -87,7 +87,7 @@ func (jctx *StreamContext) setupMsgHandler(messageType string, handler listenHan
 			return
 		}
 
-		err = handler(context.Background(), &message)
+		err = handler(addMetadataContext(message.Metadata), &message)
 
 		switch err.(type) {
 		case nil:
@@ -98,10 +98,20 @@ func (jctx *StreamContext) setupMsgHandler(messageType string, handler listenHan
 		case *web.Error:
 			jctx.logger.Error("error handling message", zap.Error(err))
 		case *web.Shutdown:
-			jctx.logger.Error("integrity issue: shutting down service")
+			jctx.logger.Error("integrity issue: shutting down service", zap.Error(err))
 			jctx.shutdown <- syscall.SIGSTOP
 		default:
 			panic(err)
 		}
 	}
+}
+
+func addMetadataContext(metadata Metadata) context.Context {
+	ctx := context.Background()
+	values := web.Values{
+		TenantID: metadata.TenantID,
+		UserID:   metadata.UserID,
+		TraceID:  metadata.TraceID,
+	}
+	return web.NewContext(ctx, &values)
 }
