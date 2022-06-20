@@ -342,7 +342,7 @@ func (th *TeamHandler) CreateInvite(w http.ResponseWriter, r *http.Request) erro
 			name := strings.Split(email, "@")
 			nu := model.NewUser{
 				Email:     email,
-				FirstName: &name[0],
+				FirstName: name[0],
 			}
 
 			_, err = th.userService.AddSeat(r.Context(), nu, time.Now())

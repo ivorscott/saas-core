@@ -61,17 +61,21 @@ func (us *UserService) AddSeat(ctx context.Context, nu model.NewUser, now time.T
 		UserAttributes: []types.AttributeType{
 			{Name: aws.String("custom:tenant-id"), Value: aws.String(uuid.New().String())},
 			{Name: aws.String("custom:company-name"), Value: aws.String(formatPath(nu.Company))},
-			{Name: aws.String("custom:full-name"), Value: aws.String(fmt.Sprintf("%v %v", nu.FirstName, nu.LastName))},
+			{Name: aws.String("custom:full-name"), Value: aws.String(fmt.Sprintf("%s %s", nu.FirstName, nu.LastName))},
 			{Name: aws.String("email"), Value: aws.String(nu.Email)},
 			{Name: aws.String("email_verified"), Value: aws.String("true")},
 		},
 	})
 	if err != nil {
+		us.logger.Error("", zap.Error(err))
 		return u, err
 	}
 	us.logger.Info("successfully added user")
 
 	user, err := us.userRepo.Create(ctx, nu, now)
+	if err != nil {
+		return u, err
+	}
 	return user, nil
 }
 

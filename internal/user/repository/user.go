@@ -63,7 +63,7 @@ func (ur *UserRepository) Create(ctx context.Context, nu model.NewUser, now time
 	}
 
 	stmt := `
-		insert into users (user_id, tenant_id, email, email_verified, first_name, last_name, picture, local, update_at, created_at)
+		insert into users (user_id, tenant_id, email, email_verified, first_name, last_name, picture, locale, updated_at, created_at)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
