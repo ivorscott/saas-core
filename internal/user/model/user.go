@@ -27,6 +27,17 @@ type NewUser struct {
 	Locale        *string `json:"locale"`
 }
 
+// NewAdminUser represents a new user request
+type NewAdminUser struct {
+	TenantID      string    `json:"tenantId" validate:"required"`
+	Company       string    `json:"company" validate:"required"`
+	Email         string    `json:"email" validate:"required"`
+	FirstName     string    `json:"firstName" validate:"required"`
+	LastName      string    `json:"lastName" validate:"required"`
+	EmailVerified bool      `json:"emailVerified" validate:"required"`
+	CreatedAt     time.Time `json:"createdAt"`
+}
+
 // UpdateUser represents an update to a user
 type UpdateUser struct {
 	FirstName *string   `json:"firstName"`

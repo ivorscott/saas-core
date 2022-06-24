@@ -65,6 +65,7 @@ func (rs *RegistrationService) RegisterTenant(ctx context.Context, newTenant mod
 		var webErrResp web.ErrorResponse
 		err = json.Unmarshal(bodyBytes, &webErrResp)
 		if err != nil {
+			rs.logger.Error("error w/ decoding body", zap.Error(err))
 			return nil, resp.StatusCode, err
 		}
 		return &webErrResp, resp.StatusCode, err

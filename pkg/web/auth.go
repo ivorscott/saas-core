@@ -14,11 +14,10 @@ import (
 
 var ErrInvalidAuthorizationHeader = errors.New("missing or invalid authorization header")
 
-func Authenticate(log *zap.Logger, r *http.Request, region string, userPoolClientID string) (*http.Request, error) {
+func Authenticate(log *zap.Logger, r *http.Request, region string, userPoolID string) (*http.Request, error) {
 	authHeader := r.Header.Get("Authorization")
-	token, sub, tenantID, err := verifyToken(r.Context(), log, authHeader, region, userPoolClientID)
+	token, sub, tenantID, err := verifyToken(r.Context(), log, authHeader, region, userPoolID)
 	if err != nil {
-		log.Info("api authentication failed", zap.Error(err))
 		return nil, NewRequestError(err, http.StatusUnauthorized)
 	}
 	r = addContextMetadata(r, token, sub, tenantID)
@@ -32,17 +31,18 @@ func getToken(authHeader string) (string, error) {
 	return "", ErrInvalidAuthorizationHeader
 }
 
-func verifyToken(ctx context.Context, logger *zap.Logger, authHeader string, region string, userPoolClientID string) (token string, sub string, tenantID string, err error) {
+func verifyToken(ctx context.Context, logger *zap.Logger, authHeader string, region string, userPoolID string) (token string, sub string, tenantID string, err error) {
 	token, err = getToken(authHeader)
 	if err != nil {
 		return
 	}
 
 	pubKeyURL := "https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json"
-	formattedURL := fmt.Sprintf(pubKeyURL, region, userPoolClientID)
+	formattedURL := fmt.Sprintf(pubKeyURL, region, userPoolID)
 
 	keySet, err := jwk.Fetch(ctx, formattedURL)
 	if err != nil {
+		logger.Error("error fetching token", zap.Error(err))
 		return
 	}
 
@@ -52,7 +52,7 @@ func verifyToken(ctx context.Context, logger *zap.Logger, authHeader string, reg
 		jwt.WithValidate(true),
 	)
 	if err != nil {
-		logger.Error("", zap.Error(err))
+		logger.Error("error decoding token", zap.Error(err))
 		return
 	}
 	sub = parsedToken.Subject()

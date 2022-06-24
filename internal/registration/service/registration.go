@@ -52,11 +52,11 @@ func (rs *RegistrationService) CreateRegistration(ctx context.Context, id string
 	var err error
 	userPoolID, err := rs.idpService.GetPlanBasedUserPool(ctx, tenant, formatPath(tenant.Company))
 	if err != nil {
-		return nil
+		return err
 	}
 	err = rs.publishTenantRegisteredEvent(ctx, id, tenant, userPoolID)
 	if err != nil {
-		return nil
+		return err
 	}
 	if err = rs.provision(ctx, Plan(tenant.Plan)); err != nil {
 		return err
@@ -76,7 +76,7 @@ func (rs *RegistrationService) publishTenantRegisteredEvent(ctx context.Context,
 	event := newTenantRegisteredEvent(values, id, tenant, userPoolID)
 	bytes, err := event.Marshal()
 	if err != nil {
-		return nil
+		return err
 	}
 	rs.js.Publish(msg.SubjectRegistered, bytes)
 	return nil

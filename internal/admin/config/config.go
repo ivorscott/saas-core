@@ -13,16 +13,16 @@ type Config struct {
 		Port            string        `conf:"default:4000"`
 	}
 	Cognito struct {
-		AppClientID      string `conf:"required"`
+		UserPoolID       string `conf:"required"`
 		UserPoolClientID string `conf:"required"`
-		Region           string `conf:"default:eu-central-1"`
+		Region           string `conf:"required"`
 	}
-	Postgres struct {
-		User       string `conf:"required"`
-		Password   string `conf:"required"`
-		Host       string `conf:"required"`
-		Port       int    `conf:"required"`
-		DB         string `conf:"required"`
+	DB struct {
+		User       string `conf:"default:postgres,noprint"`
+		Password   string `conf:"default:postgres,noprint"`
+		Host       string `conf:"default:localhost,noprint"`
+		Port       int    `conf:"default:5432,noprint"`
+		Name       string `conf:"default:admin,noprint"`
 		DisableTLS bool   `conf:"default:false"`
 	}
 	Registration struct {

@@ -50,7 +50,8 @@ func (reg *RegistrationHandler) RegisterTenant(w http.ResponseWriter, r *http.Re
 	}
 	err = reg.registrationService.CreateRegistration(r.Context(), id.String(), payload)
 	if err != nil {
-		reg.logger.Info("event publishing failed", zap.Error(err))
+		reg.logger.Info("registration failed", zap.Error(err))
+		return web.NewRequestError(err, http.StatusInternalServerError)
 	}
 
 	return web.Respond(r.Context(), w, nil, http.StatusOK)

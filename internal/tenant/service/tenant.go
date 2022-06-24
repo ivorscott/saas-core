@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"github.com/devpies/saas-core/pkg/web"
+	"time"
 
 	"github.com/devpies/saas-core/internal/tenant/model"
 	"github.com/devpies/saas-core/pkg/msg"
@@ -9,9 +12,14 @@ import (
 	"go.uber.org/zap"
 )
 
+type publisher interface {
+	Publish(subject string, message []byte)
+}
+
 // TenantService manages tenant business operations.
 type TenantService struct {
 	logger     *zap.Logger
+	js         publisher
 	tenantRepo tenantRepository
 }
 
@@ -24,9 +32,10 @@ type tenantRepository interface {
 }
 
 // NewTenantService returns a new TenantService.
-func NewTenantService(logger *zap.Logger, tenantRepo tenantRepository) *TenantService {
+func NewTenantService(logger *zap.Logger, js publisher, tenantRepo tenantRepository) *TenantService {
 	return &TenantService{
 		logger:     logger,
+		js:         js,
 		tenantRepo: tenantRepo,
 	}
 }
@@ -46,6 +55,36 @@ func (ts *TenantService) CreateTenantFromMessage(ctx context.Context, message in
 	if err != nil {
 		return err
 	}
+
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return web.CtxErr()
+	}
+
+	e := msg.TenantCreatedEvent{
+		Type: msg.TypeTenantCreated,
+		Data: msg.TenantCreatedEventData{
+			TenantID:  tenant.ID,
+			Company:   tenant.Company,
+			Email:     tenant.Email,
+			FirstName: tenant.FullName,
+			LastName:  "",
+			CreatedAt: time.Now().UTC().String(),
+		},
+		Metadata: msg.Metadata{
+			TenantID: "",
+			TraceID:  values.TraceID,
+			UserID:   values.UserID,
+		},
+	}
+
+	bytes, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+
+	ts.js.Publish(msg.SubjectTenantCreated, bytes)
+
 	return nil
 }
 

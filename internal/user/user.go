@@ -93,7 +93,7 @@ func Run() error {
 	membershipRepo := repository.NewMembershipRepository(logger, pg)
 	projectRepo := repository.NewProjectRepository(logger, pg)
 
-	userService := service.NewUserService(logger, cfg.Cognito.UserPoolClientID, userRepo, cognitoClient)
+	userService := service.NewUserService(logger, cfg.Cognito.UserPoolID, userRepo, cognitoClient)
 	teamService := service.NewTeamService(logger, teamRepo, inviteRepo)
 	membershipService := service.NewMembershipService(logger, membershipRepo)
 	projectService := service.NewProjectService(logger, projectRepo)
@@ -105,7 +105,14 @@ func Run() error {
 	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
 
 	go func() {
-		//Listen to project events to save a redundant copy in the database.
+		jetstream.Listen(
+			string(msg.TypeTenantCreated),
+			msg.SubjectTenantCreated,
+			"tenant_created_consumer",
+			userService.AddAdminUserFromEvent,
+			opts...)
+
+		// Listen to project events to save a redundant copy in the database.
 		jetstream.Listen(
 			string(msg.TypeProjectCreated),
 			msg.SubjectProjectCreated,

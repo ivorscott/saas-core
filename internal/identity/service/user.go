@@ -61,6 +61,7 @@ func (rs *UserService) CreateTenantUserFromEvent(ctx context.Context, message in
 		},
 	})
 	if err != nil {
+		rs.logger.Error("failed to add user", zap.Error(err))
 		return err
 	}
 	rs.logger.Info("successfully added user")

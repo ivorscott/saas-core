@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 	"github.com/devpies/saas-core/internal/user/model"
+	"github.com/devpies/saas-core/pkg/msg"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"strings"
@@ -15,6 +16,8 @@ import (
 
 type userRepository interface {
 	Create(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error)
+	CreateAdmin(ctx context.Context, na model.NewAdminUser) error
+	List(ctx context.Context) ([]model.User, error)
 	RetrieveByEmail(ctx context.Context, email string) (model.User, error)
 	RetrieveMe(ctx context.Context) (model.User, error)
 }
@@ -79,9 +82,37 @@ func (us *UserService) AddSeat(ctx context.Context, nu model.NewUser, now time.T
 	return user, nil
 }
 
+func (us *UserService) AddAdminUserFromEvent(ctx context.Context, message interface{}) error {
+	m, err := msg.Bytes(message)
+	if err != nil {
+		return err
+	}
+	event, err := msg.UnmarshalTenantCreatedEvent(m)
+	if err != nil {
+		return err
+	}
+	na := newAdminUser(event.Data)
+	return us.userRepo.CreateAdmin(ctx, na)
+}
+
+func newAdminUser(data msg.TenantCreatedEventData) model.NewAdminUser {
+	return model.NewAdminUser{
+		Company:       data.Company,
+		Email:         data.Email,
+		FirstName:     data.FirstName,
+		LastName:      data.LastName,
+		EmailVerified: true,
+		CreatedAt:     msg.ParseTime(data.CreatedAt),
+	}
+}
+
 func formatPath(company string) string {
 	return strings.ToLower(strings.Replace(company, " ", "", -1))
 
+}
+
+func (us *UserService) List(ctx context.Context) ([]model.User, error) {
+	return us.userRepo.List(ctx)
 }
 
 func (us *UserService) RetrieveByEmail(ctx context.Context, email string) (model.User, error) {

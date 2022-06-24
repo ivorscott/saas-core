@@ -87,6 +87,12 @@ func (jctx *StreamContext) setupMsgHandler(messageType string, handler listenHan
 			return
 		}
 
+		jctx.logger.Info(
+			"processing message",
+			zap.String("type", messageType),
+			zap.String("tenantID", message.Metadata.TenantID),
+			zap.String("traceID", message.Metadata.TraceID),
+		)
 		err = handler(addMetadataContext(message.Metadata), &message)
 
 		switch err.(type) {

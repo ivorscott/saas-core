@@ -34,7 +34,7 @@ func Routes(
 	middleware := []web.Middleware{
 		mid.Logger(log),
 		mid.Errors(log),
-		mid.Auth(log, config.Cognito.Region, config.Cognito.UserPoolClientID),
+		mid.Auth(log, config.Cognito.Region, config.Cognito.UserPoolID),
 		mid.Panics(log),
 	}
 

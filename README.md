@@ -13,10 +13,23 @@ This project is a part of "AWS SaaS app in 30 days" - _Proof of Concept_
 - install [pgcli](https://www.pgcli.com/)
 - install [golangci-lint](https://github.com/golangci/golangci-lint)
 - install [go-migrate](https://github.com/golang-migrate/migrate)
+- install [nosql workbench](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/workbench.settingup.html)
 - [saas-infra resources](https://github.com/devpies/saas-infra/tree/main/local/saas) 
 
-## Getting Started
-Print instructions.
+## Setup
+
+1. Checkout `saas-infra` and deploy the `local` infrastructure.
+2. Use the terraform output values for this repository's `.env` file.
+3. Copy `.env.sample` in the project root and create your own `.env` file.
+4. Copy `./manifests/secrets.sample.yaml` and create your own `./manifests/secrets.yaml` file.
+5. Start containers: `tilt up`
+6. Port forward the traefik ports: `make ports`
+7. Setup local DynamoDB tables: `make dynamodb-create`
+8. Deploy ingress routes: `make routes`
+
+## Using Make
+By default using Tilt allows you to develop against running containers. Alternatively, you can simultaneously run
+go binaries natively for an idiomatic go development experience.
 
 ```bash
 > make
@@ -48,28 +61,23 @@ OPTIONS
   --web-shutdown-timeout/$ADMIN_WEB_SHUTDOWN_TIMEOUT                  <duration>  (default: 5s)
   --web-address/$ADMIN_WEB_ADDRESS                                    <string>    (default: localhost)
   --web-port/$ADMIN_WEB_PORT                                          <string>    (default: 4000)
-  --cognito-app-client-id/$ADMIN_COGNITO_APP_CLIENT_ID                <string>    (required)
+  --cognito-user-pool-id/$ADMIN_COGNITO_USER_POOL_ID                  <string>    (required)
   --cognito-user-pool-client-id/$ADMIN_COGNITO_USER_POOL_CLIENT_ID    <string>    (required)
-  --cognito-region/$ADMIN_COGNITO_REGION                              <string>    (default: eu-central-1)
-  --postgres-user/$ADMIN_POSTGRES_USER                                <string>    (required)
-  --postgres-password/$ADMIN_POSTGRES_PASSWORD                        <string>    (required)
-  --postgres-host/$ADMIN_POSTGRES_HOST                                <string>    (required)
-  --postgres-port/$ADMIN_POSTGRES_PORT                                <int>       (required)
-  --postgres-db/$ADMIN_POSTGRES_DB                                    <string>    (required)
-  --postgres-disable-tls/$ADMIN_POSTGRES_DISABLE_TLS                  <bool>      (default: false)
+  --cognito-region/$ADMIN_COGNITO_REGION                              <string>    (required)
+  --db-user/$ADMIN_DB_USER                                            <string>    (noprint,default: postgres)
+  --db-password/$ADMIN_DB_PASSWORD                                    <string>    (noprint,default: postgres)
+  --db-host/$ADMIN_DB_HOST                                            <string>    (noprint,default: localhost)
+  --db-port/$ADMIN_DB_PORT                                            <int>       (noprint,default: 5432)
+  --db-name/$ADMIN_DB_NAME                                            <string>    (noprint,default: admin)
+  --db-disable-tls/$ADMIN_DB_DISABLE_TLS                              <bool>      (default: false)
   --registration-service-address/$ADMIN_REGISTRATION_SERVICE_ADDRESS  <string>    (default: localhost)
   --registration-service-port/$ADMIN_REGISTRATION_SERVICE_PORT        <string>    (default: 4001)
-  --help/-h                                                           
-  display this help message
+  --help/-h                                                           display this help message
 ```
 
 > __TIP__  
-> 
-> 1. Using `make` is the easiest way to get started. However, if you choose to run go binaries directly, you can export the `.env` file variables to avoid using CLI flags:  
-> ```bash
-> export $(grep -v '^#' .env | xargs)
->```
-> 2. Enable bash-completion of the makefile targets. Add this in your `~/.bash_profile` file or `~/.bashrc` file.
+>
+> Enable `bash-completion` for makefile targets. Add this in your `~/.bash_profile` or `~/.bashrc` file.
 > ```bash
 > complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' ?akefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
 > ```
@@ -88,8 +96,3 @@ nats stream purge # remove all messages
 https://docs.nats.io/nats-concepts/jetstream/js_walkthrough
 
 
-## Up and Running w/ K8s
-
-1. Start containers: `tilt up`
-2. Port forward traefik ports: `make forward`
-3. Deploy traefik ingress routes`make routes`

@@ -85,7 +85,7 @@ func Run() error {
 		js.Listen(
 			string(msg.TypeTenantRegistered),
 			msg.SubjectRegistered,
-			"user_consumer",
+			"identity_consumer",
 			userService.CreateTenantUserFromEvent,
 			opts...,
 		)

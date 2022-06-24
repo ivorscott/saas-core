@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/devpies/saas-core/internal/admin/config"
 	"github.com/devpies/saas-core/internal/admin/model"
 	"github.com/devpies/saas-core/pkg/web"
 
@@ -30,7 +29,6 @@ type sessionManager interface {
 // AuthHandler contains various auth related handlers.
 type AuthHandler struct {
 	logger      *zap.Logger
-	config      config.Config
 	render      renderer
 	session     sessionManager
 	authService authService
@@ -46,10 +44,9 @@ var (
 )
 
 // NewAuthHandler returns a new authentication handler.
-func NewAuthHandler(logger *zap.Logger, config config.Config, renderEngine renderer, session sessionManager, authService authService) *AuthHandler {
+func NewAuthHandler(logger *zap.Logger, renderEngine renderer, session sessionManager, authService authService) *AuthHandler {
 	return &AuthHandler{
 		logger:      logger,
-		config:      config,
 		render:      renderEngine,
 		session:     session,
 		authService: authService,

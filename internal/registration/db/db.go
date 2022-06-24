@@ -20,12 +20,12 @@ func NewProductionDynamoDBClient(ctx context.Context) *dynamodb.Client {
 }
 
 // NewDevelopmentDynamoDBClient returns a development client for DynamoDB.
-func NewDevelopmentDynamoDBClient(ctx context.Context, port string) *dynamodb.Client {
+func NewDevelopmentDynamoDBClient(ctx context.Context, address, port string) *dynamodb.Client {
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion("eu-central-1"),
 		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
 			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: fmt.Sprintf("http://localhost:%s", port)}, nil
+				return aws.Endpoint{URL: fmt.Sprintf("http://%s:%s", address, port)}, nil
 			})),
 		config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
 			Value: aws.Credentials{

@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	StreamTenants     = "TENANTS"
-	SubjectRegistered = "TENANTS.registered"
-	SubjectSiloed     = "TENANTS.siloed"
+	StreamTenants        = "TENANTS"
+	SubjectRegistered    = "TENANTS.registered"
+	SubjectSiloed        = "TENANTS.siloed"
+	SubjectTenantCreated = "TENANTS.created"
 
 	StreamMemberships        = "MEMBERSHIPS"
 	SubjectMembershipCreated = "MEMBERSHIPS.created"

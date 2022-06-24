@@ -47,6 +47,18 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, user, http.StatusCreated)
 }
 
+// List retrieves all users on the tenant account.
+func (uh *UserHandler) List(w http.ResponseWriter, r *http.Request) error {
+	var err error
+
+	users, err := uh.userService.List(r.Context())
+	if err != nil {
+		return fmt.Errorf("failed to retrieve users: %w", err)
+	}
+
+	return web.Respond(r.Context(), w, users, http.StatusOK)
+}
+
 // RetrieveMe retrieves the authenticated user.
 func (uh *UserHandler) RetrieveMe(w http.ResponseWriter, r *http.Request) error {
 	var us model.User

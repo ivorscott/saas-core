@@ -1,6 +1,20 @@
 package msg
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
+
+// UnmarshalTenantCreatedEvent parses the JSON-encoded data and returns TenantCreatedEvent.
+func UnmarshalTenantCreatedEvent(data []byte) (TenantCreatedEvent, error) {
+	var m TenantCreatedEvent
+	err := json.Unmarshal(data, &m)
+	return m, err
+}
+
+// Marshal JSON encodes TenantAdminCreatedEvent.
+func (m *TenantCreatedEvent) Marshal() ([]byte, error) {
+	return json.Marshal(m)
+}
 
 // UnmarshalTenantSiloedEvent parses the JSON-encoded data and returns TenantSiloedEvent.
 func UnmarshalTenantSiloedEvent(data []byte) (TenantSiloedEvent, error) {
@@ -75,4 +89,30 @@ type TenantSiloedEventData struct {
 	UserPoolID       string `json:"userPoolId"`
 	AppClientID      string `json:"appClientId"`
 	DeploymentStatus string `json:"deploymentStatus"`
+}
+
+// TenantCreated is a valid MessageType.
+const TenantCreated MessageType = "TenantCreated"
+
+const (
+	// TypeTenantCreated represents a concrete value for the TenantCreatedType.
+	TypeTenantCreated TenantCreatedType = "TenantCreated"
+)
+
+// TenantCreatedType represents a TenantCreated Message.
+type TenantCreatedType string
+
+type TenantCreatedEvent struct {
+	Metadata Metadata               `json:"metadata"`
+	Type     TenantCreatedType      `json:"type"`
+	Data     TenantCreatedEventData `json:"data"`
+}
+
+type TenantCreatedEventData struct {
+	TenantID  string `json:"tenantID"`
+	Company   string `json:"company"`
+	Email     string `json:"email"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	CreatedAt string `json:"createdAt"`
 }

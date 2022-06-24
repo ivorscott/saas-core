@@ -3,7 +3,6 @@ module github.com/devpies/saas-core
 go 1.18
 
 require (
-	github.com/Masterminds/squirrel v1.5.3
 	github.com/alexedwards/scs/postgresstore v0.0.0-20220528130143-d93ace5be94b
 	github.com/alexedwards/scs/v2 v2.5.0
 	github.com/ardanlabs/conf v1.5.0
@@ -56,8 +55,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.15.6 // indirect
-	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
-	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
@@ -82,3 +79,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
+
+replace github.com/devpies/saas-core/pkg/msg v0.0.0-20220619060038-9a467331531a => ./pkg/msg
+replace github.com/devpies/saas-core/pkg/web v0.0.0-20220619060038-9a467331531a => ./pkg/web
+

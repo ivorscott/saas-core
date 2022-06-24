@@ -28,37 +28,41 @@ spec:
                   name: secrets
                   key: aws_secret_access_key
             - name: AWS_DEFAULT_REGION
-              value: "eu-central-1"
-
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: region
             - name: REGISTRATION_WEB_PORT
               value: "4001"
-            - name: REGISTRATION_WEB_ADDRESS
-              value: "http://localhost"
-
-            - name: REGISTRATION_COGNITO_ADMIN_USER_POOL_CLIENT_ID
+            - name: REGISTRATION_COGNITO_USER_POOL_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: cognito_user_pool_client_id
-            - name: REGISTRATION_COGNITO_SHARED_USER_POOL_CLIENT_ID
-              valueFrom:
-               secretKeyRef:
-                 name: secrets
-                 key: cognito_shared_user_pool_client_id
+                  key: admin_user_pool_id
             - name: REGISTRATION_COGNITO_REGION
-              value: "eu-central-1"
-
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: region
+            - name: REGISTRATION_DYNAMODB_HOST
+              value: db-dynamodb-svc
             - name: REGISTRATION_DYNAMODB_TENANT_TABLE
-              value: tenants
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: dynamodb_tenants_table_name
             - name: REGISTRATION_DYNAMODB_AUTH_TABLE
-              value: auth-info
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: dynamodb_auth_info_table_name
             - name: REGISTRATION_DYNAMODB_CONFIG_TABLE
-              value: silo-config
-
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: dynamodb_silo_config_table_name
             - name: REGISTRATION_NATS_ADDRESS
               value: "nats-svc"
-            - name: REGISTRATION_NATS_PORT
-              value: "4222"
 ---
 apiVersion: v1
 kind: Service

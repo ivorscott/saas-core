@@ -27,7 +27,12 @@
                             "Content-Type": 'application/json',
                             "Authorization": `Bearer ${localStorage.getItem("id_token")}`,
                         },
-                    })
+                    }).then(res => res.json())
+                        .then(res=>{
+                            if (res.error) {
+                                location.href="/admin/logout"
+                            }
+                        })
                 }
             }
         </script>

@@ -55,7 +55,7 @@ func Run() error {
 		dbClient = db.NewProductionDynamoDBClient(ctx)
 	} else {
 		logger, err = zap.NewDevelopment()
-		dbClient = db.NewDevelopmentDynamoDBClient(ctx, cfg.Dynamodb.Port)
+		dbClient = db.NewDevelopmentDynamoDBClient(ctx, cfg.Dynamodb.Host, cfg.Dynamodb.Port)
 	}
 	if err != nil {
 		logger.Error("error creating logger", zap.Error(err))

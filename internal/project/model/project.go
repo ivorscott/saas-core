@@ -7,7 +7,7 @@ import (
 // Project represents a tenant Project.
 type Project struct {
 	ID          string    `db:"project_id" json:"id"`
-	TenantID    string    `db:"tenant_id" json:"tenantId"`
+	TenantID    string    `db:"tenant_id" json:"-"`
 	Name        string    `db:"name" json:"name"`
 	Prefix      string    `db:"prefix" json:"prefix"`
 	Description string    `db:"description" json:"description"`

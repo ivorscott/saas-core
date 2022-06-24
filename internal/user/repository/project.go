@@ -160,6 +160,7 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 		pid,
 	)
 	if err != nil {
+		pr.logger.Error("error updating project copy", zap.Error(err))
 		return err
 	}
 
