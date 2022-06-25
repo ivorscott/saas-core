@@ -37,7 +37,7 @@ func (h *HTTPRegistrationClient) Register(ctx context.Context, tenant []byte) (*
 	}
 
 	payload := bytes.NewReader(tenant)
-	url := fmt.Sprintf("%s:%s/register", h.serviceAddress, h.servicePort)
+	url := fmt.Sprintf("http://%s:%s/registration/register", h.serviceAddress, h.servicePort)
 
 	request, err := http.NewRequest(http.MethodPost, url, payload)
 	if err != nil {

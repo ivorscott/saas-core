@@ -13,8 +13,8 @@ type Config struct {
 		Port            string        `conf:"default:4001"`
 	}
 	Cognito struct {
-		UserPoolClientID string `conf:"required"`
-		Region           string `conf:"default:eu-central-1"`
+		UserPoolID string `conf:"required"`
+		Region     string `conf:"required"`
 	}
 	Nats struct {
 		Address string `conf:"default:127.0.0.1"`

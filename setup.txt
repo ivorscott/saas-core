@@ -4,5 +4,10 @@ Pre-requisites
     tilt up
 
 2. In separate terminal run:
-   ./setup.sh
+   make dynamodb-create
 
+3. Port forward Traefik ports.
+   make ports
+
+4. Apply ingress routes.
+   make routes

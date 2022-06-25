@@ -13,14 +13,15 @@ type Config struct {
 		Port            string        `conf:"default:4000"`
 	}
 	Cognito struct {
-		UserPoolClientID string `conf:"required"`
-		Region           string `conf:"default:eu-central-1"`
+		UserPoolID string `conf:"required"`
+		Region     string `conf:"required"`
 	}
 	Dynamodb struct {
 		TenantTable string `conf:"required"`
 		AuthTable   string `conf:"required"`
 		ConfigTable string `conf:"required"`
-		Port        string `conf:"default:30008"`
+		Host        string `conf:"default:localhost"`
+		Port        string `conf:"default:8000"`
 	}
 	Nats struct {
 		Address string `conf:"default:127.0.0.1"`

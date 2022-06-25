@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/mail"
 	"time"
 
@@ -63,7 +64,7 @@ func (ur *UserRepository) Create(ctx context.Context, nu model.NewUser, now time
 	}
 
 	stmt := `
-		insert into users (user_id, tenant_id, email, email_verified, first_name, last_name, picture, local, update_at, created_at)
+		insert into users (user_id, tenant_id, email, email_verified, first_name, last_name, picture, locale, updated_at, created_at)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
@@ -85,6 +86,88 @@ func (ur *UserRepository) Create(ctx context.Context, nu model.NewUser, now time
 	}
 
 	return u, nil
+}
+
+// CreateAdmin inserts a new tenant admin user into the database.
+func (ur *UserRepository) CreateAdmin(ctx context.Context, na model.NewAdminUser) error {
+	var (
+		u   model.User
+		err error
+	)
+
+	ctx = web.NewContext(ctx, &web.Values{TenantID: na.TenantID})
+
+	conn, Close, err := ur.pg.GetConnection(ctx)
+	if err != nil {
+		return fail.ErrConnectionFailed
+	}
+	defer Close()
+
+	u = model.User{
+		ID:            na.UserID,
+		TenantID:      na.TenantID,
+		Email:         na.Email,
+		EmailVerified: na.EmailVerified,
+		FirstName:     na.FirstName,
+		LastName:      na.LastName,
+		UpdatedAt:     na.CreatedAt.UTC(),
+		CreatedAt:     na.CreatedAt.UTC(),
+	}
+
+	stmt := `
+		insert into users (user_id, tenant_id, email, email_verified, first_name, last_name, picture, locale, updated_at, created_at)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	`
+
+	if _, err = conn.ExecContext(
+		ctx,
+		stmt,
+		u.ID,
+		u.TenantID,
+		u.Email,
+		u.EmailVerified,
+		u.FirstName,
+		u.LastName,
+		u.Picture,
+		u.Locale,
+		u.UpdatedAt,
+		u.CreatedAt,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// List selects all users associated to the tenant account.
+func (ur *UserRepository) List(ctx context.Context) ([]model.User, error) {
+	var (
+		u   model.User
+		us  = make([]model.User, 0)
+		err error
+	)
+
+	conn, Close, err := ur.pg.GetConnection(ctx)
+	if err != nil {
+		return us, fail.ErrConnectionFailed
+	}
+	defer Close()
+
+	stmt := `select * from users`
+
+	rows, err := conn.QueryxContext(ctx, stmt)
+	if err != nil {
+		return us, err
+	}
+	for rows.Next() {
+		err = rows.StructScan(&u)
+		if err != nil {
+			return us, fmt.Errorf("error decoding struct: %w", err)
+		}
+		us = append(us, u)
+	}
+
+	return us, nil
 }
 
 // RetrieveByEmail retrieves a user via a provided email address.

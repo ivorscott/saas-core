@@ -103,9 +103,9 @@ func (idps *IDPService) GetPlanBasedUserPool(ctx context.Context, tenant model.N
 	event := newCreateTenantSiloedEvent(values, tenant.Company, userPoolClient.ClientId, userPool.Id)
 	bytes, err := event.Marshal()
 	if err != nil {
-		return "", nil
+		return "", err
 	}
-	idps.js.Publish(msg.SubjectSiloed, bytes)
+	idps.js.Publish(msg.SubjectTenantSiloed, bytes)
 	return *userPool.Id, nil
 }
 

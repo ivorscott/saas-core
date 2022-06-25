@@ -31,6 +31,7 @@ func NewAuthInfoRepository(logger *zap.Logger, client *dynamodb.Client, table st
 // SelectAuthInfo retrieves authentication information for a specific tenant.
 func (ar *AuthInfoRepository) SelectAuthInfo(ctx context.Context, path string) (model.AuthInfo, error) {
 	var authInfo model.AuthInfo
+	ar.logger.Info("tenant path", zap.String("path", path), zap.String("table", ar.table))
 	input := dynamodb.GetItemInput{
 		TableName: aws.String(ar.table),
 		Key: map[string]types.AttributeValue{
@@ -39,10 +40,12 @@ func (ar *AuthInfoRepository) SelectAuthInfo(ctx context.Context, path string) (
 	}
 	output, err := ar.client.GetItem(ctx, &input)
 	if err != nil {
+		ar.logger.Info("failed to GetItem", zap.Error(err))
 		return authInfo, err
 	}
 	err = attributevalue.UnmarshalMap(output.Item, &authInfo)
 	if err != nil {
+		ar.logger.Info("failed to decode auth info", zap.Error(err))
 		return authInfo, err
 	}
 	return authInfo, nil
@@ -61,6 +64,7 @@ func (ar *AuthInfoRepository) InsertAuthInfo(ctx context.Context, info model.Aut
 	}
 	_, err := ar.client.PutItem(ctx, &input)
 	if err != nil {
+		ar.logger.Info("failed to PutItem", zap.Error(err))
 		return err
 	}
 	return nil

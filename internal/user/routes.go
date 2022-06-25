@@ -25,7 +25,7 @@ func Routes(
 ) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost", "https://devpie.io"},
+		AllowedOrigins:   []string{"https://devpie.local:3000", "https://devpie.io"},
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: false,
@@ -35,13 +35,14 @@ func Routes(
 	middleware := []web.Middleware{
 		mid.Logger(log),
 		mid.Errors(log),
-		mid.Auth(log, config.Cognito.Region, config.Cognito.SharedUserPoolClientID),
+		mid.Auth(log, config.Cognito.Region, config.Cognito.UserPoolID),
 		mid.Panics(log),
 	}
 
 	app := web.NewApp(mux, shutdown, log, middleware...)
 
-	//app.Handle(http.MethodPost, "/users/", userHandler.Create)
+	app.Handle(http.MethodPost, "/users", userHandler.Create)
+	app.Handle(http.MethodGet, "/users", userHandler.List)
 	app.Handle(http.MethodGet, "/users/me", userHandler.RetrieveMe)
 	app.Handle(http.MethodPost, "/users/teams", teamHandler.CreateTeamForProject)
 	app.Handle(http.MethodPost, "/users/teams/{tid}/project/{pid}", teamHandler.AssignExistingTeam)

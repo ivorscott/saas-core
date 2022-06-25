@@ -47,8 +47,8 @@ func NewAuthService(logger *zap.Logger, config config.Config, cognitoClient cogn
 func (as *AuthService) Authenticate(ctx context.Context, email, password string) (*cognitoidentityprovider.AdminInitiateAuthOutput, error) {
 	signInInput := &cognitoidentityprovider.AdminInitiateAuthInput{
 		AuthFlow:       "ADMIN_USER_PASSWORD_AUTH",
-		ClientId:       aws.String(as.config.Cognito.AppClientID),
-		UserPoolId:     aws.String(as.config.Cognito.UserPoolClientID),
+		ClientId:       aws.String(as.config.Cognito.UserPoolClientID),
+		UserPoolId:     aws.String(as.config.Cognito.UserPoolID),
 		AuthParameters: map[string]string{"USERNAME": email, "PASSWORD": password},
 	}
 
@@ -59,8 +59,8 @@ func (as *AuthService) Authenticate(ctx context.Context, email, password string)
 func (as *AuthService) RespondToNewPasswordRequiredChallenge(ctx context.Context, email, password string, session string) (*cognitoidentityprovider.AdminRespondToAuthChallengeOutput, error) {
 	params := &cognitoidentityprovider.AdminRespondToAuthChallengeInput{
 		ChallengeName: "NEW_PASSWORD_REQUIRED",
-		ClientId:      aws.String(as.config.Cognito.AppClientID),
-		UserPoolId:    aws.String(as.config.Cognito.UserPoolClientID),
+		ClientId:      aws.String(as.config.Cognito.UserPoolClientID),
+		UserPoolId:    aws.String(as.config.Cognito.UserPoolID),
 		ChallengeResponses: map[string]string{
 			"USERNAME":     email,
 			"NEW_PASSWORD": password,
@@ -73,15 +73,17 @@ func (as *AuthService) RespondToNewPasswordRequiredChallenge(ctx context.Context
 // CreateUserSession parses the idToken and saves the subject.
 func (as *AuthService) CreateUserSession(ctx context.Context, idToken []byte) error {
 	pubKeyURL := "https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json"
-	formattedURL := fmt.Sprintf(pubKeyURL, as.config.Cognito.Region, as.config.Cognito.UserPoolClientID)
+	formattedURL := fmt.Sprintf(pubKeyURL, as.config.Cognito.Region, as.config.Cognito.UserPoolID)
 
 	keySet, err := jwk.Fetch(ctx, formattedURL)
 	if err != nil {
+		as.logger.Error("error fetching token", zap.Error(err))
 		return err
 	}
 
 	tok, err := jwt.Parse(idToken, jwt.WithKeySet(keySet))
 	if err != nil {
+		as.logger.Error("error decoding token", zap.Error(err))
 		return err
 	}
 
@@ -89,7 +91,7 @@ func (as *AuthService) CreateUserSession(ctx context.Context, idToken []byte) er
 	sub := tok.Subject()
 	email, ok := tok.Get("email")
 	if !ok {
-		return fmt.Errorf("sub is not available")
+		return fmt.Errorf("email is not available")
 	}
 
 	// Store session.

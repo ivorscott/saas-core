@@ -23,7 +23,7 @@ func Routes(
 ) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost", "https://devpie.io"},
+		AllowedOrigins:   []string{"https://localhost", "https://devpie.io"},
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: false,
@@ -33,7 +33,7 @@ func Routes(
 	middleware := []web.Middleware{
 		mid.Logger(log),
 		mid.Errors(log),
-		mid.Auth(log, config.Cognito.Region, config.Cognito.AdminUserPoolClientID),
+		mid.Auth(log, config.Cognito.Region, config.Cognito.UserPoolID),
 		mid.Panics(log),
 	}
 

@@ -6,25 +6,16 @@ admin: ;@ ## Run admin app with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/admin ./cmd/admin" \
 	-command="./bin/admin \
-	--web-address=${ADMIN_WEB_ADDRESS} \
 	--web-port=${ADMIN_WEB_PORT} \
-	--cognito-app-client-id=${ADMIN_COGNITO_APP_CLIENT_ID} \
-	--cognito-user-pool-client-id=${ADMIN_COGNITO_USER_POOL_CLIENT_ID} \
-	--registration-service-address=${ADMIN_REGISTRATION_SERVICE_ADDRESS} \
-	--registration-service-port=${ADMIN_REGISTRATION_SERVICE_PORT} \
-	--postgres-user=${ADMIN_POSTGRES_USER} \
-	--postgres-password=${ADMIN_POSTGRES_PASSWORD} \
-	--postgres-host=${ADMIN_POSTGRES_HOST} \
-	--postgres-port=${ADMIN_POSTGRES_PORT} \
-	--postgres-db=${ADMIN_POSTGRES_DB} \
-	--postgres-disable-tls=true" \
+	--cognito-user-pool-id=${ADMIN_USER_POOL_ID} \
+	--cognito-user-pool-client-id=${ADMIN_USER_POOL_CLIENT_ID} \
+	--cognito-region=${REGION} \
+	--registration-service-port=${REGISTRATION_WEB_PORT} \
+	--db-port=${ADMIN_DB_PORT} \
+	--db-disable-tls=true" \
 	-include="*.gohtml" \
 	-log-prefix=false
 .PHONY: admin
-
-admin-end:	;@ ## Run end-to-end admin tests with Cypress.
-	@cypress run --project e2e/admin/
-.PHONY: admin-end
 
 admin-test: admin-mock	;@ ## Run admin tests. Add " -- -v" for verbosity.
 	go test $(val) -cover ./internal/admin/...
@@ -35,7 +26,7 @@ admin-mock: ;@ ## Generate admin mocks.
 .PHONY: admin-mock
 
 admin-db: ;@ ## Enter admin database.
-	@pgcli postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)
+	@pgcli postgres://postgres:postgres@localhost:$(ADMIN_DB_PORT)/admin
 .PHONY: admin-db
 
 admin-db-gen: ;@ ## Generate migration files. Required <name> argument.
@@ -43,27 +34,31 @@ admin-db-gen: ;@ ## Generate migration files. Required <name> argument.
 .PHONY: admin-db-gen
 
 admin-db-migrate: ;@ ## Migrate admin database. Optional <num> argument.
-	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable up $(val)
+	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(ADMIN_DB_PORT)/admin?sslmode=disable up $(val)
 .PHONY: admin-db-migrate
 
 admin-db-version: ;@ ## Print migration version for admin database.
-	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable up $(val)
+	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(ADMIN_DB_PORT)/admin?sslmode=disable version
 .PHONY: admin-db-version
 
 admin-db-rollback: ;@ ## Rollback admin database. Optional <num> argument.
-	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://$(ADMIN_POSTGRES_USER):$(ADMIN_POSTGRES_PASSWORD)@$(ADMIN_POSTGRES_HOST):$(ADMIN_POSTGRES_PORT)/$(ADMIN_POSTGRES_DB)?sslmode=disable down $(val)
+	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(ADMIN_DB_PORT)/admin?sslmode=disable down $(val)
 .PHONY: admin-db-rollback
+
+admin-db-force: ;@ ## Force version on admin database. Optional <num> argument.
+	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(ADMIN_DB_PORT)/admin?sslmode=disable force $(val)
+.PHONY: admin-db-force
 
 registration: ;@ ## Run registration api with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/registration ./cmd/registration" \
 	-command="./bin/registration \
-	--web-address=${REGISTRATION_WEB_ADDRESS} \
 	--web-port=${REGISTRATION_WEB_PORT} \
-	--cognito-admin-user-pool-client-id=${REGISTRATION_COGNITO_ADMIN_USER_POOL_CLIENT_ID} \
-	--dynamodb-tenant-table=${REGISTRATION_DYNAMODB_TENANT_TABLE} \
-	--dynamodb-auth-table=${REGISTRATION_DYNAMODB_AUTH_TABLE} \
-	--dynamodb-config-table=${REGISTRATION_DYNAMODB_CONFIG_TABLE}" \
+	--cognito-user-pool-id=${ADMIN_USER_POOL_ID} \
+	--cognito-region=${REGION} \
+	--dynamodb-tenant-table=${DYNAMODB_TENANT_TABLE} \
+	--dynamodb-auth-table=${DYNAMODB_AUTH_TABLE} \
+	--dynamodb-config-table=${DYNAMODB_CONFIG_TABLE}" \
 	-log-prefix=false
 .PHONY: registration
 
@@ -79,12 +74,12 @@ tenant: ;@ ## Run tenant api with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/tenant ./cmd/tenant" \
 	-command="./bin/tenant \
-	--web-address=${TENANT_WEB_ADDRESS} \
 	--web-port=${TENANT_WEB_PORT} \
-	--cognito-user-pool-client-id=${TENANT_COGNITO_USER_POOL_CLIENT_ID} \
-	--dynamodb-tenant-table=${TENANT_DYNAMODB_TENANT_TABLE} \
-	--dynamodb-auth-table=${TENANT_DYNAMODB_AUTH_TABLE} \
-	--dynamodb-config-table=${TENANT_DYNAMODB_CONFIG_TABLE}" \
+	--cognito-user-pool-id=${ADMIN_USER_POOL_ID} \
+	--cognito-region=${REGION} \
+	--dynamodb-tenant-table=${DYNAMODB_TENANT_TABLE} \
+	--dynamodb-auth-table=${DYNAMODB_AUTH_TABLE} \
+	--dynamodb-config-table=${DYNAMODB_CONFIG_TABLE}" \
 	-log-prefix=false
 .PHONY: tenant
 
@@ -100,9 +95,9 @@ identity: ;@ ## Run identity api with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/identity ./cmd/identity" \
 	-command="./bin/identity \
-	--web-address=${IDENTITY_WEB_ADDRESS} \
 	--web-port=${IDENTITY_WEB_PORT} \
-	--cognito-user-pool-client-id=${IDENTITY_COGNITO_USER_POOL_CLIENT_ID}" \
+	--cognito-user-pool-id=${ADMIN_USER_POOL_ID} \
+	--cognito-region=${REGION}" \
 	-log-prefix=false
 .PHONY: identity
 
@@ -118,20 +113,16 @@ project: ;@ ## Run project api with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/project ./cmd/project" \
 	-command="./bin/project \
-	--web-address=${PROJECT_WEB_ADDRESS} \
 	--web-port=${PROJECT_WEB_PORT} \
-	--cognito-shared-user-pool-client-id=${PROJECT_COGNITO_SHARED_USER_POOL_CLIENT_ID} \
-	--db-user=${PROJECT_DB_USER} \
-	--db-password=${PROJECT_DB_PASSWORD} \
-	--db-host=${PROJECT_DB_HOST} \
+	--cognito-user-pool-id=${SHARED_USER_POOL_ID} \
+	--cognito-region=${REGION} \
 	--db-port=${PROJECT_DB_PORT} \
-	--db-name=${PROJECT_DB_NAME} \
 	--db-disable-tls=true" \
 	-log-prefix=false
 .PHONY: project
 
 project-db: ;@ ## Enter project database.
-	@pgcli postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)
+	@pgcli postgres://postgres:postgres@localhost:$(PROJECT_DB_PORT)/project
 .PHONY: project-db
 
 project-db-gen: ;@ ## Generate migration files. Required <name> argument.
@@ -139,35 +130,35 @@ project-db-gen: ;@ ## Generate migration files. Required <name> argument.
 .PHONY: project-db-gen
 
 project-db-migrate: ;@ ## Migrate project database. Optional <num> argument.
-	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)?sslmode=disable up $(val)
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(PROJECT_DB_PORT)/project?sslmode=disable up $(val)
 .PHONY: project-db-migrate
 
 project-db-version: ;@ ## Print migration version for project database.
-	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)?sslmode=disable up $(val)
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(PROJECT_DB_PORT)/project?sslmode=disable version
 .PHONY: project-db-version
 
 project-db-rollback: ;@ ## Rollback project database. Optional <num> argument.
-	@migrate -path ./internal/project/res/migrations -verbose -database postgres://$(PROJECT_DB_USER):$(PROJECT_DB_PASSWORD)@$(PROJECT_DB_HOST):$(PROJECT_DB_PORT)/$(PROJECT_DB_NAME)?sslmode=disable down $(val)
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(PROJECT_DB_PORT)/project?sslmode=disable down $(val)
 .PHONY: project-db-rollback
+
+project-db-force: ;@ ## Force version on project database. Optional <num> argument.
+	@migrate -path ./internal/project/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(PROJECT_DB_PORT)/project?sslmode=disable force $(val)
+.PHONY: project-db-force
 
 user: ;@ ## Run user api with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/user ./cmd/user" \
 	-command="./bin/user \
-	--web-address=${USER_WEB_ADDRESS} \
 	--web-port=${USER_WEB_PORT} \
-	--cognito-shared-user-pool-client-id=${USER_COGNITO_SHARED_USER_POOL_CLIENT_ID} \
-	--db-user=${USER_DB_USER} \
-	--db-password=${USER_DB_PASSWORD} \
-	--db-host=${USER_DB_HOST} \
+	--cognito-user-pool-id=${SHARED_USER_POOL_ID} \
+	--cognito-region=${REGION} \
 	--db-port=${USER_DB_PORT} \
-	--db-name=${USER_DB_NAME} \
 	--db-disable-tls=true" \
 	-log-prefix=false
 .PHONY: user
 
 user-db: ;@ ## Enter user database.
-	@pgcli postgres://$(USER_DB_USER):$(USER_DB_PASSWORD)@$(USER_DB_HOST):$(USER_DB_PORT)/$(USER_DB_NAME)
+	@pgcli postgres://postgres:postgres@localhost:$(USER_DB_PORT)/user
 .PHONY: user-db
 
 user-db-gen: ;@ ## Generate migration files. Required <name> argument.
@@ -175,20 +166,42 @@ user-db-gen: ;@ ## Generate migration files. Required <name> argument.
 .PHONY: user-db-gen
 
 user-db-migrate: ;@ ## Migrate user database. Optional <num> argument.
-	@migrate -path ./internal/user/res/migrations -verbose -database postgres://$(USER_DB_USER):$(USER_DB_PASSWORD)@$(USER_DB_HOST):$(USER_DB_PORT)/$(USER_DB_NAME)?sslmode=disable up $(val)
+	@migrate -path ./internal/user/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(USER_DB_PORT)/user?sslmode=disable up $(val)
 .PHONY: user-db-migrate
 
 user-db-version: ;@ ## Print migration version for user database.
-	@migrate -path ./internal/user/res/migrations -verbose -database postgres://$(USER_DB_USER):$(USER_DB_PASSWORD)@$(USER_DB_HOST):$(USER_DB_PORT)/$(USER_DB_NAME)?sslmode=disable up $(val)
+	@migrate -path ./internal/user/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(USER_DB_PORT)/user?sslmode=disable version
 .PHONY: user-db-version
 
 user-db-rollback: ;@ ## Rollback user database. Optional <num> argument.
-	@migrate -path ./internal/user/res/migrations -verbose -database postgres://$(USER_DB_USER):$(USER_DB_PASSWORD)@$(USER_DB_HOST):$(USER_DB_PORT)/$(USER_DB_NAME)?sslmode=disable down $(val)
+	@migrate -path ./internal/user/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(USER_DB_PORT)/user?sslmode=disable down $(val)
 .PHONY: user-db-rollback
 
-tables:	;@ ## List Dynamodb tables.
+user-db-force: ;@ ## Force version on user database. Optional <num> argument.
+	@migrate -path ./internal/user/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(USER_DB_PORT)/user?sslmode=disable force $(val)
+.PHONY: user-db-force
+
+dynamodb-create:	;@ ## Create Dynamodb tables.
+	@./scripts/db-setup.sh $(SHARED_USER_POOL_ID) $(SHARED_USER_POOL_CLIENT_ID)
+	@make dynamodb-tables
+.PHONY: dynamodb-create
+
+dynamodb-destroy:	;@ ## Destroy Dynamodb tables.
+	@./scripts/db-clean.sh
+	@make dynamodb-tables
+.PHONY: dynamodb-destroy
+
+dynamodb-tables:	;@ ## List Dynamodb tables.
 	@aws dynamodb list-tables --endpoint-url http://localhost:30008
-.PHONY: tables
+.PHONY: dynamodb-tables
+
+routes: ;@ ## Apply ingress routes.
+	kubectl apply -f ./manifests/traefik-routes.yaml
+.PHONY: routes
+
+ports: ;@ ## Port forward Traefik ports.
+	kubectl port-forward --address 0.0.0.0 service/traefik 8000:8000 8080:8080 443:4443 -n default
+.PHONY: ports
 
 lint: ;@ ## Run linter.
 	@golangci-lint run
@@ -201,7 +214,7 @@ help:
 .PHONY: help
 
 # http://bit.ly/37TR1r2
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test admin-db-gen admin-db-migrate admin-db-rollback registration-test project-test project-db-gen project-db-migrate project-db-rollback user-test user-db-gen user-db-migrate user-db-rollback))
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test admin-db-gen admin-db-migrate admin-db-rollback admin-db-force registration-test project-test project-db-gen project-db-migrate project-db-rollback project-db-force user-test user-db-gen user-db-migrate user-db-rollback user-db-force))
   val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(val):;@:)
 endif

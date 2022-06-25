@@ -39,11 +39,12 @@ func (rs *RegistrationService) RegisterTenant(ctx context.Context, newTenant mod
 	)
 
 	tenant := model.Tenant{
-		ID:       uuid.New().String(),
-		Email:    newTenant.Email,
-		FullName: newTenant.FullName,
-		Company:  newTenant.Company,
-		Plan:     newTenant.Plan,
+		ID:        uuid.New().String(),
+		Email:     newTenant.Email,
+		FirstName: newTenant.FirstName,
+		LastName:  newTenant.LastName,
+		Company:   newTenant.Company,
+		Plan:      newTenant.Plan,
 	}
 
 	data, err := json.Marshal(tenant)
@@ -65,6 +66,7 @@ func (rs *RegistrationService) RegisterTenant(ctx context.Context, newTenant mod
 		var webErrResp web.ErrorResponse
 		err = json.Unmarshal(bodyBytes, &webErrResp)
 		if err != nil {
+			rs.logger.Error("error w/ decoding body", zap.Error(err))
 			return nil, resp.StatusCode, err
 		}
 		return &webErrResp, resp.StatusCode, err

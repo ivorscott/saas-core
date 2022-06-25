@@ -4,7 +4,9 @@ package service_test
 import (
 	"context"
 	"fmt"
+	"github.com/devpies/saas-core/pkg/web"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -20,7 +22,7 @@ import (
 )
 
 func TestUserService_CreateTenantUserFromMessage(t *testing.T) {
-	var testCtx = context.Background()
+	var testCtx = web.NewContext(context.Background(), &web.Values{})
 
 	event := msg.TenantRegisteredEvent{
 		Type: msg.TypeTenantRegistered,
@@ -29,23 +31,28 @@ func TestUserService_CreateTenantUserFromMessage(t *testing.T) {
 			UserID:  "123",
 		},
 		Data: msg.TenantRegisteredEventData{
-			ID:         "tenant-id",
+			TenantID:   "tenant-id",
 			Email:      "tenant-email",
-			FullName:   "full-name",
+			FirstName:  "first-name",
+			LastName:   "last-name",
 			Company:    "tenant-company",
+			Plan:       "basic",
 			UserPoolID: "user-pool-id",
 		},
 	}
 	eventBytes, _ := event.Marshal()
 	message, _ := msg.UnmarshalMsg(eventBytes)
 
+	fullName := fmt.Sprintf("%s %s", event.Data.FirstName, event.Data.LastName)
+
 	input := &cognitoidentityprovider.AdminCreateUserInput{
 		UserPoolId: aws.String(event.Data.UserPoolID),
 		Username:   aws.String(event.Data.Email),
 		UserAttributes: []types.AttributeType{
-			{Name: aws.String("custom:tenant-id"), Value: aws.String(event.Data.ID)},
+			{Name: aws.String("custom:tenant-id"), Value: aws.String(event.Data.TenantID)},
+			{Name: aws.String("custom:account-owner"), Value: aws.String("1")},
 			{Name: aws.String("custom:company-name"), Value: aws.String(event.Data.Company)},
-			{Name: aws.String("custom:full-name"), Value: aws.String(event.Data.FullName)},
+			{Name: aws.String("custom:full-name"), Value: aws.String(fullName)},
 			{Name: aws.String("email"), Value: aws.String(event.Data.Email)},
 			{Name: aws.String("email_verified"), Value: aws.String("true")},
 		},
@@ -78,7 +85,7 @@ func TestUserService_CreateTenantUserFromMessage(t *testing.T) {
 				name:    "failed to create tenant user",
 				message: &message,
 				expectations: func(deps userServiceDeps) {
-					deps.cognitoClient.On("AdminCreateUser", mock.AnythingOfType("*context.emptyCtx"), input).Return(nil, assert.AnError)
+					deps.cognitoClient.On("AdminCreateUser", mock.AnythingOfType("*context.valueCtx"), input).Return(nil, assert.AnError)
 				},
 				err: "assert.AnError general error for testing",
 			},
@@ -90,7 +97,7 @@ func TestUserService_CreateTenantUserFromMessage(t *testing.T) {
 
 				tc.expectations(deps)
 
-				err := svc.CreateTenantUserFromMessage(testCtx, tc.message)
+				err := svc.CreateTenantIdentityFromEvent(testCtx, tc.message)
 
 				assert.Equal(t, tc.err, err.Error())
 				deps.cognitoClient.AssertExpectations(t)
@@ -100,22 +107,34 @@ func TestUserService_CreateTenantUserFromMessage(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		svc, deps := setupUserServiceTest()
-		output := &cognitoidentityprovider.AdminCreateUserOutput{}
-		deps.cognitoClient.On("AdminCreateUser", mock.AnythingOfType("*context.emptyCtx"), input).Return(output, nil)
+		now := time.Now()
+		output := &cognitoidentityprovider.AdminCreateUserOutput{
+			User: &types.UserType{
+				Attributes: []types.AttributeType{
+					{Name: aws.String("sub"), Value: aws.String("subject")},
+				},
+				UserCreateDate: &now,
+			},
+		}
+		deps.cognitoClient.On("AdminCreateUser", mock.AnythingOfType("*context.valueCtx"), input).Return(output, nil)
+		deps.js.On("Publish", msg.SubjectTenantIdentityCreated, mock.Anything)
 
-		err := svc.CreateTenantUserFromMessage(testCtx, &message)
+		err := svc.CreateTenantIdentityFromEvent(testCtx, &message)
 
 		assert.Nil(t, err)
 		deps.cognitoClient.AssertExpectations(t)
+		deps.js.AssertExpectations(t)
 	})
 }
 
 type userServiceDeps struct {
 	cognitoClient *mocks.CognitoClient
+	js            *mocks.Publisher
 }
 
 func setupUserServiceTest() (*service.UserService, userServiceDeps) {
 	logger := zap.NewNop()
 	cognitoClient := &mocks.CognitoClient{}
-	return service.NewUserService(logger, cognitoClient), userServiceDeps{cognitoClient: cognitoClient}
+	js := &mocks.Publisher{}
+	return service.NewUserService(logger, js, cognitoClient), userServiceDeps{cognitoClient: cognitoClient, js: js}
 }

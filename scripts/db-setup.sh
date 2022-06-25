@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# Create Local tables
+# Create local dynamodb tables and store "shared user pool" info
+
+SHARED_POOL=$1
+SHARED_POOL_CLIENT=$2
+
 aws dynamodb create-table --table-name "auth-info" \
     --attribute-definitions \
         AttributeName=tenantPath,AttributeType=S \
@@ -9,6 +13,12 @@ aws dynamodb create-table --table-name "auth-info" \
     --endpoint-url http://localhost:30008 \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5
+
+aws dynamodb put-item --table-name "auth-info" \
+    --endpoint-url http://localhost:30008 \
+    --item \
+        '{"tenantPath": {"S": "/app"}, "userPoolId": {"S": "'${SHARED_POOL}'"}, "userPoolClientId": {"S": "'${SHARED_POOL_CLIENT}'"}}'
+
 aws dynamodb create-table --table-name "tenants" \
     --attribute-definitions \
         AttributeName=tenantId,AttributeType=S \

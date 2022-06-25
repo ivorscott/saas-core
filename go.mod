@@ -3,7 +3,6 @@ module github.com/devpies/saas-core
 go 1.18
 
 require (
-	github.com/Masterminds/squirrel v1.5.3
 	github.com/alexedwards/scs/postgresstore v0.0.0-20220528130143-d93ace5be94b
 	github.com/alexedwards/scs/v2 v2.5.0
 	github.com/ardanlabs/conf v1.5.0
@@ -16,8 +15,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.6
 	github.com/devpies/saas-core/pkg/log v0.0.0-20220605224346-efd5e99fa5dd
-	github.com/devpies/saas-core/pkg/msg v0.0.0-20220615105442-b996c3802f91
-	github.com/devpies/saas-core/pkg/web v0.0.0-20220615105442-b996c3802f91
+	github.com/devpies/saas-core/pkg/msg v0.0.0-20220619060038-9a467331531a
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220619060038-9a467331531a
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
 	github.com/go-playground/validator/v10 v10.11.0
@@ -56,8 +55,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.15.6 // indirect
-	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
-	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lestrrat-go/backoff/v2 v2.0.8 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
@@ -74,7 +71,7 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
-	golang.org/x/sys v0.0.0-20220614162138-6c1b26c55098 // indirect
+	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220607140733-d738665f6195 // indirect
 	google.golang.org/grpc v1.47.0 // indirect
@@ -83,5 +80,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-replace github.com/devpies/saas-core/pkg/msg v0.0.0-20220615105442-b996c3802f91 => ./pkg/msg
-replace github.com/devpies/saas-core/pkg/web v0.0.0-20220615105442-b996c3802f91 => ./pkg/web
+replace github.com/devpies/saas-core/pkg/msg v0.0.0-20220619060038-9a467331531a => ./pkg/msg
+replace github.com/devpies/saas-core/pkg/web v0.0.0-20220619060038-9a467331531a => ./pkg/web
+

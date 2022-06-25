@@ -78,12 +78,12 @@ func Run(staticFS embed.FS) error {
 	defer logger.Sync()
 
 	// Initialize admin database.
-	database, err := db.NewPostgresDatabase(cfg)
+	database, Close, err := db.NewPostgresDatabase(logger, cfg)
 	if err != nil {
 		logger.Error("error connecting to admin database", zap.Error(err))
 		return err
 	}
-	defer database.Close()
+	defer Close()
 
 	// Execute latest migration.
 	if err = res.MigrateUp(database.URL.String()); err != nil {
@@ -111,7 +111,7 @@ func Run(staticFS embed.FS) error {
 	registrationService := service.NewRegistrationService(logger, registrationClient)
 
 	renderEngine := render.New(logger, cfg, templateFS, session)
-	authHandler := handler.NewAuthHandler(logger, cfg, renderEngine, session, authService)
+	authHandler := handler.NewAuthHandler(logger, renderEngine, session, authService)
 	webPageHandler := handler.NewWebPageHandler(logger, renderEngine, web.SetContextStatusCode)
 	registrationHandler := handler.NewRegistrationHandler(logger, registrationService)
 	shutdown := make(chan os.Signal, 1)

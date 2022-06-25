@@ -28,36 +28,26 @@ spec:
                   name: secrets
                   key: aws_secret_access_key
             - name: AWS_DEFAULT_REGION
-              value: "eu-central-1"
-
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: region
             - name: PROJECT_WEB_PORT
               value: "4004"
-            - name: PROJECT_WEB_ADDRESS
-              value: "http://localhost"
-
-            - name: PROJECT_COGNITO_SHARED_USER_POOL_CLIENT_ID
+            - name: PROJECT_COGNITO_USER_POOL_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: cognito_shared_user_pool_client_id
+                  key: shared_user_pool_id
             - name: PROJECT_COGNITO_REGION
-              value: "eu-central-1"
-
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: region
             - name: PROJECT_NATS_ADDRESS
               value: "nats-svc"
-            - name: PROJECT_NATS_PORT
-              value: "4222"
-
-            - name: PROJECT_DB_USER
-              value: postgres
-            - name: PROJECT_DB_PASSWORD
-              value: postgres
             - name: PROJECT_DB_HOST
               value: db-project-svc
-            - name: PROJECT_DB_PORT
-              value: "5432"
-            - name: PROJECT_DB_NAME
-              value: project
             - name: PROJECT_DB_DISABLE_TLS
               value: "true"
 ---

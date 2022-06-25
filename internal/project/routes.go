@@ -28,7 +28,7 @@ func Routes(
 	middleware := []web.Middleware{
 		mid.Logger(log),
 		mid.Errors(log),
-		mid.Auth(log, config.Cognito.Region, config.Cognito.SharedUserPoolClientID),
+		mid.Auth(log, config.Cognito.Region, config.Cognito.UserPoolID),
 		mid.Panics(log),
 	}
 
@@ -47,7 +47,7 @@ func Routes(
 	app.Handle(http.MethodDelete, "/projects/columns/{cid}/tasks/{tid}", taskHandler.Delete)
 
 	h := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://*", "https://devpie.io"},
+		AllowedOrigins:   []string{"https://devpie.local:3000", "https://devpie.io"},
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Cache-Control", "Content-Type", "Strict-Transport-Security"},
 		AllowCredentials: false,

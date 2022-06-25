@@ -1,6 +1,20 @@
 package msg
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
+
+// UnmarshalTenantIdentityCreatedEvent parses the JSON-encoded data and returns TenantIdentityCreatedEvent.
+func UnmarshalTenantIdentityCreatedEvent(data []byte) (TenantIdentityCreatedEvent, error) {
+	var m TenantIdentityCreatedEvent
+	err := json.Unmarshal(data, &m)
+	return m, err
+}
+
+// Marshal JSON encodes TenantIdentityCreatedEvent.
+func (m *TenantIdentityCreatedEvent) Marshal() ([]byte, error) {
+	return json.Marshal(m)
+}
 
 // UnmarshalTenantSiloedEvent parses the JSON-encoded data and returns TenantSiloedEvent.
 func UnmarshalTenantSiloedEvent(data []byte) (TenantSiloedEvent, error) {
@@ -45,9 +59,10 @@ type TenantRegisteredEvent struct {
 }
 
 type TenantRegisteredEventData struct {
-	ID         string `json:"id"`
+	TenantID   string `json:"tenantId"`
 	Email      string `json:"email"`
-	FullName   string `json:"fullName"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
 	Company    string `json:"company"`
 	Plan       string `json:"plan"`
 	UserPoolID string `json:"userPoolId"`
@@ -75,4 +90,31 @@ type TenantSiloedEventData struct {
 	UserPoolID       string `json:"userPoolId"`
 	AppClientID      string `json:"appClientId"`
 	DeploymentStatus string `json:"deploymentStatus"`
+}
+
+// TenantIdentityCreated is a valid MessageType.
+const TenantIdentityCreated MessageType = "TenantIdentityCreated"
+
+const (
+	// TypeTenantIdentityCreated represents a concrete value for the TenantIdentityCreatedType.
+	TypeTenantIdentityCreated TenantIdentityCreatedType = "TenantIdentityCreated"
+)
+
+// TenantIdentityCreatedType represents a TenantIdentityCreated Message.
+type TenantIdentityCreatedType string
+
+type TenantIdentityCreatedEvent struct {
+	Metadata Metadata                       `json:"metadata"`
+	Type     TenantIdentityCreatedType      `json:"type"`
+	Data     TenantIdentityCreatedEventData `json:"data"`
+}
+
+type TenantIdentityCreatedEventData struct {
+	TenantID  string `json:"tenantId"`
+	UserID    string `json:"userId"`
+	Company   string `json:"company"`
+	Email     string `json:"email"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	CreatedAt string `json:"createdAt"`
 }

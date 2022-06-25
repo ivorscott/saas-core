@@ -12,7 +12,7 @@ spec:
       - "PATCH"
       - "DELETE"
     accessControlAllowOriginList:
-      - "http://localhost:3000"
+      - "https://devpie.local:3000"
     accessControlAllowHeaders:
       - "Accept"
       - "Authorization"

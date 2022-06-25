@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	StreamTenants     = "TENANTS"
-	SubjectRegistered = "TENANTS.registered"
-	SubjectSiloed     = "TENANTS.siloed"
+	StreamTenants                = "TENANTS"
+	SubjectTenantRegistered      = "TENANTS.registered"
+	SubjectTenantSiloed          = "TENANTS.siloed"
+	SubjectTenantIdentityCreated = "TENANTS.created"
 
 	StreamMemberships        = "MEMBERSHIPS"
 	SubjectMembershipCreated = "MEMBERSHIPS.created"
@@ -53,7 +54,7 @@ func Bytes(message interface{}) ([]byte, error) {
 type Metadata struct {
 	TraceID  string `json:"traceId"`
 	UserID   string `json:"userId"`
-	TenantID string `json:"tenantID"`
+	TenantID string `json:"tenantId"`
 }
 
 // MessageType is a type of message.

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -48,15 +49,15 @@ func NewRegistrationService(logger *zap.Logger, region string, idpService identi
 }
 
 // CreateRegistration starts the tenant registration process.
-func (rs *RegistrationService) CreateRegistration(ctx context.Context, id string, tenant model.NewTenant) error {
+func (rs *RegistrationService) CreateRegistration(ctx context.Context, tenantID string, tenant model.NewTenant) error {
 	var err error
-	userPoolID, err := rs.idpService.GetPlanBasedUserPool(ctx, tenant, formatPath(tenant.Company))
+	userPoolID, err := rs.idpService.GetPlanBasedUserPool(ctx, tenant, rs.formatPath(tenant.Company))
 	if err != nil {
-		return nil
+		return err
 	}
-	err = rs.publishTenantRegisteredEvent(ctx, id, tenant, userPoolID)
+	err = rs.publishTenantRegisteredEvent(ctx, tenantID, tenant, userPoolID)
 	if err != nil {
-		return nil
+		return err
 	}
 	if err = rs.provision(ctx, Plan(tenant.Plan)); err != nil {
 		return err
@@ -64,21 +65,25 @@ func (rs *RegistrationService) CreateRegistration(ctx context.Context, id string
 	return nil
 }
 
-func formatPath(company string) string {
-	return strings.ToLower(strings.Replace(company, " ", "", -1))
+func (rs *RegistrationService) formatPath(company string) string {
+	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
+	if err != nil {
+		rs.logger.Fatal("regex failed to compile", zap.Error(err))
+	}
+	return strings.ToLower(reg.ReplaceAllString(company, ""))
 }
 
-func (rs *RegistrationService) publishTenantRegisteredEvent(ctx context.Context, id string, tenant model.NewTenant, userPoolID string) error {
+func (rs *RegistrationService) publishTenantRegisteredEvent(ctx context.Context, tenantID string, tenant model.NewTenant, userPoolID string) error {
 	values, ok := web.FromContext(ctx)
 	if !ok {
 		return web.CtxErr()
 	}
-	event := newTenantRegisteredEvent(values, id, tenant, userPoolID)
+	event := newTenantRegisteredEvent(values, tenantID, tenant, userPoolID)
 	bytes, err := event.Marshal()
 	if err != nil {
-		return nil
+		return err
 	}
-	rs.js.Publish(msg.SubjectRegistered, bytes)
+	rs.js.Publish(msg.SubjectTenantRegistered, bytes)
 	return nil
 }
 
@@ -103,7 +108,7 @@ func (rs *RegistrationService) provision(ctx context.Context, plan Plan) error {
 	return nil
 }
 
-func newTenantRegisteredEvent(values *web.Values, id string, tenant model.NewTenant, userPoolID string) msg.TenantRegisteredEvent {
+func newTenantRegisteredEvent(values *web.Values, tenantID string, tenant model.NewTenant, userPoolID string) msg.TenantRegisteredEvent {
 	return msg.TenantRegisteredEvent{
 		Metadata: msg.Metadata{
 			TraceID: values.TraceID,
@@ -111,8 +116,9 @@ func newTenantRegisteredEvent(values *web.Values, id string, tenant model.NewTen
 		},
 		Type: msg.TypeTenantRegistered,
 		Data: msg.TenantRegisteredEventData{
-			ID:         id,
-			FullName:   tenant.FullName,
+			TenantID:   tenantID,
+			FirstName:  tenant.FirstName,
+			LastName:   tenant.LastName,
 			Company:    tenant.Company,
 			Email:      tenant.Email,
 			Plan:       tenant.Plan,

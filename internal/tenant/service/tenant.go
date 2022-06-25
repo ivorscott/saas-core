@@ -2,16 +2,20 @@ package service
 
 import (
 	"context"
-
 	"github.com/devpies/saas-core/internal/tenant/model"
 	"github.com/devpies/saas-core/pkg/msg"
 
 	"go.uber.org/zap"
 )
 
+type publisher interface {
+	Publish(subject string, message []byte)
+}
+
 // TenantService manages tenant business operations.
 type TenantService struct {
 	logger     *zap.Logger
+	js         publisher
 	tenantRepo tenantRepository
 }
 
@@ -24,9 +28,10 @@ type tenantRepository interface {
 }
 
 // NewTenantService returns a new TenantService.
-func NewTenantService(logger *zap.Logger, tenantRepo tenantRepository) *TenantService {
+func NewTenantService(logger *zap.Logger, js publisher, tenantRepo tenantRepository) *TenantService {
 	return &TenantService{
 		logger:     logger,
+		js:         js,
 		tenantRepo: tenantRepo,
 	}
 }
@@ -46,16 +51,18 @@ func (ts *TenantService) CreateTenantFromMessage(ctx context.Context, message in
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func newTenant(data msg.TenantRegisteredEventData) model.NewTenant {
 	return model.NewTenant{
-		ID:       data.ID,
-		Email:    data.Email,
-		FullName: data.FullName,
-		Company:  data.Company,
-		Plan:     data.Plan,
+		ID:        data.TenantID,
+		Email:     data.Email,
+		FirstName: data.FirstName,
+		LastName:  data.LastName,
+		Company:   data.Company,
+		Plan:      data.Plan,
 	}
 }
 

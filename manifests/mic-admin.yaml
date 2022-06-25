@@ -28,46 +28,41 @@ spec:
                   name: secrets
                   key: aws_secret_access_key
             - name: AWS_DEFAULT_REGION
-              value: "eu-central-1"
-
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: region
             - name: ADMIN_WEB_PORT
               value: "4000"
-            - name: ADMIN_WEB_ADDRESS
-              value: "http://localhost"
-
-            - name: ADMIN_COGNITO_APP_CLIENT_ID
+            - name: ADMIN_COGNITO_USER_POOL_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: cognito_app_client_id
+                  key: admin_user_pool_id
             - name: ADMIN_COGNITO_USER_POOL_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: cognito_user_pool_client_id
+                  key: admin_user_pool_client_id
             - name: ADMIN_COGNITO_REGION
-              value: "eu-central-1"
-
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: region
             - name: ADMIN_REGISTRATION_SERVICE_ADDRESS
-              value: "http://mic-registration-svc"
+              value: "mic-registration-svc"
             - name: ADMIN_REGISTRATION_SERVICE_PORT
               value: "4001"
-
-            - name: ADMIN_POSTGRES_USER
-              value: postgres
-            - name: ADMIN_POSTGRES_PASSWORD
-              value: postgres
-            - name: ADMIN_POSTGRES_HOST
+            - name: ADMIN_DB_HOST
               value: db-admin-svc
-            - name: ADMIN_POSTGRES_PORT
-              value: "5432"
-            - name: ADMIN_POSTGRES_DB
-              value: admin
-            - name: ADMIN_POSTGRES_DISABLE_TLS
+            - name: ADMIN_DB_DISABLE_TLS
               value: "true"
               
             - name: ADMIN_DYNAMODB_TENANT_TABLE
-              value: tenants
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: dynamodb_tenants_table_name
 ---
 apiVersion: v1
 kind: Service

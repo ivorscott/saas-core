@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS invites;
 
 DROP INDEX idx_membership_tenant, idx_memberships_user;
 DROP TABLE IF EXISTS memberships;
+DROP TYPE ROLE;
 
 DROP INDEX idx_team_tenant, idx_team_name;
 DROP TABLE IF EXISTS teams;

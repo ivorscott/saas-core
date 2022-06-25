@@ -194,8 +194,6 @@ func (pr *ProjectRepository) List(ctx context.Context) ([]model.Project, error) 
 		ps = append(ps, p)
 	}
 
-	pr.logger.Info("TEST!!!!!", zap.Any("list", ps))
-
 	return ps, nil
 }
 
@@ -316,7 +314,7 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 		p.Description,
 		p.Active,
 		p.Public,
-		p.ColumnOrder,
+		pq.Array(p.ColumnOrder),
 		p.TeamID,
 		p.UpdatedAt,
 		pid,
