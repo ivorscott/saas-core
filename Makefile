@@ -17,10 +17,6 @@ admin: ;@ ## Run admin app with live reload.
 	-log-prefix=false
 .PHONY: admin
 
-admin-end:	;@ ## Run end-to-end admin tests with Cypress.
-	@cypress run --project e2e/admin/
-.PHONY: admin-end
-
 admin-test: admin-mock	;@ ## Run admin tests. Add " -- -v" for verbosity.
 	go test $(val) -cover ./internal/admin/...
 .PHONY: admin-test

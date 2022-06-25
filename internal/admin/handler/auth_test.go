@@ -8,7 +8,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/devpies/saas-core/internal/admin/config"
 	"github.com/devpies/saas-core/internal/admin/handler"
 	"github.com/devpies/saas-core/internal/admin/mocks"
 	"github.com/devpies/saas-core/internal/admin/model"
@@ -523,7 +522,7 @@ func setupAuthHandler() (http.Handler, authHandlerDeps) {
 	authService := &mocks.AuthService{}
 	sessionManager := &mocks.SessionManager{}
 
-	auth := handler.NewAuthHandler(logger, config.Config{}, renderEngine, sessionManager, authService)
+	auth := handler.NewAuthHandler(logger, renderEngine, sessionManager, authService)
 
 	app := web.NewApp(router, shutdown, logger, []web.Middleware{mid.Errors(logger)}...)
 

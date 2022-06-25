@@ -61,7 +61,8 @@ type TenantRegisteredEvent struct {
 type TenantRegisteredEventData struct {
 	ID         string `json:"id"`
 	Email      string `json:"email"`
-	FullName   string `json:"fullName"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
 	Company    string `json:"company"`
 	Plan       string `json:"plan"`
 	UserPoolID string `json:"userPoolId"`

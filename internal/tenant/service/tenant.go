@@ -67,8 +67,8 @@ func (ts *TenantService) CreateTenantFromMessage(ctx context.Context, message in
 			TenantID:  tenant.ID,
 			Company:   tenant.Company,
 			Email:     tenant.Email,
-			FirstName: tenant.FullName,
-			LastName:  "",
+			FirstName: tenant.FirstName,
+			LastName:  tenant.LastName,
 			CreatedAt: time.Now().UTC().String(),
 		},
 		Metadata: msg.Metadata{
@@ -90,11 +90,12 @@ func (ts *TenantService) CreateTenantFromMessage(ctx context.Context, message in
 
 func newTenant(data msg.TenantRegisteredEventData) model.NewTenant {
 	return model.NewTenant{
-		ID:       data.ID,
-		Email:    data.Email,
-		FullName: data.FullName,
-		Company:  data.Company,
-		Plan:     data.Plan,
+		ID:        data.ID,
+		Email:     data.Email,
+		FirstName: data.FirstName,
+		LastName:  data.LastName,
+		Company:   data.Company,
+		Plan:      data.Plan,
 	}
 }
 

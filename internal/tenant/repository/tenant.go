@@ -33,7 +33,8 @@ func (tr *TenantRepository) Insert(ctx context.Context, tenant model.NewTenant) 
 		Item: map[string]types.AttributeValue{
 			"tenantId":    &types.AttributeValueMemberS{Value: tenant.ID},
 			"email":       &types.AttributeValueMemberS{Value: tenant.Email},
-			"fullName":    &types.AttributeValueMemberS{Value: tenant.FullName},
+			"firstName":   &types.AttributeValueMemberS{Value: tenant.FirstName},
+			"lastName":    &types.AttributeValueMemberS{Value: tenant.LastName},
 			"companyName": &types.AttributeValueMemberS{Value: tenant.Company},
 			"plan":        &types.AttributeValueMemberS{Value: tenant.Plan},
 		},
@@ -104,9 +105,14 @@ func (tr *TenantRepository) Update(ctx context.Context, id string, update model.
 		av[":email"] = &types.AttributeValueMemberS{Value: *update.Email}
 	}
 
-	if update.FullName != nil {
-		updateExp = updateExp + " fullName = :fullName,"
-		av[":fullName"] = &types.AttributeValueMemberS{Value: *update.FullName}
+	if update.FirstName != nil {
+		updateExp = updateExp + " firstName = :firstName,"
+		av[":firstName"] = &types.AttributeValueMemberS{Value: *update.FirstName}
+	}
+
+	if update.LastName != nil {
+		updateExp = updateExp + " lastName = :lastName,"
+		av[":lastName"] = &types.AttributeValueMemberS{Value: *update.LastName}
 	}
 
 	if update.CompanyName != nil {

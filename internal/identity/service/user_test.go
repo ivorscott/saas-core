@@ -31,7 +31,8 @@ func TestUserService_CreateTenantUserFromMessage(t *testing.T) {
 		Data: msg.TenantRegisteredEventData{
 			ID:         "tenant-id",
 			Email:      "tenant-email",
-			FullName:   "full-name",
+			FirstName:  "first-name",
+			LastName:   "last-name",
 			Company:    "tenant-company",
 			UserPoolID: "user-pool-id",
 		},
@@ -39,13 +40,16 @@ func TestUserService_CreateTenantUserFromMessage(t *testing.T) {
 	eventBytes, _ := event.Marshal()
 	message, _ := msg.UnmarshalMsg(eventBytes)
 
+	fullName := fmt.Sprintf("%s %s", event.Data.FirstName, event.Data.LastName)
+
 	input := &cognitoidentityprovider.AdminCreateUserInput{
 		UserPoolId: aws.String(event.Data.UserPoolID),
 		Username:   aws.String(event.Data.Email),
 		UserAttributes: []types.AttributeType{
 			{Name: aws.String("custom:tenant-id"), Value: aws.String(event.Data.ID)},
+			{Name: aws.String("custom:account-owner"), Value: aws.String("1")},
 			{Name: aws.String("custom:company-name"), Value: aws.String(event.Data.Company)},
-			{Name: aws.String("custom:full-name"), Value: aws.String(event.Data.FullName)},
+			{Name: aws.String("custom:full-name"), Value: aws.String(fullName)},
 			{Name: aws.String("email"), Value: aws.String(event.Data.Email)},
 			{Name: aws.String("email_verified"), Value: aws.String("true")},
 		},
@@ -90,7 +94,7 @@ func TestUserService_CreateTenantUserFromMessage(t *testing.T) {
 
 				tc.expectations(deps)
 
-				err := svc.CreateTenantUserFromMessage(testCtx, tc.message)
+				err := svc.CreateTenantUserFromEvent(testCtx, tc.message)
 
 				assert.Equal(t, tc.err, err.Error())
 				deps.cognitoClient.AssertExpectations(t)
@@ -103,7 +107,7 @@ func TestUserService_CreateTenantUserFromMessage(t *testing.T) {
 		output := &cognitoidentityprovider.AdminCreateUserOutput{}
 		deps.cognitoClient.On("AdminCreateUser", mock.AnythingOfType("*context.emptyCtx"), input).Return(output, nil)
 
-		err := svc.CreateTenantUserFromMessage(testCtx, &message)
+		err := svc.CreateTenantUserFromEvent(testCtx, &message)
 
 		assert.Nil(t, err)
 		deps.cognitoClient.AssertExpectations(t)

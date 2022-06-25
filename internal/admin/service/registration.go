@@ -39,11 +39,12 @@ func (rs *RegistrationService) RegisterTenant(ctx context.Context, newTenant mod
 	)
 
 	tenant := model.Tenant{
-		ID:       uuid.New().String(),
-		Email:    newTenant.Email,
-		FullName: newTenant.FullName,
-		Company:  newTenant.Company,
-		Plan:     newTenant.Plan,
+		ID:        uuid.New().String(),
+		Email:     newTenant.Email,
+		FirstName: newTenant.FirstName,
+		LastName:  newTenant.LastName,
+		Company:   newTenant.Company,
+		Plan:      newTenant.Plan,
 	}
 
 	data, err := json.Marshal(tenant)

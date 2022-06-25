@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/devpies/saas-core/pkg/msg"
@@ -55,7 +56,7 @@ func (rs *UserService) CreateTenantUserFromEvent(ctx context.Context, message in
 			{Name: aws.String("custom:tenant-id"), Value: aws.String(d.ID)},
 			{Name: aws.String("custom:account-owner"), Value: aws.String("1")},
 			{Name: aws.String("custom:company-name"), Value: aws.String(formatPath(d.Company))},
-			{Name: aws.String("custom:full-name"), Value: aws.String(d.FullName)},
+			{Name: aws.String("custom:full-name"), Value: aws.String(fmt.Sprintf("%s %s", d.FirstName, d.LastName))},
 			{Name: aws.String("email"), Value: aws.String(d.Email)},
 			{Name: aws.String("email_verified"), Value: aws.String("true")},
 		},

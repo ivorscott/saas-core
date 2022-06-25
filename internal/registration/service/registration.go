@@ -112,7 +112,8 @@ func newTenantRegisteredEvent(values *web.Values, id string, tenant model.NewTen
 		Type: msg.TypeTenantRegistered,
 		Data: msg.TenantRegisteredEventData{
 			ID:         id,
-			FullName:   tenant.FullName,
+			FirstName:  tenant.FirstName,
+			LastName:   tenant.LastName,
 			Company:    tenant.Company,
 			Email:      tenant.Email,
 			Plan:       tenant.Plan,

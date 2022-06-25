@@ -2,33 +2,12 @@
 
 This project is a part of "AWS SaaS app in 30 days" - _Proof of Concept_
 
-### Requirements
-- mac or linux machine
-- aws account
-- install [go v1.18 or higher](https://go.dev/doc/install)
-- install [tilt](https://tilt.dev/)
-- install docker-desktop - enable kubernetes
-- install [mockery](https://github.com/vektra/mockery)
-- install cypress `npm install cypress -g`
-- install [pgcli](https://www.pgcli.com/)
-- install [golangci-lint](https://github.com/golangci/golangci-lint)
-- install [go-migrate](https://github.com/golang-migrate/migrate)
-- install [nosql workbench](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/workbench.settingup.html)
-- [saas-infra resources](https://github.com/devpies/saas-infra/tree/main/local/saas) 
-
 ## Setup
 
-1. Checkout `saas-infra` and deploy the `local` infrastructure.
-2. Use the terraform output values for this repository's `.env` file.
-3. Copy `.env.sample` in the project root and create your own `.env` file.
-4. Copy `./manifests/secrets.sample.yaml` and create your own `./manifests/secrets.yaml` file.
-5. Start containers: `tilt up`
-6. Port forward the traefik ports: `make ports`
-7. Setup local DynamoDB tables: `make dynamodb-create`
-8. Deploy ingress routes: `make routes`
+Read [instructions](SETUP.md).
 
 ## Using Make
-By default using Tilt allows you to develop against running containers. Alternatively, you can simultaneously run
+By default, using Tilt allows you to develop against running containers. Alternatively, you can simultaneously run
 go binaries natively for an idiomatic go development experience.
 
 ```bash

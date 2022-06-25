@@ -63,18 +63,6 @@ func Run() error {
 	}
 	defer logger.Sync()
 
-	// Initialize 3-layered architecture.
-	tenantRepository := repository.NewTenantRepository(dbClient, cfg.Dynamodb.TenantTable)
-	siloConfigRepository := repository.NewSiloConfigRepository(dbClient, cfg.Dynamodb.ConfigTable)
-	authInfoRepository := repository.NewAuthInfoRepository(logger, dbClient, cfg.Dynamodb.AuthTable)
-
-	tenantService := service.NewTenantService(logger, tenantRepository)
-	authInfoService := service.NewAuthInfoService(logger, authInfoRepository, cfg.Cognito.Region)
-	siloConfigService := service.NewSiloConfigService(logger, siloConfigRepository)
-
-	tenantHandler := handler.NewTenantHandler(logger, tenantService)
-	authInfoHandler := handler.NewAuthInfoHandler(logger, authInfoService)
-
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	serverErrors := make(chan error, 1)
@@ -82,6 +70,18 @@ func Run() error {
 	// Initialize NATS JetStream.
 	js := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
+
+	// Initialize 3-layered architecture.
+	tenantRepository := repository.NewTenantRepository(dbClient, cfg.Dynamodb.TenantTable)
+	siloConfigRepository := repository.NewSiloConfigRepository(dbClient, cfg.Dynamodb.ConfigTable)
+	authInfoRepository := repository.NewAuthInfoRepository(logger, dbClient, cfg.Dynamodb.AuthTable)
+
+	tenantService := service.NewTenantService(logger, js, tenantRepository)
+	authInfoService := service.NewAuthInfoService(logger, authInfoRepository, cfg.Cognito.Region)
+	siloConfigService := service.NewSiloConfigService(logger, siloConfigRepository)
+
+	tenantHandler := handler.NewTenantHandler(logger, tenantService)
+	authInfoHandler := handler.NewAuthInfoHandler(logger, authInfoService)
 
 	go func() {
 		defer func() {
