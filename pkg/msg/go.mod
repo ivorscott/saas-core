@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/devpies/saas-core v0.0.0-20220608153529-30614660605e
-	github.com/devpies/saas-core/pkg/web v0.0.0-20220608153529-30614660605e
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220625133353-7598e6c30488
 	github.com/nats-io/nats.go v1.16.0
 	go.uber.org/zap v1.21.0
 )
@@ -32,13 +32,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
+	golang.org/x/sys v0.0.0-20220624220833-87e55d714810 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 )
-
-replace (
-	github.com/devpies/saas-core/pkg/web v0.0.0-20220608153529-30614660605e => ../web
-)
-
