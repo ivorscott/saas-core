@@ -14,6 +14,8 @@ github.com/devpies/saas-core/pkg/web v0.0.0-20220608153529-30614660605e h1:Og5hi
 github.com/devpies/saas-core/pkg/web v0.0.0-20220608153529-30614660605e/go.mod h1:ziV0cfnDYb/u8fTAbx1EbXkB88tCXA8TQckAgXDpbqg=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220625133353-7598e6c30488 h1:UGZfkBEM0y5NRru5CFn3GbpllQ2tgYDXcws3p6qTCqQ=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220625133353-7598e6c30488/go.mod h1:8e3cbinhc6AvOxFdsYhGdCWrs7JSiC5/Te/AoFrBQM8=
+github.com/devpies/saas-core/pkg/web v0.0.0-20220625134311-068c44362718 h1:1c/3TaRNMDk0/G7kj9WR8ShPzZV9vkmDeygE81b+29E=
+github.com/devpies/saas-core/pkg/web v0.0.0-20220625134311-068c44362718/go.mod h1:ziV0cfnDYb/u8fTAbx1EbXkB88tCXA8TQckAgXDpbqg=
 github.com/go-chi/chi/v5 v5.0.7 h1:rDTPXLDHGATaeHvVlLcR4Qe0zftYethFucbjVQ1PxU8=
 github.com/go-chi/chi/v5 v5.0.7/go.mod h1:DslCQbL2OYiznFReuXYUmQ2hGd1aDpCnlMNITLSKoi8=
 github.com/go-playground/assert/v2 v2.0.1 h1:MsBgLAaY856+nPRTKrp3/OZK38U/wa0CcBYNjji3q3A=

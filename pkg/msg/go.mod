@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/devpies/saas-core v0.0.0-20220608153529-30614660605e
-	github.com/devpies/saas-core/pkg/web v0.0.0-20220625133353-7598e6c30488
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220625134311-068c44362718
 	github.com/nats-io/nats.go v1.16.0
 	go.uber.org/zap v1.21.0
 )
