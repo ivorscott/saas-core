@@ -27,10 +27,10 @@ Tested on a m1 mac . It should work on linux as well.
 3. Use terraform output values for this repository's `.env` file.
 4. Copy `.env.sample` in the project root and create your own `.env` file.
 5. Copy `./manifests/secrets.sample.yaml` and create your own `./manifests/secrets.yaml` file.
-6. Generate valid tls self-signed certificates: `mkcert devpie.io "*.devpie.io" localhost 127.0.0.1 ::1`
+6. Generate valid tls self-signed certificates: `mkcert devpie.local "*.devpie.local" localhost 127.0.0.1 ::1`
 7. Create the `tls-secret` for traefik with the certificate values: 
    ```
-   kubectl create secret generic tls-secret --from-file=tls.crt=./server.crt --from-file=tls.key=./server.key
+   kubectl create secret generic tls-secret --from-file=tls.crt=./[YOUR-CERT-GOES-HERE] --from-file=tls.key=./[YOUR-KEY-GOES-HERE]
    ```
 8. Modify your hosts file:
    ```bash
@@ -40,12 +40,12 @@ Tested on a m1 mac . It should work on linux as well.
     # localhost is used to configure the loopback interface
     # when the system is booting.  Do not change this entry.
     ##
-    127.0.0.1       localhost admin.devpie.io api.devpie.io devpie.io
+    127.0.0.1       localhost devpie.local admin.devpie.local api.devpie.local 
     ```
    > __TIP__  
    > 
-   > You may need to click the 🔒 to the right of the address bar, validate the certificate in Chrome. Then restart the browser.
-   > This should remove the "Not Secure" label.
+   > If you still see the "Not Secure" label in the browser you may need to restart the browser 
+   > for the changes to take effect.
 9. Start containers: `tilt up`
 10. Port forward the traefik ports: `make ports`
 11. Setup local DynamoDB tables: `make dynamodb-create`
@@ -53,7 +53,7 @@ Tested on a m1 mac . It should work on linux as well.
     ![](docs/img/workbench.png)
 12. Deploy ingress routes: `make routes`
 
-13. Navigate to http://localhost:8080/dashboard/#/http/routers. You should see 4 tls terminated routers.
+13. Navigate to http://localhost:8080/dashboard/#/http/routers. You should see `4` tls terminated routers.
 
 ![](docs/img/traefik.png)
 

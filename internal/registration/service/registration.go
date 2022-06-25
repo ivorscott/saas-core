@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -50,7 +51,7 @@ func NewRegistrationService(logger *zap.Logger, region string, idpService identi
 // CreateRegistration starts the tenant registration process.
 func (rs *RegistrationService) CreateRegistration(ctx context.Context, tenantID string, tenant model.NewTenant) error {
 	var err error
-	userPoolID, err := rs.idpService.GetPlanBasedUserPool(ctx, tenant, formatPath(tenant.Company))
+	userPoolID, err := rs.idpService.GetPlanBasedUserPool(ctx, tenant, rs.formatPath(tenant.Company))
 	if err != nil {
 		return err
 	}
@@ -64,8 +65,12 @@ func (rs *RegistrationService) CreateRegistration(ctx context.Context, tenantID 
 	return nil
 }
 
-func formatPath(company string) string {
-	return strings.ToLower(strings.Replace(company, " ", "", -1))
+func (rs *RegistrationService) formatPath(company string) string {
+	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
+	if err != nil {
+		rs.logger.Fatal("regex failed to compile", zap.Error(err))
+	}
+	return strings.ToLower(reg.ReplaceAllString(company, ""))
 }
 
 func (rs *RegistrationService) publishTenantRegisteredEvent(ctx context.Context, tenantID string, tenant model.NewTenant, userPoolID string) error {

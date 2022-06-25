@@ -25,7 +25,7 @@ func Routes(
 ) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost", "https://devpie.io"},
+		AllowedOrigins:   []string{"https://devpie.local:3000", "https://devpie.io"},
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: false,

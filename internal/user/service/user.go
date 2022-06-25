@@ -10,7 +10,6 @@ import (
 	"github.com/devpies/saas-core/pkg/msg"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
-	"strings"
 	"time"
 )
 
@@ -63,7 +62,7 @@ func (us *UserService) AddSeat(ctx context.Context, nu model.NewUser, now time.T
 		Username:   aws.String(nu.Email),
 		UserAttributes: []types.AttributeType{
 			{Name: aws.String("custom:tenant-id"), Value: aws.String(uuid.New().String())},
-			{Name: aws.String("custom:company-name"), Value: aws.String(formatPath(nu.Company))},
+			{Name: aws.String("custom:company-name"), Value: aws.String(nu.Company)},
 			{Name: aws.String("custom:full-name"), Value: aws.String(fmt.Sprintf("%s %s", nu.FirstName, nu.LastName))},
 			{Name: aws.String("email"), Value: aws.String(nu.Email)},
 			{Name: aws.String("email_verified"), Value: aws.String("true")},
@@ -106,11 +105,6 @@ func newAdminUser(data msg.TenantIdentityCreatedEventData) model.NewAdminUser {
 		EmailVerified: true,
 		CreatedAt:     msg.ParseTime(data.CreatedAt),
 	}
-}
-
-func formatPath(company string) string {
-	return strings.ToLower(strings.Replace(company, " ", "", -1))
-
 }
 
 func (us *UserService) List(ctx context.Context) ([]model.User, error) {

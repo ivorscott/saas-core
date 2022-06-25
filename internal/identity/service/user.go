@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/devpies/saas-core/pkg/msg"
-	"github.com/devpies/saas-core/pkg/web"
-	"strings"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+	"github.com/devpies/saas-core/pkg/msg"
+	"github.com/devpies/saas-core/pkg/web"
 
 	"go.uber.org/zap"
 )
@@ -62,7 +60,7 @@ func (us *UserService) CreateTenantIdentityFromEvent(ctx context.Context, messag
 		UserAttributes: []types.AttributeType{
 			{Name: aws.String("custom:tenant-id"), Value: aws.String(d.TenantID)},
 			{Name: aws.String("custom:account-owner"), Value: aws.String("1")},
-			{Name: aws.String("custom:company-name"), Value: aws.String(formatPath(d.Company))},
+			{Name: aws.String("custom:company-name"), Value: aws.String(d.Company)},
 			{Name: aws.String("custom:full-name"), Value: aws.String(fmt.Sprintf("%s %s", d.FirstName, d.LastName))},
 			{Name: aws.String("email"), Value: aws.String(d.Email)},
 			{Name: aws.String("email_verified"), Value: aws.String("true")},
@@ -125,8 +123,4 @@ func newIdentityCreatedEvent(
 		},
 	}
 	return event, nil
-}
-
-func formatPath(company string) string {
-	return strings.ToLower(strings.Replace(company, " ", "", -1))
 }
