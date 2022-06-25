@@ -12,10 +12,6 @@ func Respond(ctx context.Context, w http.ResponseWriter, val interface{}, status
 	w.WriteHeader(statusCode)
 	w.Header().Set("Content-Type", "application/json")
 
-	if statusCode >= 400 {
-		w.Header().Set("Content-Type", "application/problem+json")
-	}
-
 	SetContextStatusCode(ctx, statusCode)
 
 	// Respond with a value when it exists.

@@ -3,6 +3,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/url"
 
@@ -56,16 +57,16 @@ func NewPostgresDatabase(logger *zap.Logger, cfg config.Config) (*PostgresDataba
 }
 
 // GetConnection returns a tenant aware connection.
-func (r *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func() error, error) {
+func (pg *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func() error, error) {
 	values, ok := web.FromContext(ctx)
 	if !ok {
-		r.logger.Error("invalid context values")
+		pg.logger.Error("invalid context values")
 		return nil, nil, web.CtxErr()
 	}
 
-	conn, err := r.dB.Connx(ctx)
+	conn, err := pg.dB.Connx(ctx)
 	if err != nil {
-		r.logger.Error("connection failed", zap.Error(err))
+		pg.logger.Error("connection failed", zap.Error(err))
 		_ = conn.Close()
 		return nil, nil, err
 	}
@@ -73,11 +74,46 @@ func (r *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func(
 	stmt := fmt.Sprintf("select set_config('app.current_tenant', '%s', false);", values.TenantID)
 	_, err = conn.ExecContext(ctx, stmt)
 	if err != nil {
-		r.logger.Error("setting session variable failed", zap.Error(err))
+		pg.logger.Error("setting session variable failed", zap.Error(err))
 		_ = conn.Close()
 		return nil, nil, err
 	}
 	return conn, conn.Close, nil
+}
+
+// RunInTransaction runs callback function in a transaction.
+func (pg *PostgresDatabase) RunInTransaction(ctx context.Context, fn func(*sqlx.Tx) error) error {
+	conn, Close, err := pg.GetConnection(ctx)
+	if err != nil {
+		return err
+	}
+	defer Close()
+
+	tx, err := conn.BeginTxx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return err
+	}
+
+	return pg.txRun(tx, fn)
+}
+
+func (pg *PostgresDatabase) txRun(tx *sqlx.Tx, fn func(*sqlx.Tx) error) error {
+	defer func() {
+		if err := recover(); err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				pg.logger.Info("tx.Rollback panicked", zap.Error(rbErr))
+			}
+			panic(err)
+		}
+	}()
+
+	if err := fn(tx); err != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			pg.logger.Info("tx.Rollback failed", zap.Error(rbErr))
+		}
+		return err
+	}
+	return tx.Commit()
 }
 
 // StatusCheck returns nil if it can successfully talk to the database. It returns a non-nil error otherwise.

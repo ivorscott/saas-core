@@ -44,6 +44,8 @@ func Routes(
 	app.Handle(http.MethodPost, "/users", userHandler.Create)
 	app.Handle(http.MethodGet, "/users", userHandler.List)
 	app.Handle(http.MethodGet, "/users/me", userHandler.RetrieveMe)
+	app.Handle(http.MethodDelete, "/users/{uid}", userHandler.RemoveUser)
+	app.Handle(http.MethodGet, "/users/available-seats", userHandler.SeatsAvailable)
 	app.Handle(http.MethodPost, "/users/teams", teamHandler.CreateTeamForProject)
 	app.Handle(http.MethodPost, "/users/teams/{tid}/project/{pid}", teamHandler.AssignExistingTeam)
 	app.Handle(http.MethodPost, "/users/teams/{tid}/leave", teamHandler.LeaveTeam)

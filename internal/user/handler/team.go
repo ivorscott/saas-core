@@ -345,7 +345,7 @@ func (th *TeamHandler) CreateInvite(w http.ResponseWriter, r *http.Request) erro
 				FirstName: name[0],
 			}
 
-			_, err = th.userService.AddSeat(r.Context(), nu, time.Now())
+			_, err = th.userService.AddUser(r.Context(), nu, time.Now())
 			if err != nil {
 				return err
 			}

@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"fmt"
 	"github.com/devpies/saas-core/internal/user/fail"
 	"github.com/devpies/saas-core/internal/user/model"
 	"github.com/devpies/saas-core/pkg/web"
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
@@ -39,9 +39,9 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	user, err := uh.userService.AddSeat(r.Context(), nu, time.Now())
+	user, err := uh.userService.AddUser(r.Context(), nu, time.Now())
 	if err != nil {
-		return fmt.Errorf("failed to create user: %w", err)
+		return err
 	}
 
 	return web.Respond(r.Context(), w, user, http.StatusCreated)
@@ -53,10 +53,18 @@ func (uh *UserHandler) List(w http.ResponseWriter, r *http.Request) error {
 
 	users, err := uh.userService.List(r.Context())
 	if err != nil {
-		return fmt.Errorf("failed to retrieve users: %w", err)
+		return err
 	}
 
 	return web.Respond(r.Context(), w, users, http.StatusOK)
+}
+
+func (uh *UserHandler) SeatsAvailable(w http.ResponseWriter, r *http.Request) error {
+	result, err := uh.userService.SeatsAvailable(r.Context())
+	if err != nil {
+		return err
+	}
+	return web.Respond(r.Context(), w, result, http.StatusOK)
 }
 
 // RetrieveMe retrieves the authenticated user.
@@ -80,9 +88,25 @@ func (uh *UserHandler) RetrieveMe(w http.ResponseWriter, r *http.Request) error 
 		case fail.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
-			return fmt.Errorf("failed to retrieve authenticated user: %w", err)
+			return err
 		}
 	}
 
 	return web.Respond(r.Context(), w, us, http.StatusOK)
+}
+
+func (uh *UserHandler) RemoveUser(w http.ResponseWriter, r *http.Request) error {
+
+	uid := chi.URLParam(r, "uid")
+	email := r.URL.Query().Get("email")
+	if email == "" {
+		return web.NewRequestError(fail.ErrInvalidEmail, http.StatusBadRequest)
+	}
+
+	err := uh.userService.RemoveUser(r.Context(), uid, email)
+	if err != nil {
+		return err
+	}
+
+	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
