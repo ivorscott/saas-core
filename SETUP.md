@@ -47,10 +47,10 @@ Tested on a m1 mac . It should work on linux as well.
    > If you still see the "Not Secure" label in the browser you may need to restart the browser 
    > for the changes to take effect.
 9. Start containers: `tilt up`
-10. Port forward the traefik ports: `make ports`
-11. Setup local DynamoDB tables: `make dynamodb-create`
-    - You should see 3 DynamoDB tables. The only table with data at the point is `auth-info`.   
+10. Setup local DynamoDB tables: `make dynamodb-create`
+    - You should see 3 DynamoDB tables. The only table with data at this point is `auth-info`.   
     ![](docs/img/workbench.png)
+11. Port forward the traefik ports: `make ports`
 12. Deploy ingress routes: `make routes`
 
 13. Navigate to http://localhost:8080/dashboard/#/http/routers. You should see `4` tls terminated routers.
