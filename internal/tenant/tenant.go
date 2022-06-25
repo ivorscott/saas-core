@@ -93,7 +93,7 @@ func Run() error {
 
 		js.Listen(
 			string(msg.TypeTenantRegistered),
-			msg.SubjectRegistered,
+			msg.SubjectTenantRegistered,
 			"tenant_consumer",
 			tenantService.CreateTenantFromMessage,
 			opts...,
@@ -101,8 +101,8 @@ func Run() error {
 
 		js.Listen(
 			string(msg.TypeTenantSiloed),
-			msg.SubjectSiloed,
-			"silo_consumer",
+			msg.SubjectTenantSiloed,
+			"tenant_silo_consumer",
 			siloConfigService.StoreConfigFromMessage,
 			opts...,
 		)

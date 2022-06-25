@@ -9,10 +9,10 @@ import (
 )
 
 // Auth middleware verifies the id_token.
-func Auth(log *zap.Logger, region string, userPoolClientID string) web.Middleware {
+func Auth(log *zap.Logger, region string, userPoolID string) web.Middleware {
 	f := func(after web.Handler) web.Handler {
 		h := func(w http.ResponseWriter, r *http.Request) error {
-			r, err := web.Authenticate(log, r, region, userPoolClientID)
+			r, err := web.Authenticate(log, r, region, userPoolID)
 			if err != nil {
 				log.Info("api authentication failed", zap.Error(err))
 				return web.NewRequestError(err, http.StatusUnauthorized)

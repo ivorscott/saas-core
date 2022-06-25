@@ -106,8 +106,8 @@ func Run() error {
 
 	go func() {
 		jetstream.Listen(
-			string(msg.TypeTenantCreated),
-			msg.SubjectTenantCreated,
+			string(msg.TypeTenantIdentityCreated),
+			msg.SubjectTenantIdentityCreated,
 			"tenant_created_consumer",
 			userService.AddAdminUserFromEvent,
 			opts...)

@@ -55,15 +55,6 @@ func Run() error {
 	}
 	defer logger.Sync()
 
-	// Initialize AWS clients.
-	awsCfg, err := awsConfig.LoadDefaultConfig(context.Background())
-	if err != nil {
-		logger.Error("error loading aws config", zap.Error(err))
-		return err
-	}
-	cognitoClient := cip.NewFromConfig(awsCfg)
-	userService := service.NewUserService(logger, cognitoClient)
-
 	// Initialize channels for graceful shutdown.
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
@@ -71,6 +62,15 @@ func Run() error {
 	// Initialize NATS JetStream.
 	js := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
+
+	// Initialize AWS clients.
+	awsCfg, err := awsConfig.LoadDefaultConfig(context.Background())
+	if err != nil {
+		logger.Error("error loading aws config", zap.Error(err))
+		return err
+	}
+	cognitoClient := cip.NewFromConfig(awsCfg)
+	userService := service.NewUserService(logger, js, cognitoClient)
 
 	logger.Info(fmt.Sprintf("Starting identity service on %s:%s", cfg.Web.Address, cfg.Web.Port))
 
@@ -84,9 +84,9 @@ func Run() error {
 
 		js.Listen(
 			string(msg.TypeTenantRegistered),
-			msg.SubjectRegistered,
+			msg.SubjectTenantRegistered,
 			"identity_consumer",
-			userService.CreateTenantUserFromEvent,
+			userService.CreateTenantIdentityFromEvent,
 			opts...,
 		)
 	}()

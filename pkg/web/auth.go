@@ -42,7 +42,7 @@ func verifyToken(ctx context.Context, logger *zap.Logger, authHeader string, reg
 
 	keySet, err := jwk.Fetch(ctx, formattedURL)
 	if err != nil {
-		logger.Error("error fetching token", zap.Error(err))
+		logger.Error("error fetching token", zap.String("pubKeyURL", formattedURL), zap.Error(err))
 		return
 	}
 

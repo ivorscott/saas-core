@@ -29,6 +29,7 @@ type NewUser struct {
 
 // NewAdminUser represents a new user request
 type NewAdminUser struct {
+	UserID        string    `json:"userId" validate:"required"`
 	TenantID      string    `json:"tenantId" validate:"required"`
 	Company       string    `json:"company" validate:"required"`
 	Email         string    `json:"email" validate:"required"`

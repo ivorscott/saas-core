@@ -2,10 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
-	"github.com/devpies/saas-core/pkg/web"
-	"time"
-
 	"github.com/devpies/saas-core/internal/tenant/model"
 	"github.com/devpies/saas-core/pkg/msg"
 
@@ -56,41 +52,12 @@ func (ts *TenantService) CreateTenantFromMessage(ctx context.Context, message in
 		return err
 	}
 
-	values, ok := web.FromContext(ctx)
-	if !ok {
-		return web.CtxErr()
-	}
-
-	e := msg.TenantCreatedEvent{
-		Type: msg.TypeTenantCreated,
-		Data: msg.TenantCreatedEventData{
-			TenantID:  tenant.ID,
-			Company:   tenant.Company,
-			Email:     tenant.Email,
-			FirstName: tenant.FirstName,
-			LastName:  tenant.LastName,
-			CreatedAt: time.Now().UTC().String(),
-		},
-		Metadata: msg.Metadata{
-			TenantID: "",
-			TraceID:  values.TraceID,
-			UserID:   values.UserID,
-		},
-	}
-
-	bytes, err := json.Marshal(e)
-	if err != nil {
-		return err
-	}
-
-	ts.js.Publish(msg.SubjectTenantCreated, bytes)
-
 	return nil
 }
 
 func newTenant(data msg.TenantRegisteredEventData) model.NewTenant {
 	return model.NewTenant{
-		ID:        data.ID,
+		ID:        data.TenantID,
 		Email:     data.Email,
 		FirstName: data.FirstName,
 		LastName:  data.LastName,

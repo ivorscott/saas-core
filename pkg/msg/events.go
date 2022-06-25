@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 )
 
-// UnmarshalTenantCreatedEvent parses the JSON-encoded data and returns TenantCreatedEvent.
-func UnmarshalTenantCreatedEvent(data []byte) (TenantCreatedEvent, error) {
-	var m TenantCreatedEvent
+// UnmarshalTenantIdentityCreatedEvent parses the JSON-encoded data and returns TenantIdentityCreatedEvent.
+func UnmarshalTenantIdentityCreatedEvent(data []byte) (TenantIdentityCreatedEvent, error) {
+	var m TenantIdentityCreatedEvent
 	err := json.Unmarshal(data, &m)
 	return m, err
 }
 
-// Marshal JSON encodes TenantAdminCreatedEvent.
-func (m *TenantCreatedEvent) Marshal() ([]byte, error) {
+// Marshal JSON encodes TenantIdentityCreatedEvent.
+func (m *TenantIdentityCreatedEvent) Marshal() ([]byte, error) {
 	return json.Marshal(m)
 }
 
@@ -59,7 +59,7 @@ type TenantRegisteredEvent struct {
 }
 
 type TenantRegisteredEventData struct {
-	ID         string `json:"id"`
+	TenantID   string `json:"tenantId"`
 	Email      string `json:"email"`
 	FirstName  string `json:"firstName"`
 	LastName   string `json:"lastName"`
@@ -92,25 +92,26 @@ type TenantSiloedEventData struct {
 	DeploymentStatus string `json:"deploymentStatus"`
 }
 
-// TenantCreated is a valid MessageType.
-const TenantCreated MessageType = "TenantCreated"
+// TenantIdentityCreated is a valid MessageType.
+const TenantIdentityCreated MessageType = "TenantIdentityCreated"
 
 const (
-	// TypeTenantCreated represents a concrete value for the TenantCreatedType.
-	TypeTenantCreated TenantCreatedType = "TenantCreated"
+	// TypeTenantIdentityCreated represents a concrete value for the TenantIdentityCreatedType.
+	TypeTenantIdentityCreated TenantIdentityCreatedType = "TenantIdentityCreated"
 )
 
-// TenantCreatedType represents a TenantCreated Message.
-type TenantCreatedType string
+// TenantIdentityCreatedType represents a TenantIdentityCreated Message.
+type TenantIdentityCreatedType string
 
-type TenantCreatedEvent struct {
-	Metadata Metadata               `json:"metadata"`
-	Type     TenantCreatedType      `json:"type"`
-	Data     TenantCreatedEventData `json:"data"`
+type TenantIdentityCreatedEvent struct {
+	Metadata Metadata                       `json:"metadata"`
+	Type     TenantIdentityCreatedType      `json:"type"`
+	Data     TenantIdentityCreatedEventData `json:"data"`
 }
 
-type TenantCreatedEventData struct {
-	TenantID  string `json:"tenantID"`
+type TenantIdentityCreatedEventData struct {
+	TenantID  string `json:"tenantId"`
+	UserID    string `json:"userId"`
 	Company   string `json:"company"`
 	Email     string `json:"email"`
 	FirstName string `json:"firstName"`

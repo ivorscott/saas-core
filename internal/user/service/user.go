@@ -87,7 +87,7 @@ func (us *UserService) AddAdminUserFromEvent(ctx context.Context, message interf
 	if err != nil {
 		return err
 	}
-	event, err := msg.UnmarshalTenantCreatedEvent(m)
+	event, err := msg.UnmarshalTenantIdentityCreatedEvent(m)
 	if err != nil {
 		return err
 	}
@@ -95,8 +95,10 @@ func (us *UserService) AddAdminUserFromEvent(ctx context.Context, message interf
 	return us.userRepo.CreateAdmin(ctx, na)
 }
 
-func newAdminUser(data msg.TenantCreatedEventData) model.NewAdminUser {
+func newAdminUser(data msg.TenantIdentityCreatedEventData) model.NewAdminUser {
 	return model.NewAdminUser{
+		UserID:        data.UserID,
+		TenantID:      data.TenantID,
 		Company:       data.Company,
 		Email:         data.Email,
 		FirstName:     data.FirstName,

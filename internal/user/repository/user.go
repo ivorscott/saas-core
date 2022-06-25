@@ -104,7 +104,7 @@ func (ur *UserRepository) CreateAdmin(ctx context.Context, na model.NewAdminUser
 	defer Close()
 
 	u = model.User{
-		ID:            uuid.New().String(),
+		ID:            na.UserID,
 		TenantID:      na.TenantID,
 		Email:         na.Email,
 		EmailVerified: na.EmailVerified,
