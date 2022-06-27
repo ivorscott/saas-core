@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -11,7 +12,6 @@ import (
 	"github.com/devpies/saas-core/internal/user/model"
 	"github.com/devpies/saas-core/pkg/msg"
 	"github.com/devpies/saas-core/pkg/web"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 	"net/http"
@@ -91,12 +91,19 @@ func (us *UserService) AddUser(ctx context.Context, nu model.NewUser, now time.T
 	}
 
 	// Check if user exists first.
-	if _, err := us.userRepo.RetrieveByEmail(ctx, nu.Email); err != nil {
+	_, err := us.userRepo.RetrieveByEmail(ctx, nu.Email)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+		default:
+			return model.User{}, err
+		}
+	} else {
 		return model.User{}, web.NewRequestError(fail.ErrUserAlreadyAdded, http.StatusBadRequest)
 	}
 
 	// In the shared user pool, the user may already exist associated with another tenant.
-	if _, err := us.cognitoClient.AdminGetUser(ctx, getUserInput); err != nil {
+	if _, err = us.cognitoClient.AdminGetUser(ctx, getUserInput); err != nil {
 		var unf *types.UserNotFoundException
 
 		if errors.As(err, &unf) {
@@ -137,11 +144,15 @@ func (us *UserService) addUserToTenant(ctx context.Context, nu model.NewUser, no
 }
 
 func (us *UserService) createCognitoUser(ctx context.Context, nu model.NewUser) error {
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return web.CtxErr()
+	}
 	_, err := us.cognitoClient.AdminCreateUser(ctx, &cognitoidentityprovider.AdminCreateUserInput{
 		UserPoolId: aws.String(us.userPoolID),
 		Username:   aws.String(nu.Email),
 		UserAttributes: []types.AttributeType{
-			{Name: aws.String("custom:tenant-id"), Value: aws.String(uuid.New().String())},
+			{Name: aws.String("custom:tenant-id"), Value: aws.String(values.TenantID)},
 			{Name: aws.String("custom:company-name"), Value: aws.String(nu.Company)},
 			{Name: aws.String("custom:full-name"), Value: aws.String(fmt.Sprintf("%s %s", nu.FirstName, nu.LastName))},
 			{Name: aws.String("email"), Value: aws.String(nu.Email)},

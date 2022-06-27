@@ -186,12 +186,10 @@ func (ur *UserRepository) RetrieveByEmail(ctx context.Context, email string) (mo
 			    email_verified, locale, picture, updated_at, created_at
 			from users
 			where email = $1
+			limit 1
 	`
 
-	if err = conn.SelectContext(ctx, &u, stmt, email); err != nil {
-		if err == sql.ErrNoRows {
-			return u, fail.ErrNotFound
-		}
+	if err = conn.GetContext(ctx, &u, stmt, email); err != nil {
 		return u, err
 	}
 
