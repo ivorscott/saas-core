@@ -92,8 +92,9 @@ func Run() error {
 	teamRepo := repository.NewTeamRepository(logger, pg)
 	membershipRepo := repository.NewMembershipRepository(logger, pg)
 	projectRepo := repository.NewProjectRepository(logger, pg)
+	seatRepo := repository.NewSeatRepository(logger, pg)
 
-	userService := service.NewUserService(logger, cfg.Cognito.UserPoolID, userRepo, cognitoClient)
+	userService := service.NewUserService(logger, cfg.Cognito.UserPoolID, userRepo, seatRepo, cognitoClient)
 	teamService := service.NewTeamService(logger, teamRepo, inviteRepo)
 	membershipService := service.NewMembershipService(logger, membershipRepo)
 	projectService := service.NewProjectService(logger, projectRepo)

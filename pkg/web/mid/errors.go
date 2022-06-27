@@ -20,7 +20,7 @@ func Errors(log *zap.Logger) web.Middleware {
 			if err := before(w, r); err != nil {
 
 				// Log the error.
-				log.Info("", zap.Error(err))
+				log.Error("", zap.Error(err))
 
 				// Respond to the error.
 				if err = web.RespondError(r.Context(), w, err); err != nil {

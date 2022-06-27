@@ -203,6 +203,10 @@ ports: ;@ ## Port forward Traefik ports.
 	kubectl port-forward --address 0.0.0.0 service/traefik 8000:8000 8080:8080 443:4443 -n default
 .PHONY: ports
 
+nats: ;## Port forward NATS port.
+	kubectl port-forward statefulset.apps/nats 4222
+.PHONY: nats
+
 lint: ;@ ## Run linter.
 	@golangci-lint run
 .PHONY: lint

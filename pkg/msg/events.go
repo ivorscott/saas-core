@@ -116,5 +116,6 @@ type TenantIdentityCreatedEventData struct {
 	Email     string `json:"email"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
+	Plan      string `json:"plan"`
 	CreatedAt string `json:"createdAt"`
 }

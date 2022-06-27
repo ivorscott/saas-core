@@ -47,3 +47,13 @@ type UpdateUser struct {
 	Locale    *string   `json:"locale"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
+
+type Seats struct {
+	MaxSeats  int `db:"max_seats" json:"maxSeats"`
+	SeatsUsed int `db:"seats_used" json:"seatsUsed"`
+}
+
+type SeatsAvailableResult struct {
+	MaxSeats       int `json:"maxSeats"`
+	SeatsAvailable int `json:"seatsAvailable"`
+}

@@ -115,6 +115,7 @@ func newIdentityCreatedEvent(
 			Email:     data.Email,
 			FirstName: data.FirstName,
 			LastName:  data.LastName,
+			Plan:      data.Plan,
 			CreatedAt: user.UserCreateDate.UTC().String(),
 		},
 		Metadata: msg.Metadata{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	"net/mail"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 type UserRepository struct {
 	logger *zap.Logger
 	pg     *db.PostgresDatabase
+	runTx  func(ctx context.Context, fn func(*sqlx.Tx) error) error
 }
 
 // NewUserRepository returns a new user repository.
@@ -30,11 +32,16 @@ func NewUserRepository(
 	return &UserRepository{
 		logger: logger,
 		pg:     pg,
+		runTx:  pg.RunInTransaction,
 	}
 }
 
+func (ur *UserRepository) RunTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
+	return ur.runTx(ctx, fn)
+}
+
 // Create inserts a new user into the database.
-func (ur *UserRepository) Create(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error) {
+func (ur *UserRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, nu model.NewUser, now time.Time) (model.User, error) {
 	var (
 		u   model.User
 		err error
@@ -44,12 +51,6 @@ func (ur *UserRepository) Create(ctx context.Context, nu model.NewUser, now time
 	if !ok {
 		return u, web.CtxErr()
 	}
-
-	conn, Close, err := ur.pg.GetConnection(ctx)
-	if err != nil {
-		return u, fail.ErrConnectionFailed
-	}
-	defer Close()
 
 	u = model.User{
 		ID:            uuid.New().String(),
@@ -68,7 +69,7 @@ func (ur *UserRepository) Create(ctx context.Context, nu model.NewUser, now time
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
-	if _, err = conn.ExecContext(
+	if _, err = tx.ExecContext(
 		ctx,
 		stmt,
 		u.ID,
@@ -89,19 +90,11 @@ func (ur *UserRepository) Create(ctx context.Context, nu model.NewUser, now time
 }
 
 // CreateAdmin inserts a new tenant admin user into the database.
-func (ur *UserRepository) CreateAdmin(ctx context.Context, na model.NewAdminUser) error {
+func (ur *UserRepository) CreateAdminTx(ctx context.Context, tx *sqlx.Tx, na model.NewAdminUser) error {
 	var (
 		u   model.User
 		err error
 	)
-
-	ctx = web.NewContext(ctx, &web.Values{TenantID: na.TenantID})
-
-	conn, Close, err := ur.pg.GetConnection(ctx)
-	if err != nil {
-		return fail.ErrConnectionFailed
-	}
-	defer Close()
 
 	u = model.User{
 		ID:            na.UserID,
@@ -119,7 +112,7 @@ func (ur *UserRepository) CreateAdmin(ctx context.Context, na model.NewAdminUser
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
-	if _, err = conn.ExecContext(
+	if _, err = tx.ExecContext(
 		ctx,
 		stmt,
 		u.ID,
@@ -193,12 +186,10 @@ func (ur *UserRepository) RetrieveByEmail(ctx context.Context, email string) (mo
 			    email_verified, locale, picture, updated_at, created_at
 			from users
 			where email = $1
+			limit 1
 	`
 
-	if err = conn.SelectContext(ctx, &u, stmt, email); err != nil {
-		if err == sql.ErrNoRows {
-			return u, fail.ErrNotFound
-		}
+	if err = conn.GetContext(ctx, &u, stmt, email); err != nil {
 		return u, err
 	}
 
@@ -243,4 +234,16 @@ func (ur *UserRepository) RetrieveMe(ctx context.Context) (model.User, error) {
 	}
 
 	return u, nil
+}
+
+func (ur *UserRepository) RemoveUserTx(ctx context.Context, tx *sqlx.Tx, uid string) error {
+	stmt := `delete from users where user_id = $1`
+
+	_, err := tx.ExecContext(ctx, stmt, uid)
+	if err != nil {
+		ur.logger.Error("failed to remove user", zap.Error(err))
+		return err
+	}
+
+	return nil
 }

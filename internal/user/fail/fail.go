@@ -10,8 +10,8 @@ var (
 	ErrInvalidID = errors.New("id provided was not a valid UUID")
 	// ErrInvalidEmail represents an invalid email.
 	ErrInvalidEmail = errors.New("email was not valid")
-	// ErrNotAuthorized represents an unauthorized request error.
-	ErrNotAuthorized = errors.New("not authorized")
 	// ErrConnectionFailed represents a failed connection attempt.
 	ErrConnectionFailed = errors.New("connection failed")
+	// ErrUserAlreadyAdded represents a failed attempt to add the same user a second time.
+	ErrUserAlreadyAdded = errors.New("user already added")
 )
