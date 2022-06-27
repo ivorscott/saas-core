@@ -405,12 +405,16 @@ github.com/devpies/saas-core/pkg/msg v0.0.0-20220625133353-7598e6c30488 h1:RWTfb
 github.com/devpies/saas-core/pkg/msg v0.0.0-20220625133353-7598e6c30488/go.mod h1:VR0f825NYyAo20l6YxZ1i6fDI4uI/pt0gwZdRFzNjYE=
 github.com/devpies/saas-core/pkg/msg v0.0.0-20220625134421-4535e68cf6c6 h1:8sANN//mAzW1c+7Oba6Uaren2TRW08u+C+SXCAuSvZ4=
 github.com/devpies/saas-core/pkg/msg v0.0.0-20220625134421-4535e68cf6c6/go.mod h1:grZ3DIqlCFNVxHsbyeiIygIdRNPk0xtYKe9xHypJR5U=
+github.com/devpies/saas-core/pkg/msg v0.0.0-20220627222556-ca75364fec09 h1:CbxT4sNE8GpPBfski/dfOVxLJJdfalOzyL717oyzjRE=
+github.com/devpies/saas-core/pkg/msg v0.0.0-20220627222556-ca75364fec09/go.mod h1:grZ3DIqlCFNVxHsbyeiIygIdRNPk0xtYKe9xHypJR5U=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220619060038-9a467331531a h1:yTdxQKM684Gg+pLscG869ebDjGH2DVLbm0jh5K+hvUs=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220619060038-9a467331531a/go.mod h1:8e3cbinhc6AvOxFdsYhGdCWrs7JSiC5/Te/AoFrBQM8=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220625133353-7598e6c30488 h1:UGZfkBEM0y5NRru5CFn3GbpllQ2tgYDXcws3p6qTCqQ=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220625133353-7598e6c30488/go.mod h1:8e3cbinhc6AvOxFdsYhGdCWrs7JSiC5/Te/AoFrBQM8=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220625134421-4535e68cf6c6 h1:g0wnDgePZ5v3RmkMyyjB3ftolhF+iOTsVNH2bgZHFZ8=
 github.com/devpies/saas-core/pkg/web v0.0.0-20220625134421-4535e68cf6c6/go.mod h1:ziV0cfnDYb/u8fTAbx1EbXkB88tCXA8TQckAgXDpbqg=
+github.com/devpies/saas-core/pkg/web v0.0.0-20220627222556-ca75364fec09 h1:xx6WgIX1Xt6HJuSDqgWnbbzjmVE+KSx3POI30dcgqes=
+github.com/devpies/saas-core/pkg/web v0.0.0-20220627222556-ca75364fec09/go.mod h1:ziV0cfnDYb/u8fTAbx1EbXkB88tCXA8TQckAgXDpbqg=
 github.com/dgrijalva/jwt-go v0.0.0-20170104182250-a601269ab70c/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
@@ -1564,6 +1568,8 @@ golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c h1:aFV+BgZ4svzjfabn8ERpuB4JI
 golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220624220833-87e55d714810 h1:rHZQSjJdAI4Xf5Qzeh2bBc5YJIkPFVM6oDtMFYmgws0=
 golang.org/x/sys v0.0.0-20220624220833-87e55d714810/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b h1:2n253B2r0pYSmEV+UNCQoPfU/FiaizQEK5Gu4Bq4JE8=
+golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=

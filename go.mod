@@ -15,8 +15,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.6
 	github.com/devpies/saas-core/pkg/log v0.0.0-20220605224346-efd5e99fa5dd
-	github.com/devpies/saas-core/pkg/msg v0.0.0-20220625134421-4535e68cf6c6
-	github.com/devpies/saas-core/pkg/web v0.0.0-20220625134421-4535e68cf6c6
+	github.com/devpies/saas-core/pkg/msg v0.0.0-20220627222556-ca75364fec09
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220627222556-ca75364fec09
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
 	github.com/go-playground/validator/v10 v10.11.0
@@ -71,15 +71,11 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
-	golang.org/x/sys v0.0.0-20220624220833-87e55d714810 // indirect
+	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220607140733-d738665f6195 // indirect
 	google.golang.org/grpc v1.47.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-)
-
-replace (
-	github.com/devpies/saas-core/pkg/msg v0.0.0-20220625134421-4535e68cf6c6 => ./pkg/msg
 )
