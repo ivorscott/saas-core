@@ -4,6 +4,8 @@ metadata:
   name: cfg
 data:
     region: "eu-central-1"
-    dynamodb_tenants_table_name: tenants
-    dynamodb_auth_info_table_name: auth-info
-    dynamodb_silo_config_table_name: silo-config
+    dynamodb_tenants_table_name: local-tenants
+    dynamodb_auth_info_table_name: local-auth-info
+    dynamodb_silo_config_table_name: local-silo-config
+    dynamodb_connections_table_name: local-connections
+

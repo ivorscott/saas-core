@@ -3,7 +3,6 @@ k8s_yaml([
     './manifests/configmap.yaml',
     './manifests/secrets.yaml',
     './manifests/db-admin.yaml',
-    './manifests/db-dynamodb.yaml',
     './manifests/db-project.yaml',
     './manifests/db-user.yaml',
     './manifests/traefik-crd.yaml',

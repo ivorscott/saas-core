@@ -10,12 +10,10 @@ aws dynamodb create-table --table-name "auth-info" \
         AttributeName=tenantPath,AttributeType=S \
     --key-schema \
         AttributeName=tenantPath,KeyType=HASH \
-    --endpoint-url http://localhost:30008 \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5
 
 aws dynamodb put-item --table-name "auth-info" \
-    --endpoint-url http://localhost:30008 \
     --item \
         '{"tenantPath": {"S": "/app"}, "userPoolId": {"S": "'${SHARED_POOL}'"}, "userPoolClientId": {"S": "'${SHARED_POOL_CLIENT}'"}}'
 
@@ -24,7 +22,6 @@ aws dynamodb create-table --table-name "tenants" \
         AttributeName=tenantId,AttributeType=S \
     --key-schema \
         AttributeName=tenantId,KeyType=HASH \
-    --endpoint-url http://localhost:30008 \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5
 aws dynamodb create-table --table-name "silo-config" \
@@ -32,7 +29,6 @@ aws dynamodb create-table --table-name "silo-config" \
         AttributeName=tenantName,AttributeType=S \
     --key-schema \
         AttributeName=tenantName,KeyType=HASH \
-    --endpoint-url http://localhost:30008 \
     --provisioned-throughput \
         ReadCapacityUnits=5,WriteCapacityUnits=5
 

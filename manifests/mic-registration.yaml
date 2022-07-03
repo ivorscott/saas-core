@@ -44,23 +44,11 @@ spec:
                 configMapKeyRef:
                   name: cfg
                   key: region
-            - name: REGISTRATION_DYNAMODB_HOST
-              value: db-dynamodb-svc
-            - name: REGISTRATION_DYNAMODB_TENANT_TABLE
-              valueFrom:
-                configMapKeyRef:
-                  name: cfg
-                  key: dynamodb_tenants_table_name
             - name: REGISTRATION_DYNAMODB_AUTH_TABLE
               valueFrom:
                 configMapKeyRef:
                   name: cfg
                   key: dynamodb_auth_info_table_name
-            - name: REGISTRATION_DYNAMODB_CONFIG_TABLE
-              valueFrom:
-                configMapKeyRef:
-                  name: cfg
-                  key: dynamodb_silo_config_table_name
             - name: REGISTRATION_NATS_ADDRESS
               value: "nats-svc"
 ---

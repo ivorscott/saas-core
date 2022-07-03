@@ -44,8 +44,6 @@ spec:
                 configMapKeyRef:
                   name: cfg
                   key: region
-            - name: TENANT_DYNAMODB_HOST
-              value: db-dynamodb-svc
             - name: TENANT_DYNAMODB_TENANT_TABLE
               valueFrom:
                 configMapKeyRef:
