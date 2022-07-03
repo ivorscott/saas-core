@@ -6,8 +6,8 @@ ENV CGO_ENABLED=0
 
 WORKDIR /core
 
+RUN mkdir log
 COPY ../go.* ./
-
 COPY ../cmd/tenant ./cmd/tenant
 COPY ../internal/tenant ./internal/tenant
 COPY ../pkg ./pkg

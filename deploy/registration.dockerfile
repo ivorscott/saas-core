@@ -6,6 +6,7 @@ ENV CGO_ENABLED=0
 
 WORKDIR /core
 
+RUN mkdir log
 COPY ../go.* .
 COPY ../cmd/registration ./cmd/registration
 COPY ../internal/registration ./internal/registration

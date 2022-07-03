@@ -54,7 +54,6 @@ func Run() error {
 		logger, err = zap.NewDevelopment()
 	}
 	if err != nil {
-		logger.Error("error creating logger", zap.Error(err))
 		return err
 	}
 	defer logger.Sync()
