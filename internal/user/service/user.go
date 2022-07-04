@@ -2,19 +2,16 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
-	"github.com/devpies/saas-core/internal/user/fail"
 	"github.com/devpies/saas-core/internal/user/model"
 	"github.com/devpies/saas-core/pkg/msg"
 	"github.com/devpies/saas-core/pkg/web"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
-	"net/http"
 	"time"
 )
 
@@ -52,13 +49,18 @@ type cognitoClient interface {
 	) (*cognitoidentityprovider.AdminGetUserOutput, error)
 }
 
+type connectionRepository interface {
+	Insert(ctx context.Context, nc model.NewConnection) error
+}
+
 // UserService manages the user business operations.
 type UserService struct {
-	logger        *zap.Logger
-	userPoolID    string
-	userRepo      userRepository
-	seatRepo      seatRepository
-	cognitoClient cognitoClient
+	logger         *zap.Logger
+	userPoolID     string
+	userRepo       userRepository
+	seatRepo       seatRepository
+	cognitoClient  cognitoClient
+	connectionRepo connectionRepository
 }
 
 const (
@@ -73,13 +75,15 @@ func NewUserService(
 	userRepo userRepository,
 	seatRepo seatRepository,
 	cognitoClient cognitoClient,
+	connectionRepo connectionRepository,
 ) *UserService {
 	return &UserService{
-		logger:        logger,
-		userPoolID:    userPoolID,
-		userRepo:      userRepo,
-		seatRepo:      seatRepo,
-		cognitoClient: cognitoClient,
+		logger:         logger,
+		userPoolID:     userPoolID,
+		userRepo:       userRepo,
+		seatRepo:       seatRepo,
+		cognitoClient:  cognitoClient,
+		connectionRepo: connectionRepo,
 	}
 }
 
@@ -90,20 +94,7 @@ func (us *UserService) AddUser(ctx context.Context, nu model.NewUser, now time.T
 		Username:   aws.String(nu.Email),
 	}
 
-	// Check if user exists first.
-	_, err := us.userRepo.RetrieveByEmail(ctx, nu.Email)
-	if err != nil {
-		switch err {
-		case sql.ErrNoRows:
-		default:
-			return model.User{}, err
-		}
-	} else {
-		return model.User{}, web.NewRequestError(fail.ErrUserAlreadyAdded, http.StatusBadRequest)
-	}
-
-	// In the shared user pool, the user may already exist associated with another tenant.
-	if _, err = us.cognitoClient.AdminGetUser(ctx, getUserInput); err != nil {
+	if _, err := us.cognitoClient.AdminGetUser(ctx, getUserInput); err != nil {
 		var unf *types.UserNotFoundException
 
 		if errors.As(err, &unf) {
@@ -114,7 +105,12 @@ func (us *UserService) AddUser(ctx context.Context, nu model.NewUser, now time.T
 		}
 	}
 
-	return us.addUserToTenant(ctx, nu, now)
+	user, err := us.addUserToTenant(ctx, nu, now)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	return user, err
 }
 
 func (us *UserService) addUserToTenant(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error) {
@@ -140,6 +136,11 @@ func (us *UserService) addUserToTenant(ctx context.Context, nu model.NewUser, no
 	if err != nil {
 		return model.User{}, err
 	}
+
+	if err = us.connectionRepo.Insert(ctx, model.NewConnection{UserID: user.ID, TenantID: ""}); err != nil {
+		return user, err
+	}
+
 	return user, nil
 }
 

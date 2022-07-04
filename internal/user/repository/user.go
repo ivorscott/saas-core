@@ -54,6 +54,7 @@ func (ur *UserRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, nu model.Ne
 
 	u = model.User{
 		ID:            uuid.New().String(),
+		TenantID:      values.TenantID,
 		Email:         nu.Email,
 		EmailVerified: nu.EmailVerified,
 		FirstName:     nu.FirstName,
@@ -73,7 +74,7 @@ func (ur *UserRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, nu model.Ne
 		ctx,
 		stmt,
 		u.ID,
-		values.TenantID,
+		u.TenantID,
 		u.Email,
 		u.EmailVerified,
 		u.FirstName,

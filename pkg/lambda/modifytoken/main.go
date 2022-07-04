@@ -144,7 +144,7 @@ func handler(ctx context.Context, event events.CognitoEventUserPoolsPreTokenGen)
 	}
 
 	event.Response.ClaimsOverrideDetails.ClaimsToAddOrOverride = map[string]string{
-		"tenant-connections": string(bytes),
+		"custom:tenant-connections": string(bytes),
 	}
 	return event, nil
 }

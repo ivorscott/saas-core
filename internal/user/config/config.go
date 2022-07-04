@@ -27,6 +27,10 @@ type Config struct {
 		Name       string `conf:"default:user,noprint"`
 		DisableTLS bool   `conf:"default:false"`
 	}
+	Dynamodb struct {
+		ConnectionTable string `conf:"required"`
+	}
+
 	Nats struct {
 		Address string `conf:"default:127.0.0.1"`
 		Port    string `conf:"default:4222"`

@@ -67,10 +67,12 @@ func Run() error {
 	}
 	defer Close()
 
-	// Execute latest migration.
-	if err = res.MigrateUp(pg.URL.String()); err != nil {
-		logger.Error("error connecting to project database", zap.Error(err))
-		return err
+	// Execute latest migration in production.
+	if cfg.Web.Production {
+		if err = res.MigrateUp(pg.URL.String()); err != nil {
+			logger.Error("error connecting to user database", zap.Error(err))
+			return err
+		}
 	}
 
 	jetStream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
