@@ -20,7 +20,7 @@ type Config struct {
 		APIKey string `conf:"default:none"`
 	}
 	DB struct {
-		User       string `conf:"default:postgres,noprint"`
+		User       string `conf:"default:user_a,noprint"`
 		Password   string `conf:"default:postgres,noprint"`
 		Host       string `conf:"default:localhost,noprint"`
 		Port       int    `conf:"default:5432,noprint"`

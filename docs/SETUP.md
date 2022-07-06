@@ -1,4 +1,3 @@
-
 # Setup Guide
 
 ## Requirements
@@ -23,7 +22,7 @@ Tested on a m1 mac . It should work on linux as well.
 2. Checkout `saas-infra` and deploy the `local` infrastructure.
    - You will need to supply a valid email for the _SaaS provider admin user_. This user is used to
    login to the admin web app.
-   ![](docs/img/admin-webapp.png)
+   ![](img/admin-webapp.png)
 3. Use terraform output values for this repository's `.env` file.
 4. Copy `.env.sample` in the project root and create your own `.env` file.
 5. Copy `./manifests/secrets.sample.yaml` and create your own `./manifests/secrets.yaml` file.
@@ -49,13 +48,13 @@ Tested on a m1 mac . It should work on linux as well.
 9. Start containers: `tilt up`
 10. Setup local DynamoDB tables: `make dynamodb-create`
     - You should see 3 DynamoDB tables. The only table with data at this point is `auth-info`.   
-    ![](docs/img/workbench.png)
+    ![](img/workbench.png)
 11. Port forward the traefik ports: `make ports`
 12. Deploy ingress routes: `make routes`
 
 13. Navigate to http://localhost:8080/dashboard/#/http/routers. You should see `4` tls terminated routers.
 
-![](docs/img/traefik.png)
+![](img/traefik.png)
 
 ## Getting Help
 If you need help or have questions create an issue. Alternatively, you can join our [discord server](https://discord.gg/MeKKvHBKQG) 
