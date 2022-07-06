@@ -98,12 +98,8 @@ func (uh *UserHandler) RetrieveMe(w http.ResponseWriter, r *http.Request) error 
 func (uh *UserHandler) RemoveUser(w http.ResponseWriter, r *http.Request) error {
 
 	uid := chi.URLParam(r, "uid")
-	email := r.URL.Query().Get("email")
-	if email == "" {
-		return web.NewRequestError(fail.ErrInvalidEmail, http.StatusBadRequest)
-	}
 
-	err := uh.userService.RemoveUser(r.Context(), uid, email)
+	err := uh.userService.RemoveUser(r.Context(), uid)
 	if err != nil {
 		return err
 	}
