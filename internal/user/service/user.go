@@ -2,30 +2,28 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
-	"github.com/devpies/saas-core/internal/user/fail"
 	"github.com/devpies/saas-core/internal/user/model"
 	"github.com/devpies/saas-core/pkg/msg"
 	"github.com/devpies/saas-core/pkg/web"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
-	"net/http"
 	"time"
 )
 
 type userRepository interface {
 	RunTx(ctx context.Context, fn func(*sqlx.Tx) error) error
-	CreateTx(ctx context.Context, tx *sqlx.Tx, nu model.NewUser, now time.Time) (model.User, error)
-	CreateAdminTx(ctx context.Context, tx *sqlx.Tx, na model.NewAdminUser) error
+	AttachTx(ctx context.Context, tx *sqlx.Tx, userID string, now time.Time) error
+	CreateUser(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error)
+	CreateAdminUser(ctx context.Context, nu model.NewAdminUser, now time.Time) (model.User, error)
 	List(ctx context.Context) ([]model.User, error)
 	RetrieveByEmail(ctx context.Context, email string) (model.User, error)
 	RetrieveMe(ctx context.Context) (model.User, error)
-	RemoveUserTx(ctx context.Context, tx *sqlx.Tx, uid string) error
+	DetachUserTx(ctx context.Context, tx *sqlx.Tx, uid string) error
 }
 
 type seatRepository interface {
@@ -52,13 +50,19 @@ type cognitoClient interface {
 	) (*cognitoidentityprovider.AdminGetUserOutput, error)
 }
 
+type connectionRepository interface {
+	Insert(ctx context.Context, nc model.NewConnection) error
+	Delete(ctx context.Context, userID string) error
+}
+
 // UserService manages the user business operations.
 type UserService struct {
-	logger        *zap.Logger
-	userPoolID    string
-	userRepo      userRepository
-	seatRepo      seatRepository
-	cognitoClient cognitoClient
+	logger         *zap.Logger
+	userPoolID     string
+	userRepo       userRepository
+	seatRepo       seatRepository
+	cognitoClient  cognitoClient
+	connectionRepo connectionRepository
 }
 
 const (
@@ -73,13 +77,15 @@ func NewUserService(
 	userRepo userRepository,
 	seatRepo seatRepository,
 	cognitoClient cognitoClient,
+	connectionRepo connectionRepository,
 ) *UserService {
 	return &UserService{
-		logger:        logger,
-		userPoolID:    userPoolID,
-		userRepo:      userRepo,
-		seatRepo:      seatRepo,
-		cognitoClient: cognitoClient,
+		logger:         logger,
+		userPoolID:     userPoolID,
+		userRepo:       userRepo,
+		seatRepo:       seatRepo,
+		cognitoClient:  cognitoClient,
+		connectionRepo: connectionRepo,
 	}
 }
 
@@ -90,42 +96,47 @@ func (us *UserService) AddUser(ctx context.Context, nu model.NewUser, now time.T
 		Username:   aws.String(nu.Email),
 	}
 
-	// Check if user exists first.
-	_, err := us.userRepo.RetrieveByEmail(ctx, nu.Email)
-	if err != nil {
-		switch err {
-		case sql.ErrNoRows:
-		default:
-			return model.User{}, err
-		}
-	} else {
-		return model.User{}, web.NewRequestError(fail.ErrUserAlreadyAdded, http.StatusBadRequest)
-	}
-
-	// In the shared user pool, the user may already exist associated with another tenant.
-	if _, err = us.cognitoClient.AdminGetUser(ctx, getUserInput); err != nil {
+	if _, err := us.cognitoClient.AdminGetUser(ctx, getUserInput); err != nil {
 		var unf *types.UserNotFoundException
 
 		if errors.As(err, &unf) {
-			if err = us.createCognitoUser(ctx, nu); err != nil {
+			if err = us.createCognitoIdentity(ctx, nu); err != nil {
+				us.logger.Error("failed to create cognito identity")
 				return model.User{}, err
 			}
-			us.logger.Info("successfully added user")
+			_, err = us.userRepo.CreateUser(ctx, nu, now)
+			if err != nil {
+				us.logger.Error("failed to create user profile")
+				return model.User{}, err
+			}
+			us.logger.Info("successfully created user")
 		}
 	}
 
-	return us.addUserToTenant(ctx, nu, now)
+	user, err := us.userRepo.RetrieveByEmail(ctx, nu.Email)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	err = us.attachUserToTenant(ctx, user.ID, now)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	us.logger.Info("successfully added user to tenant")
+
+	return user, err
 }
 
-func (us *UserService) addUserToTenant(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error) {
+func (us *UserService) attachUserToTenant(ctx context.Context, userID string, now time.Time) error {
 	var (
 		user model.User
 		err  error
 	)
 
 	err = us.userRepo.RunTx(ctx, func(tx *sqlx.Tx) error {
-		// Try creating a user for the tenant.
-		user, err = us.userRepo.CreateTx(ctx, tx, nu, now)
+		// Add user to tenant.
+		err = us.userRepo.AttachTx(ctx, tx, userID, now)
 		if err != nil {
 			us.logger.Error("failed to add seat")
 			return err
@@ -138,12 +149,17 @@ func (us *UserService) addUserToTenant(ctx context.Context, nu model.NewUser, no
 		return nil
 	})
 	if err != nil {
-		return model.User{}, err
+		return err
 	}
-	return user, nil
+
+	if err = us.connectionRepo.Insert(ctx, model.NewConnection{UserID: user.ID, TenantID: ""}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (us *UserService) createCognitoUser(ctx context.Context, nu model.NewUser) error {
+func (us *UserService) createCognitoIdentity(ctx context.Context, nu model.NewUser) error {
 	values, ok := web.FromContext(ctx)
 	if !ok {
 		return web.CtxErr()
@@ -181,7 +197,7 @@ func (us *UserService) AddAdminUserFromEvent(ctx context.Context, message interf
 		// In this case, the subject may be the SaaS Admin provider provisioning a tenant in the admin app.
 		ctx = web.NewContext(ctx, &web.Values{TenantID: na.TenantID})
 
-		if err = us.userRepo.CreateAdminTx(ctx, tx, na); err != nil {
+		if _, err = us.userRepo.CreateAdminUser(ctx, na, na.CreatedAt); err != nil {
 			us.logger.Error("failed to create tenant admin")
 			return err
 		}
@@ -249,11 +265,11 @@ func (us *UserService) SeatsAvailable(ctx context.Context) (model.SeatsAvailable
 	}, nil
 }
 
-func (us *UserService) RemoveUser(ctx context.Context, uid, email string) error {
+func (us *UserService) RemoveUser(ctx context.Context, uid string) error {
 	// Remove user and decrement the seats used counter.
 	if err := us.userRepo.RunTx(ctx, func(tx *sqlx.Tx) error {
 		// Remove user.
-		if err := us.userRepo.RemoveUserTx(ctx, tx, uid); err != nil {
+		if err := us.userRepo.DetachUserTx(ctx, tx, uid); err != nil {
 			us.logger.Error("failed to remove user")
 			return err
 		}
@@ -267,14 +283,5 @@ func (us *UserService) RemoveUser(ctx context.Context, uid, email string) error 
 		return err
 	}
 
-	if _, err := us.cognitoClient.AdminDeleteUser(ctx, &cognitoidentityprovider.AdminDeleteUserInput{
-		Username:   aws.String(email),
-		UserPoolId: aws.String(us.userPoolID),
-	}); err != nil {
-		us.logger.Error("failed to remove cognito user", zap.Error(err))
-		return err
-	}
-	us.logger.Info("successfully removed cognito user")
-
-	return nil
+	return us.connectionRepo.Delete(ctx, uid)
 }

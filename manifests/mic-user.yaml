@@ -50,6 +50,11 @@ spec:
               value: db-user-svc
             - name: USER_DB_DISABLE_TLS
               value: "true"
+            - name: USER_DYNAMODB_CONNECTION_TABLE
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: dynamodb_connections_table_name
 ---
 apiVersion: v1
 kind: Service

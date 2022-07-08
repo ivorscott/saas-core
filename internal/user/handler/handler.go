@@ -13,5 +13,5 @@ type userService interface {
 	List(ctx context.Context) ([]model.User, error)
 	RetrieveByEmail(ctx context.Context, email string) (model.User, error)
 	RetrieveMe(ctx context.Context) (model.User, error)
-	RemoveUser(ctx context.Context, uid, cognitoUsername string) error
+	RemoveUser(ctx context.Context, uid string) error
 }

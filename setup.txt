@@ -11,3 +11,4 @@ Pre-requisites
 
 4. Apply ingress routes.
    make routes
+

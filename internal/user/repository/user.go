@@ -40,17 +40,48 @@ func (ur *UserRepository) RunTx(ctx context.Context, fn func(*sqlx.Tx) error) er
 	return ur.runTx(ctx, fn)
 }
 
-// Create inserts a new user into the database.
-func (ur *UserRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, nu model.NewUser, now time.Time) (model.User, error) {
+// AttachTx attaches a user to a tenant in the database.
+func (ur *UserRepository) AttachTx(ctx context.Context, tx *sqlx.Tx, userID string, now time.Time) error {
 	var (
-		u   model.User
 		err error
 	)
 
 	values, ok := web.FromContext(ctx)
 	if !ok {
-		return u, web.CtxErr()
+		return web.CtxErr()
 	}
+
+	stmt := `
+		insert into users (user_id, tenant_id, updated_at, created_at)
+		values ($1, $2, $3, $4)
+	`
+
+	if _, err = tx.ExecContext(
+		ctx,
+		stmt,
+		userID,
+		values.TenantID,
+		now.UTC(),
+		now.UTC(),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CreateUser creates a user profile in the database. Row level security does not apply to the user_profiles table.
+func (ur *UserRepository) CreateUser(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error) {
+	var (
+		u   model.User
+		err error
+	)
+
+	conn, Close, err := ur.pg.GetConnection(ctx)
+	if err != nil {
+		return u, fail.ErrConnectionFailed
+	}
+	defer Close()
 
 	u = model.User{
 		ID:            uuid.New().String(),
@@ -65,15 +96,14 @@ func (ur *UserRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, nu model.Ne
 	}
 
 	stmt := `
-		insert into users (user_id, tenant_id, email, email_verified, first_name, last_name, picture, locale, updated_at, created_at)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		insert into user_profiles (user_id, email, email_verified, first_name, last_name, picture, locale, updated_at, created_at)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
-	if _, err = tx.ExecContext(
+	if _, err = conn.ExecContext(
 		ctx,
 		stmt,
 		u.ID,
-		values.TenantID,
 		u.Email,
 		u.EmailVerified,
 		u.FirstName,
@@ -89,34 +119,39 @@ func (ur *UserRepository) CreateTx(ctx context.Context, tx *sqlx.Tx, nu model.Ne
 	return u, nil
 }
 
-// CreateAdmin inserts a new tenant admin user into the database.
-func (ur *UserRepository) CreateAdminTx(ctx context.Context, tx *sqlx.Tx, na model.NewAdminUser) error {
+// CreateUser creates user profile in database. Row level security not applicable to user_profiles table.
+func (ur *UserRepository) CreateAdminUser(ctx context.Context, nu model.NewAdminUser, now time.Time) (model.User, error) {
 	var (
 		u   model.User
 		err error
 	)
 
+	conn, Close, err := ur.pg.GetConnection(ctx)
+	if err != nil {
+		return u, fail.ErrConnectionFailed
+	}
+	defer Close()
+
 	u = model.User{
-		ID:            na.UserID,
-		TenantID:      na.TenantID,
-		Email:         na.Email,
-		EmailVerified: na.EmailVerified,
-		FirstName:     na.FirstName,
-		LastName:      na.LastName,
-		UpdatedAt:     na.CreatedAt.UTC(),
-		CreatedAt:     na.CreatedAt.UTC(),
+		ID:            uuid.New().String(),
+		Email:         nu.Email,
+		EmailVerified: nu.EmailVerified,
+		FirstName:     nu.FirstName,
+		LastName:      nu.LastName,
+		UpdatedAt:     now.UTC(),
+		CreatedAt:     now.UTC(),
 	}
 
 	stmt := `
-		insert into users (user_id, tenant_id, email, email_verified, first_name, last_name, picture, locale, updated_at, created_at)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		-- Row level security not applicable.
+		insert into user_profiles (user_id, email, email_verified, first_name, last_name, picture, locale, updated_at, created_at)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
-	if _, err = tx.ExecContext(
+	if _, err = conn.ExecContext(
 		ctx,
 		stmt,
 		u.ID,
-		u.TenantID,
 		u.Email,
 		u.EmailVerified,
 		u.FirstName,
@@ -126,10 +161,10 @@ func (ur *UserRepository) CreateAdminTx(ctx context.Context, tx *sqlx.Tx, na mod
 		u.UpdatedAt,
 		u.CreatedAt,
 	); err != nil {
-		return err
+		return u, err
 	}
 
-	return nil
+	return u, nil
 }
 
 // List selects all users associated to the tenant account.
@@ -146,7 +181,7 @@ func (ur *UserRepository) List(ctx context.Context) ([]model.User, error) {
 	}
 	defer Close()
 
-	stmt := `select * from users`
+	stmt := `select * from users inner join user_profiles using(user_id)`
 
 	rows, err := conn.QueryxContext(ctx, stmt)
 	if err != nil {
@@ -182,9 +217,10 @@ func (ur *UserRepository) RetrieveByEmail(ctx context.Context, email string) (mo
 
 	stmt := `
 			select 
-			    user_id, tenant_id, email, first_name, last_name,
+			    u.user_id, tenant_id, email, first_name, last_name,
 			    email_verified, locale, picture, updated_at, created_at
-			from users
+			from users u
+			inner join user_profiles using (user_id)
 			where email = $1
 			limit 1
 	`
@@ -220,9 +256,10 @@ func (ur *UserRepository) RetrieveMe(ctx context.Context) (model.User, error) {
 
 	stmt := `
 		select 
-			user_id, tenant_id, email, first_name, last_name,
-			email_verified, locale, picture, updated_at, created_at
-		from users
+			u.user_id, tenant_id, email, first_name, last_name,
+			email_verified, locale, picture, u.updated_at, u.created_at
+		from users u
+		inner join user_profiles using (user_id)
 		where user_id = $1
 	`
 
@@ -236,10 +273,15 @@ func (ur *UserRepository) RetrieveMe(ctx context.Context) (model.User, error) {
 	return u, nil
 }
 
-func (ur *UserRepository) RemoveUserTx(ctx context.Context, tx *sqlx.Tx, uid string) error {
-	stmt := `delete from users where user_id = $1`
+func (ur *UserRepository) DetachUserTx(ctx context.Context, tx *sqlx.Tx, uid string) error {
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return web.CtxErr()
+	}
 
-	_, err := tx.ExecContext(ctx, stmt, uid)
+	stmt := `delete from users where user_id = $1 and tenant_id = $2`
+
+	_, err := tx.ExecContext(ctx, stmt, uid, values.TenantID)
 	if err != nil {
 		ur.logger.Error("failed to remove user", zap.Error(err))
 		return err

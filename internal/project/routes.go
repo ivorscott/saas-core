@@ -24,6 +24,13 @@ func Routes(
 	config config.Config,
 ) http.Handler {
 	mux := chi.NewRouter()
+	mux.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"https://devpie.local:3000", "https://devpie.io"},
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "BasePath"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
 
 	middleware := []web.Middleware{
 		mid.Logger(log),
@@ -46,13 +53,5 @@ func Routes(
 	app.Handle(http.MethodPatch, "/projects/tasks/{tid}/move", taskHandler.Move)
 	app.Handle(http.MethodDelete, "/projects/columns/{cid}/tasks/{tid}", taskHandler.Delete)
 
-	h := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://devpie.local:3000", "https://devpie.io"},
-		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Cache-Control", "Content-Type", "Strict-Transport-Security"},
-		AllowCredentials: false,
-		MaxAge:           300,
-	})
-
-	return h.Handler(app)
+	return app
 }

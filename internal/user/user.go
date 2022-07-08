@@ -54,7 +54,6 @@ func Run() error {
 		logger, err = zap.NewDevelopment()
 	}
 	if err != nil {
-		logger.Error("error creating logger", zap.Error(err))
 		return err
 	}
 	defer logger.Sync()
@@ -70,16 +69,20 @@ func Run() error {
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	serverErrors := make(chan error, 1)
 
+	dynamodbClient := db.NewDynamoDBClient(context.Background(), cfg)
+
 	pg, Close, err := db.NewPostgresDatabase(logger, cfg)
 	if err != nil {
 		return err
 	}
 	defer Close()
 
-	// Execute latest migration.
-	if err = res.MigrateUp(pg.URL.String()); err != nil {
-		logger.Error("error connecting to user database", zap.Error(err))
-		return err
+	// Execute latest migration in production.
+	if cfg.Web.Production {
+		if err = res.MigrateUp(pg.URL.String()); err != nil {
+			logger.Error("error connecting to user database", zap.Error(err))
+			return err
+		}
 	}
 
 	jetstream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
@@ -93,8 +96,9 @@ func Run() error {
 	membershipRepo := repository.NewMembershipRepository(logger, pg)
 	projectRepo := repository.NewProjectRepository(logger, pg)
 	seatRepo := repository.NewSeatRepository(logger, pg)
+	connections := repository.NewConnectionRepository(dynamodbClient, cfg.Dynamodb.ConnectionTable)
 
-	userService := service.NewUserService(logger, cfg.Cognito.UserPoolID, userRepo, seatRepo, cognitoClient)
+	userService := service.NewUserService(logger, cfg.Cognito.UserPoolID, userRepo, seatRepo, cognitoClient, connections)
 	teamService := service.NewTeamService(logger, teamRepo, inviteRepo)
 	membershipService := service.NewMembershipService(logger, membershipRepo)
 	projectService := service.NewProjectService(logger, projectRepo)

@@ -27,7 +27,7 @@ func Routes(
 	mux.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://devpie.local:3000", "https://devpie.io"},
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "BasePath"},
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
@@ -56,5 +56,5 @@ func Routes(
 	app.Handle(http.MethodGet, "/users/teams/{tid}/members", membershipHandler.RetrieveMemberships)
 	app.Handle(http.MethodPatch, "/users/teams/{tid}/invites/{iid}", teamHandler.UpdateInvite)
 
-	return mux
+	return app
 }

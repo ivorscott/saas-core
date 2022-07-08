@@ -52,16 +52,15 @@ func Run() error {
 
 	if cfg.Web.Production {
 		logger, err = log.NewProductionLogger(logPath)
-		dbClient = db.NewProductionDynamoDBClient(ctx)
 	} else {
 		logger, err = zap.NewDevelopment()
-		dbClient = db.NewDevelopmentDynamoDBClient(ctx, cfg.Dynamodb.Host, cfg.Dynamodb.Port)
 	}
 	if err != nil {
-		logger.Error("error creating logger", zap.Error(err))
 		return err
 	}
 	defer logger.Sync()
+
+	dbClient = db.NewDynamoDBClient(ctx, cfg)
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)

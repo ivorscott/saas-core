@@ -15,6 +15,7 @@ spec:
       - "https://devpie.local:3000"
     accessControlAllowHeaders:
       - "Accept"
+      - "BasePath"
       - "Authorization"
       - "Cache-Control"
       - "Content-Type"

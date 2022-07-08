@@ -18,6 +18,7 @@ type User struct {
 
 // NewUser represents a new user request
 type NewUser struct {
+	UserID        *string `json:"userId"`
 	Company       string  `json:"company" validate:"required"`
 	Email         string  `json:"email" validate:"required"`
 	FirstName     string  `json:"firstName" validate:"required"`

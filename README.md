@@ -1,10 +1,15 @@
 # SaaS-Core
 
-This project is a part of "AWS SaaS app in 30 days" - _Proof of Concept_
+Multi-tenant SaaS app built on AWS
 
 ## Setup
 
-Read [instructions](SETUP.md).
+Read [instructions](docs/SETUP.md).
+
+### Cheatsheets
+
+- [Using NATS](/docs/nats.md)
+- [Using Postgres](/docs/postgres.md)
 
 ## Using Make
 By default, using Tilt allows you to develop against running containers. Alternatively, you can simultaneously run
@@ -60,18 +65,3 @@ OPTIONS
 > ```bash
 > complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' ?akefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
 > ```
-
-## Debugging NATS 
-
-```bash
-kubectl port-forward statefulset.apps/nats 4222
-nats account info
-nats stream info my_stream
-nats consumer info
-nats stream view my_stream # view messages
-nats stream rmm # remove message
-nats stream purge # remove all messages
-```
-https://docs.nats.io/nats-concepts/jetstream/js_walkthrough
-
-

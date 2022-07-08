@@ -181,18 +181,8 @@ user-db-force: ;@ ## Force version on user database. Optional <num> argument.
 	@migrate -path ./internal/user/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(USER_DB_PORT)/user?sslmode=disable force $(val)
 .PHONY: user-db-force
 
-dynamodb-create:	;@ ## Create Dynamodb tables.
-	@./scripts/db-setup.sh $(SHARED_USER_POOL_ID) $(SHARED_USER_POOL_CLIENT_ID)
-	@make dynamodb-tables
-.PHONY: dynamodb-create
-
-dynamodb-destroy:	;@ ## Destroy Dynamodb tables.
-	@./scripts/db-clean.sh
-	@make dynamodb-tables
-.PHONY: dynamodb-destroy
-
 dynamodb-tables:	;@ ## List Dynamodb tables.
-	@aws dynamodb list-tables --endpoint-url http://localhost:30008
+	@aws dynamodb list-tables
 .PHONY: dynamodb-tables
 
 routes: ;@ ## Apply ingress routes.

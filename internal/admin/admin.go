@@ -67,12 +67,12 @@ func Run(staticFS embed.FS) error {
 		return err
 	}
 
-	logger, err = zap.NewDevelopment()
 	if cfg.Web.Production {
 		logger, err = log.NewProductionLogger(logPath)
+	} else {
+		logger, err = zap.NewDevelopment()
 	}
 	if err != nil {
-		logger.Error("error creating logger", zap.Error(err))
 		return err
 	}
 	defer logger.Sync()

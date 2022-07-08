@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 
-	"github.com/devpies/saas-core/internal/tenant/config"
+	"github.com/devpies/saas-core/internal/user/config"
 
 	awsCfg "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
