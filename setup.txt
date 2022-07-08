@@ -3,12 +3,9 @@ Pre-requisites
 1. Run the kubernetes resources:
     tilt up
 
-2. In separate terminal run:
-   make dynamodb-create
-
-3. Port forward Traefik ports.
+2. Port forward Traefik ports.
    make ports
 
-4. Apply ingress routes.
+3. Apply ingress routes.
    make routes
 
