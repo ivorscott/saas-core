@@ -3,6 +3,11 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"github.com/aws/aws-sdk-go-v2/aws"
+
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+
 	"io"
 	"net/http"
 
@@ -19,15 +24,17 @@ type registrationClient interface {
 
 // RegistrationService is responsible for triggering tenant registration.
 type RegistrationService struct {
-	logger     *zap.Logger
-	httpClient registrationClient
+	logger        *zap.Logger
+	cognitoClient cognitoClient
+	httpClient    registrationClient
 }
 
 // NewRegistrationService returns a new registration service.
-func NewRegistrationService(logger *zap.Logger, httpClient registrationClient) *RegistrationService {
+func NewRegistrationService(logger *zap.Logger, cognitoClient cognitoClient, httpClient registrationClient) *RegistrationService {
 	return &RegistrationService{
-		logger:     logger,
-		httpClient: httpClient,
+		logger:        logger,
+		cognitoClient: cognitoClient,
+		httpClient:    httpClient,
 	}
 }
 
@@ -73,4 +80,11 @@ func (rs *RegistrationService) RegisterTenant(ctx context.Context, newTenant mod
 	}
 
 	return nil, resp.StatusCode, nil
+}
+
+func (rs *RegistrationService) ResendTemporaryPassword(ctx context.Context, username string) (*cognitoidentityprovider.AdminCreateUserOutput, error) {
+	return rs.cognitoClient.AdminCreateUser(ctx, &cognitoidentityprovider.AdminCreateUserInput{
+		Username:      aws.String(username),
+		MessageAction: types.MessageActionTypeResend,
+	})
 }

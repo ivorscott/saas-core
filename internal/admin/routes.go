@@ -58,8 +58,10 @@ func Routes(
 	app.Handle(http.MethodGet, "/admin/logout", withSession()(authHandler.Logout))
 	app.Handle(http.MethodGet, "/*", withSession()(webPageHandler.E404Page))
 
+	// API endpoints
 	app.Handle(http.MethodGet, "/admin/api/verify", authHandler.VerifyTokenNoop)
 	app.Handle(http.MethodPost, "/admin/api/send-registration", registrationHandler.ProcessRegistration)
+	app.Handle(http.MethodPost, "/admin/api/resend-otp", registrationHandler.ResendOTP)
 
 	return mux
 }

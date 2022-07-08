@@ -22,17 +22,6 @@ type AuthService struct {
 	session       *scs.SessionManager
 }
 
-type cognitoClient interface {
-	AdminInitiateAuth(
-		ctx context.Context,
-		params *cognitoidentityprovider.AdminInitiateAuthInput,
-		optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminInitiateAuthOutput, error)
-	AdminRespondToAuthChallenge(
-		ctx context.Context,
-		params *cognitoidentityprovider.AdminRespondToAuthChallengeInput,
-		optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminRespondToAuthChallengeOutput, error)
-}
-
 // NewAuthService creates a new instance of AuthService.
 func NewAuthService(logger *zap.Logger, config config.Config, cognitoClient cognitoClient, session *scs.SessionManager) *AuthService {
 	return &AuthService{
