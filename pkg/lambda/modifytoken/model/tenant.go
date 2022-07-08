@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"regexp"
@@ -33,7 +32,7 @@ func NewTenants(items []map[string]types.AttributeValue) ([]Tenant, error) {
 func NewTenantConnectionMap(tenants []Tenant) TenantConnectionMap {
 	var m = make(TenantConnectionMap, len(tenants))
 	for _, tenant := range tenants {
-		tenantPath := fmt.Sprintf("/%s", formatPath(tenant.CompanyName))
+		tenantPath := formatPath(tenant.CompanyName)
 		m[tenantPath] = Tenant{
 			TenantID:    tenant.TenantID,
 			CompanyName: tenant.CompanyName,
