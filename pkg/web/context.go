@@ -36,17 +36,23 @@ func FromContext(ctx context.Context) (*Values, bool) {
 }
 
 // addContextMetadata adds Metadata to context.
-func addContextMetadata(r *http.Request, token string, sub string, tenantID string) *http.Request {
+func addContextMetadata(r *http.Request, token string, sub string, defaultTenantID string, tenantMap TenantConnectionMap) *http.Request {
+	basePath := r.Header.Get("BasePath")
 	traceID := r.Header.Get("TraceID")
 	if traceID == "" {
 		traceID = uuid.New().String()
 	}
 
 	if v, ok := FromContext(r.Context()); ok {
-		v.TraceID = traceID
 		v.UserID = sub
 		v.Token = token
-		v.TenantID = tenantID
+		v.TraceID = traceID
+		v.TenantID = defaultTenantID
+
+		val, okay := tenantMap[basePath]
+		if okay {
+			v.TenantID = val.TenantID
+		}
 
 		ctx := NewContext(r.Context(), v)
 		r = r.WithContext(ctx)

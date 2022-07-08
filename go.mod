@@ -9,7 +9,6 @@ require (
 	github.com/aws/aws-sdk-go v1.44.17
 	github.com/aws/aws-sdk-go-v2 v1.16.5
 	github.com/aws/aws-sdk-go-v2/config v1.15.7
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.2
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.9.3
 	github.com/aws/aws-sdk-go-v2/service/codepipeline v1.13.6
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5
@@ -34,6 +33,7 @@ require (
 )
 
 require (
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.2 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.5 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.6 // indirect
@@ -78,4 +78,8 @@ require (
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+replace (
+	github.com/devpies/saas-core/pkg/web => ./pkg/web
 )

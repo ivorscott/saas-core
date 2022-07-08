@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -16,11 +17,11 @@ var ErrInvalidAuthorizationHeader = errors.New("missing or invalid authorization
 
 func Authenticate(log *zap.Logger, r *http.Request, region string, userPoolID string) (*http.Request, error) {
 	authHeader := r.Header.Get("Authorization")
-	token, sub, tenantID, err := verifyToken(r.Context(), log, authHeader, region, userPoolID)
+	token, sub, tenantID, tenantMap, err := verifyToken(r.Context(), log, authHeader, region, userPoolID)
 	if err != nil {
 		return nil, NewRequestError(err, http.StatusUnauthorized)
 	}
-	r = addContextMetadata(r, token, sub, tenantID)
+	r = addContextMetadata(r, token, sub, tenantID, tenantMap)
 	return r, nil
 }
 
@@ -31,7 +32,21 @@ func getToken(authHeader string) (string, error) {
 	return "", ErrInvalidAuthorizationHeader
 }
 
-func verifyToken(ctx context.Context, logger *zap.Logger, authHeader string, region string, userPoolID string) (token string, sub string, tenantID string, err error) {
+// TenantConnectionMap represents a valid tenant connection mapping.
+type TenantConnectionMap map[string]struct {
+	TenantID    string `json:"id"`
+	CompanyName string `json:"companyName"`
+	Plan        string `json:"plan"`
+	Path        string `json:"path"`
+}
+
+func verifyToken(
+	ctx context.Context,
+	logger *zap.Logger,
+	authHeader string,
+	region string,
+	userPoolID string,
+) (token string, sub string, tenantID string, tenantMap TenantConnectionMap, err error) {
 	token, err = getToken(authHeader)
 	if err != nil {
 		return
@@ -60,6 +75,14 @@ func verifyToken(ctx context.Context, logger *zap.Logger, authHeader string, reg
 	val, ok := parsedToken.Get("custom:tenant-id")
 	if ok {
 		tenantID = val.(string)
+	}
+
+	val, ok = parsedToken.Get("custom:tenant-connections")
+	if ok {
+		err = json.Unmarshal([]byte(val.(string)), &tenantMap)
+		if err != nil {
+			return
+		}
 	}
 
 	return
