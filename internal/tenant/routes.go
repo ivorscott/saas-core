@@ -24,7 +24,7 @@ func Routes(
 ) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://localhost", "https://devpie.io"},
+		AllowedOrigins:   []string{"https://admin.devpie.local", "https://admin.devpie.io"},
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: false,
@@ -40,11 +40,11 @@ func Routes(
 
 	app := web.NewApp(mux, shutdown, log, middleware...)
 
-	app.Handle(http.MethodGet, "/", tenantHandler.FindAll)
-	app.Handle(http.MethodGet, "/{id}", tenantHandler.FindOne)
-	app.Handle(http.MethodPatch, "/{id}", tenantHandler.Update)
-	app.Handle(http.MethodDelete, "/{id}", tenantHandler.Delete)
-	app.Handle(http.MethodGet, "/auth-info", authInfoHandler.GetAuthInfo)
+	app.Handle(http.MethodGet, "/tenants", tenantHandler.FindAll)
+	app.Handle(http.MethodGet, "/tenants/{id}", tenantHandler.FindOne)
+	app.Handle(http.MethodPatch, "/tenants/{id}", tenantHandler.Update)
+	app.Handle(http.MethodDelete, "/tenants/{id}", tenantHandler.Delete)
+	app.Handle(http.MethodGet, "/tenants/auth-info", authInfoHandler.GetAuthInfo)
 
 	return mux
 }

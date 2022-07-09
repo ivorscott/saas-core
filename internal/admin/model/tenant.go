@@ -11,21 +11,23 @@ func init() {
 
 // NewTenant represents a new tenant.
 type NewTenant struct {
-	Email     string `json:"email" validate:"required"`
-	FirstName string `json:"firstName" validate:"required"`
-	LastName  string `json:"lastName" validate:"required"`
-	Company   string `json:"companyName" validate:"required"`
-	Plan      string `json:"plan" validate:"required,oneof=basic premium"`
+	Email       string `json:"email" validate:"required"`
+	FirstName   string `json:"firstName" validate:"required"`
+	LastName    string `json:"lastName" validate:"required"`
+	CompanyName string `json:"companyName" validate:"required"`
+	Plan        string `json:"plan" validate:"required,oneof=basic premium"`
 }
 
 // Tenant represents a tenant.
 type Tenant struct {
-	ID        string `json:"ID"`
-	Email     string `json:"email"`
-	FirstName string `json:"firstName" validate:"required"`
-	LastName  string `json:"lastName" validate:"required"`
-	Company   string `json:"companyName"`
-	Plan      string `json:"plan"`
+	ID          string `json:"id"`
+	Email       string `json:"email"`
+	FirstName   string `json:"firstName" validate:"required"`
+	LastName    string `json:"lastName" validate:"required"`
+	CompanyName string `json:"companyName"`
+	Plan        string `json:"plan"`
+	Status      string `json:"status"`
+	Created     string `json:"createdAt"`
 }
 
 // Validate validates the NewTenant.

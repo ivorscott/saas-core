@@ -15,6 +15,7 @@ type Config struct {
 	Cognito struct {
 		UserPoolID       string `conf:"required"`
 		UserPoolClientID string `conf:"required"`
+		SharedUserPoolID string `conf:"required"`
 		Region           string `conf:"required"`
 	}
 	DB struct {
@@ -28,5 +29,9 @@ type Config struct {
 	Registration struct {
 		ServiceAddress string `conf:"default:localhost"`
 		ServicePort    string `conf:"default:4001"`
+	}
+	Tenant struct {
+		ServiceAddress string `conf:"default:localhost"`
+		ServicePort    string `conf:"default:4002"`
 	}
 }

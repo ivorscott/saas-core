@@ -105,15 +105,18 @@ func Run(staticFS embed.FS) error {
 	cognitoClient := cip.NewFromConfig(awsCfg)
 
 	registrationClient := clients.NewHTTPRegistrationClient(logger, cfg.Registration.ServiceAddress, cfg.Registration.ServicePort)
+	tenantClient := clients.NewHTTPTenantClient(logger, cfg.Tenant.ServiceAddress, cfg.Tenant.ServicePort)
 
 	// Initialize 3-layered architecture.
 	authService := service.NewAuthService(logger, cfg, cognitoClient, session)
-	registrationService := service.NewRegistrationService(logger, cognitoClient, registrationClient)
-
+	registrationService := service.NewRegistrationService(logger, cfg, cognitoClient, registrationClient)
+	tenantService := service.NewTenantService(logger, tenantClient)
 	renderEngine := render.New(logger, cfg, templateFS, session)
 	authHandler := handler.NewAuthHandler(logger, renderEngine, session, authService)
 	webPageHandler := handler.NewWebPageHandler(logger, renderEngine, web.SetContextStatusCode)
 	registrationHandler := handler.NewRegistrationHandler(logger, registrationService)
+	tenantHandler := handler.NewTenantHandler(logger, tenantService)
+
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	serverErrors := make(chan error, 1)
@@ -122,7 +125,7 @@ func Run(staticFS embed.FS) error {
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, assets, authHandler, webPageHandler, registrationHandler, cfg),
+		Handler:      Routes(logger, shutdown, assets, cfg, authHandler, webPageHandler, registrationHandler, tenantHandler),
 	}
 
 	go func() {

@@ -20,10 +20,11 @@ func Routes(
 	log *zap.Logger,
 	shutdown chan os.Signal,
 	assets fs.FS,
+	config config.Config,
 	authHandler *handler.AuthHandler,
 	webPageHandler *handler.WebPageHandler,
 	registrationHandler *handler.RegistrationHandler,
-	config config.Config,
+	tenantsHandler *handler.TenantHandler,
 ) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(loadSession)
@@ -60,6 +61,7 @@ func Routes(
 
 	// API endpoints
 	app.Handle(http.MethodGet, "/admin/api/verify", authHandler.VerifyTokenNoop)
+	app.Handle(http.MethodGet, "/admin/api/tenants", tenantsHandler.ListTenants)
 	app.Handle(http.MethodPost, "/admin/api/send-registration", registrationHandler.ProcessRegistration)
 	app.Handle(http.MethodPost, "/admin/api/resend-otp", registrationHandler.ResendOTP)
 

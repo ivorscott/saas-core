@@ -9,6 +9,7 @@ admin: ;@ ## Run admin app with live reload.
 	--web-port=${ADMIN_WEB_PORT} \
 	--cognito-user-pool-id=${ADMIN_USER_POOL_ID} \
 	--cognito-user-pool-client-id=${ADMIN_USER_POOL_CLIENT_ID} \
+	--cognito-shared-user-pool-id=${SHARED_USER_POOL_ID} \
 	--cognito-region=${REGION} \
 	--registration-service-port=${REGISTRATION_WEB_PORT} \
 	--db-port=${ADMIN_DB_PORT} \

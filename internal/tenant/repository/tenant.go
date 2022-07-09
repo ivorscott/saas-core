@@ -35,7 +35,7 @@ func (tr *TenantRepository) Insert(ctx context.Context, tenant model.NewTenant) 
 			"email":       &types.AttributeValueMemberS{Value: tenant.Email},
 			"firstName":   &types.AttributeValueMemberS{Value: tenant.FirstName},
 			"lastName":    &types.AttributeValueMemberS{Value: tenant.LastName},
-			"companyName": &types.AttributeValueMemberS{Value: tenant.Company},
+			"companyName": &types.AttributeValueMemberS{Value: tenant.CompanyName},
 			"plan":        &types.AttributeValueMemberS{Value: tenant.Plan},
 		},
 	}
@@ -125,29 +125,9 @@ func (tr *TenantRepository) Update(ctx context.Context, id string, update model.
 		av[":plan"] = &types.AttributeValueMemberS{Value: *update.Plan}
 	}
 
-	if update.Address != nil {
-		updateExp = updateExp + " address = :address,"
-		av[":address"] = &types.AttributeValueMemberS{Value: *update.Address}
-	}
-
-	if update.City != nil {
-		updateExp = updateExp + " city = :city,"
-		av[":city"] = &types.AttributeValueMemberS{Value: *update.City}
-	}
-
-	if update.Zipcode != nil {
-		updateExp = updateExp + " zipcode = :zipcode,"
-		av[":zipcode"] = &types.AttributeValueMemberS{Value: *update.Zipcode}
-	}
-
-	if update.Country != nil {
-		updateExp = updateExp + " country = :country,"
-		av[":country"] = &types.AttributeValueMemberS{Value: *update.Country}
-	}
-
-	if update.TaxNumber != nil {
-		updateExp = updateExp + " taxNumber = :taxNumber,"
-		av[":taxNumber"] = &types.AttributeValueMemberS{Value: *update.TaxNumber}
+	if update.Status != nil {
+		updateExp = updateExp + " status = :status,"
+		av[":status"] = &types.AttributeValueMemberS{Value: *update.Status}
 	}
 
 	updateExp = strings.TrimSuffix(updateExp, ",")

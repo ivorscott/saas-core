@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+
 	"github.com/devpies/saas-core/internal/tenant/model"
 	"github.com/devpies/saas-core/pkg/msg"
 
@@ -55,14 +56,15 @@ func (ts *TenantService) CreateTenantFromMessage(ctx context.Context, message in
 	return nil
 }
 
+//TODO: add status and created time
 func newTenant(data msg.TenantRegisteredEventData) model.NewTenant {
 	return model.NewTenant{
-		ID:        data.TenantID,
-		Email:     data.Email,
-		FirstName: data.FirstName,
-		LastName:  data.LastName,
-		Company:   data.Company,
-		Plan:      data.Plan,
+		ID:          data.TenantID,
+		Email:       data.Email,
+		FirstName:   data.FirstName,
+		LastName:    data.LastName,
+		CompanyName: data.Company,
+		Plan:        data.Plan,
 	}
 }
 

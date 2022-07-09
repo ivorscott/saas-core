@@ -43,7 +43,7 @@ func TestNewTenant_Validate(t *testing.T) {
 		{
 			name: "invalid company",
 			modifier: func(nt *model.NewTenant) {
-				nt.Company = ""
+				nt.CompanyName = ""
 			},
 			err: "failed on the 'required' tag",
 		},
@@ -73,11 +73,11 @@ func TestNewTenant_Validate(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			nt := model.NewTenant{
-				FirstName: "Test",
-				LastName:  "User",
-				Company:   "Test Company",
-				Email:     "test@email.com",
-				Plan:      "basic",
+				FirstName:   "Test",
+				LastName:    "User",
+				CompanyName: "Test Company",
+				Email:       "test@email.com",
+				Plan:        "basic",
 			}
 
 			tc.modifier(&nt)
