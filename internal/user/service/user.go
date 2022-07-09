@@ -12,15 +12,17 @@ import (
 	"github.com/devpies/saas-core/pkg/web"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
+	"net/http"
 	"time"
 )
 
 type userRepository interface {
 	RunTx(ctx context.Context, fn func(*sqlx.Tx) error) error
-	AttachTx(ctx context.Context, tx *sqlx.Tx, userID string, now time.Time) error
-	CreateUser(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error)
-	CreateAdminUser(ctx context.Context, nu model.NewAdminUser, now time.Time) (model.User, error)
+	AddUserTx(ctx context.Context, tx *sqlx.Tx, userID string, now time.Time) error
+	CreateUserProfile(ctx context.Context, nu model.NewUser, userID string, now time.Time) (model.User, error)
+	CreateAdminUser(ctx context.Context, na model.NewAdminUser) error
 	List(ctx context.Context) ([]model.User, error)
+	RetrieveIDByEmail(ctx context.Context, email string) (string, error)
 	RetrieveByEmail(ctx context.Context, email string) (model.User, error)
 	RetrieveMe(ctx context.Context) (model.User, error)
 	DetachUserTx(ctx context.Context, tx *sqlx.Tx, uid string) error
@@ -90,60 +92,87 @@ func NewUserService(
 }
 
 // AddUser adds a new or existing user to the tenant's account and updates the number of seats.
-func (us *UserService) AddUser(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error) {
-	getUserInput := &cognitoidentityprovider.AdminGetUserInput{
-		UserPoolId: aws.String(us.sharedUserPoolID),
-		Username:   aws.String(nu.Email),
+func (us *UserService) AddUser(ctx context.Context, nu model.NewUser, now time.Time) error {
+	var (
+		userID string
+		err    error
+	)
+
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return web.CtxErr()
 	}
 
-	if _, err := us.cognitoClient.AdminGetUser(ctx, getUserInput); err != nil {
-		var unf *types.UserNotFoundException
+	// Verify user doesn't belong to the tenant already.
+	_, err = us.userRepo.RetrieveByEmail(ctx, nu.Email)
+	if err == nil {
+		us.logger.Info("user already connected to tenant")
+		return web.NewRequestError(fmt.Errorf("user already added"), http.StatusBadRequest)
+	}
 
-		if errors.As(err, &unf) {
-			if err = us.createCognitoIdentity(ctx, nu); err != nil {
-				us.logger.Error("failed to create cognito identity")
-				return model.User{}, err
-			}
-			_, err = us.userRepo.CreateUser(ctx, nu, now)
-			if err != nil {
-				us.logger.Error("failed to create user profile")
-				return model.User{}, err
-			}
-			us.logger.Info("successfully created user")
+	// Determine if a cognito identity already exists.
+	output, err := us.cognitoClient.AdminGetUser(ctx, &cognitoidentityprovider.AdminGetUserInput{
+		UserPoolId: aws.String(us.sharedUserPoolID),
+		Username:   aws.String(nu.Email),
+	})
+	// If identity exists, attach existing user profile to tenant.
+	if err == nil {
+		userID = getUserIDFromAttributes(output.UserAttributes)
+		err = us.addUserToTenant(ctx, userID, values.TenantID, now)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// Otherwise, create identity when user not found, then add user to tenant.
+	var unf *types.UserNotFoundException
+
+	if errors.As(err, &unf) {
+		var result *cognitoidentityprovider.AdminCreateUserOutput
+
+		result, err = us.createCognitoIdentity(ctx, nu)
+		if err != nil {
+			us.logger.Error("error creating cognito identity")
+			return err
+		}
+		userID = getUserIDFromAttributes(result.User.Attributes)
+		_, err = us.userRepo.CreateUserProfile(ctx, nu, userID, now)
+		if err != nil {
+			us.logger.Error("error creating user profile")
+			return err
+		}
+		err = us.addUserToTenant(ctx, userID, values.TenantID, now)
+		if err != nil {
+			return err
 		}
 	}
 
-	user, err := us.userRepo.RetrieveByEmail(ctx, nu.Email)
-	if err != nil {
-		return model.User{}, err
-	}
-
-	err = us.attachUserToTenant(ctx, user.ID, now)
-	if err != nil {
-		return model.User{}, err
-	}
-
-	us.logger.Info("successfully added user to tenant")
-
-	return user, err
+	return nil
 }
 
-func (us *UserService) attachUserToTenant(ctx context.Context, userID string, now time.Time) error {
-	var (
-		user model.User
-		err  error
-	)
+func getUserIDFromAttributes(attributes []types.AttributeType) string {
+	for _, v := range attributes {
+		if v.Name != nil && *v.Name == "sub" {
+			return *v.Value
+		}
+	}
+	return ""
+}
+
+func (us *UserService) addUserToTenant(ctx context.Context, userID, tenantID string, now time.Time) error {
+	var err error
 
 	err = us.userRepo.RunTx(ctx, func(tx *sqlx.Tx) error {
 		// Add user to tenant.
-		err = us.userRepo.AttachTx(ctx, tx, userID, now)
+		err = us.userRepo.AddUserTx(ctx, tx, userID, now)
 		if err != nil {
-			us.logger.Error("failed to add seat")
+			us.logger.Error("error adding user to tenant")
 			return err
 		}
 		// Then increment seats used.
 		if err = us.seatRepo.IncrementSeatsUsedTx(ctx, tx); err != nil {
-			us.logger.Error("failed to increment seats used")
+			us.logger.Error("error incrementing seats used")
 			return err
 		}
 		return nil
@@ -152,19 +181,25 @@ func (us *UserService) attachUserToTenant(ctx context.Context, userID string, no
 		return err
 	}
 
-	if err = us.connectionRepo.Insert(ctx, model.NewConnection{UserID: user.ID, TenantID: ""}); err != nil {
+	connection := model.NewConnection{
+		UserID:   userID,
+		TenantID: tenantID,
+	}
+
+	if err = us.connectionRepo.Insert(ctx, connection); err != nil {
+		us.logger.Error("error creating connection")
 		return err
 	}
 
 	return nil
 }
 
-func (us *UserService) createCognitoIdentity(ctx context.Context, nu model.NewUser) error {
+func (us *UserService) createCognitoIdentity(ctx context.Context, nu model.NewUser) (*cognitoidentityprovider.AdminCreateUserOutput, error) {
 	values, ok := web.FromContext(ctx)
 	if !ok {
-		return web.CtxErr()
+		return nil, web.CtxErr()
 	}
-	_, err := us.cognitoClient.AdminCreateUser(ctx, &cognitoidentityprovider.AdminCreateUserInput{
+	return us.cognitoClient.AdminCreateUser(ctx, &cognitoidentityprovider.AdminCreateUserInput{
 		UserPoolId: aws.String(us.sharedUserPoolID),
 		Username:   aws.String(nu.Email),
 		UserAttributes: []types.AttributeType{
@@ -175,9 +210,9 @@ func (us *UserService) createCognitoIdentity(ctx context.Context, nu model.NewUs
 			{Name: aws.String("email_verified"), Value: aws.String("true")},
 		},
 	})
-	return err
 }
 
+// AddAdminUserFromEvent creates the tenant admin and sets max seats allowed.
 func (us *UserService) AddAdminUserFromEvent(ctx context.Context, message interface{}) error {
 	m, err := msg.Bytes(message)
 	if err != nil {
@@ -191,13 +226,11 @@ func (us *UserService) AddAdminUserFromEvent(ctx context.Context, message interf
 
 	na := newAdminUser(event.Data)
 
-	// Create tenant admin and set max seats allowed.
 	err = us.userRepo.RunTx(ctx, func(tx *sqlx.Tx) error {
-		// When the subject is a tenant, the tenantID is already available in context.
-		// In this case, the subject may be the SaaS Admin provider provisioning a tenant in the admin app.
+		// The requester may be a SaaS Admin. Use the tenantID from the event instead of context.
 		ctx = web.NewContext(ctx, &web.Values{TenantID: na.TenantID})
 
-		if _, err = us.userRepo.CreateAdminUser(ctx, na, na.CreatedAt); err != nil {
+		if err = us.userRepo.CreateAdminUser(ctx, na); err != nil {
 			us.logger.Error("failed to create tenant admin")
 			return err
 		}

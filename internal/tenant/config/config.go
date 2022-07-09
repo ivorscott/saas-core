@@ -18,9 +18,10 @@ type Config struct {
 		Region           string `conf:"required"`
 	}
 	Dynamodb struct {
-		TenantTable string `conf:"required"`
-		AuthTable   string `conf:"required"`
-		ConfigTable string `conf:"required"`
+		TenantTable     string `conf:"required"`
+		AuthTable       string `conf:"required"`
+		ConfigTable     string `conf:"required"`
+		ConnectionTable string `conf:"required"`
 	}
 	Nats struct {
 		Address string `conf:"default:127.0.0.1"`

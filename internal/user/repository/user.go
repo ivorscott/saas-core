@@ -40,8 +40,8 @@ func (ur *UserRepository) RunTx(ctx context.Context, fn func(*sqlx.Tx) error) er
 	return ur.runTx(ctx, fn)
 }
 
-// AttachTx attaches a user to a tenant in the database.
-func (ur *UserRepository) AttachTx(ctx context.Context, tx *sqlx.Tx, userID string, now time.Time) error {
+// AddUserTx adds a user to a tenant in the database.
+func (ur *UserRepository) AddUserTx(ctx context.Context, tx *sqlx.Tx, userID string, now time.Time) error {
 	var (
 		err error
 	)
@@ -70,8 +70,8 @@ func (ur *UserRepository) AttachTx(ctx context.Context, tx *sqlx.Tx, userID stri
 	return nil
 }
 
-// CreateUser creates a user profile in the database. Row level security does not apply to the user_profiles table.
-func (ur *UserRepository) CreateUser(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error) {
+// CreateUser creates a tenant agnostic user profile. Row level security is not enabled on "user_profiles".
+func (ur *UserRepository) CreateUserProfile(ctx context.Context, nu model.NewUser, userID string, now time.Time) (model.User, error) {
 	var (
 		u   model.User
 		err error
@@ -84,15 +84,12 @@ func (ur *UserRepository) CreateUser(ctx context.Context, nu model.NewUser, now 
 	defer Close()
 
 	u = model.User{
-		ID:            uuid.New().String(),
-		Email:         nu.Email,
-		EmailVerified: nu.EmailVerified,
-		FirstName:     nu.FirstName,
-		LastName:      nu.LastName,
-		Picture:       nu.Picture,
-		Locale:        nu.Locale,
-		UpdatedAt:     now.UTC(),
-		CreatedAt:     now.UTC(),
+		ID:        userID,
+		Email:     nu.Email,
+		FirstName: nu.FirstName,
+		LastName:  nu.LastName,
+		UpdatedAt: now.UTC(),
+		CreatedAt: now.UTC(),
 	}
 
 	stmt := `
@@ -119,31 +116,17 @@ func (ur *UserRepository) CreateUser(ctx context.Context, nu model.NewUser, now 
 	return u, nil
 }
 
-// CreateUser creates user profile in database. Row level security not applicable to user_profiles table.
-func (ur *UserRepository) CreateAdminUser(ctx context.Context, nu model.NewAdminUser, now time.Time) (model.User, error) {
-	var (
-		u   model.User
-		err error
-	)
+// CreateAdminUser creates an admin user for the tenant.
+func (ur *UserRepository) CreateAdminUser(ctx context.Context, na model.NewAdminUser) error {
+	var err error
 
 	conn, Close, err := ur.pg.GetConnection(ctx)
 	if err != nil {
-		return u, fail.ErrConnectionFailed
+		return fail.ErrConnectionFailed
 	}
 	defer Close()
 
-	u = model.User{
-		ID:            uuid.New().String(),
-		Email:         nu.Email,
-		EmailVerified: nu.EmailVerified,
-		FirstName:     nu.FirstName,
-		LastName:      nu.LastName,
-		UpdatedAt:     now.UTC(),
-		CreatedAt:     now.UTC(),
-	}
-
 	stmt := `
-		-- Row level security not applicable.
 		insert into user_profiles (user_id, email, email_verified, first_name, last_name, picture, locale, updated_at, created_at)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
@@ -151,20 +134,36 @@ func (ur *UserRepository) CreateAdminUser(ctx context.Context, nu model.NewAdmin
 	if _, err = conn.ExecContext(
 		ctx,
 		stmt,
-		u.ID,
-		u.Email,
-		u.EmailVerified,
-		u.FirstName,
-		u.LastName,
-		u.Picture,
-		u.Locale,
-		u.UpdatedAt,
-		u.CreatedAt,
+		na.UserID,
+		na.Email,
+		na.EmailVerified,
+		na.FirstName,
+		na.LastName,
+		nil,
+		nil,
+		na.CreatedAt.UTC(),
+		na.CreatedAt.UTC(),
 	); err != nil {
-		return u, err
+		return err
 	}
 
-	return u, nil
+	stmt = `
+		insert into users (user_id, tenant_id, updated_at, created_at)
+		values ($1, $2, $3, $4)
+	`
+
+	if _, err = conn.ExecContext(
+		ctx,
+		stmt,
+		na.UserID,
+		na.TenantID,
+		na.CreatedAt.UTC(),
+		na.CreatedAt.UTC(),
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // List selects all users associated to the tenant account.
@@ -198,6 +197,32 @@ func (ur *UserRepository) List(ctx context.Context) ([]model.User, error) {
 	return us, nil
 }
 
+// RetrieveIDByEmail retrieves a userID via a provided email address.
+func (ur *UserRepository) RetrieveIDByEmail(ctx context.Context, email string) (string, error) {
+	var (
+		uid string
+		err error
+	)
+
+	if _, err = mail.ParseAddress(email); err != nil {
+		return "", fail.ErrInvalidEmail
+	}
+
+	conn, Close, err := ur.pg.GetConnection(ctx)
+	if err != nil {
+		return "", fail.ErrConnectionFailed
+	}
+	defer Close()
+
+	stmt := `select user_id from user_profiles where email = $1 limit 1`
+
+	if err = conn.GetContext(ctx, &uid, stmt, email); err != nil {
+		return "", err
+	}
+
+	return uid, nil
+}
+
 // RetrieveByEmail retrieves a user via a provided email address.
 func (ur *UserRepository) RetrieveByEmail(ctx context.Context, email string) (model.User, error) {
 	var (
@@ -218,7 +243,7 @@ func (ur *UserRepository) RetrieveByEmail(ctx context.Context, email string) (mo
 	stmt := `
 			select 
 			    u.user_id, tenant_id, email, first_name, last_name,
-			    email_verified, locale, picture, updated_at, created_at
+			    email_verified, locale, picture, u.updated_at, u.created_at
 			from users u
 			inner join user_profiles using (user_id)
 			where email = $1

@@ -28,8 +28,8 @@ func NewSiloConfigService(logger *zap.Logger, siloConfigRepo siloConfigRepositor
 	}
 }
 
-// StoreConfigFromMessage stores tenant silo configuration from a message.
-func (ts *SiloConfigService) StoreConfigFromMessage(ctx context.Context, message interface{}) error {
+// StoreConfigFromEvent stores tenant silo configuration from a message.
+func (ts *SiloConfigService) StoreConfigFromEvent(ctx context.Context, message interface{}) error {
 	m, err := msg.Bytes(message)
 	if err != nil {
 		return err

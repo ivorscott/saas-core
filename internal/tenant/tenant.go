@@ -73,8 +73,8 @@ func Run() error {
 	tenantRepository := repository.NewTenantRepository(dynamoDBClient, cfg.Dynamodb.TenantTable)
 	siloConfigRepository := repository.NewSiloConfigRepository(dynamoDBClient, cfg.Dynamodb.ConfigTable)
 	authInfoRepository := repository.NewAuthInfoRepository(logger, dynamoDBClient, cfg.Dynamodb.AuthTable)
-
-	tenantService := service.NewTenantService(logger, js, cfg.Cognito.SharedUserPoolID, cognitoClient, tenantRepository)
+	connectionRepository := repository.NewConnectionRepository(dynamoDBClient, cfg.Dynamodb.ConnectionTable)
+	tenantService := service.NewTenantService(logger, js, cfg.Cognito.SharedUserPoolID, cognitoClient, tenantRepository, connectionRepository)
 	authInfoService := service.NewAuthInfoService(logger, authInfoRepository, cfg.Cognito.Region)
 	siloConfigService := service.NewSiloConfigService(logger, siloConfigRepository)
 
@@ -93,7 +93,7 @@ func Run() error {
 			string(msg.TypeTenantRegistered),
 			msg.SubjectTenantRegistered,
 			"tenant_consumer",
-			tenantService.CreateTenantFromMessage,
+			tenantService.CreateTenantFromEvent,
 			opts...,
 		)
 
@@ -101,7 +101,7 @@ func Run() error {
 			string(msg.TypeTenantSiloed),
 			msg.SubjectTenantSiloed,
 			"tenant_silo_consumer",
-			siloConfigService.StoreConfigFromMessage,
+			siloConfigService.StoreConfigFromEvent,
 			opts...,
 		)
 	}()

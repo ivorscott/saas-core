@@ -18,14 +18,10 @@ type User struct {
 
 // NewUser represents a new user request
 type NewUser struct {
-	UserID        *string `json:"userId"`
-	Company       string  `json:"company" validate:"required"`
-	Email         string  `json:"email" validate:"required"`
-	FirstName     string  `json:"firstName" validate:"required"`
-	LastName      string  `json:"lastName"`
-	EmailVerified bool    `json:"emailVerified"`
-	Picture       *string `json:"picture"`
-	Locale        *string `json:"locale"`
+	Company   string `json:"company" validate:"required"`
+	Email     string `json:"email" validate:"required"`
+	FirstName string `json:"firstName" validate:"required"`
+	LastName  string `json:"lastName"`
 }
 
 // NewAdminUser represents a new user request

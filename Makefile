@@ -79,6 +79,7 @@ tenant: ;@ ## Run tenant api with live reload.
 	--cognito-user-pool-id=${ADMIN_USER_POOL_ID} \
 	--cognito-shared-user-pool-id=${SHARED_USER_POOL_ID} \
 	--cognito-region=${REGION} \
+	--dynamodb-connection-table=${DYNAMODB_CONNECTION_TABLE} \
 	--dynamodb-tenant-table=${DYNAMODB_TENANT_TABLE} \
 	--dynamodb-auth-table=${DYNAMODB_AUTH_TABLE} \
 	--dynamodb-config-table=${DYNAMODB_CONFIG_TABLE}" \
@@ -136,6 +137,7 @@ user: ;@ ## Run user api with live reload.
 	--web-port=${USER_WEB_PORT} \
 	--cognito-shared-user-pool-id=${SHARED_USER_POOL_ID} \
 	--cognito-region=${REGION} \
+	--dynamodb-connection-table=${DYNAMODB_CONNECTION_TABLE} \
 	--db-port=${USER_DB_PORT} \
 	--db-disable-tls=true" \
 	-log-prefix=false

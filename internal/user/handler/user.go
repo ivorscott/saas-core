@@ -39,12 +39,12 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	user, err := uh.userService.AddUser(r.Context(), nu, time.Now())
+	err = uh.userService.AddUser(r.Context(), nu, time.Now())
 	if err != nil {
 		return err
 	}
 
-	return web.Respond(r.Context(), w, user, http.StatusCreated)
+	return web.Respond(r.Context(), w, nil, http.StatusCreated)
 }
 
 // List retrieves all users on the tenant account.

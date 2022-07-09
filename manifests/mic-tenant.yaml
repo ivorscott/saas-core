@@ -64,6 +64,11 @@ spec:
                 configMapKeyRef:
                   name: cfg
                   key: dynamodb_silo_config_table_name
+            - name: TENANT_DYNAMODB_CONNECTION_TABLE
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: dynamodb_connections_table_name
             - name: TENANT_NATS_ADDRESS
               value: "nats-svc"
 ---
