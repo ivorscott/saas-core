@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/devpies/saas-core/internal/project/fail"
@@ -17,9 +18,8 @@ import (
 )
 
 type projectService interface {
-	List(ctx context.Context) ([]model.Project, error)
+	List(ctx context.Context, all bool) ([]model.Project, error)
 	Retrieve(ctx context.Context, projectID string) (model.Project, error)
-	RetrieveShared(ctx context.Context, projectID string) (model.Project, error)
 	Create(ctx context.Context, project model.NewProject, now time.Time) (model.Project, error)
 	Update(ctx context.Context, projectID string, update model.UpdateProject, now time.Time) (model.Project, error)
 	Delete(ctx context.Context, projectID string) error
@@ -53,7 +53,14 @@ func NewProjectHandler(
 
 // List handles project list requests.
 func (ph *ProjectHandler) List(w http.ResponseWriter, r *http.Request) error {
-	list, err := ph.projectService.List(r.Context())
+	var all bool
+
+	path := r.Header.Get("BasePath")
+	if strings.ToLower(path) == "projects" {
+		all = true
+	}
+
+	list, err := ph.projectService.List(r.Context(), all)
 	if err != nil {
 		return err
 	}
@@ -65,12 +72,7 @@ func (ph *ProjectHandler) List(w http.ResponseWriter, r *http.Request) error {
 func (ph *ProjectHandler) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	pid := chi.URLParam(r, "pid")
 
-	opr, err := ph.projectService.Retrieve(r.Context(), pid)
-	if err == nil {
-		return web.Respond(r.Context(), w, opr, http.StatusOK)
-	}
-
-	spr, err := ph.projectService.RetrieveShared(r.Context(), pid)
+	project, err := ph.projectService.Retrieve(r.Context(), pid)
 	if err != nil {
 		switch err {
 		case fail.ErrNotFound:
@@ -82,7 +84,7 @@ func (ph *ProjectHandler) Retrieve(w http.ResponseWriter, r *http.Request) error
 		}
 	}
 
-	return web.Respond(r.Context(), w, spr, http.StatusOK)
+	return web.Respond(r.Context(), w, project, http.StatusOK)
 }
 
 // Create handles project create requests.
@@ -222,10 +224,7 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if _, err = ph.projectService.Retrieve(r.Context(), pid); err != nil {
-		_, err = ph.projectService.RetrieveShared(r.Context(), pid)
-		if err == nil {
-			return web.NewRequestError(err, http.StatusUnauthorized)
-		}
+		return err
 	}
 	if err = ph.taskService.DeleteAll(r.Context(), pid); err != nil {
 		return err

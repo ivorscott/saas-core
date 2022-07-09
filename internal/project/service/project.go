@@ -16,7 +16,6 @@ type projectRepository interface {
 	RunTx(ctx context.Context, fn func(*sqlx.Tx) error) error
 	RetrieveTeamID(ctx context.Context, pid string) (string, error)
 	Retrieve(ctx context.Context, pid string) (model.Project, error)
-	RetrieveShared(ctx context.Context, pid string) (model.Project, error)
 	List(ctx context.Context) ([]model.Project, error)
 	Create(ctx context.Context, np model.NewProject, now time.Time) (model.Project, error)
 	Update(ctx context.Context, pid string, update model.UpdateProject, now time.Time) (model.Project, error)
@@ -41,18 +40,16 @@ func NewProjectService(logger *zap.Logger, projectRepo projectRepository, member
 }
 
 // List lists projects.
-func (ps *ProjectService) List(ctx context.Context) ([]model.Project, error) {
+func (ps *ProjectService) List(ctx context.Context, all bool) ([]model.Project, error) {
+	if all {
+		return forEachT(ctx, ps.projectRepo.List)
+	}
 	return ps.projectRepo.List(ctx)
 }
 
 // Retrieve retrieves an owned project.
 func (ps *ProjectService) Retrieve(ctx context.Context, projectID string) (model.Project, error) {
 	return ps.projectRepo.Retrieve(ctx, projectID)
-}
-
-// RetrieveShared retrieves shared a project.
-func (ps *ProjectService) RetrieveShared(ctx context.Context, projectID string) (model.Project, error) {
-	return ps.projectRepo.RetrieveShared(ctx, projectID)
 }
 
 // Create creates a project.

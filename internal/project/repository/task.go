@@ -136,7 +136,6 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid stri
 	pr := NewProjectRepository(tr.logger, tr.pg)
 	p, err = pr.Retrieve(ctx, pid)
 	if err != nil {
-		p, err = pr.RetrieveShared(ctx, pid)
 		if err != nil {
 			return t, err
 		}

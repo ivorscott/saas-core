@@ -78,11 +78,6 @@ func (pr *ProjectRepository) Retrieve(ctx context.Context, pid string) (model.Pr
 		return p, fail.ErrInvalidID
 	}
 
-	values, ok := web.FromContext(ctx)
-	if !ok {
-		return p, web.CtxErr()
-	}
-
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
 		return p, fail.ErrConnectionFailed
@@ -94,59 +89,9 @@ func (pr *ProjectRepository) Retrieve(ctx context.Context, pid string) (model.Pr
 				project_id, name, prefix, description, team_id,
 				user_id, active, "public", column_order, updated_at, created_at
 			from projects
-			where project_id = $1 and user_id = $2
+			where project_id = $1
 		`
-	row := conn.QueryRowxContext(ctx, stmt, pid, values.UserID)
-	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return p, fail.ErrNotFound
-		}
-		return p, err
-	}
-
-	return p, nil
-}
-
-// RetrieveShared retrieves a shared project from the database.
-func (pr *ProjectRepository) RetrieveShared(ctx context.Context, pid string) (model.Project, error) {
-	var p model.Project
-
-	if _, err := uuid.Parse(pid); err != nil {
-		return p, fail.ErrInvalidID
-	}
-
-	values, ok := web.FromContext(ctx)
-	if !ok {
-		return p, web.CtxErr()
-	}
-
-	conn, Close, err := pr.pg.GetConnection(ctx)
-	if err != nil {
-		return p, fail.ErrConnectionFailed
-	}
-	defer Close()
-
-	tid, err := pr.RetrieveTeamID(ctx, pid)
-	if err != nil {
-		return p, err
-	}
-
-	membershipRepo := NewMembershipRepository(pr.logger, pr.pg)
-	m, err := membershipRepo.Retrieve(ctx, values.UserID, tid)
-	if err != nil {
-		return p, fail.ErrNotAuthorized
-	}
-
-	stmt := `
-			select 
-				project_id, name, prefix, description, team_id,
-				user_id, active, public, column_order, updated_at, created_at
-			from projects
-			where project_id = $1 and team_id = $2
-		`
-
-	row := conn.QueryRowxContext(ctx, stmt, pid, m.TeamID)
+	row := conn.QueryRowxContext(ctx, stmt, pid)
 	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -163,26 +108,15 @@ func (pr *ProjectRepository) List(ctx context.Context) ([]model.Project, error) 
 	var p model.Project
 	var ps = make([]model.Project, 0)
 
-	values, ok := web.FromContext(ctx)
-	if !ok {
-		return ps, web.CtxErr()
-	}
-
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
 		return ps, fail.ErrConnectionFailed
 	}
 	defer Close()
 
-	stmt := `
-		select * from projects
-		where team_id in (select team_id from memberships where user_id = $1)
-		union 
-		select * from projects
-	 	where user_id = $1
-		group by project_id`
+	stmt := `select * from projects`
 
-	rows, err := conn.QueryxContext(ctx, stmt, values.UserID)
+	rows, err := conn.QueryxContext(ctx, stmt)
 	if err != nil {
 		return nil, fmt.Errorf("error selecting projects :%w", err)
 	}
@@ -269,7 +203,6 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 
 	p, err = pr.Retrieve(ctx, pid)
 	if err != nil {
-		p, err = pr.RetrieveShared(ctx, pid)
 		if err != nil {
 			return p, err
 		}
@@ -335,7 +268,6 @@ func (pr *ProjectRepository) UpdateTx(ctx context.Context, tx *sqlx.Tx, pid stri
 
 	p, err = pr.Retrieve(ctx, pid)
 	if err != nil {
-		p, err = pr.RetrieveShared(ctx, pid)
 		if err != nil {
 			return p, err
 		}
