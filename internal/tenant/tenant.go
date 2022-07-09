@@ -3,6 +3,7 @@ package tenant
 import (
 	"context"
 	"fmt"
+	"github.com/devpies/saas-core/internal/tenant/clients"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,7 +11,6 @@ import (
 	"syscall"
 
 	"github.com/devpies/saas-core/internal/tenant/config"
-	"github.com/devpies/saas-core/internal/tenant/db"
 	"github.com/devpies/saas-core/internal/tenant/handler"
 	"github.com/devpies/saas-core/internal/tenant/repository"
 	"github.com/devpies/saas-core/internal/tenant/service"
@@ -18,7 +18,6 @@ import (
 	"github.com/devpies/saas-core/pkg/msg"
 
 	"github.com/ardanlabs/conf"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
@@ -26,11 +25,10 @@ import (
 // Run contains the app setup.
 func Run() error {
 	var (
-		cfg      config.Config
-		logger   *zap.Logger
-		dbClient *dynamodb.Client
-		logPath  = "log/out.log"
-		err      error
+		cfg     config.Config
+		logger  *zap.Logger
+		logPath = "log/out.log"
+		err     error
 	)
 
 	if err = conf.Parse(os.Args[1:], "TENANT", &cfg); err != nil {
@@ -48,8 +46,6 @@ func Run() error {
 		return err
 	}
 
-	ctx := context.Background()
-
 	if cfg.Web.Production {
 		logger, err = log.NewProductionLogger(logPath)
 	} else {
@@ -60,8 +56,6 @@ func Run() error {
 	}
 	defer logger.Sync()
 
-	dbClient = db.NewDynamoDBClient(ctx, cfg)
-
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 	serverErrors := make(chan error, 1)
@@ -70,12 +64,17 @@ func Run() error {
 	js := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
 
-	// Initialize 3-layered architecture.
-	tenantRepository := repository.NewTenantRepository(dbClient, cfg.Dynamodb.TenantTable)
-	siloConfigRepository := repository.NewSiloConfigRepository(dbClient, cfg.Dynamodb.ConfigTable)
-	authInfoRepository := repository.NewAuthInfoRepository(logger, dbClient, cfg.Dynamodb.AuthTable)
+	ctx := context.Background()
 
-	tenantService := service.NewTenantService(logger, js, tenantRepository)
+	dynamoDBClient := clients.NewDynamoDBClient(ctx, cfg.Cognito.Region)
+	cognitoClient := clients.NewCognitoClient(ctx, cfg.Cognito.Region)
+
+	// Initialize 3-layered architecture.
+	tenantRepository := repository.NewTenantRepository(dynamoDBClient, cfg.Dynamodb.TenantTable)
+	siloConfigRepository := repository.NewSiloConfigRepository(dynamoDBClient, cfg.Dynamodb.ConfigTable)
+	authInfoRepository := repository.NewAuthInfoRepository(logger, dynamoDBClient, cfg.Dynamodb.AuthTable)
+
+	tenantService := service.NewTenantService(logger, js, cfg.Cognito.SharedUserPoolID, cognitoClient, tenantRepository)
 	authInfoService := service.NewAuthInfoService(logger, authInfoRepository, cfg.Cognito.Region)
 	siloConfigService := service.NewSiloConfigService(logger, siloConfigRepository)
 
@@ -111,7 +110,7 @@ func Run() error {
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, tenantHandler, authInfoHandler, cfg),
+		Handler:      Routes(logger, shutdown, cfg.Cognito.Region, cfg.Cognito.UserPoolID, tenantHandler, authInfoHandler),
 	}
 
 	go func() {

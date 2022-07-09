@@ -3,8 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
-	awsConfig "github.com/aws/aws-sdk-go-v2/config"
-	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/devpies/saas-core/internal/user/clients"
 	"github.com/nats-io/nats.go"
 	"net/http"
 	"os"
@@ -58,19 +57,6 @@ func Run() error {
 	}
 	defer logger.Sync()
 
-	awsCfg, err := awsConfig.LoadDefaultConfig(context.Background())
-	if err != nil {
-		logger.Error("error loading aws config", zap.Error(err))
-		return err
-	}
-	cognitoClient := cip.NewFromConfig(awsCfg)
-
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-	serverErrors := make(chan error, 1)
-
-	dynamodbClient := db.NewDynamoDBClient(context.Background(), cfg)
-
 	pg, Close, err := db.NewPostgresDatabase(logger, cfg)
 	if err != nil {
 		return err
@@ -85,9 +71,18 @@ func Run() error {
 		}
 	}
 
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+	serverErrors := make(chan error, 1)
+
 	jetstream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
 
 	_ = jetstream.Create(msg.StreamMemberships)
+
+	ctx := context.Background()
+
+	dynamoDBClient := clients.NewDynamoDBClient(ctx, cfg.Cognito.Region)
+	cognitoClient := clients.NewCognitoClient(ctx, cfg.Cognito.Region)
 
 	// Initialize 3-layered architecture.
 	inviteRepo := repository.NewInviteRepository(logger, pg)
@@ -96,9 +91,9 @@ func Run() error {
 	membershipRepo := repository.NewMembershipRepository(logger, pg)
 	projectRepo := repository.NewProjectRepository(logger, pg)
 	seatRepo := repository.NewSeatRepository(logger, pg)
-	connections := repository.NewConnectionRepository(dynamodbClient, cfg.Dynamodb.ConnectionTable)
+	connections := repository.NewConnectionRepository(dynamoDBClient, cfg.Dynamodb.ConnectionTable)
 
-	userService := service.NewUserService(logger, cfg.Cognito.UserPoolID, userRepo, seatRepo, cognitoClient, connections)
+	userService := service.NewUserService(logger, userRepo, seatRepo, cognitoClient, connections, cfg.Cognito.SharedUserPoolID)
 	teamService := service.NewTeamService(logger, teamRepo, inviteRepo)
 	membershipService := service.NewMembershipService(logger, membershipRepo)
 	projectService := service.NewProjectService(logger, projectRepo)
@@ -145,7 +140,7 @@ func Run() error {
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, userHandler, teamHandler, membershipHandler, cfg),
+		Handler:      Routes(logger, shutdown, cfg.Cognito.Region, cfg.Cognito.SharedUserPoolID, userHandler, teamHandler, membershipHandler),
 	}
 
 	go func() {

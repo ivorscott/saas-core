@@ -13,8 +13,9 @@ type Config struct {
 		Port            string        `conf:"default:4000"`
 	}
 	Cognito struct {
-		UserPoolID string `conf:"required"`
-		Region     string `conf:"required"`
+		UserPoolID       string `conf:"required"`
+		SharedUserPoolID string `conf:"required"`
+		Region           string `conf:"required"`
 	}
 	Dynamodb struct {
 		TenantTable string `conf:"required"`

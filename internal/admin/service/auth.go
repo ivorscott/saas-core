@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/devpies/saas-core/internal/admin/config"
-
 	"github.com/alexedwards/scs/v2"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/aws"
@@ -16,19 +14,23 @@ import (
 
 // AuthService is responsible for managing authentication with Cognito.
 type AuthService struct {
-	logger        *zap.Logger
-	config        config.Config
-	cognitoClient cognitoClient
-	session       *scs.SessionManager
+	logger          *zap.Logger
+	region          string
+	adminClientID   string
+	adminUserPoolID string
+	cognitoClient   cognitoClient
+	session         *scs.SessionManager
 }
 
 // NewAuthService creates a new instance of AuthService.
-func NewAuthService(logger *zap.Logger, config config.Config, cognitoClient cognitoClient, session *scs.SessionManager) *AuthService {
+func NewAuthService(logger *zap.Logger, region, adminClientID, adminUserPoolID string, cognitoClient cognitoClient, session *scs.SessionManager) *AuthService {
 	return &AuthService{
-		logger:        logger,
-		config:        config,
-		cognitoClient: cognitoClient,
-		session:       session,
+		logger:          logger,
+		region:          region,
+		adminClientID:   adminClientID,
+		adminUserPoolID: adminUserPoolID,
+		cognitoClient:   cognitoClient,
+		session:         session,
 	}
 }
 
@@ -36,8 +38,8 @@ func NewAuthService(logger *zap.Logger, config config.Config, cognitoClient cogn
 func (as *AuthService) Authenticate(ctx context.Context, email, password string) (*cognitoidentityprovider.AdminInitiateAuthOutput, error) {
 	signInInput := &cognitoidentityprovider.AdminInitiateAuthInput{
 		AuthFlow:       "ADMIN_USER_PASSWORD_AUTH",
-		ClientId:       aws.String(as.config.Cognito.UserPoolClientID),
-		UserPoolId:     aws.String(as.config.Cognito.UserPoolID),
+		ClientId:       aws.String(as.adminClientID),
+		UserPoolId:     aws.String(as.adminUserPoolID),
 		AuthParameters: map[string]string{"USERNAME": email, "PASSWORD": password},
 	}
 
@@ -48,8 +50,8 @@ func (as *AuthService) Authenticate(ctx context.Context, email, password string)
 func (as *AuthService) RespondToNewPasswordRequiredChallenge(ctx context.Context, email, password string, session string) (*cognitoidentityprovider.AdminRespondToAuthChallengeOutput, error) {
 	params := &cognitoidentityprovider.AdminRespondToAuthChallengeInput{
 		ChallengeName: "NEW_PASSWORD_REQUIRED",
-		ClientId:      aws.String(as.config.Cognito.UserPoolClientID),
-		UserPoolId:    aws.String(as.config.Cognito.UserPoolID),
+		ClientId:      aws.String(as.adminClientID),
+		UserPoolId:    aws.String(as.adminUserPoolID),
 		ChallengeResponses: map[string]string{
 			"USERNAME":     email,
 			"NEW_PASSWORD": password,
@@ -62,7 +64,7 @@ func (as *AuthService) RespondToNewPasswordRequiredChallenge(ctx context.Context
 // CreateUserSession parses the idToken and saves the subject.
 func (as *AuthService) CreateUserSession(ctx context.Context, idToken []byte) error {
 	pubKeyURL := "https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json"
-	formattedURL := fmt.Sprintf(pubKeyURL, as.config.Cognito.Region, as.config.Cognito.UserPoolID)
+	formattedURL := fmt.Sprintf(pubKeyURL, as.region, as.adminUserPoolID)
 
 	keySet, err := jwk.Fetch(ctx, formattedURL)
 	if err != nil {

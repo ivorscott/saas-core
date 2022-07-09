@@ -17,6 +17,7 @@
                 <th>Company Name</th>
                 <th>E-Mail</th>
                 <th>Plan</th>
+                <th>Enabled</th>
                 <th>Status</th>
                 <th>Created</th>
                 <th>Actions</th>
@@ -69,7 +70,12 @@
                             cell.appendChild(element)
 
                             cell = row.insertCell();
-                            element = document.createTextNode(user.status);
+                            let enabledText = user.enabled ? "enabled": "disabled";
+                            element = document.createTextNode(enabledText);
+                            cell.appendChild(element)
+
+                            cell = row.insertCell();
+                            element = document.createTextNode(user.status.toLowerCase());
                             cell.appendChild(element)
 
                             cell = row.insertCell();

@@ -5,7 +5,7 @@
 {{end}}
 
 {{define "content"}}
-    <form id="create-tenant-form" name="login-form"
+    <form data-uid="{{.UserID}}" id="create-tenant-form" name="login-form"
           class="d-block needs-validation login-form col-md-4 offset-md-4" autocomplete="off" novalidate>
 
         <div class="alert alert-danger text-center d-none text-capitalize" id="messages"></div>
@@ -70,6 +70,7 @@
             }
             form.classList.add("was-validated");
 
+            payload.id = form.getAttribute("data-uid");
             payload.firstName = document.getElementById("first-name").value;
             payload.lastName = document.getElementById("last-name").value;
             payload.email = document.getElementById("email").value;

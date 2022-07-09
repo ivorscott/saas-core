@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/devpies/saas-core/internal/tenant/config"
 	"github.com/devpies/saas-core/internal/tenant/handler"
 	"github.com/devpies/saas-core/pkg/web"
 	"github.com/devpies/saas-core/pkg/web/mid"
@@ -18,9 +17,10 @@ import (
 func Routes(
 	log *zap.Logger,
 	shutdown chan os.Signal,
+	region string,
+	adminUserPoolID string,
 	tenantHandler *handler.TenantHandler,
 	authInfoHandler *handler.AuthInfoHandler,
-	config config.Config,
 ) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(cors.Handler(cors.Options{
@@ -34,7 +34,7 @@ func Routes(
 	middleware := []web.Middleware{
 		mid.Logger(log),
 		mid.Errors(log),
-		mid.Auth(log, config.Cognito.Region, config.Cognito.UserPoolID),
+		mid.Auth(log, region, adminUserPoolID),
 		mid.Panics(log),
 	}
 

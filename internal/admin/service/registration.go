@@ -7,14 +7,12 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/devpies/saas-core/internal/admin/config"
 	"github.com/devpies/saas-core/internal/admin/model"
 	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -24,19 +22,19 @@ type registrationClient interface {
 
 // RegistrationService is responsible for triggering tenant registration.
 type RegistrationService struct {
-	logger        *zap.Logger
-	config        config.Config
-	cognitoClient cognitoClient
-	httpClient    registrationClient
+	logger           *zap.Logger
+	sharedUserPoolID string
+	cognitoClient    cognitoClient
+	httpClient       registrationClient
 }
 
 // NewRegistrationService returns a new registration service.
-func NewRegistrationService(logger *zap.Logger, config config.Config, cognitoClient cognitoClient, httpClient registrationClient) *RegistrationService {
+func NewRegistrationService(logger *zap.Logger, sharedUserPoolID string, cognitoClient cognitoClient, httpClient registrationClient) *RegistrationService {
 	return &RegistrationService{
-		logger:        logger,
-		config:        config,
-		cognitoClient: cognitoClient,
-		httpClient:    httpClient,
+		logger:           logger,
+		sharedUserPoolID: sharedUserPoolID,
+		cognitoClient:    cognitoClient,
+		httpClient:       httpClient,
 	}
 }
 
@@ -47,16 +45,7 @@ func (rs *RegistrationService) RegisterTenant(ctx context.Context, newTenant mod
 		err  error
 	)
 
-	tenant := model.Tenant{
-		ID:          uuid.New().String(),
-		Email:       newTenant.Email,
-		FirstName:   newTenant.FirstName,
-		LastName:    newTenant.LastName,
-		CompanyName: newTenant.CompanyName,
-		Plan:        newTenant.Plan,
-	}
-
-	data, err := json.Marshal(tenant)
+	data, err := json.Marshal(newTenant)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -93,7 +82,7 @@ func (rs *RegistrationService) RegisterTenant(ctx context.Context, newTenant mod
 func (rs *RegistrationService) ResendTemporaryPassword(ctx context.Context, username string) (*cognitoidentityprovider.AdminCreateUserOutput, error) {
 	return rs.cognitoClient.AdminCreateUser(ctx, &cognitoidentityprovider.AdminCreateUserInput{
 		Username:      aws.String(username),
-		UserPoolId:    aws.String(rs.config.Cognito.SharedUserPoolID),
+		UserPoolId:    aws.String(rs.sharedUserPoolID),
 		MessageAction: types.MessageActionTypeResend,
 	})
 }

@@ -34,7 +34,7 @@ spec:
                   key: region
             - name: USER_WEB_PORT
               value: "4005"
-            - name: USER_COGNITO_USER_POOL_ID
+            - name: USER_COGNITO_SHARED_USER_POOL_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets

@@ -9,7 +9,6 @@ k8s_yaml([
     './manifests/traefik-depl.yaml',
     './manifests/traefik-svc.yaml',
     './manifests/traefik-headers.yaml',
-    './manifests/mic-identity.yaml',
     './manifests/mic-tenant.yaml',
     './manifests/mic-registration.yaml',
     './manifests/mic-admin.yaml',
@@ -17,7 +16,6 @@ k8s_yaml([
     './manifests/mic-user.yaml'
 ])
 
-docker_build('identity:latest', '.' ,dockerfile = 'deploy/identity.dockerfile')
 docker_build('tenant:latest', '.', dockerfile = 'deploy/tenant.dockerfile')
 docker_build('registration:latest', '.' ,dockerfile = 'deploy/registration.dockerfile')
 docker_build('admin:latest', '.', dockerfile = 'deploy/admin.dockerfile')

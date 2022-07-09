@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"github.com/devpies/saas-core/internal/admin/render"
+	"github.com/google/uuid"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -41,7 +43,9 @@ func (page *WebPageHandler) TenantsPage(w http.ResponseWriter, r *http.Request) 
 
 // CreateTenantPage displays a tenant registration form.
 func (page *WebPageHandler) CreateTenantPage(w http.ResponseWriter, r *http.Request) error {
-	return page.render.Template(w, r, "create-tenant", nil)
+	var data = make(map[string]string)
+	data["UserID"] = uuid.New().String()
+	return page.render.Template(w, r, "create-tenant", &render.TemplateData{StringMap: data})
 }
 
 // E404Page displays a 404 error page.

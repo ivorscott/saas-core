@@ -89,7 +89,7 @@ func Run() error {
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, registrationHandler, cfg),
+		Handler:      Routes(logger, shutdown, cfg.Cognito.Region, cfg.Cognito.UserPoolID, registrationHandler),
 	}
 
 	go func() {

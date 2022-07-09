@@ -57,12 +57,12 @@ type connectionRepository interface {
 
 // UserService manages the user business operations.
 type UserService struct {
-	logger         *zap.Logger
-	userPoolID     string
-	userRepo       userRepository
-	seatRepo       seatRepository
-	cognitoClient  cognitoClient
-	connectionRepo connectionRepository
+	logger           *zap.Logger
+	userRepo         userRepository
+	seatRepo         seatRepository
+	cognitoClient    cognitoClient
+	connectionRepo   connectionRepository
+	sharedUserPoolID string
 }
 
 const (
@@ -73,26 +73,26 @@ const (
 // NewUserService returns a new user service.
 func NewUserService(
 	logger *zap.Logger,
-	userPoolID string,
 	userRepo userRepository,
 	seatRepo seatRepository,
 	cognitoClient cognitoClient,
 	connectionRepo connectionRepository,
+	sharedUserPoolID string,
 ) *UserService {
 	return &UserService{
-		logger:         logger,
-		userPoolID:     userPoolID,
-		userRepo:       userRepo,
-		seatRepo:       seatRepo,
-		cognitoClient:  cognitoClient,
-		connectionRepo: connectionRepo,
+		logger:           logger,
+		userRepo:         userRepo,
+		seatRepo:         seatRepo,
+		cognitoClient:    cognitoClient,
+		connectionRepo:   connectionRepo,
+		sharedUserPoolID: sharedUserPoolID,
 	}
 }
 
 // AddUser adds a new or existing user to the tenant's account and updates the number of seats.
 func (us *UserService) AddUser(ctx context.Context, nu model.NewUser, now time.Time) (model.User, error) {
 	getUserInput := &cognitoidentityprovider.AdminGetUserInput{
-		UserPoolId: aws.String(us.userPoolID),
+		UserPoolId: aws.String(us.sharedUserPoolID),
 		Username:   aws.String(nu.Email),
 	}
 
@@ -165,7 +165,7 @@ func (us *UserService) createCognitoIdentity(ctx context.Context, nu model.NewUs
 		return web.CtxErr()
 	}
 	_, err := us.cognitoClient.AdminCreateUser(ctx, &cognitoidentityprovider.AdminCreateUserInput{
-		UserPoolId: aws.String(us.userPoolID),
+		UserPoolId: aws.String(us.sharedUserPoolID),
 		Username:   aws.String(nu.Email),
 		UserAttributes: []types.AttributeType{
 			{Name: aws.String("custom:tenant-id"), Value: aws.String(values.TenantID)},

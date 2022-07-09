@@ -37,6 +37,9 @@ func (tr *TenantRepository) Insert(ctx context.Context, tenant model.NewTenant) 
 			"lastName":    &types.AttributeValueMemberS{Value: tenant.LastName},
 			"companyName": &types.AttributeValueMemberS{Value: tenant.CompanyName},
 			"plan":        &types.AttributeValueMemberS{Value: tenant.Plan},
+			"enabled":     &types.AttributeValueMemberBOOL{Value: true},
+			"status":      &types.AttributeValueMemberS{Value: tenant.Status},
+			"created":     &types.AttributeValueMemberS{Value: tenant.Created.String()},
 		},
 	}
 	_, err := tr.client.PutItem(ctx, &input)

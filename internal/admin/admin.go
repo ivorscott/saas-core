@@ -24,8 +24,6 @@ import (
 	"github.com/alexedwards/scs/postgresstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/ardanlabs/conf"
-	awsConfig "github.com/aws/aws-sdk-go-v2/config"
-	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"go.uber.org/zap"
 )
 
@@ -96,20 +94,14 @@ func Run(staticFS embed.FS) error {
 	session.Lifetime = 24 * time.Hour
 	session.Store = postgresstore.New(database.DB.DB)
 
-	// Initialize AWS clients.
-	awsCfg, err := awsConfig.LoadDefaultConfig(context.Background())
-	if err != nil {
-		logger.Error("error loading aws config", zap.Error(err))
-		return err
-	}
-	cognitoClient := cip.NewFromConfig(awsCfg)
-
+	ctx := context.Background()
+	cognitoClient := clients.NewCognitoClient(ctx, cfg.Cognito.Region)
 	registrationClient := clients.NewHTTPRegistrationClient(logger, cfg.Registration.ServiceAddress, cfg.Registration.ServicePort)
 	tenantClient := clients.NewHTTPTenantClient(logger, cfg.Tenant.ServiceAddress, cfg.Tenant.ServicePort)
 
 	// Initialize 3-layered architecture.
-	authService := service.NewAuthService(logger, cfg, cognitoClient, session)
-	registrationService := service.NewRegistrationService(logger, cfg, cognitoClient, registrationClient)
+	authService := service.NewAuthService(logger, cfg.Cognito.Region, cfg.Cognito.UserPoolClientID, cfg.Cognito.UserPoolID, cognitoClient, session)
+	registrationService := service.NewRegistrationService(logger, cfg.Cognito.SharedUserPoolID, cognitoClient, registrationClient)
 	tenantService := service.NewTenantService(logger, tenantClient)
 	renderEngine := render.New(logger, cfg, templateFS, session)
 	authHandler := handler.NewAuthHandler(logger, renderEngine, session, authService)
@@ -125,7 +117,7 @@ func Run(staticFS embed.FS) error {
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, assets, cfg, authHandler, webPageHandler, registrationHandler, tenantHandler),
+		Handler:      Routes(logger, shutdown, assets, cfg.Cognito.Region, cfg.Cognito.UserPoolID, authHandler, webPageHandler, registrationHandler, tenantHandler),
 	}
 
 	go func() {

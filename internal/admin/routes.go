@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/devpies/saas-core/internal/admin/config"
 	"github.com/devpies/saas-core/internal/admin/handler"
 	"github.com/devpies/saas-core/pkg/web"
 	"github.com/devpies/saas-core/pkg/web/mid"
@@ -20,7 +19,8 @@ func Routes(
 	log *zap.Logger,
 	shutdown chan os.Signal,
 	assets fs.FS,
-	config config.Config,
+	region string,
+	adminUserPoolID string,
 	authHandler *handler.AuthHandler,
 	webPageHandler *handler.WebPageHandler,
 	registrationHandler *handler.RegistrationHandler,
@@ -40,7 +40,7 @@ func Routes(
 	middleware := []web.Middleware{
 		mid.Logger(log),
 		mid.Errors(log),
-		withAuth(log, config.Cognito.Region, config.Cognito.UserPoolID),
+		withAuth(log, region, adminUserPoolID),
 		mid.Panics(log),
 	}
 

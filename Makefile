@@ -77,6 +77,7 @@ tenant: ;@ ## Run tenant api with live reload.
 	-command="./bin/tenant \
 	--web-port=${TENANT_WEB_PORT} \
 	--cognito-user-pool-id=${ADMIN_USER_POOL_ID} \
+	--cognito-shared-user-pool-id=${SHARED_USER_POOL_ID} \
 	--cognito-region=${REGION} \
 	--dynamodb-tenant-table=${DYNAMODB_TENANT_TABLE} \
 	--dynamodb-auth-table=${DYNAMODB_AUTH_TABLE} \
@@ -91,24 +92,6 @@ tenant-test: tenant-mock	;@ ## Run tenant tests. Add " -- -v" for verbosity.
 tenant-mock: ;@ ## Generate tenant mocks.
 	go generate ./internal/tenant/...
 .PHONY: tenant-mock
-
-identity: ;@ ## Run identity api with live reload.
-	@CompileDaemon \
-	-build="go build -o ./bin/identity ./cmd/identity" \
-	-command="./bin/identity \
-	--web-port=${IDENTITY_WEB_PORT} \
-	--cognito-user-pool-id=${ADMIN_USER_POOL_ID} \
-	--cognito-region=${REGION}" \
-	-log-prefix=false
-.PHONY: identity
-
-identity-test: identity-mock	;@ ## Run identity tests. Add " -- -v" for verbosity.
-	go test $(val) -cover ./internal/identity/...
-.PHONY: identity-test
-
-identity-mock: ;@ ## Generate identity mocks.
-	go generate ./internal/identity/...
-.PHONY: identity-mock
 
 project: ;@ ## Run project api with live reload.
 	@CompileDaemon \
@@ -151,7 +134,7 @@ user: ;@ ## Run user api with live reload.
 	-build="go build -o ./bin/user ./cmd/user" \
 	-command="./bin/user \
 	--web-port=${USER_WEB_PORT} \
-	--cognito-user-pool-id=${SHARED_USER_POOL_ID} \
+	--cognito-shared-user-pool-id=${SHARED_USER_POOL_ID} \
 	--cognito-region=${REGION} \
 	--db-port=${USER_DB_PORT} \
 	--db-disable-tls=true" \

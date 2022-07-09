@@ -2,6 +2,13 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+	"github.com/devpies/saas-core/pkg/web"
+	"time"
 
 	"github.com/devpies/saas-core/internal/tenant/model"
 	"github.com/devpies/saas-core/pkg/msg"
@@ -13,11 +20,20 @@ type publisher interface {
 	Publish(subject string, message []byte)
 }
 
+type cognitoClient interface {
+	AdminCreateUser(
+		ctx context.Context,
+		params *cognitoidentityprovider.AdminCreateUserInput,
+		optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.AdminCreateUserOutput, error)
+}
+
 // TenantService manages tenant business operations.
 type TenantService struct {
-	logger     *zap.Logger
-	js         publisher
-	tenantRepo tenantRepository
+	logger        *zap.Logger
+	js            publisher
+	sharedPoolID  string
+	cognitoClient cognitoClient
+	tenantRepo    tenantRepository
 }
 
 type tenantRepository interface {
@@ -29,11 +45,13 @@ type tenantRepository interface {
 }
 
 // NewTenantService returns a new TenantService.
-func NewTenantService(logger *zap.Logger, js publisher, tenantRepo tenantRepository) *TenantService {
+func NewTenantService(logger *zap.Logger, js publisher, sharedPoolID string, cognitoClient cognitoClient, tenantRepo tenantRepository) *TenantService {
 	return &TenantService{
-		logger:     logger,
-		js:         js,
-		tenantRepo: tenantRepo,
+		logger:        logger,
+		js:            js,
+		sharedPoolID:  sharedPoolID,
+		cognitoClient: cognitoClient,
+		tenantRepo:    tenantRepo,
 	}
 }
 
@@ -47,17 +65,44 @@ func (ts *TenantService) CreateTenantFromMessage(ctx context.Context, message in
 	if err != nil {
 		return err
 	}
-	tenant := newTenant(event.Data)
-	err = ts.tenantRepo.Insert(ctx, tenant)
+
+	output, err := ts.createTenantIdentity(ctx, event.Data)
 	if err != nil {
+		ts.logger.Error("error creating cognito identity", zap.Error(err))
 		return err
 	}
 
-	return nil
+	if err = ts.createTenant(ctx, event.Data, output.User.UserCreateDate); err != nil {
+		ts.logger.Error("error storing tenant", zap.Error(err))
+		return err
+	}
+
+	return ts.publish(ctx, output.User, event.Data)
 }
 
-//TODO: add status and created time
-func newTenant(data msg.TenantRegisteredEventData) model.NewTenant {
+// TODO: remove user pool id from event. There's only one pool now (the shared user pool).
+func (ts *TenantService) createTenantIdentity(ctx context.Context, data msg.TenantRegisteredEventData) (*cognitoidentityprovider.AdminCreateUserOutput, error) {
+	return ts.cognitoClient.AdminCreateUser(ctx, &cognitoidentityprovider.AdminCreateUserInput{
+		UserPoolId: aws.String(ts.sharedPoolID),
+		Username:   aws.String(data.Email),
+		UserAttributes: []types.AttributeType{
+			{Name: aws.String("custom:tenant-id"), Value: aws.String(data.TenantID)},
+			{Name: aws.String("custom:account-owner"), Value: aws.String("1")},
+			{Name: aws.String("custom:company-name"), Value: aws.String(data.Company)},
+			{Name: aws.String("custom:full-name"), Value: aws.String(fmt.Sprintf("%s %s", data.FirstName, data.LastName))},
+			{Name: aws.String("email"), Value: aws.String(data.Email)},
+			{Name: aws.String("email_verified"), Value: aws.String("true")},
+		},
+	})
+}
+
+func (ts *TenantService) createTenant(ctx context.Context, data msg.TenantRegisteredEventData, created *time.Time) error {
+	tenant := newTenant(data, created)
+	return ts.tenantRepo.Insert(ctx, tenant)
+}
+
+func newTenant(data msg.TenantRegisteredEventData, created *time.Time) model.NewTenant {
+	initialStatus := string(types.UserStatusTypeForceChangePassword)
 	return model.NewTenant{
 		ID:          data.TenantID,
 		Email:       data.Email,
@@ -65,7 +110,64 @@ func newTenant(data msg.TenantRegisteredEventData) model.NewTenant {
 		LastName:    data.LastName,
 		CompanyName: data.Company,
 		Plan:        data.Plan,
+		Status:      initialStatus,
+		Created:     *created,
 	}
+}
+
+func newIdentityCreatedEvent(
+	ctx context.Context,
+	user *types.UserType,
+	data msg.TenantRegisteredEventData,
+) (msg.TenantIdentityCreatedEvent, error) {
+	var event msg.TenantIdentityCreatedEvent
+
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return event, web.CtxErr()
+	}
+
+	var userID string
+	for _, v := range user.Attributes {
+		if v.Name != nil && *v.Name == "sub" {
+			userID = *v.Value
+			break
+		}
+	}
+
+	event = msg.TenantIdentityCreatedEvent{
+		Type: msg.TypeTenantIdentityCreated,
+		Data: msg.TenantIdentityCreatedEventData{
+			TenantID:  data.TenantID,
+			UserID:    userID,
+			Company:   data.Company,
+			Email:     data.Email,
+			FirstName: data.FirstName,
+			LastName:  data.LastName,
+			Plan:      data.Plan,
+			CreatedAt: user.UserCreateDate.UTC().String(),
+		},
+		Metadata: msg.Metadata{
+			TraceID: values.TraceID,
+			UserID:  values.UserID,
+		},
+	}
+	return event, nil
+}
+
+func (ts *TenantService) publish(ctx context.Context, user *types.UserType, data msg.TenantRegisteredEventData) error {
+	e, err := newIdentityCreatedEvent(ctx, user, data)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := json.Marshal(e)
+	if err != nil {
+		return err
+	}
+
+	ts.js.Publish(msg.SubjectTenantIdentityCreated, bytes)
+	return nil
 }
 
 // FindOne finds a single tenant.

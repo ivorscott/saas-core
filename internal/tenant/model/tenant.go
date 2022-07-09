@@ -1,6 +1,9 @@
 package model
 
-import "github.com/go-playground/validator/v10"
+import (
+	"github.com/go-playground/validator/v10"
+	"time"
+)
 
 var tenantValidator *validator.Validate
 
@@ -11,12 +14,14 @@ func init() {
 
 // NewTenant represents a new Tenant.
 type NewTenant struct {
-	ID          string `json:"id" validate:"required"`
-	Email       string `json:"email" validate:"required"`
-	FirstName   string `json:"firstName" validate:"required"`
-	LastName    string `json:"lastName" validate:"required"`
-	CompanyName string `json:"companyName" validate:"required"`
-	Plan        string `json:"plan" validate:"required,oneof=basic premium"`
+	ID          string    `json:"id" validate:"required"`
+	Email       string    `json:"email" validate:"required"`
+	FirstName   string    `json:"firstName" validate:"required"`
+	LastName    string    `json:"lastName" validate:"required"`
+	CompanyName string    `json:"companyName" validate:"required"`
+	Plan        string    `json:"plan" validate:"required,oneof=basic premium"`
+	Status      string    `json:"status"`
+	Created     time.Time `json:"createdAt"`
 }
 
 // Tenant represents a system Tenant.
@@ -27,6 +32,7 @@ type Tenant struct {
 	LastName    string `json:"lastName" validate:"required"`
 	CompanyName string `json:"companyName" validate:"required"`
 	Plan        string `json:"plan"  validate:"required,oneof=basic premium"`
+	Enabled     bool   `json:"enabled"`
 	Status      string `json:"status"`
 	Created     string `json:"createdAt"`
 }
