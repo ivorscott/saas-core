@@ -15,7 +15,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.6
 	github.com/devpies/saas-core/pkg/log v0.0.0-20220605224346-efd5e99fa5dd
 	github.com/devpies/saas-core/pkg/msg v0.0.0-20220627222556-ca75364fec09
-	github.com/devpies/saas-core/pkg/web v0.0.0-20220709140235-133769a891ae
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220709220410-877841615cfb
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
 	github.com/go-playground/validator/v10 v10.11.0
