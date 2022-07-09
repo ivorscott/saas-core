@@ -10,12 +10,13 @@ import (
 
 // Values carries information about each request.
 type Values struct {
-	TenantID   string
-	UserID     string
 	Token      string
 	TraceID    string
 	StatusCode int
 	Start      time.Time
+	UserID     string
+	TenantID   string
+	TenantMap  TenantConnectionMap
 }
 
 // ctxKey represents the type of value for the context key.
@@ -48,6 +49,7 @@ func addContextMetadata(r *http.Request, token string, sub string, defaultTenant
 		v.Token = token
 		v.TraceID = traceID
 		v.TenantID = defaultTenantID
+		v.TenantMap = tenantMap
 
 		val, okay := tenantMap[basePath]
 		if okay {
