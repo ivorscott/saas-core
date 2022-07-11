@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/devpies/saas-core/pkg/msg"
+	"github.com/devpies/saas-core/pkg/web"
 	"github.com/jmoiron/sqlx"
 	"time"
 
@@ -39,10 +40,14 @@ func NewProjectService(logger *zap.Logger, projectRepo projectRepository, member
 	}
 }
 
-// List lists projects.
+// List retrieves projects across tenant accounts for the authenticated user.
 func (ps *ProjectService) List(ctx context.Context, all bool) ([]model.Project, error) {
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return nil, web.CtxErr()
+	}
 	if all {
-		return forEachT(ctx, ps.projectRepo.List)
+		return forEachT(ctx, values.TenantMap, ps.projectRepo.List)
 	}
 	return ps.projectRepo.List(ctx)
 }
