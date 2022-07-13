@@ -4,22 +4,18 @@ import (
 	"context"
 	"fmt"
 	"github.com/devpies/saas-core/internal/project/res"
-	"github.com/nats-io/nats.go"
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime/debug"
 	"syscall"
 
+	"github.com/ardanlabs/conf"
 	"github.com/devpies/saas-core/internal/project/config"
 	"github.com/devpies/saas-core/internal/project/db"
 	"github.com/devpies/saas-core/internal/project/handler"
 	"github.com/devpies/saas-core/internal/project/repository"
 	"github.com/devpies/saas-core/internal/project/service"
 	"github.com/devpies/saas-core/pkg/log"
-	"github.com/devpies/saas-core/pkg/msg"
-
-	"github.com/ardanlabs/conf"
 	"go.uber.org/zap"
 )
 
@@ -75,64 +71,18 @@ func Run() error {
 		}
 	}
 
-	jetStream := msg.NewStreamContext(logger, shutdown, cfg.Nats.Address, cfg.Nats.Port)
-
-	_ = jetStream.Create(msg.StreamProjects)
-
 	// Initialize 3-layered architecture.
 	taskRepo := repository.NewTaskRepository(logger, pg)
 	columnRepo := repository.NewColumnRepository(logger, pg)
 	projectRepo := repository.NewProjectRepository(logger, pg)
-	membershipRepo := repository.NewMembershipRepository(logger, pg)
 
 	taskService := service.NewTaskService(logger, taskRepo)
 	columnService := service.NewColumnService(logger, columnRepo)
-	projectService := service.NewProjectService(logger, projectRepo, membershipRepo)
-	membershipService := service.NewMembershipService(logger, membershipRepo)
+	projectService := service.NewProjectService(logger, projectRepo)
 
 	taskHandler := handler.NewTaskHandler(logger, taskService, columnService)
 	columnHandler := handler.NewColumnHandler(logger, columnService)
-	projectHandler := handler.NewProjectHandler(logger, jetStream, projectService, columnService, taskService)
-
-	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				err = fmt.Errorf("listener panic: %v", r)
-				logger.Error(fmt.Sprintf("%s", debug.Stack()), zap.Error(err))
-			}
-		}()
-
-		// Listen to membership events to save a redundant copy in the database.
-		jetStream.Listen(
-			string(msg.TypeMembershipCreated),
-			msg.SubjectMembershipCreated,
-			"membership_created_consumer",
-			membershipService.CreateMembershipCopyFromEvent,
-			opts...,
-		)
-		jetStream.Listen(
-			string(msg.TypeMembershipUpdated),
-			msg.SubjectMembershipUpdated,
-			"membership_updated_consumer",
-			membershipService.UpdateMembershipCopyFromEvent,
-			opts...,
-		)
-		jetStream.Listen(
-			string(msg.TypeMembershipDeleted),
-			msg.SubjectMembershipDeleted,
-			"membership_deleted_consumer",
-			membershipService.DeleteMembershipCopyFromEvent,
-			opts...,
-		)
-		jetStream.Listen(
-			string(msg.TypeTeamAssignedEventType),
-			msg.SubjectProjectTeamAssigned,
-			"project_assigned_consumer",
-			projectService.AssignProjectTeamFromEvent,
-			opts...,
-		)
-	}()
+	projectHandler := handler.NewProjectHandler(logger, projectService, columnService, taskService)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),

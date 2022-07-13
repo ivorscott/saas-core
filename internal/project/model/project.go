@@ -11,7 +11,6 @@ type Project struct {
 	Name        string    `db:"name" json:"name"`
 	Prefix      string    `db:"prefix" json:"prefix"`
 	Description string    `db:"description" json:"description"`
-	TeamID      string    `db:"team_id" json:"teamId"`
 	UserID      string    `db:"user_id" json:"userId"`
 	Active      bool      `db:"active" json:"active"`
 	Public      bool      `db:"public" json:"public"`
@@ -22,8 +21,7 @@ type Project struct {
 
 // NewProject represents a new Project.
 type NewProject struct {
-	Name   string `json:"name" validate:"required"`
-	TeamID string `json:"teamId"`
+	Name string `json:"name" validate:"required"`
 }
 
 // UpdateProject represents a Project update.
@@ -31,7 +29,6 @@ type UpdateProject struct {
 	Name        *string  `json:"name"`
 	Active      *bool    `json:"active"`
 	Public      *bool    `json:"public"`
-	TeamID      *string  `json:"teamId"`
 	Description *string  `json:"description"`
 	ColumnOrder []string `json:"columnOrder"`
 }

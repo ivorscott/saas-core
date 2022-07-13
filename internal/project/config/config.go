@@ -24,8 +24,4 @@ type Config struct {
 		Name       string `conf:"default:project,noprint"`
 		DisableTLS bool   `conf:"default:false"`
 	}
-	Nats struct {
-		Address string `conf:"default:127.0.0.1"`
-		Port    string `conf:"default:4222"`
-	}
 }

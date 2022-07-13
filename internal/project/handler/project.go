@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/devpies/saas-core/internal/project/fail"
 	"github.com/devpies/saas-core/internal/project/model"
-	"github.com/devpies/saas-core/pkg/msg"
 	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/go-chi/chi/v5"
@@ -28,7 +26,6 @@ type projectService interface {
 // ProjectHandler handles the project requests.
 type ProjectHandler struct {
 	logger         *zap.Logger
-	js             publisher
 	projectService projectService
 	columnService  columnService
 	taskService    taskService
@@ -37,14 +34,12 @@ type ProjectHandler struct {
 // NewProjectHandler returns a new project handler.
 func NewProjectHandler(
 	logger *zap.Logger,
-	js publisher,
 	projectService projectService,
 	columnService columnService,
 	taskService taskService,
 ) *ProjectHandler {
 	return &ProjectHandler{
 		logger:         logger,
-		js:             js,
 		projectService: projectService,
 		columnService:  columnService,
 		taskService:    taskService,
@@ -94,11 +89,6 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		err error
 	)
 
-	values, ok := web.FromContext(r.Context())
-	if !ok {
-		return web.CtxErr()
-	}
-
 	if err = web.Decode(r, &np); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
@@ -124,47 +114,12 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	e := msg.ProjectCreatedEvent{
-		Data: msg.ProjectCreatedEventData{
-			ProjectID:   project.ID,
-			TenantID:    project.TenantID,
-			Name:        project.Name,
-			Prefix:      project.Prefix,
-			Description: project.Description,
-			TeamID:      project.TeamID,
-			UserID:      project.UserID,
-			Active:      project.Active,
-			Public:      project.Public,
-			ColumnOrder: project.ColumnOrder,
-			UpdatedAt:   project.UpdatedAt.String(),
-			CreatedAt:   project.CreatedAt.String(),
-		},
-		Type: msg.TypeProjectCreated,
-		Metadata: msg.Metadata{
-			TenantID: values.TenantID,
-			UserID:   values.UserID,
-			TraceID:  values.TraceID,
-		},
-	}
-
-	bytes, err := json.Marshal(e)
-	if err != nil {
-		return err
-	}
-
-	ph.js.Publish(msg.SubjectProjectCreated, bytes)
-
 	return web.Respond(r.Context(), w, project, http.StatusCreated)
 }
 
 // Update handles project update requests.
 func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 	var update model.UpdateProject
-
-	values, ok := web.FromContext(r.Context())
-	if !ok {
-		return web.CtxErr()
-	}
 
 	pid := chi.URLParam(r, "pid")
 
@@ -184,32 +139,6 @@ func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	e := msg.ProjectUpdatedEvent{
-		Type: msg.TypeProjectUpdated,
-		Data: msg.ProjectUpdatedEventData{
-			Name:        &up.Name,
-			Description: &up.Description,
-			Active:      &up.Active,
-			Public:      &up.Public,
-			TeamID:      &up.TeamID,
-			ProjectID:   up.ID,
-			ColumnOrder: up.ColumnOrder,
-			UpdatedAt:   up.UpdatedAt.String(),
-		},
-		Metadata: msg.Metadata{
-			TenantID: values.TenantID,
-			UserID:   values.UserID,
-			TraceID:  values.TraceID,
-		},
-	}
-
-	bytes, err := json.Marshal(e)
-	if err != nil {
-		return err
-	}
-
-	ph.js.Publish(msg.SubjectProjectUpdated, bytes)
-
 	return web.Respond(r.Context(), w, up, http.StatusOK)
 }
 
@@ -217,11 +146,6 @@ func (ph *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) error {
 func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	var err error
 	pid := chi.URLParam(r, "pid")
-
-	values, ok := web.FromContext(r.Context())
-	if !ok {
-		return web.CtxErr()
-	}
 
 	if _, err = ph.projectService.Retrieve(r.Context(), pid); err != nil {
 		return err
@@ -240,25 +164,6 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 			return fmt.Errorf("error deleting project %q: %w", pid, err)
 		}
 	}
-
-	e := msg.ProjectDeletedEvent{
-		Type: msg.TypeProjectDeleted,
-		Metadata: msg.Metadata{
-			TenantID: values.TenantID,
-			TraceID:  values.TraceID,
-			UserID:   values.UserID,
-		},
-		Data: msg.ProjectDeletedEventData{
-			ProjectID: pid,
-		},
-	}
-
-	bytes, err := json.Marshal(e)
-	if err != nil {
-		return err
-	}
-
-	ph.js.Publish(msg.SubjectProjectDeleted, bytes)
 
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }

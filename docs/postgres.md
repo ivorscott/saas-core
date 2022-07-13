@@ -3,7 +3,7 @@
 Examples of how to use common commands. 
 
 ## Backups and Restoration
-
+q
 Create a backup.
 ```
 pg_dump -d postgres://postgres:postgres@localhost:30010/user > ./data/user_20220704.sql

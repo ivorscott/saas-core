@@ -20,8 +20,7 @@ func Routes(
 	region string,
 	sharedUserPoolID string,
 	userHandler *handler.UserHandler,
-	teamHandler *handler.TeamHandler,
-	membershipHandler *handler.MembershipHandler,
+	inviteHandler *handler.InviteHandler,
 ) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(cors.Handler(cors.Options{
@@ -46,15 +45,9 @@ func Routes(
 	app.Handle(http.MethodGet, "/users/me", userHandler.RetrieveMe)
 	app.Handle(http.MethodDelete, "/users/{uid}", userHandler.RemoveUser)
 	app.Handle(http.MethodGet, "/users/available-seats", userHandler.SeatsAvailable)
-	app.Handle(http.MethodPost, "/users/teams", teamHandler.CreateTeamForProject)
-	app.Handle(http.MethodPost, "/users/teams/{tid}/project/{pid}", teamHandler.AssignExistingTeam)
-	app.Handle(http.MethodPost, "/users/teams/{tid}/leave", teamHandler.LeaveTeam)
-	app.Handle(http.MethodGet, "/users/teams", teamHandler.List)
-	app.Handle(http.MethodGet, "/users/teams/{tid}", teamHandler.Retrieve)
-	app.Handle(http.MethodPost, "/users/teams/{tid}/invites", teamHandler.CreateInvite)
-	app.Handle(http.MethodGet, "/users/teams/invites", teamHandler.RetrieveInvites)
-	app.Handle(http.MethodGet, "/users/teams/{tid}/members", membershipHandler.RetrieveMemberships)
-	app.Handle(http.MethodPatch, "/users/teams/{tid}/invites/{iid}", teamHandler.UpdateInvite)
+	app.Handle(http.MethodGet, "/users/invites", inviteHandler.RetrieveInvites)
+	app.Handle(http.MethodPost, "/users/invites", inviteHandler.CreateInvite)
+	app.Handle(http.MethodPatch, "/users/invites/{iid}", inviteHandler.UpdateInvite)
 
 	return app
 }

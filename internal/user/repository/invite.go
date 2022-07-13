@@ -49,7 +49,7 @@ func (ir *InviteRepository) Create(ctx context.Context, ni model.NewInvite, now 
 	defer Close()
 
 	stmt := `
-			insert into invites (invite_id, tenant_id, user_id, team_id, read, accepted, expiration, updated_at, created_at)
+			insert into invites (invite_id, tenant_id, user_id, read, accepted, expiration, updated_at, created_at)
 			values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
@@ -59,7 +59,6 @@ func (ir *InviteRepository) Create(ctx context.Context, ni model.NewInvite, now 
 		uuid.New().String(),
 		values.TenantID,
 		ni.UserID,
-		ni.TeamID,
 		false,
 		false,
 		now.AddDate(0, 0, 5),
@@ -99,7 +98,7 @@ func (ir *InviteRepository) RetrieveInvite(ctx context.Context, iid string) (mod
 
 	stmt := `
 		select 
-		    invite_id, tenant_id, user_id, team_id, read, accepted, expiration, updated_at, created_at
+		    invite_id, tenant_id, user_id, read, accepted, expiration, updated_at, created_at
 		from invites
 		where user_id = $1 and invites = $2
 	`
@@ -138,7 +137,7 @@ func (ir *InviteRepository) RetrieveInvites(ctx context.Context) ([]model.Invite
 	defer Close()
 
 	stmt := `
-			select invite_id, tenant_id, user_id, team_id, read, accepted, expiration, updated_at, created_at
+			select invite_id, tenant_id, user_id, read, accepted, expiration, updated_at, created_at
 			from invites
 			where user_id = $1 and expiration > now()
 	`

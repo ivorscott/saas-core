@@ -37,36 +37,6 @@ func (pr *ProjectRepository) RunTx(ctx context.Context, fn func(*sqlx.Tx) error)
 	return pr.runTx(ctx, fn)
 }
 
-// RetrieveTeamID retrieved the teamID associated with a project from the database.
-func (pr *ProjectRepository) RetrieveTeamID(ctx context.Context, pid string) (string, error) {
-	var (
-		teamID string
-		err    error
-	)
-
-	if _, err = uuid.Parse(pid); err != nil {
-		return "", fail.ErrInvalidID
-	}
-
-	conn, Close, err := pr.pg.GetConnection(ctx)
-	if err != nil {
-		return "", fail.ErrConnectionFailed
-	}
-	defer Close()
-
-	stmt := `select team_id from projects where project_id = $1`
-	row := conn.QueryRowxContext(ctx, stmt, pid)
-	err = row.Scan(&teamID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", fail.ErrNotFound
-		}
-		return "", err
-	}
-
-	return teamID, nil
-}
-
 // Retrieve retrieves an owned project from the database.
 func (pr *ProjectRepository) Retrieve(ctx context.Context, pid string) (model.Project, error) {
 	var (
@@ -86,13 +56,13 @@ func (pr *ProjectRepository) Retrieve(ctx context.Context, pid string) (model.Pr
 
 	stmt := `
 			select 
-				project_id, name, prefix, description, team_id,
+				project_id, name, prefix, description,
 				user_id, active, "public", column_order, updated_at, created_at
 			from projects
 			where project_id = $1
 		`
 	row := conn.QueryRowxContext(ctx, stmt, pid)
-	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.TeamID, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
+	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return p, fail.ErrNotFound
@@ -121,7 +91,7 @@ func (pr *ProjectRepository) List(ctx context.Context) ([]model.Project, error) 
 		return nil, fmt.Errorf("error selecting projects :%w", err)
 	}
 	for rows.Next() {
-		err = rows.Scan(&p.ID, &p.TenantID, &p.Name, &p.Prefix, &p.Description, &p.UserID, &p.TeamID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
+		err = rows.Scan(&p.ID, &p.TenantID, &p.Name, &p.Prefix, &p.Description, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row into struct :%w", err)
 		}
@@ -156,7 +126,6 @@ func (pr *ProjectRepository) Create(ctx context.Context, np model.NewProject, no
 		Prefix:      fmt.Sprintf("%s-", np.Name[:3]),
 		Active:      true,
 		UserID:      values.UserID,
-		TeamID:      np.TeamID,
 		ColumnOrder: []string{"column-1", "column-2", "column-3", "column-4"},
 		UpdatedAt:   now.UTC(),
 		CreatedAt:   now.UTC(),
@@ -164,9 +133,9 @@ func (pr *ProjectRepository) Create(ctx context.Context, np model.NewProject, no
 
 	stmt := `
 			insert into projects (
-				project_id, tenant_id, name, prefix, team_id,
+				project_id, tenant_id, name, prefix,
 				description, user_id, column_order, updated_at, created_at
-			) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			`
 	if _, err = conn.ExecContext(
 		ctx,
@@ -175,7 +144,6 @@ func (pr *ProjectRepository) Create(ctx context.Context, np model.NewProject, no
 		p.TenantID,
 		p.Name,
 		p.Prefix,
-		np.TeamID,
 		"",
 		values.UserID,
 		pq.Array(p.ColumnOrder),
@@ -223,9 +191,6 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 	if update.ColumnOrder != nil {
 		p.ColumnOrder = update.ColumnOrder
 	}
-	if update.TeamID != nil {
-		p.TeamID = *update.TeamID
-	}
 
 	stmt := `
 			update projects
@@ -235,9 +200,8 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 				active = $3,
 				public = $4,
 				column_order = $5,
-				team_id = $6,
-				updated_at = $7
-			where project_id = $8
+				updated_at = $6
+			where project_id = $7
 			`
 
 	_, err = conn.ExecContext(
@@ -248,7 +212,6 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 		p.Active,
 		p.Public,
 		pq.Array(p.ColumnOrder),
-		p.TeamID,
 		p.UpdatedAt,
 		pid,
 	)
@@ -288,9 +251,6 @@ func (pr *ProjectRepository) UpdateTx(ctx context.Context, tx *sqlx.Tx, pid stri
 	if update.ColumnOrder != nil {
 		p.ColumnOrder = update.ColumnOrder
 	}
-	if update.TeamID != nil {
-		p.TeamID = *update.TeamID
-	}
 
 	stmt := `
 			update projects
@@ -300,9 +260,8 @@ func (pr *ProjectRepository) UpdateTx(ctx context.Context, tx *sqlx.Tx, pid stri
 				active = $3,
 				public = $4,
 				column_order = $5,
-				team_id = $6,
-				updated_at = $7
-			where project_id = $8
+				updated_at = $6
+			where project_id = $7
 			`
 
 	_, err = tx.ExecContext(
@@ -313,8 +272,7 @@ func (pr *ProjectRepository) UpdateTx(ctx context.Context, tx *sqlx.Tx, pid stri
 		p.Active,
 		p.Public,
 		pq.Array(p.ColumnOrder),
-		p.TeamID,
-		p.UpdatedAt,
+		now.UTC(),
 		pid,
 	)
 	if err != nil {

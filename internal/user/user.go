@@ -87,21 +87,14 @@ func Run() error {
 	// Initialize 3-layered architecture.
 	inviteRepo := repository.NewInviteRepository(logger, pg)
 	userRepo := repository.NewUserRepository(logger, pg)
-	teamRepo := repository.NewTeamRepository(logger, pg)
-	membershipRepo := repository.NewMembershipRepository(logger, pg)
-	projectRepo := repository.NewProjectRepository(logger, pg)
 	seatRepo := repository.NewSeatRepository(logger, pg)
 	connections := repository.NewConnectionRepository(dynamoDBClient, cfg.Dynamodb.ConnectionTable)
 
 	userService := service.NewUserService(logger, userRepo, seatRepo, cognitoClient, connections, cfg.Cognito.SharedUserPoolID)
-	teamService := service.NewTeamService(logger, teamRepo, inviteRepo)
-	membershipService := service.NewMembershipService(logger, membershipRepo)
-	projectService := service.NewProjectService(logger, projectRepo)
 	inviteService := service.NewInviteService(logger, inviteRepo)
 
 	userHandler := handler.NewUserHandler(logger, userService)
-	teamHandler := handler.NewTeamHandler(logger, jetstream, cfg.Sendgrid.APIKey, teamService, projectService, membershipService, inviteService, userService)
-	membershipHandler := handler.NewMembershipHandler(logger, membershipService)
+	inviteHandler := handler.NewInviteHandler(logger, inviteService)
 	opts := []nats.SubOpt{nats.DeliverAll(), nats.ManualAck()}
 
 	go func() {
@@ -111,36 +104,13 @@ func Run() error {
 			"tenant_created_consumer",
 			userService.AddAdminUserFromEvent,
 			opts...)
-
-		// Listen to project events to save a redundant copy in the database.
-		jetstream.Listen(
-			string(msg.TypeProjectCreated),
-			msg.SubjectProjectCreated,
-			"project_created_consumer",
-			projectService.CreateProjectCopyFromEvent,
-			opts...,
-		)
-		jetstream.Listen(
-			string(msg.TypeProjectUpdated),
-			msg.SubjectProjectUpdated,
-			"project_updated_consumer",
-			projectService.UpdateProjectCopyFromEvent,
-			opts...,
-		)
-		jetstream.Listen(
-			string(msg.TypeProjectDeleted),
-			msg.SubjectProjectDeleted,
-			"project_deleted_consumer",
-			projectService.DeleteProjectCopyFromEvent,
-			opts...,
-		)
 	}()
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),
 		WriteTimeout: cfg.Web.WriteTimeout,
 		ReadTimeout:  cfg.Web.ReadTimeout,
-		Handler:      Routes(logger, shutdown, cfg.Cognito.Region, cfg.Cognito.SharedUserPoolID, userHandler, teamHandler, membershipHandler),
+		Handler:      Routes(logger, shutdown, cfg.Cognito.Region, cfg.Cognito.SharedUserPoolID, userHandler, inviteHandler),
 	}
 
 	go func() {
