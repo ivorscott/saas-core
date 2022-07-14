@@ -3,7 +3,7 @@ package model_test
 import (
 	"testing"
 
-	"github.com/devpies/saas-core/internal/admin/model"
+	"github.com/devpies/saas-core/internal/registration/model"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -84,9 +84,15 @@ func TestNewTenant_Validate(t *testing.T) {
 
 			err := nt.Validate()
 			if tc.err != "" {
+				if err == nil {
+					t.Errorf("expected: %s, got nil", tc.err)
+					return
+				}
 				assert.Regexp(t, tc.err, err.Error())
 			} else {
-				assert.Nil(t, err)
+				if err != nil {
+					t.Errorf("expected: nil, got: %s", err.Error())
+				}
 			}
 		})
 	}

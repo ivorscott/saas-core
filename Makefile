@@ -106,6 +106,14 @@ project: ;@ ## Run project api with live reload.
 	-log-prefix=false
 .PHONY: project
 
+project-test: project-mock	;@ ## Run project tests. Add " -- -v" for verbosity.
+	go test $(val) -cover ./internal/project/...
+.PHONY: project-test
+
+project-mock: ;@ ## Generate project mocks.
+	go generate ./internal/project/...
+.PHONY: project-mock
+
 project-db: ;@ ## Enter project database.
 	@pgcli postgres://postgres:postgres@localhost:$(PROJECT_DB_PORT)/project
 .PHONY: project-db

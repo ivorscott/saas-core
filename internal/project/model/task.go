@@ -1,8 +1,16 @@
 package model
 
 import (
+	"github.com/go-playground/validator/v10"
 	"time"
 )
+
+var taskValidator *validator.Validate
+
+func init() {
+	v := NewValidator()
+	taskValidator = v
+}
 
 // Task represents a Project Task.
 type Task struct {
@@ -22,24 +30,36 @@ type Task struct {
 
 // NewTask represents a new Task.
 type NewTask struct {
-	Title string `json:"title" validate:"required"`
+	Title string `json:"title" validate:"required,min=1,max=75"`
+}
+
+func (nt *NewTask) Validate() error {
+	return taskValidator.Struct(nt)
 }
 
 // UpdateTask represents a Task being updated.
 type UpdateTask struct {
-	Title       *string   `json:"title"`
+	Title       *string   `json:"title" validate:"required,max=75"`
 	Key         *string   `json:"key"`
 	Points      *int      `json:"points"`
-	Content     *string   `json:"content"`
+	Content     *string   `json:"content" validate:"required,max=1000"`
 	AssignedTo  *string   `json:"assignedTo"`
 	Attachments []string  `json:"attachments"`
 	Comments    []string  `json:"comments"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
+func (ut *UpdateTask) Validate() error {
+	return taskValidator.Struct(ut)
+}
+
 // MoveTask represents a Task being moved between columns.
 type MoveTask struct {
-	To      string   `json:"to"`
-	From    string   `json:"from"`
-	TaskIds []string `json:"taskIds"`
+	To      string   `json:"to" validate:"required"`
+	From    string   `json:"from" validate:"required"`
+	TaskIds []string `json:"taskIds" validate:"required"`
+}
+
+func (mt *MoveTask) Validate() error {
+	return taskValidator.Struct(mt)
 }

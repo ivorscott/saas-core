@@ -2,7 +2,16 @@ package model
 
 import (
 	"time"
+
+	"github.com/go-playground/validator/v10"
 )
+
+var projectValidator *validator.Validate
+
+func init() {
+	v := NewValidator()
+	projectValidator = v
+}
 
 // Project represents a tenant Project.
 type Project struct {
@@ -21,14 +30,22 @@ type Project struct {
 
 // NewProject represents a new Project.
 type NewProject struct {
-	Name string `json:"name" validate:"required"`
+	Name string `json:"name" validate:"required,max=22"`
+}
+
+func (np *NewProject) Validate() error {
+	return projectValidator.Struct(np)
 }
 
 // UpdateProject represents a Project update.
 type UpdateProject struct {
-	Name        *string  `json:"name"`
+	Name        *string  `json:"name" validate:"omitempty,min=3,max=22"`
 	Active      *bool    `json:"active"`
 	Public      *bool    `json:"public"`
-	Description *string  `json:"description"`
+	Description *string  `json:"description" validate:"omitempty,max=72"`
 	ColumnOrder []string `json:"columnOrder"`
+}
+
+func (up *UpdateProject) Validate() error {
+	return projectValidator.Struct(up)
 }
