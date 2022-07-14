@@ -23,7 +23,11 @@ func TestNewProject_Validate(t *testing.T) {
 		{
 			name: "too long",
 			modifier: func(np *model.NewProject) {
-				np.Name = "Extremely Long Name For A Project"
+				var text string
+				for i := 0; i < 23; i++ {
+					text += "x"
+				}
+				np.Name = text
 			},
 			err: "failed on the 'max' tag",
 		},
@@ -65,30 +69,31 @@ func TestUpdateProject_Validate(t *testing.T) {
 			err:      "",
 		},
 		{
-			name: "valid",
+			name: "name too long",
 			modifier: func(up *model.UpdateProject) {
-				up.Description = aws.String("This text represents a project description that is really long but valid")
-			},
-			err: "",
-		},
-		{
-			name: "too long",
-			modifier: func(up *model.UpdateProject) {
-				up.Name = aws.String("extremely long project!")
+				var text string
+				for i := 0; i < 23; i++ {
+					text += "x"
+				}
+				up.Name = aws.String(text)
 			},
 			err: "failed on the 'max' tag",
 		},
 		{
-			name: "too short",
+			name: "name too short",
 			modifier: func(up *model.UpdateProject) {
-				up.Name = aws.String("t")
+				up.Name = aws.String("x")
 			},
 			err: "failed on the 'min' tag",
 		},
 		{
-			name: "too long",
+			name: "description too long",
 			modifier: func(up *model.UpdateProject) {
-				up.Description = aws.String("This text represents a project description that's unfortunately not valid") // over by 1 char
+				var text string
+				for i := 0; i < 73; i++ {
+					text += "x"
+				}
+				up.Description = aws.String(text)
 			},
 			err: "failed on the 'max' tag",
 		},

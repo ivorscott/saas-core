@@ -1,8 +1,16 @@
 package model
 
 import (
+	"github.com/go-playground/validator/v10"
 	"time"
 )
+
+var columnValidator *validator.Validate
+
+func init() {
+	v := NewValidator()
+	columnValidator = v
+}
 
 // Column represents a Project Column.
 type Column struct {
@@ -17,14 +25,22 @@ type Column struct {
 
 // NewColumn represents a new Column.
 type NewColumn struct {
-	Title      string `json:"title"`
-	ColumnName string `json:"columnName"`
-	ProjectID  string `json:"projectId"`
+	Title      string `json:"title" validate:"required,max=24"`
+	ColumnName string `json:"columnName" validate:"required,max=10"`
+	ProjectID  string `json:"projectId" validate:"required,max=36"`
+}
+
+func (nc *NewColumn) Validate() error {
+	return columnValidator.Struct(nc)
 }
 
 // UpdateColumn represents a Column update.
 type UpdateColumn struct {
-	Title     *string   `json:"title"`
+	Title     *string   `json:"title" validate:"omitempty,max=24"`
 	TaskIDS   *[]string `json:"taskIds"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (uc *UpdateColumn) Validate() error {
+	return columnValidator.Struct(uc)
 }
