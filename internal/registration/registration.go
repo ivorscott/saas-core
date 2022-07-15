@@ -16,7 +16,6 @@ import (
 	"github.com/devpies/saas-core/pkg/log"
 	"github.com/devpies/saas-core/pkg/msg"
 
-	"github.com/ardanlabs/conf"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -33,22 +32,10 @@ func Run() error {
 		err      error
 	)
 
-	if err = conf.Parse(os.Args[1:], "REGISTRATION", &cfg); err != nil {
-		if err == conf.ErrHelpWanted {
-			var usage string
-			usage, err = conf.Usage("REGISTRATION", &cfg)
-			if err != nil {
-				logger.Error("error generating config usage", zap.Error(err))
-				return err
-			}
-			fmt.Println(usage)
-			return nil
-		}
-		logger.Error("error parsing config", zap.Error(err))
+	cfg, err = config.NewConfig()
+	if err != nil {
 		return err
 	}
-
-	ctx := context.Background()
 
 	if cfg.Web.Production {
 		logger, err = log.NewProductionLogger(logPath)
@@ -60,7 +47,7 @@ func Run() error {
 	}
 	defer logger.Sync()
 
-	dbClient = db.NewDynamoDBClient(ctx, cfg)
+	dbClient = db.NewDynamoDBClient(context.Background(), cfg)
 
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)

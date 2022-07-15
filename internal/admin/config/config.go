@@ -1,6 +1,11 @@
 package config
 
-import "time"
+import (
+	"fmt"
+	"github.com/ardanlabs/conf"
+	"os"
+	"time"
+)
 
 // Config represents the application configuration.
 type Config struct {
@@ -34,4 +39,23 @@ type Config struct {
 		ServiceAddress string `conf:"default:localhost"`
 		ServicePort    string `conf:"default:4002"`
 	}
+}
+
+func NewConfig() (Config, error) {
+	var cfg Config
+
+	if err := conf.Parse(os.Args[1:], "ADMIN", &cfg); err != nil {
+		if err == conf.ErrHelpWanted {
+			var usage string
+			usage, err = conf.Usage("ADMIN", &cfg)
+			if err != nil {
+				panic(fmt.Errorf("error generating config usage %s", err.Error()))
+			}
+			println(usage)
+			return cfg, err
+		}
+		panic(fmt.Errorf("error parsing config %s", err.Error()))
+		return cfg, err
+	}
+	return cfg, nil
 }

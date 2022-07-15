@@ -23,7 +23,6 @@ import (
 
 	"github.com/alexedwards/scs/postgresstore"
 	"github.com/alexedwards/scs/v2"
-	"github.com/ardanlabs/conf"
 	"go.uber.org/zap"
 )
 
@@ -50,18 +49,8 @@ func Run(staticFS embed.FS) error {
 		return err
 	}
 
-	if err = conf.Parse(os.Args[1:], "ADMIN", &cfg); err != nil {
-		if err == conf.ErrHelpWanted {
-			var usage string
-			usage, err = conf.Usage("ADMIN", &cfg)
-			if err != nil {
-				logger.Error("error generating config usage", zap.Error(err))
-				return err
-			}
-			fmt.Println(usage)
-			return nil
-		}
-		logger.Error("error parsing config", zap.Error(err))
+	cfg, err = config.NewConfig()
+	if err != nil {
 		return err
 	}
 

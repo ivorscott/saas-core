@@ -1,6 +1,11 @@
 package config
 
-import "time"
+import (
+	"fmt"
+	"github.com/ardanlabs/conf"
+	"os"
+	"time"
+)
 
 // Config represents the application configuration.
 type Config struct {
@@ -27,4 +32,23 @@ type Config struct {
 		Address string `conf:"default:127.0.0.1"`
 		Port    string `conf:"default:4222"`
 	}
+}
+
+func NewConfig() (Config, error) {
+	var cfg Config
+
+	if err := conf.Parse(os.Args[1:], "TENANT", &cfg); err != nil {
+		if err == conf.ErrHelpWanted {
+			var usage string
+			usage, err = conf.Usage("TENANT", &cfg)
+			if err != nil {
+				panic(fmt.Errorf("error generating config usage: %s", err.Error()))
+			}
+			println(usage)
+			return cfg, err
+		}
+		panic(fmt.Errorf("error parsing config: %s", err.Error()))
+		return cfg, err
+	}
+	return cfg, nil
 }

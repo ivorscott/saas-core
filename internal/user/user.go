@@ -19,7 +19,6 @@ import (
 	"github.com/devpies/saas-core/pkg/log"
 	"github.com/devpies/saas-core/pkg/msg"
 
-	"github.com/ardanlabs/conf"
 	"go.uber.org/zap"
 )
 
@@ -32,18 +31,8 @@ func Run() error {
 		err     error
 	)
 
-	if err = conf.Parse(os.Args[1:], "USER", &cfg); err != nil {
-		if err == conf.ErrHelpWanted {
-			var usage string
-			usage, err = conf.Usage("USER", &cfg)
-			if err != nil {
-				logger.Error("error generating config usage", zap.Error(err))
-				return err
-			}
-			fmt.Println(usage)
-			return nil
-		}
-		logger.Error("error parsing config", zap.Error(err))
+	cfg, err = config.NewConfig()
+	if err != nil {
 		return err
 	}
 
