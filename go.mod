@@ -14,8 +14,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.6
 	github.com/devpies/saas-core/pkg/log v0.0.0-20220605224346-efd5e99fa5dd
-	github.com/devpies/saas-core/pkg/msg v0.0.0-20220627222556-ca75364fec09
-	github.com/devpies/saas-core/pkg/web v0.0.0-20220709220410-877841615cfb
+	github.com/devpies/saas-core/pkg/msg v0.0.0-20220715190832-7340771fc8af
+	github.com/devpies/saas-core/pkg/web v0.0.0-20220715190832-7340771fc8af
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
 	github.com/go-playground/validator/v10 v10.11.0
@@ -51,7 +51,7 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-testfixtures/testfixtures/v3 v3.8.0 // indirect
-	github.com/goccy/go-json v0.9.8 // indirect
+	github.com/goccy/go-json v0.9.10 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -72,7 +72,7 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
-	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220607140733-d738665f6195 // indirect
 	google.golang.org/grpc v1.47.0 // indirect
