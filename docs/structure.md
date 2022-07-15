@@ -1,6 +1,6 @@
 # Project Structure
 
-Services commonly adopt a [3-layered architecture](https://en.wikipedia.org/wiki/Multitier_architecture) 
+The `internal` folder contains the application source code. Services commonly adopt a [3-layered architecture](https://en.wikipedia.org/wiki/Multitier_architecture) 
 represented as 3 packages:
 
 1. __handler__ 
