@@ -35,7 +35,6 @@ Shared libraries, are kept in `pkg` to enforce consistency across services.
 Resources for projects.
 
 - [Fixtures](#fixtures)
-- [Seeds](#seeds)
 - [Migrations](#migrations)
 - [Golden Files](#golden-files)
 - [Test Utils](#test-utils)
@@ -46,8 +45,7 @@ The resource folder includes, test fixtures, golden files, migrations and databa
 fixtures # test fixtures
 golden # golden files
 migrations # migrations
-seed # data for development
-testutils # test helpers
+testutils # integration test helpers
 ```
 
 ### Fixtures
@@ -61,18 +59,21 @@ not being caught in the tests.
 __Before every test, the test database is cleaned and the fixture data is loaded into
 the database.__ https://github.com/go-testfixtures/testfixtures
 
-### Seeds
-
-`res/seed`
-
-Seed data should be updated as databases change. Keep it simple and maintain a single seed file for each database used by the service.
-
 ### Migrations
 
 `res/migrations`
 
-Migrations are managed via `res.MigrateUp()` and via
-`make` commands. [Learn more](/README.md#migration-and-seeding).
+Migrations use [go-migrate](https://github.com/golang-migrate/migrate) and are managed via `res.MigrateUp()` and `make` commands.
+Always create backups before migrating (even locally). [Learn more.](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
+
+```bash
+# Example make targets
+project-db-gen       # Generate migration files. Required <name> argument.
+project-db-migrate   # Migrate project database. Optional <num> argument.
+project-db-version   # Print migration version for project database.
+project-db-rollback  # Rollback project database. Optional <num> argument.
+project-db-force     # Force version on project database. Optional <num> argument.
+```
 
 ### Golden Files
 
@@ -80,17 +81,21 @@ Migrations are managed via `res.MigrateUp()` and via
 
 Goldenfiles are used in tests to compare database responses with previous queries preserved as snapshots in json format.
 If a database response changes, the golden file test fails and a new snapshot must be saved for the test to pass.
-To update all golden files change the following function argument to `true`:
+
+Goldenfiles help detect unwanted changes in the data access layer. Always track down why something has changed before updating
+a goldenfile to pass a failing test. To update all golden files change the following function argument to `true`:
 ```
-golden := testutils.NewGoldenConfig(true)
+golden := testutils.NewGoldenConfig(false)
 ```
-Alternatively, if you want one golden file to update, comment the corresponding
-code block:
+Doing this will always update the goldenfiles so make sure to change it back to `false` after running the tests again, otherwise,
+the goldenfiles will always update. 
+
+Alternatively, if you want one golden file to update you can use comments:
 
 ```go
-// pkg/repository/repository_test.go
+// repository/repository_test.go
 
-goldenFile := "employee.json"
+goldenFile := "projects.json"
 
 //if golden.ShouldUpdate() {
     testutils.SaveGoldenFile(&actual, goldenFile)
@@ -100,4 +105,18 @@ Then re-run the  tests.
 
 ### Test Utils
 
-Test utils are test helpers.
+Test utils are integration test helpers. The package returns a database connection after setting up
+the test database with migrations and fixtures. It is desired to connect as a `non-root` user during tests. This is useful 
+because postgres [row-Level security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html) is bypassed for the super user. 
+
+Connecting to the test database as `root`.
+
+```go
+db, Close := testutils.DBConnect().AsRoot()
+```
+
+Connecting to the test database as `non-root`.
+
+```go
+db, Close := testutils.DBConnect().AsNonRoot()
+```
