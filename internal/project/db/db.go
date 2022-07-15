@@ -70,7 +70,7 @@ func (pg *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func
 		_ = conn.Close()
 		return nil, nil, err
 	}
-	
+
 	stmt := fmt.Sprintf("select set_config('app.current_tenant', '%s', false);", values.TenantID)
 
 	_, err = conn.ExecContext(ctx, stmt)
@@ -80,6 +80,10 @@ func (pg *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func
 		return nil, nil, err
 	}
 	return conn, conn.Close, nil
+}
+
+func (pg *PostgresDatabase) TestsOnlyDBConnection() *sql.DB {
+	return pg.db.DB
 }
 
 // RunInTransaction runs callback function in a transaction.
@@ -108,11 +112,4 @@ func (pg *PostgresDatabase) txRun(tx *sqlx.Tx, fn func(*sqlx.Tx) error) error {
 		return err
 	}
 	return tx.Commit()
-}
-
-// StatusCheck returns nil if it can successfully talk to the database. It returns a non-nil error otherwise.
-func StatusCheck(ctx context.Context, pg *PostgresDatabase) error {
-	const q = `SELECT true`
-	var tmp bool
-	return pg.db.QueryRowxContext(ctx, q).Scan(&tmp)
 }

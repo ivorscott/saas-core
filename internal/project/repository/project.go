@@ -50,7 +50,7 @@ func (pr *ProjectRepository) Retrieve(ctx context.Context, pid string) (model.Pr
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return p, fail.ErrConnectionFailed
+		return p, err
 	}
 	defer Close()
 
@@ -80,7 +80,7 @@ func (pr *ProjectRepository) List(ctx context.Context) ([]model.Project, error) 
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return ps, fail.ErrConnectionFailed
+		return ps, err
 	}
 	defer Close()
 
@@ -95,6 +95,8 @@ func (pr *ProjectRepository) List(ctx context.Context) ([]model.Project, error) 
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row into struct :%w", err)
 		}
+		p.CreatedAt = p.CreatedAt.UTC()
+		p.UpdatedAt = p.UpdatedAt.UTC()
 		ps = append(ps, p)
 	}
 
@@ -115,7 +117,7 @@ func (pr *ProjectRepository) Create(ctx context.Context, np model.NewProject, no
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return p, fail.ErrConnectionFailed
+		return p, err
 	}
 	defer Close()
 
@@ -165,7 +167,7 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return p, fail.ErrConnectionFailed
+		return p, err
 	}
 	defer Close()
 
@@ -297,7 +299,7 @@ func (pr *ProjectRepository) Delete(ctx context.Context, pid string) error {
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
 	if err != nil {
-		return fail.ErrConnectionFailed
+		return err
 	}
 	defer Close()
 

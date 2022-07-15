@@ -1,4 +1,4 @@
-// Package res contains repository configuration.
+// Package res contains application resources.
 package res
 
 import (
@@ -21,8 +21,10 @@ func MigrateUp(databaseURL string) error {
 	if err != nil {
 		return err
 	}
+
 	m, err := migrate.NewWithSourceInstance("iofs", d, databaseURL)
 	if err != nil {
+		println(databaseURL)
 		return err
 	}
 	if err = m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {

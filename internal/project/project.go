@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ardanlabs/conf"
 	"github.com/devpies/saas-core/internal/project/config"
 	"github.com/devpies/saas-core/internal/project/db"
 	"github.com/devpies/saas-core/internal/project/handler"
@@ -22,24 +21,13 @@ import (
 // Run contains the app setup.
 func Run() error {
 	var (
-		cfg     config.Config
 		logger  *zap.Logger
 		logPath = "log/out.log"
 		err     error
 	)
 
-	if err = conf.Parse(os.Args[1:], "PROJECT", &cfg); err != nil {
-		if err == conf.ErrHelpWanted {
-			var usage string
-			usage, err = conf.Usage("PROJECT", &cfg)
-			if err != nil {
-				logger.Error("error generating config usage", zap.Error(err))
-				return err
-			}
-			fmt.Println(usage)
-			return nil
-		}
-		logger.Error("error parsing config", zap.Error(err))
+	cfg, err := config.NewConfig()
+	if err != nil {
 		return err
 	}
 

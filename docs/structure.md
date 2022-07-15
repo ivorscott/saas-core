@@ -38,6 +38,7 @@ Resources for projects.
 - [Seeds](#seeds)
 - [Migrations](#migrations)
 - [Golden Files](#golden-files)
+- [Test Utils](#test-utils)
 
 The resource folder includes, test fixtures, golden files, migrations and database seeds.
 
@@ -46,6 +47,7 @@ fixtures # test fixtures
 golden # golden files
 migrations # migrations
 seed # data for development
+testutils # test helpers
 ```
 
 ### Fixtures
@@ -78,9 +80,9 @@ Migrations are managed via `res.MigrateUp()` and via
 
 Goldenfiles are used in tests to compare database responses with previous queries preserved as snapshots in json format.
 If a database response changes, the golden file test fails and a new snapshot must be saved for the test to pass.
-To update all golden files run:
+To update all golden files change the following function argument to `true`:
 ```
-go test ./... -update
+golden := testutils.NewGoldenConfig(true)
 ```
 Alternatively, if you want one golden file to update, comment the corresponding
 code block:
@@ -94,3 +96,8 @@ goldenFile := "employee.json"
     testutils.SaveGoldenFile(&actual, goldenFile)
 //}
 ```
+Then re-run the  tests.
+
+### Test Utils
+
+Test utils are test helpers.

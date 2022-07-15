@@ -1,6 +1,12 @@
 package config
 
-import "time"
+import (
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/ardanlabs/conf"
+)
 
 // Config represents the application configuration.
 type Config struct {
@@ -24,4 +30,23 @@ type Config struct {
 		Name       string `conf:"default:project,noprint"`
 		DisableTLS bool   `conf:"default:false"`
 	}
+}
+
+func NewConfig() (Config, error) {
+	var cfg Config
+
+	if err := conf.Parse(os.Args[1:], "PROJECT", &cfg); err != nil {
+		if err == conf.ErrHelpWanted {
+			var usage string
+			usage, err = conf.Usage("PROJECT", &cfg)
+			if err != nil {
+				panic(fmt.Errorf("error generating config usage: %s", err.Error()))
+			}
+			println(usage)
+			return cfg, err
+		}
+		panic(fmt.Errorf("error parsing config: %s", err.Error()))
+		return cfg, err
+	}
+	return cfg, nil
 }
