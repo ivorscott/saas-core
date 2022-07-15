@@ -107,7 +107,7 @@ Then re-run the  tests.
 
 Test utils are integration test helpers. The package returns a database connection after setting up
 the test database with migrations and fixtures. It is desired to connect as a `non-root` user during tests. This is useful 
-because postgres [row-Level security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html) is bypassed for the super user. 
+because postgres [row-level security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html) is bypassed for the super user. 
 
 Connecting to the test database as `root`.
 
