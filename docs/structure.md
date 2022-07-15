@@ -14,13 +14,10 @@ In addition to these conventions, services may also contain:
 
 1. __config__
    - environment variable configuration.
-
 2. __db__
    - required database clients.
-
 3. __model__
    - data transfer objects and validation.
-
 4. __res__
    - resources for the project. [Learn more](#res)
 
