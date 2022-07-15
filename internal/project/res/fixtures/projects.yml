@@ -1,7 +1,7 @@
 - project_id: 96c3424e-17cf-4bd2-916e-1ec2ddc979a5
   tenant_id: f24d653a-f465-11ec-bfa4-26b2e5d16858
   name: Apple
-  prefix: App-
+  prefix: APP-
   description: The Apple project
   user_id: 0ef64d03-8a91-4513-907c-dd1fcfcfeb46
   active: true
@@ -13,7 +13,7 @@
 - project_id: f8a6daf8-7239-47c3-a4e7-74d46439c7e5
   tenant_id: f24d653a-f465-11ec-bfa4-26b2e5d16858
   name: Lime
-  prefix: Lim-
+  prefix: LIM-
   description: ""
   user_id: 0ef64d03-8a91-4513-907c-dd1fcfcfeb46
   active: true

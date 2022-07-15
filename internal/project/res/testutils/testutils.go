@@ -2,6 +2,7 @@
 package testutils
 
 import (
+	"context"
 	"github.com/devpies/saas-core/internal/project/config"
 	"github.com/devpies/saas-core/internal/project/db"
 	"github.com/devpies/saas-core/internal/project/res"
@@ -9,9 +10,17 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"testing"
 )
 
-const dbDriver = "postgres"
+const (
+	MockRequirement = "mock-requirement"
+	MockUUID        = "ac7b523d-1eb9-43f3-bd33-c3e8106c2e70"
+
+	dbDriver = "postgres"
+)
+
+var MockCtx = context.Background()
 
 // AsRole enables database role switching in tests.
 type AsRole struct {
@@ -92,11 +101,11 @@ func prepareEnvironment() {
 		},
 		{
 			key:   "PROJECT_COGNITO_USER_POOL_ID",
-			value: "mock-requirement",
+			value: MockRequirement,
 		},
 		{
 			key:   "PROJECT_COGNITO_REGION",
-			value: "mock-requirement",
+			value: MockRequirement,
 		},
 	}
 	for _, e := range env {
@@ -105,4 +114,9 @@ func prepareEnvironment() {
 			panic(err)
 		}
 	}
+}
+
+func Debug[T any](t *testing.T, data T) {
+	wrapper := "\n\nDEBUG ================================\n\n"
+	t.Logf("%s %+v %s", wrapper, data, wrapper)
 }

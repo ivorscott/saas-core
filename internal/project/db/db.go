@@ -5,6 +5,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/devpies/saas-core/internal/project/fail"
+	"net/http"
 	"net/url"
 
 	"github.com/devpies/saas-core/internal/project/config"
@@ -62,6 +64,10 @@ func (pg *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func
 	if !ok {
 		pg.logger.Error("invalid context values")
 		return nil, nil, web.CtxErr()
+	}
+
+	if values.TenantID == "" {
+		return nil, nil, web.NewRequestError(fail.ErrNotAuthorized, http.StatusUnauthorized)
 	}
 
 	conn, err := pg.db.Connx(ctx)

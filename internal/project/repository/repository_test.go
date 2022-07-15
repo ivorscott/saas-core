@@ -2,7 +2,6 @@
 package repository_test
 
 import (
-	"context"
 	"github.com/devpies/saas-core/internal/project/repository"
 	"github.com/devpies/saas-core/internal/project/res/testutils"
 	"github.com/devpies/saas-core/pkg/web"
@@ -16,7 +15,6 @@ import (
 )
 
 var (
-	testCtx      = context.Background()
 	testProjects []model.Project
 )
 
@@ -29,26 +27,54 @@ func TestMain(m *testing.M) {
 func TestGoldenFiles(t *testing.T) {
 	golden := testutils.NewGoldenConfig(false)
 
-	t.Run("projects golden file", func(t *testing.T) {
-		var actual []model.Project
-		var expected []model.Project
+	t.Run("project golden files", func(t *testing.T) {
 
-		db, Close := testutils.DBConnect().AsRoot()
-		defer Close()
+		t.Run("list", func(t *testing.T) {
+			var actual []model.Project
+			var expected []model.Project
 
-		repo := repository.NewProjectRepository(zap.NewNop(), db)
+			db, Close := testutils.DBConnect().AsRoot()
+			defer Close()
 
-		ctx := web.NewContext(testCtx, &web.Values{TenantID: ""})
+			repo := repository.NewProjectRepository(zap.NewNop(), db)
 
-		actual, err := repo.List(ctx)
-		require.NoError(t, err)
-		goldenFile := "projects.json"
+			ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: testutils.MockRequirement})
 
-		if golden.ShouldUpdate() {
-			testutils.SaveGoldenFile(&actual, goldenFile)
-		}
+			actual, err := repo.List(ctx)
+			require.NoError(t, err)
+			goldenFile := "projects.json"
 
-		testutils.LoadGoldenFile(&expected, goldenFile)
-		assert.Equal(t, expected, actual)
+			if golden.ShouldUpdate() {
+				testutils.SaveGoldenFile(&actual, goldenFile)
+			}
+
+			testutils.LoadGoldenFile(&expected, goldenFile)
+			assert.Equal(t, expected, actual)
+		})
+
+		t.Run("retrieve by id", func(t *testing.T) {
+			var actual model.Project
+			var expected []model.Project
+
+			db, Close := testutils.DBConnect().AsRoot()
+			defer Close()
+
+			repo := repository.NewProjectRepository(zap.NewNop(), db)
+
+			ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: testutils.MockRequirement})
+
+			actual, err := repo.Retrieve(ctx, testProjects[0].ID)
+			require.NoError(t, err)
+			goldenFile := "projects.json"
+
+			if golden.ShouldUpdate() {
+				testutils.SaveGoldenFile(&actual, goldenFile)
+			}
+
+			testutils.LoadGoldenFile(&expected, goldenFile)
+			assert.Equal(t, expected[0], actual)
+		})
+
 	})
+
 }

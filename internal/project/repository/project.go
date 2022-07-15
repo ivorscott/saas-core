@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/devpies/saas-core/pkg/web"
 	"github.com/jmoiron/sqlx"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/devpies/saas-core/internal/project/db"
@@ -56,19 +58,22 @@ func (pr *ProjectRepository) Retrieve(ctx context.Context, pid string) (model.Pr
 
 	stmt := `
 			select 
-				project_id, name, prefix, description,
+				project_id, tenant_id, name, prefix, description,
 				user_id, active, "public", column_order, updated_at, created_at
 			from projects
 			where project_id = $1
 		`
 	row := conn.QueryRowxContext(ctx, stmt, pid)
-	err = row.Scan(&p.ID, &p.Name, &p.Prefix, &p.Description, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
+	err = row.Scan(&p.ID, &p.TenantID, &p.Name, &p.Prefix, &p.Description, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return p, fail.ErrNotFound
 		}
 		return p, err
 	}
+
+	p.CreatedAt = p.CreatedAt.UTC()
+	p.UpdatedAt = p.UpdatedAt.UTC()
 
 	return p, nil
 }
@@ -95,8 +100,10 @@ func (pr *ProjectRepository) List(ctx context.Context) ([]model.Project, error) 
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row into struct :%w", err)
 		}
+
 		p.CreatedAt = p.CreatedAt.UTC()
 		p.UpdatedAt = p.UpdatedAt.UTC()
+
 		ps = append(ps, p)
 	}
 
@@ -125,7 +132,7 @@ func (pr *ProjectRepository) Create(ctx context.Context, np model.NewProject, no
 		ID:          uuid.New().String(),
 		TenantID:    values.TenantID,
 		Name:        np.Name,
-		Prefix:      fmt.Sprintf("%s-", np.Name[:3]),
+		Prefix:      formatPrefix(np.Name),
 		Active:      true,
 		UserID:      values.UserID,
 		ColumnOrder: []string{"column-1", "column-2", "column-3", "column-4"},
@@ -310,4 +317,16 @@ func (pr *ProjectRepository) Delete(ctx context.Context, pid string) error {
 	}
 
 	return nil
+}
+
+// formatPrefix generates a project prefix.
+func formatPrefix(str string) string {
+	// Strip spaces and digits.
+	var re = regexp.MustCompile(`(\d| )`)
+	var substitution = ""
+
+	s := re.ReplaceAllString(str, substitution)
+	s = strings.ToUpper(s)
+
+	return s[:3] + "-"
 }
