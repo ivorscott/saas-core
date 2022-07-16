@@ -19,7 +19,7 @@ In addition to these conventions, services may also contain:
 3. __model__
    - data transfer objects and validation.
 4. __res__
-   - resources for the project. [Learn more](#res)
+   - additional resources for the services. [Learn more](#res)
 
 
 Shared libraries, are kept in `pkg` to enforce consistency across services.
@@ -32,14 +32,14 @@ Shared libraries, are kept in `pkg` to enforce consistency across services.
    - events used for service communication.
 
 ## Res
-Resources for projects.
+Additional resources for services.
 
 - [Fixtures](#fixtures)
 - [Migrations](#migrations)
 - [Golden Files](#golden-files)
 - [Test Utils](#test-utils)
 
-The resource folder includes, test fixtures, golden files, migrations and database seeds.
+The resource folder includes, test fixtures, golden files, and migrations.
 
 ```bash
 fixtures # test fixtures

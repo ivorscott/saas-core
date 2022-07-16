@@ -1,4 +1,4 @@
-// Package res contains application resources.
+// Package res contains additional resources for services.
 package res
 
 import (
