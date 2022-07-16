@@ -17,7 +17,6 @@ type projectRepository interface {
 	List(ctx context.Context) ([]model.Project, error)
 	Create(ctx context.Context, np model.NewProject, now time.Time) (model.Project, error)
 	Update(ctx context.Context, pid string, update model.UpdateProject, now time.Time) (model.Project, error)
-	UpdateTx(ctx context.Context, tx *sqlx.Tx, pid string, update model.UpdateProject, now time.Time) (model.Project, error)
 	Delete(ctx context.Context, pid string) error
 }
 

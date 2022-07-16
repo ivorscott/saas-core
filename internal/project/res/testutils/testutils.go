@@ -14,9 +14,7 @@ import (
 )
 
 const (
-	MockRequirement = "mock-requirement"
-	MockUUID        = "ac7b523d-1eb9-43f3-bd33-c3e8106c2e70"
-
+	MockUUID = "ac7b523d-1eb9-43f3-bd33-c3e8106c2e70"
 	dbDriver = "postgres"
 )
 
@@ -101,11 +99,11 @@ func prepareEnvironment() {
 		},
 		{
 			key:   "PROJECT_COGNITO_USER_POOL_ID",
-			value: MockRequirement,
+			value: "mock",
 		},
 		{
 			key:   "PROJECT_COGNITO_REGION",
-			value: MockRequirement,
+			value: "mock",
 		},
 	}
 	for _, e := range env {

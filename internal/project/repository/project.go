@@ -180,9 +180,7 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 
 	p, err = pr.Retrieve(ctx, pid)
 	if err != nil {
-		if err != nil {
-			return p, err
-		}
+		return p, err
 	}
 
 	if update.Name != nil {
@@ -214,66 +212,6 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 			`
 
 	_, err = conn.ExecContext(
-		ctx,
-		stmt,
-		p.Name,
-		p.Description,
-		p.Active,
-		p.Public,
-		pq.Array(p.ColumnOrder),
-		p.UpdatedAt,
-		pid,
-	)
-	if err != nil {
-		return p, fmt.Errorf("error updating project :%w", err)
-	}
-
-	return p, nil
-}
-
-// UpdateTx updates a project in the database.
-func (pr *ProjectRepository) UpdateTx(ctx context.Context, tx *sqlx.Tx, pid string, update model.UpdateProject, now time.Time) (model.Project, error) {
-	var (
-		p   model.Project
-		err error
-	)
-
-	p, err = pr.Retrieve(ctx, pid)
-	if err != nil {
-		if err != nil {
-			return p, err
-		}
-	}
-
-	if update.Name != nil {
-		p.Name = *update.Name
-	}
-	if update.Description != nil {
-		p.Description = *update.Description
-	}
-	if update.Active != nil {
-		p.Active = *update.Active
-	}
-	if update.Public != nil {
-		p.Public = *update.Public
-	}
-	if update.ColumnOrder != nil {
-		p.ColumnOrder = update.ColumnOrder
-	}
-
-	stmt := `
-			update projects
-			set 
-			    name = $1,
-			    description = $2,
-				active = $3,
-				public = $4,
-				column_order = $5,
-				updated_at = $6
-			where project_id = $7
-			`
-
-	_, err = tx.ExecContext(
 		ctx,
 		stmt,
 		p.Name,

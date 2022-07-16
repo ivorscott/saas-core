@@ -38,7 +38,7 @@ func TestGoldenFiles(t *testing.T) {
 
 			repo := repository.NewProjectRepository(zap.NewNop(), db)
 
-			ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: testutils.MockRequirement})
+			ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: testutils.MockUUID})
 
 			actual, err := repo.List(ctx)
 			require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestGoldenFiles(t *testing.T) {
 
 			repo := repository.NewProjectRepository(zap.NewNop(), db)
 
-			ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: testutils.MockRequirement})
+			ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: testutils.MockUUID})
 
 			actual, err := repo.Retrieve(ctx, testProjects[0].ID)
 			require.NoError(t, err)
