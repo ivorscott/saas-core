@@ -21,7 +21,7 @@ func TestProjectRepository_Create(t *testing.T) {
 		defer Close()
 
 		p := model.NewProject{
-			Name: "My Project",
+			Name: "M123y Project",
 		}
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -52,7 +52,7 @@ func TestProjectRepository_Create(t *testing.T) {
 		assert.Equal(t, err, web.CtxErr())
 	})
 
-	t.Run("unauthorized error", func(t *testing.T) {
+	t.Run("no tenant error", func(t *testing.T) {
 		db, Close := testutils.DBConnect().AsNonRoot()
 		defer Close()
 
@@ -66,7 +66,7 @@ func TestProjectRepository_Create(t *testing.T) {
 		_, err := repo.Create(ctx, p, time.Now())
 		assert.NotNil(t, err)
 
-		assert.Equal(t, err.Error(), fail.ErrNotAuthorized.Error())
+		assert.Equal(t, fail.ErrNoTenant, err)
 	})
 }
 
@@ -141,7 +141,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 		assert.Equal(t, err, web.CtxErr())
 	})
 
-	t.Run("unauthorized error", func(t *testing.T) {
+	t.Run("no tenant error", func(t *testing.T) {
 		db, Close := testutils.DBConnect().AsNonRoot()
 		defer Close()
 
@@ -151,7 +151,64 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 		_, err := repo.Retrieve(ctx, expectedProject.ID)
 		assert.NotNil(t, err)
 
-		assert.Equal(t, err.Error(), fail.ErrNotAuthorized.Error())
+		assert.Equal(t, fail.ErrNoTenant, err)
+	})
+}
+
+func TestProjectRepository_List(t *testing.T) {
+	expectedTenantID := testProjects[0].TenantID
+	expectedProject := testProjects[0]
+
+	t.Run("success", func(t *testing.T) {
+		db, Close := testutils.DBConnect().AsNonRoot()
+		defer Close()
+
+		repo := repository.NewProjectRepository(zap.NewNop(), db)
+		ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID, UserID: expectedProject.UserID})
+
+		list, err := repo.List(ctx)
+		assert.Nil(t, err)
+
+		assert.Equal(t, testProjects, list)
+	})
+
+	t.Run("no results", func(t *testing.T) {
+		db, Close := testutils.DBConnect().AsNonRoot()
+		defer Close()
+
+		repo := repository.NewProjectRepository(zap.NewNop(), db)
+		ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: testutils.MockUUID, UserID: expectedProject.UserID})
+
+		list, err := repo.List(ctx)
+		assert.Nil(t, err)
+
+		assert.NotEqual(t, testProjects, list)
+		assert.Equal(t, 0, len(list))
+	})
+
+	t.Run("context error", func(t *testing.T) {
+		db, Close := testutils.DBConnect().AsNonRoot()
+		defer Close()
+
+		repo := repository.NewProjectRepository(zap.NewNop(), db)
+
+		_, err := repo.List(testutils.MockCtx)
+		assert.NotNil(t, err)
+
+		assert.Equal(t, web.CtxErr(), err)
+	})
+
+	t.Run("no tenant error", func(t *testing.T) {
+		db, Close := testutils.DBConnect().AsNonRoot()
+		defer Close()
+
+		repo := repository.NewProjectRepository(zap.NewNop(), db)
+		ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: "", UserID: expectedProject.UserID})
+
+		_, err := repo.List(ctx)
+		assert.NotNil(t, err)
+
+		assert.Equal(t, fail.ErrNoTenant, err)
 	})
 }
 
@@ -304,10 +361,10 @@ func TestProjectRepository_Update(t *testing.T) {
 		_, err := repo.Update(testutils.MockCtx, expectedProject.ID, update, time.Now())
 		assert.NotNil(t, err)
 
-		assert.Equal(t, err, web.CtxErr())
+		assert.Equal(t, web.CtxErr(), err)
 	})
 
-	t.Run("unauthorized error", func(t *testing.T) {
+	t.Run("no tenant error", func(t *testing.T) {
 		expectedProject := testProjects[0]
 
 		db, Close := testutils.DBConnect().AsNonRoot()
@@ -321,6 +378,76 @@ func TestProjectRepository_Update(t *testing.T) {
 		_, err := repo.Update(ctx, expectedProject.ID, update, time.Now())
 		assert.NotNil(t, err)
 
-		assert.Equal(t, err.Error(), fail.ErrNotAuthorized.Error())
+		assert.Equal(t, fail.ErrNoTenant, err)
+	})
+}
+
+func TestProjectRepository_Delete(t *testing.T) {
+	expectedTenantID := testProjects[0].TenantID
+	expectedProject := testProjects[0]
+
+	t.Run("success", func(t *testing.T) {
+		db, Close := testutils.DBConnect().AsNonRoot()
+		defer Close()
+
+		repo := repository.NewProjectRepository(zap.NewNop(), db)
+		ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID, UserID: expectedProject.UserID})
+
+		err := repo.Delete(ctx, expectedProject.ID)
+		assert.Nil(t, err)
+
+		_, err = repo.Retrieve(ctx, expectedProject.ID)
+		assert.NotNil(t, err)
+		assert.Equal(t, fail.ErrNotFound, err)
+	})
+
+	t.Run("user id not UUID", func(t *testing.T) {
+		db, Close := testutils.DBConnect().AsNonRoot()
+		defer Close()
+
+		repo := repository.NewProjectRepository(zap.NewNop(), db)
+		ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID, UserID: ""})
+
+		err := repo.Delete(ctx, expectedProject.ID)
+		assert.NotNil(t, err)
+		assert.Equal(t, fail.ErrInvalidID, err)
+	})
+
+	t.Run("project id not UUID", func(t *testing.T) {
+		db, Close := testutils.DBConnect().AsNonRoot()
+		defer Close()
+
+		repo := repository.NewProjectRepository(zap.NewNop(), db)
+		ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID, UserID: expectedProject.UserID})
+
+		err := repo.Delete(ctx, "mock")
+		assert.NotNil(t, err)
+		testutils.Debug(t, err)
+		assert.Equal(t, fail.ErrInvalidID, err)
+	})
+
+	t.Run("context error", func(t *testing.T) {
+		db, Close := testutils.DBConnect().AsNonRoot()
+		defer Close()
+
+		repo := repository.NewProjectRepository(zap.NewNop(), db)
+
+		err := repo.Delete(testutils.MockCtx, expectedProject.ID)
+		assert.NotNil(t, err)
+
+		assert.Equal(t, web.CtxErr(), err)
+	})
+
+	t.Run("no tenant error", func(t *testing.T) {
+		db, Close := testutils.DBConnect().AsNonRoot()
+		defer Close()
+
+		repo := repository.NewProjectRepository(zap.NewNop(), db)
+		ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: "", UserID: expectedProject.UserID})
+
+		err := repo.Delete(ctx, expectedProject.ID)
+		assert.NotNil(t, err)
+
+		assert.Equal(t, fail.ErrNoTenant, err)
 	})
 }

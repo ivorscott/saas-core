@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/devpies/saas-core/internal/project/fail"
-	"net/http"
 	"net/url"
 
 	"github.com/devpies/saas-core/internal/project/config"
@@ -67,7 +66,7 @@ func (pg *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func
 	}
 
 	if values.TenantID == "" {
-		return nil, nil, web.NewRequestError(fail.ErrNotAuthorized, http.StatusUnauthorized)
+		return nil, nil, fail.ErrNoTenant
 	}
 
 	conn, err := pg.db.Connx(ctx)

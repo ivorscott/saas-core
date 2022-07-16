@@ -64,8 +64,19 @@ func (pr *ProjectRepository) Retrieve(ctx context.Context, pid string) (model.Pr
 			where project_id = $1
 		`
 	row := conn.QueryRowxContext(ctx, stmt, pid)
-	err = row.Scan(&p.ID, &p.TenantID, &p.Name, &p.Prefix, &p.Description, &p.UserID, &p.Active, &p.Public, (*pq.StringArray)(&p.ColumnOrder), &p.UpdatedAt, &p.CreatedAt)
-	if err != nil {
+	if err = row.Scan(
+		&p.ID,
+		&p.TenantID,
+		&p.Name,
+		&p.Prefix,
+		&p.Description,
+		&p.UserID,
+		&p.Active,
+		&p.Public,
+		(*pq.StringArray)(&p.ColumnOrder),
+		&p.UpdatedAt,
+		&p.CreatedAt,
+	); err != nil {
 		if err == sql.ErrNoRows {
 			return p, fail.ErrNotFound
 		}
@@ -233,13 +244,17 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 func (pr *ProjectRepository) Delete(ctx context.Context, pid string) error {
 	var err error
 
+	values, ok := web.FromContext(ctx)
+	if !ok {
+		return web.CtxErr()
+	}
+
 	if _, err = uuid.Parse(pid); err != nil {
 		return fail.ErrInvalidID
 	}
 
-	values, ok := web.FromContext(ctx)
-	if !ok {
-		return web.CtxErr()
+	if _, err = uuid.Parse(values.UserID); err != nil {
+		return fail.ErrInvalidID
 	}
 
 	conn, Close, err := pr.pg.GetConnection(ctx)
@@ -250,8 +265,14 @@ func (pr *ProjectRepository) Delete(ctx context.Context, pid string) error {
 
 	stmt := `delete from projects where project_id = $1 and user_id = $2`
 
-	if _, err = conn.ExecContext(ctx, stmt, pid, values.UserID); err != nil {
+	result, err := conn.ExecContext(ctx, stmt, pid, values.UserID)
+	if err != nil {
 		return fmt.Errorf("error deleting project %s :%w", pid, err)
+	}
+
+	num, err := result.RowsAffected()
+	if err != nil || num < int64(1) {
+		return fail.DeleteFailed
 	}
 
 	return nil
