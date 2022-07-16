@@ -15,6 +15,7 @@ func init() {
 // Column represents a Project Column.
 type Column struct {
 	ID         string    `db:"column_id" json:"id"`
+	TenantID   string    `db:"tenant_id" json:"tenantID"`
 	Title      string    `db:"title" json:"title"`
 	ColumnName string    `db:"column_name" json:"columnName"`
 	TaskIDS    []string  `db:"task_ids" json:"taskIds"`

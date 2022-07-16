@@ -17,6 +17,7 @@ import (
 var (
 	dbConnect    *testutils.DatabaseClient
 	testProjects []model.Project
+	testColumns  []model.Column
 )
 
 func TestMain(m *testing.M) {
@@ -25,12 +26,61 @@ func TestMain(m *testing.M) {
 	defer dbClose()
 
 	testutils.LoadGoldenFile(&testProjects, "projects.json")
+	testutils.LoadGoldenFile(&testColumns, "columns.json")
 
 	os.Exit(m.Run())
 }
 
 func TestGoldenFiles(t *testing.T) {
 	golden := testutils.NewGoldenConfig(false)
+
+	t.Run("column golden files", func(t *testing.T) {
+		t.Run("list", func(t *testing.T) {
+			var actual []model.Column
+			var expected []model.Column
+
+			db, Close := dbConnect.AsRoot()
+			defer Close()
+
+			repo := repository.NewColumnRepository(zap.NewNop(), db)
+
+			ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: testutils.MockUUID})
+
+			actual, err := repo.List(ctx, testProjects[0].ID)
+			require.NoError(t, err)
+			goldenFile := "columns.json"
+
+			if golden.ShouldUpdate() {
+				testutils.SaveGoldenFile(&actual, goldenFile)
+			}
+
+			testutils.LoadGoldenFile(&expected, goldenFile)
+			assert.Equal(t, expected, actual)
+		})
+
+		t.Run("retrieve by id", func(t *testing.T) {
+			var actual model.Column
+			var expected []model.Column
+
+			db, Close := dbConnect.AsRoot()
+			defer Close()
+
+			repo := repository.NewColumnRepository(zap.NewNop(), db)
+
+			ctx := web.NewContext(testutils.MockCtx, &web.Values{TenantID: testutils.MockUUID})
+
+			actual, err := repo.Retrieve(ctx, testColumns[0].ID)
+			require.NoError(t, err)
+			goldenFile := "columns.json"
+
+			if golden.ShouldUpdate() {
+				testutils.SaveGoldenFile(&actual, goldenFile)
+			}
+
+			testutils.LoadGoldenFile(&expected, goldenFile)
+			assert.Equal(t, expected[0], actual)
+		})
+	})
 
 	t.Run("project golden files", func(t *testing.T) {
 		t.Run("list", func(t *testing.T) {

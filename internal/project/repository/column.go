@@ -1,5 +1,6 @@
 package repository
 
+import "C"
 import (
 	"context"
 	"database/sql"
@@ -49,12 +50,14 @@ func (cr *ColumnRepository) Retrieve(ctx context.Context, cid string) (model.Col
 	defer Close()
 
 	stmt := `
-		select column_id, project_id, title, column_name, task_ids, updated_at, created_at
+		select 
+		    column_id, tenant_id, project_id, title, 
+		    column_name, task_ids, updated_at, created_at
 		from columns
 		where column_id = $1
 	`
 
-	err = conn.QueryRowxContext(ctx, stmt, cid).Scan(&c.ID, &c.ProjectID, &c.Title, &c.ColumnName, (*pq.StringArray)(&c.TaskIDS), &c.UpdatedAt, &c.CreatedAt)
+	err = conn.QueryRowxContext(ctx, stmt, cid).Scan(&c.ID, &c.TenantID, &c.ProjectID, &c.Title, &c.ColumnName, (*pq.StringArray)(&c.TaskIDS), &c.UpdatedAt, &c.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return c, fail.ErrNotFound
@@ -62,6 +65,8 @@ func (cr *ColumnRepository) Retrieve(ctx context.Context, cid string) (model.Col
 		return c, err
 	}
 
+	c.UpdatedAt = c.UpdatedAt.UTC()
+	c.CreatedAt = c.CreatedAt.UTC()
 	return c, nil
 }
 
@@ -81,7 +86,7 @@ func (cr *ColumnRepository) List(ctx context.Context, pid string) ([]model.Colum
 
 	stmt := `
 		select 
-			column_id, project_id, title, column_name, task_ids, updated_at, created_at	
+			column_id, tenant_id, project_id, title, column_name, task_ids, updated_at, created_at	
 		from columns
 		where project_id = $1
 	`
@@ -91,10 +96,12 @@ func (cr *ColumnRepository) List(ctx context.Context, pid string) ([]model.Colum
 		return nil, fmt.Errorf("error selecting columns :%w", err)
 	}
 	for rows.Next() {
-		err = rows.Scan(&c.ID, &c.ProjectID, &c.Title, &c.ColumnName, (*pq.StringArray)(&c.TaskIDS), &c.UpdatedAt, &c.CreatedAt)
+		err = rows.Scan(&c.ID, &c.TenantID, &c.ProjectID, &c.Title, &c.ColumnName, (*pq.StringArray)(&c.TaskIDS), &c.UpdatedAt, &c.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row into struct :%w", err)
 		}
+		c.UpdatedAt = c.UpdatedAt.UTC()
+		c.CreatedAt = c.CreatedAt.UTC()
 		cs = append(cs, c)
 	}
 
@@ -115,9 +122,20 @@ func (cr *ColumnRepository) Create(ctx context.Context, nc model.NewColumn, now 
 
 	conn, Close, err := cr.pg.GetConnection(ctx)
 	if err != nil {
-		return c, fail.ErrConnectionFailed
+		return c, err
 	}
 	defer Close()
+
+	c = model.Column{
+		ID:         uuid.New().String(),
+		TenantID:   values.TenantID,
+		Title:      nc.Title,
+		ColumnName: nc.ColumnName,
+		TaskIDS:    make([]string, 0),
+		ProjectID:  nc.ProjectID,
+		UpdatedAt:  now.UTC(),
+		CreatedAt:  now.UTC(),
+	}
 
 	stmt := `
 		insert into columns (
@@ -129,14 +147,14 @@ func (cr *ColumnRepository) Create(ctx context.Context, nc model.NewColumn, now 
 	if _, err = conn.ExecContext(
 		ctx,
 		stmt,
-		uuid.New().String(),
-		values.TenantID,
-		nc.Title,
-		nc.ColumnName,
-		pq.Array(make([]string, 0)),
-		nc.ProjectID,
-		now.UTC(),
-		now.UTC(),
+		c.ID,
+		c.TenantID,
+		c.Title,
+		c.ColumnName,
+		pq.Array(c.TaskIDS),
+		c.ProjectID,
+		c.UpdatedAt,
+		c.CreatedAt,
 	); err != nil {
 		return c, fmt.Errorf("error inserting column: %+v :%w", nc, err)
 	}
