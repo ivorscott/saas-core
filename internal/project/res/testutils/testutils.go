@@ -3,80 +3,109 @@ package testutils
 
 import (
 	"context"
+	"database/sql"
 	"github.com/devpies/saas-core/internal/project/config"
 	"github.com/devpies/saas-core/internal/project/db"
 	"github.com/devpies/saas-core/internal/project/res"
+	"github.com/go-testfixtures/testfixtures/v3"
 	"go.uber.org/zap"
 	"os"
 	"path"
 	"runtime"
-	"testing"
 )
 
 const (
-	MockUUID = "ac7b523d-1eb9-43f3-bd33-c3e8106c2e70"
-	dbDriver = "postgres"
+	MockUUID    = "ac7b523d-1eb9-43f3-bd33-c3e8106c2e70"
+	rootUser    = "postgres"
+	dbDriver    = "postgres"
+	fixturesDir = "fixtures"
 )
 
 var MockCtx = context.Background()
 
-// AsRole enables database role switching in tests.
-type AsRole struct {
-	cfg config.Config
+// DatabaseClient sets up a database and enables role switching.
+type DatabaseClient struct {
+	cfg      config.Config
+	fixtures *testfixtures.Loader
+	user     string
+	root     string
 }
 
-// DBConnect prepares the test database connection.
-func DBConnect() *AsRole {
+// NewDatabaseClient returns a DatabaseClient and a close method to clean up the setup connection.
+func NewDatabaseClient() (*DatabaseClient, func() error) {
 	prepareEnvironment()
+
 	cfg, err := config.NewConfig()
 	if err != nil {
 		panic(err)
 	}
-	return &AsRole{
-		cfg: cfg,
+
+	c := DatabaseClient{
+		cfg:  cfg,
+		root: rootUser,
+		user: cfg.DB.User,
 	}
+
+	return &c, c.setupDB()
 }
 
-// AsRoot connects to test database as root.
-func (a *AsRole) AsRoot() (*db.PostgresDatabase, func() error) {
-	return a.setupDBAsRoot()
+// setupDB runs migrations and fixtures as root.
+func (client *DatabaseClient) setupDB() func() error {
+	client.setRole(client.root)
+	repo, Close := client.connect()
+
+	err := res.MigrateUp(repo.URL.String())
+	if err != nil {
+		panic(err)
+	}
+	client.setFixtures(repo.TestsOnlyDBConnection())
+	return Close
 }
 
-// AsNonRoot connects to test database as non-root.
-func (a *AsRole) AsNonRoot() (*db.PostgresDatabase, func() error) {
-	_, Close := a.setupDBAsRoot()
-	_ = Close()
-	a.cfg.DB.User = "user_a"
-	repo, Close, err := db.NewPostgresDatabase(zap.NewNop(), a.cfg)
+// AsRoot connects as root.
+func (client *DatabaseClient) AsRoot() (*db.PostgresDatabase, func() error) {
+	client.setRole(client.root)
+	client.loadFixtures()
+	return client.connect()
+}
+
+// AsNonRoot connects as non-root.
+func (client *DatabaseClient) AsNonRoot() (*db.PostgresDatabase, func() error) {
+	client.setRole(client.user)
+	client.loadFixtures()
+	return client.connect()
+}
+
+func (client *DatabaseClient) setRole(role string) {
+	client.cfg.DB.User = role
+}
+
+// connect creates a database connection.
+func (client *DatabaseClient) connect() (*db.PostgresDatabase, func() error) {
+	repo, Close, err := db.NewPostgresDatabase(zap.NewNop(), client.cfg)
 	if err != nil {
 		panic(err)
 	}
 	return repo, Close
 }
 
-// setupDBAsRoot migrates and loads fixtures.
-func (a *AsRole) setupDBAsRoot() (*db.PostgresDatabase, func() error) {
-	a.cfg.DB.User = "postgres"
-	repo, Close, err := db.NewPostgresDatabase(zap.NewNop(), a.cfg)
+func (client *DatabaseClient) loadFixtures() {
+	err := client.fixtures.Load()
 	if err != nil {
 		panic(err)
 	}
-	err = res.MigrateUp(repo.URL.String())
-	if err != nil {
-		panic(err)
-	}
-	err = loadFixtures(repo.TestsOnlyDBConnection())
-	if err != nil {
-		panic(err)
-	}
-	return repo, Close
 }
 
-// resFile returns a file from the resource directory.
-func resFile(pathElem ...string) string {
-	_, thisFile, _, _ := runtime.Caller(0)
-	parentDir, _ := path.Split(path.Dir(thisFile))
-	return path.Join(parentDir, path.Join(pathElem...))
+func (client *DatabaseClient) setFixtures(db *sql.DB) {
+	fixtures, err := testfixtures.New(
+		testfixtures.Database(db),
+		testfixtures.Dialect(dbDriver),
+		testfixtures.Directory(resFile(fixturesDir)),
+	)
+	if err != nil {
+		panic(err)
+	}
+	client.fixtures = fixtures
 }
 
 // prepareEnvironment prepares environment for integration testing with postgres while mocking cognito.
@@ -114,7 +143,9 @@ func prepareEnvironment() {
 	}
 }
 
-func Debug[T any](t *testing.T, data T) {
-	wrapper := "\n\nDEBUG ================================\n\n"
-	t.Logf("%s %+v %s", wrapper, data, wrapper)
+// resFile returns a file from the resource directory.
+func resFile(pathElem ...string) string {
+	_, thisFile, _, _ := runtime.Caller(0)
+	parentDir, _ := path.Split(path.Dir(thisFile))
+	return path.Join(parentDir, path.Join(pathElem...))
 }

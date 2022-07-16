@@ -17,7 +17,7 @@ func TestProjectRepository_Create(t *testing.T) {
 	expectedTenantID := testProjects[0].TenantID
 
 	t.Run("success", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		p := model.NewProject{
@@ -37,7 +37,7 @@ func TestProjectRepository_Create(t *testing.T) {
 	})
 
 	t.Run("context error", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		p := model.NewProject{
@@ -53,7 +53,7 @@ func TestProjectRepository_Create(t *testing.T) {
 	})
 
 	t.Run("no tenant error", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		p := model.NewProject{
@@ -75,7 +75,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 	expectedProject := testProjects[0]
 
 	t.Run("success", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -88,7 +88,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 	})
 
 	t.Run("id not UUID", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -102,7 +102,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 	})
 
 	t.Run("data isolation between tenants", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -116,7 +116,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -130,7 +130,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 	})
 
 	t.Run("context error", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -142,7 +142,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 	})
 
 	t.Run("no tenant error", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -160,7 +160,7 @@ func TestProjectRepository_List(t *testing.T) {
 	expectedProject := testProjects[0]
 
 	t.Run("success", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -173,7 +173,7 @@ func TestProjectRepository_List(t *testing.T) {
 	})
 
 	t.Run("no results", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -187,7 +187,7 @@ func TestProjectRepository_List(t *testing.T) {
 	})
 
 	t.Run("context error", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -199,7 +199,7 @@ func TestProjectRepository_List(t *testing.T) {
 	})
 
 	t.Run("no tenant error", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -219,7 +219,7 @@ func TestProjectRepository_Update(t *testing.T) {
 		t.Run("update project name", func(t *testing.T) {
 			expectedProject := testProjects[0]
 
-			db, Close := testutils.DBConnect().AsNonRoot()
+			db, Close := dbConnect.AsNonRoot()
 			defer Close()
 
 			repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -242,7 +242,7 @@ func TestProjectRepository_Update(t *testing.T) {
 		t.Run("update project description", func(t *testing.T) {
 			expectedProject := testProjects[0]
 
-			db, Close := testutils.DBConnect().AsNonRoot()
+			db, Close := dbConnect.AsNonRoot()
 			defer Close()
 
 			repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -265,7 +265,7 @@ func TestProjectRepository_Update(t *testing.T) {
 		t.Run("update project active field", func(t *testing.T) {
 			expectedProject := testProjects[0]
 
-			db, Close := testutils.DBConnect().AsNonRoot()
+			db, Close := dbConnect.AsNonRoot()
 			defer Close()
 
 			repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -288,7 +288,7 @@ func TestProjectRepository_Update(t *testing.T) {
 		t.Run("update project public field", func(t *testing.T) {
 			expectedProject := testProjects[0]
 
-			db, Close := testutils.DBConnect().AsNonRoot()
+			db, Close := dbConnect.AsNonRoot()
 			defer Close()
 
 			repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -311,7 +311,7 @@ func TestProjectRepository_Update(t *testing.T) {
 		t.Run("update project column order", func(t *testing.T) {
 			expectedProject := testProjects[0]
 
-			db, Close := testutils.DBConnect().AsNonRoot()
+			db, Close := dbConnect.AsNonRoot()
 			defer Close()
 
 			repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -333,7 +333,7 @@ func TestProjectRepository_Update(t *testing.T) {
 	})
 
 	t.Run("id not UUID", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -342,7 +342,6 @@ func TestProjectRepository_Update(t *testing.T) {
 		update := model.UpdateProject{}
 
 		_, err := repo.Update(ctx, "mock", update, time.Now())
-		testutils.Debug(t, err)
 		assert.NotNil(t, err)
 
 		assert.Equal(t, fail.ErrInvalidID, err)
@@ -351,7 +350,7 @@ func TestProjectRepository_Update(t *testing.T) {
 	t.Run("context error", func(t *testing.T) {
 		expectedProject := testProjects[0]
 
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -367,7 +366,7 @@ func TestProjectRepository_Update(t *testing.T) {
 	t.Run("no tenant error", func(t *testing.T) {
 		expectedProject := testProjects[0]
 
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -387,7 +386,7 @@ func TestProjectRepository_Delete(t *testing.T) {
 	expectedProject := testProjects[0]
 
 	t.Run("success", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -402,7 +401,7 @@ func TestProjectRepository_Delete(t *testing.T) {
 	})
 
 	t.Run("user id not UUID", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -414,7 +413,7 @@ func TestProjectRepository_Delete(t *testing.T) {
 	})
 
 	t.Run("project id not UUID", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -422,12 +421,11 @@ func TestProjectRepository_Delete(t *testing.T) {
 
 		err := repo.Delete(ctx, "mock")
 		assert.NotNil(t, err)
-		testutils.Debug(t, err)
 		assert.Equal(t, fail.ErrInvalidID, err)
 	})
 
 	t.Run("context error", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -439,7 +437,7 @@ func TestProjectRepository_Delete(t *testing.T) {
 	})
 
 	t.Run("no tenant error", func(t *testing.T) {
-		db, Close := testutils.DBConnect().AsNonRoot()
+		db, Close := dbConnect.AsNonRoot()
 		defer Close()
 
 		repo := repository.NewProjectRepository(zap.NewNop(), db)

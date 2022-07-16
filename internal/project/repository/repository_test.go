@@ -15,10 +15,15 @@ import (
 )
 
 var (
+	dbConnect    *testutils.DatabaseClient
 	testProjects []model.Project
 )
 
 func TestMain(m *testing.M) {
+	db, dbClose := testutils.NewDatabaseClient()
+	dbConnect = db
+	defer dbClose()
+
 	testutils.LoadGoldenFile(&testProjects, "projects.json")
 
 	os.Exit(m.Run())
@@ -28,12 +33,11 @@ func TestGoldenFiles(t *testing.T) {
 	golden := testutils.NewGoldenConfig(false)
 
 	t.Run("project golden files", func(t *testing.T) {
-
 		t.Run("list", func(t *testing.T) {
 			var actual []model.Project
 			var expected []model.Project
 
-			db, Close := testutils.DBConnect().AsRoot()
+			db, Close := dbConnect.AsRoot()
 			defer Close()
 
 			repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -56,7 +60,7 @@ func TestGoldenFiles(t *testing.T) {
 			var actual model.Project
 			var expected []model.Project
 
-			db, Close := testutils.DBConnect().AsRoot()
+			db, Close := dbConnect.AsRoot()
 			defer Close()
 
 			repo := repository.NewProjectRepository(zap.NewNop(), db)
@@ -74,7 +78,5 @@ func TestGoldenFiles(t *testing.T) {
 			testutils.LoadGoldenFile(&expected, goldenFile)
 			assert.Equal(t, expected[0], actual)
 		})
-
 	})
-
 }
