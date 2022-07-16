@@ -105,18 +105,47 @@ Then re-run the  tests.
 
 ### Test Utils
 
-Test utils are integration test helpers. The package returns a database connection after setting up
-the test database with migrations and fixtures. It is desired to connect as a `non-root` user during tests. This is useful 
-because postgres [row-level security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html) is bypassed for the super user. 
+Test utils are integration test helpers. The package contains a database client that sets up
+the test database with migrations and fixtures. The package provides the ability to switch between database users. This is useful because postgres 
+[row-level security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html) is bypassed for the `root` user. To 
+ensure data isolation is working as expected use the `non-root` user in tests unless you have a good reason to do otherwise.
 
-Connecting to the test database as `root`.
+Initialize `testutils.NewDatabaseClient` in TestMain, and load test fixtures.
 
 ```go
-db, Close := testutils.DBConnect().AsRoot()
+package repository_test
+
+import (
+    ...
+)
+
+var (
+	dbConnect    *testutils.DatabaseClient
+	testProjects []model.Project
+	testColumns  []model.Column
+)
+
+func TestMain(m *testing.M) {
+   db, dbClose := testutils.NewDatabaseClient()
+   dbConnect = db
+   defer dbClose()
+
+   testutils.LoadGoldenFile(&testProjects, "projects.json")
+   testutils.LoadGoldenFile(&testColumns, "columns.json")
+
+   os.Exit(m.Run())
+}
+```
+Then in your tests use the `dbConnect` variable:
+
+__Connecting to the test database as `root`.__
+
+```go
+db, Close := dbConnect.AsRoot()
 ```
 
-Connecting to the test database as `non-root`.
+__Connecting to the test database as `non-root`.__
 
 ```go
-db, Close := testutils.DBConnect().AsNonRoot()
+db, Close := dbConnect.AsNonRoot()
 ```
