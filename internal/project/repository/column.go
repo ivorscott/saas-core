@@ -45,7 +45,7 @@ func (cr *ColumnRepository) Retrieve(ctx context.Context, cid string) (model.Col
 
 	conn, Close, err := cr.pg.GetConnection(ctx)
 	if err != nil {
-		return c, fail.ErrConnectionFailed
+		return c, err
 	}
 	defer Close()
 
