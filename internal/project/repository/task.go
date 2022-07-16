@@ -51,13 +51,13 @@ func (tr *TaskRepository) Retrieve(ctx context.Context, tid string) (model.Task,
 
 	stmt := `
 		select 
-			task_id, key, seq, title, points, content, assigned_to,
+			task_id, key, seq, title, points, user_id, content, assigned_to,
 			attachments, comments, project_id, updated_at, created_at
 		from tasks
 		where task_id = $1
 	`
 
-	err = conn.QueryRowxContext(ctx, stmt, tid).Scan(&t.ID, &t.Key, &t.Seq, &t.Title, &t.Points, &t.Content, &t.AssignedTo, (*pq.StringArray)(&t.Attachments), (*pq.StringArray)(&t.Comments), &t.ProjectID, &t.UpdatedAt, &t.CreatedAt)
+	err = conn.QueryRowxContext(ctx, stmt, tid).Scan(&t.ID, &t.Key, &t.Seq, &t.Title, &t.Points, &t.UserID, &t.Content, &t.AssignedTo, (*pq.StringArray)(&t.Attachments), (*pq.StringArray)(&t.Comments), &t.ProjectID, &t.UpdatedAt, &t.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return t, fail.ErrNotFound
@@ -84,7 +84,7 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 
 	stmt := `
 		select
-			task_id, key, seq, title, points, content, assigned_to,
+			task_id, key, seq, title, points, user_id, content, assigned_to,
 			attachments, comments, project_id, updated_at, created_at
 		from tasks
 		where project_id = $1
@@ -102,6 +102,7 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 			&t.Seq,
 			&t.Title,
 			&t.Points,
+			&t.UserID,
 			&t.Content,
 			&t.AssignedTo,
 			(*pq.StringArray)(&t.Attachments),
@@ -176,6 +177,7 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid stri
 		ID:          uuid.New().String(),
 		Key:         k,
 		Title:       nt.Title,
+		UserID:      values.UserID,
 		ProjectID:   pid,
 		Comments:    make([]string, 0),
 		Attachments: make([]string, 0),
@@ -183,7 +185,7 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid stri
 
 	stmt = `
 		insert into tasks (
-			task_id, tenant_id, key, title, content, assigned_to, 
+			task_id, tenant_id, key, title, content, user_id, assigned_to, 
 			attachments, comments, project_id, updated_at, created_at
 		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
@@ -196,6 +198,7 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid stri
 		t.Key,
 		t.Title,
 		t.Content,
+		t.UserID,
 		t.AssignedTo,
 		pq.Array(t.Attachments),
 		pq.Array(t.Comments),

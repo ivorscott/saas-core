@@ -19,6 +19,7 @@ type Task struct {
 	Seq         int       `db:"seq" json:"seq"`
 	Title       string    `db:"title" json:"title"`
 	Points      int       `db:"points" json:"points"`
+	UserID      string    `db:"user_id" json:"userId"`
 	Content     string    `db:"content" json:"content"`
 	ProjectID   string    `db:"project_id" json:"projectId"`
 	AssignedTo  string    `db:"assigned_to" json:"assignedTo"`
