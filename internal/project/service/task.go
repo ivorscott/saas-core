@@ -15,7 +15,6 @@ type taskRepository interface {
 	List(ctx context.Context, pid string) ([]model.Task, error)
 	Update(ctx context.Context, tid string, update model.UpdateTask, now time.Time) (model.Task, error)
 	Delete(ctx context.Context, tid string) error
-	DeleteAll(ctx context.Context, pid string) error
 }
 
 // TaskService is responsible for managing task business logic.
@@ -55,9 +54,4 @@ func (ts *TaskService) Update(ctx context.Context, taskID string, update model.U
 // Delete deletes a task.
 func (ts *TaskService) Delete(ctx context.Context, taskID string) error {
 	return ts.repo.Delete(ctx, taskID)
-}
-
-// DeleteAll deletes all tasks.
-func (ts *TaskService) DeleteAll(ctx context.Context, projectID string) error {
-	return ts.repo.DeleteAll(ctx, projectID)
 }

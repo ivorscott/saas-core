@@ -41,7 +41,6 @@ func (nt *NewTask) Validate() error {
 // UpdateTask represents a Task being updated.
 type UpdateTask struct {
 	Title       *string   `json:"title" validate:"omitempty,max=75"`
-	Key         *string   `json:"key"`
 	Points      *int      `json:"points"`
 	Content     *string   `json:"content" validate:"omitempty,max=1000"`
 	AssignedTo  *string   `json:"assignedTo"`

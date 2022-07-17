@@ -37,9 +37,8 @@ func (nc *NewColumn) Validate() error {
 
 // UpdateColumn represents a Column update.
 type UpdateColumn struct {
-	Title     *string   `json:"title" validate:"omitempty,max=24"`
-	TaskIDS   *[]string `json:"taskIds"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	Title   *string  `json:"title" validate:"omitempty,max=24"`
+	TaskIDS []string `json:"taskIds"`
 }
 
 func (uc *UpdateColumn) Validate() error {

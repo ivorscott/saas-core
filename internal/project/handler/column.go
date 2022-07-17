@@ -85,7 +85,7 @@ func (ch *ColumnHandler) Update(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("error decoding column update: %w", err)
 	}
 
-	if err := ch.service.Update(r.Context(), id, update, time.Now()); err != nil {
+	if _, err := ch.service.Update(r.Context(), id, update, time.Now()); err != nil {
 		switch err {
 		case fail.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)

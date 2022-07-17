@@ -150,12 +150,6 @@ func (ph *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 	if _, err = ph.projectService.Retrieve(r.Context(), pid); err != nil {
 		return err
 	}
-	if err = ph.taskService.DeleteAll(r.Context(), pid); err != nil {
-		return err
-	}
-	if err = ph.columnService.DeleteAll(r.Context(), pid); err != nil {
-		return err
-	}
 	if err = ph.projectService.Delete(r.Context(), pid); err != nil {
 		switch err {
 		case fail.ErrInvalidID:

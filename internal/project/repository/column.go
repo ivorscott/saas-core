@@ -77,9 +77,13 @@ func (cr *ColumnRepository) List(ctx context.Context, pid string) ([]model.Colum
 		err error
 	)
 
+	if _, err = uuid.Parse(pid); err != nil {
+		return cs, fail.ErrInvalidID
+	}
+
 	conn, Close, err := cr.pg.GetConnection(ctx)
 	if err != nil {
-		return cs, fail.ErrConnectionFailed
+		return cs, err
 	}
 	defer Close()
 
@@ -92,6 +96,9 @@ func (cr *ColumnRepository) List(ctx context.Context, pid string) ([]model.Colum
 
 	rows, err := conn.QueryxContext(ctx, stmt, pid)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return cs, nil
+		}
 		return nil, fmt.Errorf("error selecting columns :%w", err)
 	}
 	for rows.Next() {
@@ -162,22 +169,25 @@ func (cr *ColumnRepository) Create(ctx context.Context, nc model.NewColumn, now 
 }
 
 // Update updates a project column from the database.
-func (cr *ColumnRepository) Update(ctx context.Context, cid string, uc model.UpdateColumn, now time.Time) error {
-	var err error
+func (cr *ColumnRepository) Update(ctx context.Context, cid string, uc model.UpdateColumn, now time.Time) (model.Column, error) {
+	var (
+		c   model.Column
+		err error
+	)
 
 	if _, err = uuid.Parse(cid); err != nil {
-		return fail.ErrInvalidID
+		return c, fail.ErrInvalidID
 	}
 
 	conn, Close, err := cr.pg.GetConnection(ctx)
 	if err != nil {
-		return fail.ErrConnectionFailed
+		return c, err
 	}
 	defer Close()
 
-	c, err := cr.Retrieve(ctx, cid)
+	c, err = cr.Retrieve(ctx, cid)
 	if err != nil {
-		return err
+		return c, err
 	}
 
 	if uc.Title != nil {
@@ -185,7 +195,7 @@ func (cr *ColumnRepository) Update(ctx context.Context, cid string, uc model.Upd
 	}
 
 	if uc.TaskIDS != nil {
-		c.TaskIDS = *uc.TaskIDS
+		c.TaskIDS = uc.TaskIDS
 	}
 
 	stmt := `
@@ -199,10 +209,10 @@ func (cr *ColumnRepository) Update(ctx context.Context, cid string, uc model.Upd
 
 	_, err = conn.ExecContext(ctx, stmt, c.Title, pq.Array(c.TaskIDS), now.UTC(), cid)
 	if err != nil {
-		return fmt.Errorf("error updating column :%w", err)
+		return c, fmt.Errorf("error updating column :%w", err)
 	}
 
-	return nil
+	return c, nil
 }
 
 // Delete deletes a project column from the database.
@@ -215,7 +225,7 @@ func (cr *ColumnRepository) Delete(ctx context.Context, cid string) error {
 
 	conn, Close, err := cr.pg.GetConnection(ctx)
 	if err != nil {
-		return fail.ErrConnectionFailed
+		return err
 	}
 	defer Close()
 
@@ -223,29 +233,6 @@ func (cr *ColumnRepository) Delete(ctx context.Context, cid string) error {
 
 	if _, err = conn.ExecContext(ctx, stmt, cid); err != nil {
 		return fmt.Errorf("error deleting column %s :%w", cid, err)
-	}
-
-	return nil
-}
-
-// DeleteAll deletes all project columns from the database.
-func (cr *ColumnRepository) DeleteAll(ctx context.Context, pid string) error {
-	var err error
-
-	if _, err := uuid.Parse(pid); err != nil {
-		return fail.ErrInvalidID
-	}
-
-	conn, Close, err := cr.pg.GetConnection(ctx)
-	if err != nil {
-		return fail.ErrConnectionFailed
-	}
-	defer Close()
-
-	stmt := `delete from columns where project_id = $1`
-
-	if _, err = conn.ExecContext(ctx, stmt, pid); err != nil {
-		return fmt.Errorf("error deleting all columns :%w", err)
 	}
 
 	return nil

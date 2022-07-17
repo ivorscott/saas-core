@@ -40,7 +40,7 @@ func TestProjectRepository_Create(t *testing.T) {
 			},
 		},
 		{
-			name: "id is not UUID",
+			name: "user id is not UUID",
 			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID, UserID: "mock"}),
 			expectations: func(t *testing.T, ctx context.Context, repo *repository.ProjectRepository, expected model.NewProject, actual model.Project, err error) {
 				assert.NotNil(t, err)
@@ -101,7 +101,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 			},
 		},
 		{
-			name:      "id not UUID",
+			name:      "project id not UUID",
 			projectID: "mock",
 			ctx:       web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID}),
 			expectations: func(t *testing.T, ctx context.Context, expected model.Project, actual model.Project, err error) {
@@ -180,7 +180,7 @@ func TestProjectRepository_List(t *testing.T) {
 			},
 		},
 		{
-			name: "no results",
+			name: "data isolation between tenants",
 			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: testutils.MockUUID}),
 			expectations: func(t *testing.T, ctx context.Context, expected []model.Project, actual []model.Project, err error) {
 				assert.Nil(t, err)
@@ -300,7 +300,7 @@ func TestProjectRepository_Update(t *testing.T) {
 			},
 		},
 		{
-			name:      "id not UUID",
+			name:      "project id not UUID",
 			ctx:       web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID}),
 			projectID: "mock",
 			update:    model.UpdateProject{},

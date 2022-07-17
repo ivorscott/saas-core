@@ -45,7 +45,7 @@ func (tr *TaskRepository) Retrieve(ctx context.Context, tid string) (model.Task,
 
 	conn, Close, err := tr.pg.GetConnection(ctx)
 	if err != nil {
-		return t, fail.ErrConnectionFailed
+		return t, err
 	}
 	defer Close()
 
@@ -84,6 +84,10 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 		return ts, err
 	}
 	defer Close()
+
+	if _, err = uuid.Parse(pid); err != nil {
+		return ts, fail.ErrInvalidID
+	}
 
 	stmt := `
 		select
@@ -260,6 +264,9 @@ func (tr *TaskRepository) Update(ctx context.Context, tid string, update model.U
 	if update.Content != nil {
 		t.Content = *update.Content
 	}
+	if update.Points != nil {
+		t.Points = *update.Points
+	}
 	if update.AssignedTo != nil {
 		t.AssignedTo = *update.AssignedTo
 	}
@@ -309,7 +316,7 @@ func (tr *TaskRepository) Delete(ctx context.Context, tid string) error {
 
 	conn, Close, err := tr.pg.GetConnection(ctx)
 	if err != nil {
-		return fail.ErrConnectionFailed
+		return err
 	}
 	defer Close()
 
@@ -317,29 +324,6 @@ func (tr *TaskRepository) Delete(ctx context.Context, tid string) error {
 
 	if _, err = conn.ExecContext(ctx, stmt, tid); err != nil {
 		return fmt.Errorf("error deleting task %s: %w", tid, err)
-	}
-
-	return nil
-}
-
-// DeleteAll deletes all project tasks from the database.
-func (tr *TaskRepository) DeleteAll(ctx context.Context, pid string) error {
-	var err error
-
-	if _, err = uuid.Parse(pid); err != nil {
-		return fail.ErrInvalidID
-	}
-
-	conn, Close, err := tr.pg.GetConnection(ctx)
-	if err != nil {
-		return fail.ErrConnectionFailed
-	}
-	defer Close()
-
-	stmt := `delete from tasks where project_id = $1`
-
-	if _, err = conn.ExecContext(ctx, stmt, pid); err != nil {
-		return fmt.Errorf("error deleting all tasks: %w", err)
 	}
 
 	return nil

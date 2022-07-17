@@ -91,10 +91,10 @@ func (th *TaskHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	ids := append(c.TaskIDS, task.ID)
 
 	uc := model.UpdateColumn{
-		TaskIDS: &ids,
+		TaskIDS: ids,
 	}
 
-	if err = th.columnService.Update(r.Context(), cid, uc, time.Now()); err != nil {
+	if _, err = th.columnService.Update(r.Context(), cid, uc, time.Now()); err != nil {
 		return err
 	}
 
@@ -141,9 +141,9 @@ func (th *TaskHandler) Delete(w http.ResponseWriter, r *http.Request) error {
 
 	if i >= 0 {
 		newTaskIds := append(c.TaskIDS[:i], c.TaskIDS[i+1:]...)
-		uc := model.UpdateColumn{TaskIDS: &newTaskIds}
+		uc := model.UpdateColumn{TaskIDS: newTaskIds}
 
-		if err = th.columnService.Update(r.Context(), cid, uc, time.Now()); err != nil {
+		if _, err = th.columnService.Update(r.Context(), cid, uc, time.Now()); err != nil {
 			return err
 		}
 
@@ -183,12 +183,12 @@ func (th *TaskHandler) Move(w http.ResponseWriter, r *http.Request) error {
 
 	if i >= 0 {
 		newFromTaskIds := append(cF.TaskIDS[:i], cF.TaskIDS[i+1:]...)
-		foc := model.UpdateColumn{TaskIDS: &newFromTaskIds}
+		foc := model.UpdateColumn{TaskIDS: newFromTaskIds}
 
 		newToTaskIds := append(cT.TaskIDS, tid)
-		toc := model.UpdateColumn{TaskIDS: &newToTaskIds}
+		toc := model.UpdateColumn{TaskIDS: newToTaskIds}
 
-		err = th.columnService.Update(r.Context(), mt.From, foc, time.Now())
+		_, err = th.columnService.Update(r.Context(), mt.From, foc, time.Now())
 		if err != nil {
 			switch err {
 			case fail.ErrNotFound:
@@ -200,7 +200,7 @@ func (th *TaskHandler) Move(w http.ResponseWriter, r *http.Request) error {
 			}
 		}
 
-		err = th.columnService.Update(r.Context(), mt.To, toc, time.Now())
+		_, err = th.columnService.Update(r.Context(), mt.To, toc, time.Now())
 		if err != nil {
 			switch err {
 			case fail.ErrNotFound:
