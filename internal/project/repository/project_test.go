@@ -16,6 +16,7 @@ import (
 
 func TestProjectRepository_Create(t *testing.T) {
 	expectedTenantID := testProjects[0].TenantID
+	expectedUserID := testProjects[0].UserID
 
 	tests := []struct {
 		name         string
@@ -25,7 +26,7 @@ func TestProjectRepository_Create(t *testing.T) {
 	}{
 		{
 			name: "success",
-			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID}),
+			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID, UserID: expectedUserID}),
 			expectations: func(t *testing.T, ctx context.Context, repo *repository.ProjectRepository, expected model.NewProject, actual model.Project, err error) {
 				assert.Nil(t, err)
 				assert.Equal(t, expectedTenantID, actual.TenantID)
@@ -39,6 +40,15 @@ func TestProjectRepository_Create(t *testing.T) {
 			},
 		},
 		{
+			name: "id is not UUID",
+			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID, UserID: "mock"}),
+			expectations: func(t *testing.T, ctx context.Context, repo *repository.ProjectRepository, expected model.NewProject, actual model.Project, err error) {
+				assert.NotNil(t, err)
+				assert.Equal(t, fail.ErrInvalidID, err)
+				assert.NotEqual(t, expected, actual)
+			},
+		},
+		{
 			name: "context error",
 			ctx:  testutils.MockCtx,
 			expectations: func(t *testing.T, ctx context.Context, repo *repository.ProjectRepository, expected model.NewProject, actual model.Project, err error) {
@@ -48,7 +58,7 @@ func TestProjectRepository_Create(t *testing.T) {
 		},
 		{
 			name: "no tenant error",
-			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: ""}),
+			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: "", UserID: expectedUserID}),
 			expectations: func(t *testing.T, ctx context.Context, repo *repository.ProjectRepository, expected model.NewProject, actual model.Project, err error) {
 				assert.NotNil(t, err)
 				assert.Equal(t, fail.ErrNoTenant, err)
@@ -87,7 +97,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 			ctx:       web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID}),
 			expectations: func(t *testing.T, ctx context.Context, expected model.Project, actual model.Project, err error) {
 				assert.Nil(t, err)
-				assert.Equal(t, expectedProject, actual)
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -97,7 +107,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 			expectations: func(t *testing.T, ctx context.Context, expected model.Project, actual model.Project, err error) {
 				assert.NotNil(t, err)
 				assert.Equal(t, fail.ErrInvalidID, err)
-				assert.NotEqual(t, expectedProject, actual)
+				assert.NotEqual(t, expected, actual)
 			},
 		},
 		{
@@ -107,7 +117,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 			expectations: func(t *testing.T, ctx context.Context, expected model.Project, actual model.Project, err error) {
 				assert.NotNil(t, err)
 				assert.Equal(t, fail.ErrNotFound, err)
-				assert.NotEqual(t, expectedProject, actual)
+				assert.NotEqual(t, expected, actual)
 			},
 		},
 		{
@@ -117,7 +127,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 			expectations: func(t *testing.T, ctx context.Context, expected model.Project, actual model.Project, err error) {
 				assert.NotNil(t, err)
 				assert.Equal(t, fail.ErrNotFound, err)
-				assert.NotEqual(t, expectedProject, actual)
+				assert.NotEqual(t, expected, actual)
 			},
 		},
 		{

@@ -38,5 +38,45 @@
     "projectId": "96c3424e-17cf-4bd2-916e-1ec2ddc979a5",
     "updatedAt": "2022-07-09T05:51:24.222499Z",
     "createdAt": "2022-07-09T05:51:24.222499Z"
+  },
+  {
+    "id": "67459719-a22d-4aff-a6ad-7216bbd87dbd",
+    "tenantID": "f24d653a-f465-11ec-bfa4-26b2e5d16858",
+    "title": "To Do",
+    "columnName": "column-1",
+    "taskIds": [],
+    "projectId": "f8a6daf8-7239-47c3-a4e7-74d46439c7e5",
+    "updatedAt": "2022-07-09T05:51:24.211989Z",
+    "createdAt": "2022-07-09T05:51:24.211989Z"
+  },
+  {
+    "id": "aae5b0b4-3c31-4019-a1b5-783c01de6884",
+    "tenantID": "f24d653a-f465-11ec-bfa4-26b2e5d16858",
+    "title": "In Progress",
+    "columnName": "column-2",
+    "taskIds": [],
+    "projectId": "f8a6daf8-7239-47c3-a4e7-74d46439c7e5",
+    "updatedAt": "2022-07-09T05:51:24.219037Z",
+    "createdAt": "2022-07-09T05:51:24.219037Z"
+  },
+  {
+    "id": "131f311f-6880-44df-818b-0e986fbed104",
+    "tenantID": "f24d653a-f465-11ec-bfa4-26b2e5d16858",
+    "title": "Review",
+    "columnName": "column-3",
+    "taskIds": [],
+    "projectId": "f8a6daf8-7239-47c3-a4e7-74d46439c7e5",
+    "updatedAt": "2022-07-09T05:51:24.220731Z",
+    "createdAt": "2022-07-09T05:51:24.220731Z"
+  },
+  {
+    "id": "83d3a5fd-08e2-487a-a882-a19717e8b143",
+    "tenantID": "f24d653a-f465-11ec-bfa4-26b2e5d16858",
+    "title": "Done",
+    "columnName": "column-4",
+    "taskIds": [],
+    "projectId": "f8a6daf8-7239-47c3-a4e7-74d46439c7e5",
+    "updatedAt": "2022-07-09T05:51:24.222499Z",
+    "createdAt": "2022-07-09T05:51:24.222499Z"
   }
 ]

@@ -16,8 +16,8 @@ func init() {
 type Task struct {
 	ID          string    `db:"task_id" json:"id"`
 	Key         string    `db:"key" json:"key"`
-	Seq         int       `db:"seq" json:"seq"`
 	Title       string    `db:"title" json:"title"`
+	TenantID    string    `db:"tenant_id" json:"tenantId"`
 	Points      int       `db:"points" json:"points"`
 	UserID      string    `db:"user_id" json:"userId"`
 	Content     string    `db:"content" json:"content"`

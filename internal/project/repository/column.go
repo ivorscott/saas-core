@@ -1,6 +1,5 @@
 package repository
 
-import "C"
 import (
 	"context"
 	"database/sql"

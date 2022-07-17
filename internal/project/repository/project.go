@@ -139,6 +139,10 @@ func (pr *ProjectRepository) Create(ctx context.Context, np model.NewProject, no
 	}
 	defer Close()
 
+	if _, err = uuid.Parse(values.UserID); err != nil {
+		return p, fail.ErrInvalidID
+	}
+
 	p = model.Project{
 		ID:          uuid.New().String(),
 		TenantID:    values.TenantID,

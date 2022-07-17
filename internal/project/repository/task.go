@@ -51,19 +51,22 @@ func (tr *TaskRepository) Retrieve(ctx context.Context, tid string) (model.Task,
 
 	stmt := `
 		select 
-			task_id, key, seq, title, points, user_id, content, assigned_to,
+			task_id, tenant_id, key, title, points, user_id, content, assigned_to,
 			attachments, comments, project_id, updated_at, created_at
 		from tasks
 		where task_id = $1
 	`
 
-	err = conn.QueryRowxContext(ctx, stmt, tid).Scan(&t.ID, &t.Key, &t.Seq, &t.Title, &t.Points, &t.UserID, &t.Content, &t.AssignedTo, (*pq.StringArray)(&t.Attachments), (*pq.StringArray)(&t.Comments), &t.ProjectID, &t.UpdatedAt, &t.CreatedAt)
+	err = conn.QueryRowxContext(ctx, stmt, tid).Scan(&t.ID, &t.TenantID, &t.Key, &t.Title, &t.Points, &t.UserID, &t.Content, &t.AssignedTo, (*pq.StringArray)(&t.Attachments), (*pq.StringArray)(&t.Comments), &t.ProjectID, &t.UpdatedAt, &t.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return t, fail.ErrNotFound
 		}
 		return t, err
 	}
+
+	t.UpdatedAt = t.UpdatedAt.UTC()
+	t.CreatedAt = t.CreatedAt.UTC()
 
 	return t, nil
 }
@@ -78,13 +81,13 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 
 	conn, Close, err := tr.pg.GetConnection(ctx)
 	if err != nil {
-		return ts, fail.ErrConnectionFailed
+		return ts, err
 	}
 	defer Close()
 
 	stmt := `
 		select
-			task_id, key, seq, title, points, user_id, content, assigned_to,
+			task_id, tenant_id, key, title, points, user_id, content, assigned_to,
 			attachments, comments, project_id, updated_at, created_at
 		from tasks
 		where project_id = $1
@@ -92,14 +95,17 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 
 	rows, err := conn.QueryxContext(ctx, stmt, pid)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return ts, nil
+		}
 		return nil, fmt.Errorf("error selecting tasks: %w", err)
 	}
 
 	for rows.Next() {
 		err = rows.Scan(
 			&t.ID,
+			&t.TenantID,
 			&t.Key,
-			&t.Seq,
 			&t.Title,
 			&t.Points,
 			&t.UserID,
@@ -114,10 +120,32 @@ func (tr *TaskRepository) List(ctx context.Context, pid string) ([]model.Task, e
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row into struct: %w", err)
 		}
+
+		t.UpdatedAt = t.UpdatedAt.UTC()
+		t.CreatedAt = t.CreatedAt.UTC()
+
 		ts = append(ts, t)
 	}
 
 	return ts, nil
+}
+
+func formatKey(lastKey string, prefix string) (string, error) {
+	var (
+		keyNumber = 1
+		err       error
+	)
+
+	if lastKey != "" {
+		ss := strings.Split(lastKey, "-")
+		keyNumber, err = strconv.Atoi(ss[1])
+		if err != nil {
+			return "", err
+		}
+		keyNumber = keyNumber + 1
+	}
+
+	return fmt.Sprintf("%s%d", prefix, keyNumber), nil
 }
 
 // Create creates a project task in the database.
@@ -144,11 +172,14 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid stri
 
 	conn, Close, err := tr.pg.GetConnection(ctx)
 	if err != nil {
-		return t, fail.ErrConnectionFailed
+		return t, err
 	}
 	defer Close()
 
-	// Get key from last task created in project.
+	if _, err = uuid.Parse(values.UserID); err != nil {
+		return t, fail.ErrInvalidID
+	}
+
 	stmt := `select key from tasks where project_id = $1 order by created_at desc limit 1`
 
 	err = conn.QueryRowxContext(ctx, stmt, pid).Scan(&last.Key)
@@ -157,44 +188,37 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid stri
 			return t, err
 		}
 	}
-	// Generate sequence number.
-	// If no task exists, begin with 1 (e.g., APP-1).
-	// Otherwise increment last number.
-	var seq = 1
-	var lastKeyNumber int
-	if last.Key != "" {
-		ss := strings.Split(last.Key, "-")
-		lastKeyNumber, err = strconv.Atoi(ss[1])
-		if err != nil {
-			return t, nil
-		}
-		seq = lastKeyNumber + 1
-	}
 
-	k := fmt.Sprintf("%s%d", p.Prefix, seq)
+	key, err := formatKey(last.Key, p.Prefix)
+	if err != nil {
+		return t, nil
+	}
 
 	t = model.Task{
 		ID:          uuid.New().String(),
-		Key:         k,
+		Key:         key,
 		Title:       nt.Title,
+		TenantID:    values.TenantID,
 		UserID:      values.UserID,
 		ProjectID:   pid,
 		Comments:    make([]string, 0),
 		Attachments: make([]string, 0),
+		UpdatedAt:   now.UTC(),
+		CreatedAt:   now.UTC(),
 	}
 
 	stmt = `
 		insert into tasks (
 			task_id, tenant_id, key, title, content, user_id, assigned_to, 
 			attachments, comments, project_id, updated_at, created_at
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
 	if _, err = conn.ExecContext(
 		ctx,
 		stmt,
 		t.ID,
-		values.TenantID,
+		t.TenantID,
 		t.Key,
 		t.Title,
 		t.Content,
@@ -203,8 +227,8 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid stri
 		pq.Array(t.Attachments),
 		pq.Array(t.Comments),
 		t.ProjectID,
-		now.UTC(),
-		now.UTC(),
+		t.UpdatedAt,
+		t.CreatedAt,
 	); err != nil {
 		return t, fmt.Errorf("error inserting tasks: %v: %w", nt, err)
 	}
