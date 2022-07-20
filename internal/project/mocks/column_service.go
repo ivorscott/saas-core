@@ -17,25 +17,39 @@ type ColumnService struct {
 	mock.Mock
 }
 
-// Create provides a mock function with given fields: ctx, column, now
-func (_m *ColumnService) Create(ctx context.Context, column model.NewColumn, now time.Time) (model.Column, error) {
-	ret := _m.Called(ctx, column, now)
+// Create provides a mock function with given fields: ctx, nc, now
+func (_m *ColumnService) Create(ctx context.Context, nc model.NewColumn, now time.Time) (model.Column, error) {
+	ret := _m.Called(ctx, nc, now)
 
 	var r0 model.Column
 	if rf, ok := ret.Get(0).(func(context.Context, model.NewColumn, time.Time) model.Column); ok {
-		r0 = rf(ctx, column, now)
+		r0 = rf(ctx, nc, now)
 	} else {
 		r0 = ret.Get(0).(model.Column)
 	}
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, model.NewColumn, time.Time) error); ok {
-		r1 = rf(ctx, column, now)
+		r1 = rf(ctx, nc, now)
 	} else {
 		r1 = ret.Error(1)
 	}
 
 	return r0, r1
+}
+
+// CreateColumns provides a mock function with given fields: ctx, pid, now
+func (_m *ColumnService) CreateColumns(ctx context.Context, pid string, now time.Time) error {
+	ret := _m.Called(ctx, pid, now)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, time.Time) error); ok {
+		r0 = rf(ctx, pid, now)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // Delete provides a mock function with given fields: ctx, columnID

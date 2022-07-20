@@ -53,6 +53,7 @@ func (ps *ProjectService) Retrieve(ctx context.Context, projectID string) (model
 
 // Create creates a project.
 func (ps *ProjectService) Create(ctx context.Context, project model.NewProject, now time.Time) (model.Project, error) {
+
 	return ps.projectRepo.Create(ctx, project, now)
 }
 

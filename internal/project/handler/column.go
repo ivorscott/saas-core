@@ -63,6 +63,7 @@ func (ch *ColumnHandler) Retrieve(w http.ResponseWriter, r *http.Request) error 
 // Create handles column creation requests.
 func (ch *ColumnHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	var nc model.NewColumn
+
 	if err := web.Decode(r, &nc); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err

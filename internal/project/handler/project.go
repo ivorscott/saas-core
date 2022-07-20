@@ -90,30 +90,17 @@ func (ph *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	)
 
 	if err = web.Decode(r, &np); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
+		return web.NewRequestError(err, http.StatusBadRequest)
 	}
 
 	project, err := ph.projectService.Create(r.Context(), np, time.Now())
 	if err != nil {
 		return err
 	}
-
-	titles := [4]string{"To Do", "In Progress", "Review", "Done"}
-
-	ph.logger.Info(project.ID)
-	for i, title := range titles {
-		nt := model.NewColumn{
-			ProjectID:  project.ID,
-			Title:      title,
-			ColumnName: fmt.Sprintf(`column-%d`, i+1),
-		}
-		_, err = ph.columnService.Create(r.Context(), nt, time.Now())
-		if err != nil {
-			return err
-		}
+	err = ph.columnService.CreateColumns(r.Context(), project.ID, time.Now())
+	if err != nil {
+		return err
 	}
-
 	return web.Respond(r.Context(), w, project, http.StatusCreated)
 }
 

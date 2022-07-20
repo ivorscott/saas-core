@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/devpies/saas-core/internal/project/model"
@@ -31,9 +32,31 @@ func NewColumnService(logger *zap.Logger, repo columnRepository) *ColumnService 
 	}
 }
 
+// CreateColumns creates new project columns.
+func (cs *ColumnService) CreateColumns(ctx context.Context, pid string, now time.Time) error {
+	titles := [4]string{"To Do", "In Progress", "Review", "Done"}
+
+	for i, title := range titles {
+		nc := model.NewColumn{
+			ProjectID:  pid,
+			Title:      title,
+			ColumnName: fmt.Sprintf(`column-%d`, i+1),
+		}
+		_, err := cs.repo.Create(ctx, nc, now)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Create creates a new project column.
-func (cs *ColumnService) Create(ctx context.Context, column model.NewColumn, now time.Time) (model.Column, error) {
-	return cs.repo.Create(ctx, column, now)
+func (cs *ColumnService) Create(ctx context.Context, nc model.NewColumn, now time.Time) (model.Column, error) {
+	column, err := cs.repo.Create(ctx, nc, now)
+	if err != nil {
+		return model.Column{}, err
+	}
+	return column, nil
 }
 
 // List lists all project columns.

@@ -8,7 +8,8 @@ import (
 )
 
 type columnService interface {
-	Create(ctx context.Context, column model.NewColumn, now time.Time) (model.Column, error)
+	Create(ctx context.Context, nc model.NewColumn, now time.Time) (model.Column, error)
+	CreateColumns(ctx context.Context, pid string, now time.Time) error
 	List(ctx context.Context, projectID string) ([]model.Column, error)
 	Retrieve(ctx context.Context, columnID string) (model.Column, error)
 	Update(ctx context.Context, columnID string, update model.UpdateColumn, now time.Time) (model.Column, error)
