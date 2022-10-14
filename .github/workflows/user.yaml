@@ -50,12 +50,11 @@ jobs:
           path: main
       - run: |
           ./patch.sh
-          rm patch.sh
-          
+          export VERSION=$(cat .build-version)
+
           cd main
           git config --local user.email github-actions@github.com
           git config --local user.name github-actions
           git add .
-          export VERSION=$(cat .build-version)
           git commit -m "new release: $VERSION"
           git push
