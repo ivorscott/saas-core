@@ -51,7 +51,8 @@ jobs:
       - run: |
           ./patch.sh
           rm patch.sh
-
+          
+          cd main
           git config --local user.email github-actions@github.com
           git config --local user.name github-actions
           git add .
