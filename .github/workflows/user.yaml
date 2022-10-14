@@ -50,16 +50,17 @@ jobs:
           path: saas-infra
       - run: |
           ls -l && pwd
-          mv patch.sh saas-infra/manifests
-          cd saas-infra/manifests
+#          mv patch.sh saas-infra/manifests
+          cd saas-infra
           ls -l && pwd
-
-          ./patch.sh
-          rm patch.sh
-
-          git config --local user.email github-actions@github.com
-          git config --local user.name github-actions
-          git add .
-          export VERSION=$(cat .build-version)
-          git commit -m "new release: $VERSION"
-          git push
+          cd manifests
+          ls -l && pwd
+#          ./patch.sh
+#          rm patch.sh
+#
+#          git config --local user.email github-actions@github.com
+#          git config --local user.name github-actions
+#          git add .
+#          export VERSION=$(cat .build-version)
+#          git commit -m "new release: $VERSION"
+#          git push
