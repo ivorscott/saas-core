@@ -6,11 +6,16 @@ on:
       - ".github/workflows/tenant.yaml"
       - "cmd/tenant/**"
       - "internal/tenant/**"
+      - "deploy/tenant.dockerfile"
   workflow_dispatch:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - uses: actions/checkout@v2
       - uses: docker/login-action@v1
@@ -25,18 +30,15 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           export SHA=$(git rev-parse --short HEAD)
-
-          docker build \
-          --build-arg GITHUB_USER=${{ secrets.USERNAME }} \
-          --build-arg GITHUB_TOKEN=${{ secrets.PAT }} --file ./deploy/tenant.dockerfile --tag ghcr.io/$OWNER/$IMAGE:$SHA .
-
+          
+          docker build --file ./deploy/tenant.dockerfile --tag ghcr.io/$OWNER/$IMAGE:$SHA .
           docker push ghcr.io/$OWNER/$IMAGE:$SHA
 
           echo $OWNER/$IMAGE:$SHA > .build-version
 
           cat > patch.sh <<EOF
           #!/bin/bash
-          sed -i 's/$IMAGE:.*/$IMAGE:$SHA/' $IMAGE.yaml
+          sed -i 's/$IMAGE:.*/$IMAGE:$SHA/' ./main/manifests/mic-$IMAGE.yaml
           EOF
 
           chmod +x patch.sh
@@ -45,17 +47,14 @@ jobs:
         with:
           repository: devpies/saas-infra
           token: ${{ secrets.PAT }}
-          path: saas-infra
+          path: main
       - run: |
-          mv patch.sh saas-infra/manifests
-          cd saas-infra/manifests
-
           ./patch.sh
-          rm patch.sh
+          export VERSION=$(cat .build-version)
 
+          cd main
           git config --local user.email github-actions@github.com
           git config --local user.name github-actions
           git add .
-          export VERSION=$(cat .build-version)
           git commit -m "new release: $VERSION"
           git push
