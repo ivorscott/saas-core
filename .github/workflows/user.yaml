@@ -38,6 +38,7 @@ jobs:
 
           cat > patch.sh <<EOF
           #!/bin/bash
+          ls -l && pwd
           sed -i 's/$IMAGE:.*/$IMAGE:$SHA/' mic-$IMAGE.yaml
           EOF
 
