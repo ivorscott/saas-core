@@ -4,14 +4,15 @@ LABEL org.opencontainers.image.authors="devpie"
 
 ENV CGO_ENABLED=0
 
-WORKDIR /core
+WORKDIR /app
 
 RUN mkdir log
-COPY ../go.* ./
-COPY ../cmd/project ./cmd/project
-COPY ../internal/project ./internal/project
-COPY ../pkg ./pkg
+
+COPY go.* ./
+COPY cmd/project ./cmd/project
+COPY internal/project ./internal/project
+COPY pkg ./pkg
 
 RUN go mod download && go build ./cmd/project
 
-CMD ["./project"]
+CMD ["./app/project"]
