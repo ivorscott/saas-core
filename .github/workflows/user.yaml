@@ -47,20 +47,21 @@ jobs:
         with:
           repository: devpies/saas-infra
           token: ${{ secrets.PAT }}
-          path: saas-infra
+          path: main
       - run: |
           ls -l && pwd
-#          mv patch.sh saas-infra/manifests
-          cd saas-infra
+          mv patch.sh main/saas-infra/manifests
+          cd main
           ls -l && pwd
-          cd manifests
+          cd saas-infra/manifests
           ls -l && pwd
-#          ./patch.sh
-#          rm patch.sh
-#
-#          git config --local user.email github-actions@github.com
-#          git config --local user.name github-actions
-#          git add .
-#          export VERSION=$(cat .build-version)
-#          git commit -m "new release: $VERSION"
-#          git push
+
+          ./patch.sh
+          rm patch.sh
+
+          git config --local user.email github-actions@github.com
+          git config --local user.name github-actions
+          git add .
+          export VERSION=$(cat .build-version)
+          git commit -m "new release: $VERSION"
+          git push
