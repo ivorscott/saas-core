@@ -38,7 +38,7 @@ jobs:
 
           cat > patch.sh <<EOF
           #!/bin/bash
-          sed -i 's/$IMAGE:.*/$IMAGE:$SHA/' $IMAGE.yaml
+          sed -i 's/$IMAGE:.*/$IMAGE:$SHA/' mic-$IMAGE.yaml
           EOF
 
           chmod +x patch.sh
