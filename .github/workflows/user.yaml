@@ -27,6 +27,8 @@ jobs:
         run: |
           export SHA=$(git rev-parse --short HEAD)
 
+          ls -l && pwd
+          
           docker build \
           --build-arg GITHUB_USER=${{ secrets.USERNAME }} \
           --build-arg GITHUB_TOKEN=${{ secrets.PAT }} --file ./deploy/user.dockerfile --tag ghcr.io/$OWNER/$IMAGE:$SHA .

@@ -7,8 +7,9 @@ ENV CGO_ENABLED=0
 WORKDIR /core
 
 RUN mkdir log
-COPY .. .
-RUN ls -l && pwd
+RUN echo "before" && ls -l && pwd
+COPY . .
+RUN echo "after" && ls -l && pwd
 #COPY ../cmd/user ./cmd/user
 #COPY ../internal/user ./internal/user
 #COPY ../pkg ./pkg
