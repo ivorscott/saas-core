@@ -7,10 +7,11 @@ ENV CGO_ENABLED=0
 WORKDIR /core
 
 RUN mkdir log
-COPY ../go.* ./
-COPY ../cmd/user ./cmd/user
-COPY ../internal/user ./internal/user
-COPY ../pkg ./pkg
+COPY .. .
+RUN ls -l && pwd
+#COPY ../cmd/user ./cmd/user
+#COPY ../internal/user ./internal/user
+#COPY ../pkg ./pkg
 
 RUN go mod download && go build ./cmd/user
 

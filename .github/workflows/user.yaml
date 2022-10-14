@@ -6,6 +6,7 @@ on:
       - ".github/workflows/user.yaml"
       - "cmd/user/**"
       - "internal/user/**"
+      - "deploy/user.dockerfile"
   workflow_dispatch:
 
 jobs:
