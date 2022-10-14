@@ -50,10 +50,10 @@ jobs:
           path: main
       - run: |
           ls -l && pwd
-          mv patch.sh main/saas-infra/manifests
+          mv patch.sh main/manifests
           cd main
           ls -l && pwd
-          cd saas-infra/manifests
+          cd manifests
           ls -l && pwd
 
           ./patch.sh
