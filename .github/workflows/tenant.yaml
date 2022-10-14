@@ -6,6 +6,7 @@ on:
       - ".github/workflows/tenant.yml"
       - "cmd/tenant/**"
       - "internal/tenant/**"
+  workflow_dispatch:
 
 jobs:
   publish:

@@ -6,6 +6,7 @@ on:
       - ".github/workflows/project.yml"
       - "cmd/project/**"
       - "internal/project/**"
+  workflow_dispatch:
 
 jobs:
   publish:

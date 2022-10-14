@@ -6,6 +6,7 @@ on:
       - ".github/workflows/user.yml"
       - "cmd/user/**"
       - "internal/user/**"
+  workflow_dispatch:
 
 jobs:
   publish:

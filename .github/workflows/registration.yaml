@@ -6,6 +6,7 @@ on:
       - ".github/workflows/registration.yml"
       - "cmd/registration/**"
       - "internal/registration/**"
+  workflow_dispatch:
 
 jobs:
   publish:
