@@ -4,6 +4,8 @@ LABEL org.opencontainers.image.authors="devpie"
 
 ENV CGO_ENABLED=0
 
+WORKDIR /app
+
 RUN mkdir log
 COPY go.* ./
 COPY cmd/user ./cmd/user
