@@ -26,8 +26,6 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           export SHA=$(git rev-parse --short HEAD)
-
-          ls -l && pwd
           
           docker build \
           --build-arg GITHUB_USER=${{ secrets.USERNAME }} \
