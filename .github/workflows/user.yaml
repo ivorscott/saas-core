@@ -3,7 +3,7 @@ name: user
 on:
   push:
     paths:
-      - ".github/workflows/user.yml"
+      - ".github/workflows/user.yaml"
       - "cmd/user/**"
       - "internal/user/**"
   workflow_dispatch:

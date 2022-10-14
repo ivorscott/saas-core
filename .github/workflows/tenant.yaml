@@ -3,7 +3,7 @@ name: tenant
 on:
   push:
     paths:
-      - ".github/workflows/tenant.yml"
+      - ".github/workflows/tenant.yaml"
       - "cmd/tenant/**"
       - "internal/tenant/**"
   workflow_dispatch:

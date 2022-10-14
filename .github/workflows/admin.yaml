@@ -3,7 +3,7 @@ name: admin
 on:
   push:
     paths:
-      - ".github/workflows/admin.yml"
+      - ".github/workflows/admin.yaml"
       - "cmd/admin/**"
       - "internal/admin/**"
   workflow_dispatch:

@@ -3,7 +3,7 @@ name: project
 on:
   push:
     paths:
-      - ".github/workflows/project.yml"
+      - ".github/workflows/project.yaml"
       - "cmd/project/**"
       - "internal/project/**"
   workflow_dispatch:

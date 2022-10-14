@@ -3,7 +3,7 @@ name: registration
 on:
   push:
     paths:
-      - ".github/workflows/registration.yml"
+      - ".github/workflows/registration.yaml"
       - "cmd/registration/**"
       - "internal/registration/**"
   workflow_dispatch:
