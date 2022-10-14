@@ -47,11 +47,13 @@ jobs:
         with:
           repository: devpies/saas-infra
           token: ${{ secrets.PAT }}
+          path: saas-infra
       - run: |
           ls -l && pwd
           mv patch.sh saas-infra/manifests
           cd saas-infra/manifests
           ls -l && pwd
+
           ./patch.sh
           rm patch.sh
 
