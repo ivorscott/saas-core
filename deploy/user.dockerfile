@@ -4,16 +4,12 @@ LABEL org.opencontainers.image.authors="devpie"
 
 ENV CGO_ENABLED=0
 
-WORKDIR /core
-
 RUN mkdir log
-RUN echo "before" && ls -l && pwd
-COPY . .
-RUN echo "after" && ls -l && pwd
-#COPY ../cmd/user ./cmd/user
-#COPY ../internal/user ./internal/user
-#COPY ../pkg ./pkg
+COPY cmd/user ./cmd/user
+COPY internal/user ./internal/user
+COPY pkg ./pkg
 
+RUN echo "testing" && ls -l && pwd
 RUN go mod download && go build ./cmd/user
 
 CMD ["./user"]
