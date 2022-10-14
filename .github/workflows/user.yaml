@@ -38,7 +38,7 @@ jobs:
 
           cat > patch.sh <<EOF
           #!/bin/bash
-          sed -i 's/$IMAGE:.*/$IMAGE:$SHA/' mic-$IMAGE.yaml
+          sed -i 's/$IMAGE:.*/$IMAGE:$SHA/' ./main/manifests/mic-$IMAGE.yaml
           EOF
 
           chmod +x patch.sh
@@ -49,13 +49,6 @@ jobs:
           token: ${{ secrets.PAT }}
           path: main
       - run: |
-          ls -l && pwd
-          mv patch.sh main/manifests
-          cd main
-          ls -l && pwd
-          cd manifests
-          ls -l && pwd
-
           ./patch.sh
           rm patch.sh
 
