@@ -15,4 +15,4 @@ COPY pkg ./pkg
 
 RUN go mod download && go build ./cmd/tenant
 
-CMD ["./app/tenant"]
+CMD ["/app/tenant"]

@@ -15,4 +15,4 @@ COPY pkg ./pkg
 
 RUN go mod download && go build ./cmd/user
 
-CMD ["./app/user"]
+CMD ["/app/user"]

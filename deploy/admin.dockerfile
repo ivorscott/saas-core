@@ -15,4 +15,4 @@ COPY pkg ./pkg
 
 RUN go mod download && go build ./cmd/admin
 
-CMD ["./app/admin"]
+CMD ["/app/admin"]

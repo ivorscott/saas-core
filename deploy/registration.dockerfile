@@ -15,4 +15,4 @@ COPY pkg ./pkg
 
 RUN go mod download && go build ./cmd/registration
 
-CMD ["./app/registration"]
+CMD ["/app/registration"]
