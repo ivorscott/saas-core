@@ -73,9 +73,11 @@ func Run(staticFS embed.FS) error {
 	defer Close()
 
 	// Execute latest migration.
-	if err = res.MigrateUp(database.URL.String()); err != nil {
-		logger.Error("error connecting to admin database", zap.Error(err))
-		return err
+	if cfg.Web.Production {
+		if err = res.MigrateUp(database.URL.String()); err != nil {
+			logger.Error("error connecting to admin database", zap.Error(err))
+			return err
+		}
 	}
 
 	// Initialize a new session manager and configure the session lifetime.
