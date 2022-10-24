@@ -21,11 +21,14 @@ type StreamContext struct {
 
 // NewStreamContext returns a new StreamContext.
 func NewStreamContext(logger *zap.Logger, shutdown chan os.Signal, address string, port string) *StreamContext {
-	var err error
+	var (
+		conn = fmt.Sprintf("nats://%s:%s", address, port)
+		err  error
+	)
 
-	nc, err := nats.Connect(fmt.Sprintf("nats://%s:%s", address, port))
+	nc, err := nats.Connect(conn)
 	if err != nil {
-		logger.Error("could not connect to NATS", zap.Error(err))
+		logger.Error("could not connect to NATS", zap.Error(fmt.Errorf("%v: connecting to %s ", err, conn)))
 	}
 
 	js, err := nc.JetStream()
