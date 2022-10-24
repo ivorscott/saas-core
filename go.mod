@@ -14,11 +14,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.15.5
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.6
 	github.com/devpies/saas-core/pkg/log v0.0.0-20220605224346-efd5e99fa5dd
-	github.com/devpies/saas-core/pkg/msg v0.0.0-20220715190832-7340771fc8af
+	github.com/devpies/saas-core/pkg/msg v0.0.0-20221024084346-328c060bc79f
 	github.com/devpies/saas-core/pkg/web v0.0.0-20220715190832-7340771fc8af
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.1
 	github.com/go-playground/validator/v10 v10.11.0
+	github.com/go-testfixtures/testfixtures/v3 v3.8.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.3.0
 	github.com/jmoiron/sqlx v1.3.5
@@ -26,8 +27,6 @@ require (
 	github.com/lib/pq v1.10.6
 	github.com/nats-io/nats.go v1.16.0
 	github.com/pkg/errors v0.9.1
-	github.com/sendgrid/rest v2.6.9+incompatible
-	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/stretchr/testify v1.7.2
 	go.uber.org/zap v1.21.0
 )
@@ -50,7 +49,6 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-testfixtures/testfixtures/v3 v3.8.0 // indirect
 	github.com/goccy/go-json v0.9.10 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
