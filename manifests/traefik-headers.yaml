@@ -13,6 +13,7 @@ spec:
       - "DELETE"
     accessControlAllowOriginList:
       - "https://devpie.local:3000"
+      - "http://devpie.local:3000"
     accessControlAllowHeaders:
       - "Accept"
       - "BasePath"
@@ -22,4 +23,3 @@ spec:
       - "Strict-Transport-Security"
     accessControlMaxAge: 100
     addVaryHeader: true
----
