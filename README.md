@@ -18,6 +18,13 @@ go binaries natively for an idiomatic go development experience.
 
 ```bash
 > make
+
+- Setup Instructions - 
+
+1. tilt up
+2. make ports
+3. make routes
+
 admin             Run admin app with live reload.
 admin-end         Run end-to-end admin tests with Cypress.
 admin-test        Run admin tests. Add " -- -v" for verbosity.

@@ -196,7 +196,13 @@ lint: ;@ ## Run linter.
 .PHONY: lint
 
 help:
-	@cat ./setup.txt
+	@echo
+	@echo "- Setup Instructions -"
+	@echo
+	@echo 1. tilt up
+	@echo 2. make ports
+	@echo 3. make routes
+	@echo
 	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
