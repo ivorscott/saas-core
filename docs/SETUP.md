@@ -27,10 +27,11 @@ Tested on a m1 mac . It should work on linux as well.
 4. Copy `.env.sample` in the project root and create your own `.env` file.
 5. Copy `./manifests/secrets.sample.yaml` and create your own `./manifests/secrets.yaml` file.
 6. Generate valid tls self-signed certificates: `mkcert devpie.local "*.devpie.local" localhost 127.0.0.1 ::1`
-7. Create the `tls-secret` for traefik with the certificate values: 
+7. Generate the `tls-secret` yaml for traefik with the certificate values: 
    ```
-   kubectl create secret generic tls-secret --from-file=tls.crt=./[YOUR-CERT-GOES-HERE] --from-file=tls.key=./[YOUR-KEY-GOES-HERE]
+   kubectl create secret generic tls-secret --from-file=tls.crt=./devpie.local.pem --from-file=tls.key=./devpie.local-key.pem -o yaml 
    ```
+   Then add the contents to the bottom of your secrets.yaml file.
 8. Modify your hosts file:
    ```bash
     ##

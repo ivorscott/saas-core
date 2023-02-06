@@ -8,9 +8,9 @@ Read [instructions](docs/SETUP.md).
 
 ### Cheatsheets
 
-- [Using NATS](/docs/nats.md)
-- [Using Postgres](/docs/postgres.md)
-- [Project Structure](/docs/structure.md)
+- [Using NATS](docs/nats.md)
+- [Using Postgres](docs/postgres.md)
+- [Project Structure](docs/structure.md)
 
 ## Using Make
 By default, using Tilt allows you to develop against running containers. Alternatively, you can simultaneously run

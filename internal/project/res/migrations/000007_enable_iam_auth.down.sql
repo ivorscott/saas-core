@@ -1,0 +1,1 @@
+REVOKE rds_iam FROM user_a;

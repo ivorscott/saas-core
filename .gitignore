@@ -9,3 +9,4 @@ manifests/secrets.yaml
 .run
 function.zip
 main
+devpie.local*.pem
