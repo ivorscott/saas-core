@@ -29,6 +29,8 @@ func NewStreamContext(logger *zap.Logger, shutdown chan os.Signal, address strin
 	nc, err := nats.Connect(conn)
 	if err != nil {
 		logger.Error("could not connect to NATS", zap.Error(fmt.Errorf("%v: connecting to %s ", err, conn)))
+	} else {
+		logger.Info("connected to NATS")
 	}
 
 	js, err := nc.JetStream()
