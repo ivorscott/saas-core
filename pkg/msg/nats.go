@@ -106,7 +106,12 @@ func (jctx *StreamContext) setupMsgHandler(messageType string, handler listenHan
 			if err != nil {
 				jctx.logger.Error("error acknowledging message", zap.Error(err))
 			}
+			jctx.logger.Info("message acknowledged", zap.String("traceId", message.Metadata.TraceID))
 		case *web.Error:
+			err = m.Ack()
+			if err != nil {
+				jctx.logger.Error("error acknowledging message", zap.Error(err))
+			}
 			jctx.logger.Error("error handling message", zap.Error(err))
 		case *web.Shutdown:
 			jctx.logger.Error("integrity issue: shutting down service", zap.Error(err))
