@@ -1,6 +1,6 @@
 module github.com/devpies/saas-core/pkg/msg
 
-go 1.18
+go 1.21
 
 require (
 	github.com/devpies/saas-core v0.0.0-20220608153529-30614660605e
