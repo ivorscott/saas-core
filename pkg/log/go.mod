@@ -1,6 +1,6 @@
 module github.com/devpies/saas-core/pkg/log
 
-go 1.18
+go 1.21
 
 require (
 	go.uber.org/zap v1.21.0
