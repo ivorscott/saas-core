@@ -3,11 +3,14 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 	"github.com/devpies/saas-core/pkg/web"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/devpies/saas-core/internal/tenant/model"
@@ -49,6 +52,11 @@ type connectionRepository interface {
 	Insert(ctx context.Context, nc model.NewConnection) error
 }
 
+var (
+	// ErrUsernameExistsException represents an AWS Cognito error caused by attempting to create and existing user.
+	ErrUsernameExistsException = errors.New("account already exists")
+)
+
 // NewTenantService returns a new TenantService.
 func NewTenantService(
 	logger *zap.Logger,
@@ -82,7 +90,12 @@ func (ts *TenantService) CreateTenantFromEvent(ctx context.Context, message inte
 	output, err := ts.createTenantIdentity(ctx, event.Data)
 	if err != nil {
 		ts.logger.Error("error creating cognito identity", zap.Error(err))
-		return err
+		switch {
+		case strings.Contains(strings.ToLower(err.Error()), ErrUsernameExistsException.Error()):
+			return web.NewRequestError(ErrUsernameExistsException, http.StatusBadRequest)
+		default:
+			return web.NewRequestError(err, http.StatusUnauthorized)
+		}
 	}
 	userID := getUserID(output.User)
 	created := output.User.UserCreateDate

@@ -401,8 +401,12 @@ github.com/devpies/saas-core/pkg/log v0.0.0-20231024014211-fe5037179b8a h1:5zCbO
 github.com/devpies/saas-core/pkg/log v0.0.0-20231024014211-fe5037179b8a/go.mod h1:MNN5OJ630Vj5GNChqu/ojZMSxziDsR2DxAT6cKKNU8o=
 github.com/devpies/saas-core/pkg/msg v0.0.0-20231024014211-fe5037179b8a h1:Qt4bRm06xG4E0+zebAFkwrS65/bvvBASlDGV7vJzAQ0=
 github.com/devpies/saas-core/pkg/msg v0.0.0-20231024014211-fe5037179b8a/go.mod h1:YYhXQZOLp2yEqUEeGVD4EHjwhrjzdRcvLe97N/aZ9JQ=
+github.com/devpies/saas-core/pkg/msg v0.0.0-20231024015845-c995bf9e8052 h1:trTbFLvTzS7dQq2QkE7F18lWedj/sB+DDuOaMW4Zcgk=
+github.com/devpies/saas-core/pkg/msg v0.0.0-20231024015845-c995bf9e8052/go.mod h1:YYhXQZOLp2yEqUEeGVD4EHjwhrjzdRcvLe97N/aZ9JQ=
 github.com/devpies/saas-core/pkg/web v0.0.0-20231024011106-5e76986d6fa0 h1:HPIU2U/A2XFf3zbWcxiMrtwbvDeowfSgX0Q4DZipsMQ=
 github.com/devpies/saas-core/pkg/web v0.0.0-20231024011106-5e76986d6fa0/go.mod h1:ziV0cfnDYb/u8fTAbx1EbXkB88tCXA8TQckAgXDpbqg=
+github.com/devpies/saas-core/pkg/web v0.0.0-20231024015845-c995bf9e8052 h1:nkSpTxB2FIRnBU6C1V5rdNAqxZ/iidnIk1sSxM+TI6g=
+github.com/devpies/saas-core/pkg/web v0.0.0-20231024015845-c995bf9e8052/go.mod h1:a97IlwfR8tm+V0ksYppXB6lNuQ8qPT6lvQOo2cjMedg=
 github.com/dgrijalva/jwt-go v0.0.0-20170104182250-a601269ab70c/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
