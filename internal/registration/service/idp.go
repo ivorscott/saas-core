@@ -16,8 +16,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: refactor implementation. There's only one pool now (the shared user pool).
-
 // IDPService manages the identity provider configuration.
 type IDPService struct {
 	logger        *zap.Logger

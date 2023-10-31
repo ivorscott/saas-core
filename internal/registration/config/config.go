@@ -1,10 +1,12 @@
+// Package config manages configuration values.
 package config
 
 import (
 	"fmt"
-	"github.com/ardanlabs/conf"
 	"os"
 	"time"
+
+	"github.com/ardanlabs/conf"
 )
 
 // Config represents the application configuration.
@@ -30,6 +32,7 @@ type Config struct {
 	}
 }
 
+// NewConfig creates a new configuration struct for the service.
 func NewConfig() (Config, error) {
 	var cfg Config
 

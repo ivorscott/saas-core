@@ -1,3 +1,4 @@
+// Package handler manages the presentation layer for handling incoming requests.
 package handler
 
 import (

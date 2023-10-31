@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mic-billing
+spec:
+  selector:
+    matchLabels:
+      app: mic-billing
+  template:
+    metadata:
+      labels:
+        app: mic-billing
+    spec:
+      containers:
+        - image: billing:latest
+          name: mic-billing
+          ports:
+            - containerPort: 4006
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: aws_access_key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: aws_secret_access_key
+            - name: AWS_DEFAULT_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: region
+            - name: BILLING_WEB_PORT
+              value: "4006"
+            - name: BILLING_COGNITO_USER_POOL_ID
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: admin_user_pool_id
+            - name: BILLING_COGNITO_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: cfg
+                  key: region
+            - name: BILLING_STRIPE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: billing_stripe_key
+            - name: BILLING_STRIPE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: billing_stripe_secret
+            - name: BILLING_DB_HOST
+              value: db-billing-svc
+            - name: BILLING_DB_DISABLE_TLS
+              value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mic-billing-svc
+spec:
+  selector:
+    app: mic-billing
+  ports:
+    - port: 4006
+      targetPort: 4006

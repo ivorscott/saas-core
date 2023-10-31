@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-billing
+spec:
+  selector:
+    matchLabels:
+      app: db-billing
+  template:
+    metadata:
+      labels:
+        app: db-billing
+    spec:
+      volumes:
+        - name: db-billing-volume
+          hostPath:
+            # use your local path, not mine
+            path: "/Users/ivorscott/DevPie/saas-core/data/billing"
+      containers:
+        - name: db-billing
+          image: postgres:11.6
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "250m"
+              memory: "250Mi"
+          env:
+            - name: POSTGRES_DB
+              value: billing
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: db-billing-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-billing-svc
+spec:
+  type: NodePort
+  selector:
+    app: db-billing
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+      nodePort: 30008

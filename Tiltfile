@@ -5,6 +5,7 @@ k8s_yaml([
     './manifests/db-admin.yaml',
     './manifests/db-project.yaml',
     './manifests/db-user.yaml',
+    './manifests/db-billing.yaml',
     './manifests/traefik-crd.yaml',
     './manifests/traefik-depl.yaml',
     './manifests/traefik-svc.yaml',
@@ -13,9 +14,11 @@ k8s_yaml([
     './manifests/mic-registration.yaml',
     './manifests/mic-admin.yaml',
     './manifests/mic-project.yaml',
-    './manifests/mic-user.yaml'
+    './manifests/mic-user.yaml',
+    './manifests/mic-billing.yaml'
 ])
 
+docker_build('billing:latest', '.', dockerfile = 'deploy/billing.dockerfile')
 docker_build('tenant:latest', '.', dockerfile = 'deploy/tenant.dockerfile')
 docker_build('registration:latest', '.' ,dockerfile = 'deploy/registration.dockerfile')
 docker_build('admin:latest', '.', dockerfile = 'deploy/admin.dockerfile')

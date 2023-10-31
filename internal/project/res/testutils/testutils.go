@@ -3,15 +3,16 @@ package testutils
 
 import (
 	"context"
+	"os"
+	"path"
+	"runtime"
+
 	"database/sql"
 	"github.com/devpies/saas-core/internal/project/config"
 	"github.com/devpies/saas-core/internal/project/db"
 	"github.com/devpies/saas-core/internal/project/res"
 	"github.com/go-testfixtures/testfixtures/v3"
 	"go.uber.org/zap"
-	"os"
-	"path"
-	"runtime"
 )
 
 const (
@@ -52,13 +53,13 @@ func NewDatabaseClient() (*DatabaseClient, func() error) {
 // setupDB runs migrations and fixtures as root.
 func (client *DatabaseClient) setupDB() func() error {
 	client.setRole(client.root)
-	repo, Close := client.connect()
+	pg, Close := client.connect()
 
-	err := res.MigrateUp(repo.URL.String())
+	err := res.MigrateUp(pg.URL.String())
 	if err != nil {
 		panic(err)
 	}
-	client.setFixtures(repo.TestsOnlyDBConnection())
+	client.setFixtures(pg.TestsOnlyDBConnection())
 	return Close
 }
 

@@ -2,6 +2,7 @@ include .env
 
 .DEFAULT_GOAL := help
 
+# Admin service =============================================================
 admin: ;@ ## Run admin app with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/admin ./cmd/admin" \
@@ -50,6 +51,7 @@ admin-db-force: ;@ ## Force version on admin database. Optional <num> argument.
 	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(ADMIN_DB_PORT)/admin?sslmode=disable force $(val)
 .PHONY: admin-db-force
 
+# Registration service =============================================================
 registration: ;@ ## Run registration api with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/registration ./cmd/registration" \
@@ -71,6 +73,7 @@ registration-mock: ;@ ## Generate registration mocks.
 	go generate ./internal/registration/...
 .PHONY: registration-mock
 
+# Tenant service =============================================================
 tenant: ;@ ## Run tenant api with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/tenant ./cmd/tenant" \
@@ -94,6 +97,7 @@ tenant-mock: ;@ ## Generate tenant mocks.
 	go generate ./internal/tenant/...
 .PHONY: tenant-mock
 
+# Project service =============================================================
 project: ;@ ## Run project api with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/project ./cmd/project" \
@@ -138,6 +142,7 @@ project-db-force: ;@ ## Force version on project database. Optional <num> argume
 	@migrate -path ./internal/project/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(PROJECT_DB_PORT)/project?sslmode=disable force $(val)
 .PHONY: project-db-force
 
+# User service =============================================================
 user: ;@ ## Run user api with live reload.
 	@CompileDaemon \
 	-build="go build -o ./bin/user ./cmd/user" \
@@ -175,6 +180,31 @@ user-db-force: ;@ ## Force version on user database. Optional <num> argument.
 	@migrate -path ./internal/user/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(USER_DB_PORT)/user?sslmode=disable force $(val)
 .PHONY: user-db-force
 
+# Billing service =============================================================
+billing-db: ;@ ## Enter billing database.
+	@pgcli postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/billing
+.PHONY: billing-db
+
+billing-db-gen: ;@ ## Generate migration files. Required <name> argument.
+	@migrate create -ext sql -dir ./internal/billing/res/migrations -seq $(val)
+.PHONY: billing-db-gen
+
+billing-db-migrate: ;@ ## Migrate billing database. Optional <num> argument.
+	@migrate -path ./internal/billing/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/billing?sslmode=disable up $(val)
+.PHONY: billing-db-migrate
+
+billing-db-version: ;@ ## Print migration version for billing database.
+	@migrate -path ./internal/billing/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/billing?sslmode=disable version
+.PHONY: billing-db-version
+
+billing-db-rollback: ;@ ## Rollback billing database. Optional <num> argument.
+	@migrate -path ./internal/billing/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/billing?sslmode=disable down $(val)
+.PHONY: billing-db-rollback
+
+billing-db-force: ;@ ## Force version on billing database. Optional <num> argument.
+	@migrate -path ./internal/billing/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/billing?sslmode=disable force $(val)
+.PHONY: billing-db-force
+
 dynamodb-tables:	;@ ## List Dynamodb tables.
 	@aws dynamodb list-tables
 .PHONY: dynamodb-tables
@@ -191,8 +221,9 @@ nats: ;## Port forward NATS port.
 	kubectl port-forward statefulset.apps/nats 4222
 .PHONY: nats
 
-lint: ;@ ## Run linter.
-	@golangci-lint run
+lint: ;@ ## Run linter. Optional <package path> argument.
+	@golangci-lint run $(val)
+
 .PHONY: lint
 
 help:
@@ -208,7 +239,8 @@ help:
 .PHONY: help
 
 # http://bit.ly/37TR1r2
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),admin-test admin-db-gen admin-db-migrate admin-db-rollback admin-db-force registration-test project-test project-db-gen project-db-migrate project-db-rollback project-db-force user-test user-db-gen user-db-migrate user-db-rollback user-db-force))
+# TODO: Find a better way
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),lint admin-test admin-db-gen admin-db-migrate admin-db-rollback admin-db-force registration-test project-test project-db-gen project-db-migrate project-db-rollback project-db-force user-test user-db-gen user-db-migrate user-db-rollback user-db-force billing-test billing-db-gen billing-db-migrate billing-db-rollback billing-db-force))
   val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(val):;@:)
 endif

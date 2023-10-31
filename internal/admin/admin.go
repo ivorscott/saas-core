@@ -1,3 +1,4 @@
+// Package admin provides a saas admin web app for administrators.
 package admin
 
 import (

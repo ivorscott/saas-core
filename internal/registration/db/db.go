@@ -1,3 +1,4 @@
+// Package db creates a new database client.
 package db
 
 import (

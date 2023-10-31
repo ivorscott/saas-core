@@ -1,3 +1,4 @@
+// Package repository manages the data access layer for handling queries.
 package repository
 
 import (

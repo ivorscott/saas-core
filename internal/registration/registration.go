@@ -1,3 +1,4 @@
+// Package registration provides tenant registration services.
 package registration
 
 import (

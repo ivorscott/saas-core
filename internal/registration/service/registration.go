@@ -1,3 +1,4 @@
+// Package service manages the application layer for handling business logic.
 package service
 
 import (
