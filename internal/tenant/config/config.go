@@ -1,3 +1,4 @@
+// Package config manages configuration values.
 package config
 
 import (
@@ -34,6 +35,7 @@ type Config struct {
 	}
 }
 
+// NewConfig returns a new Config.
 func NewConfig() (Config, error) {
 	var cfg Config
 

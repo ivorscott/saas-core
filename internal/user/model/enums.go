@@ -1,9 +1,9 @@
 package model
 
-// Role type for enumerated values
+// Role type for enumerated values.
 type Role int
 
-// Roles
+// Roles.
 const (
 	Administrator = iota
 	Editor
@@ -11,7 +11,7 @@ const (
 	Viewer
 )
 
-// String retrieves the corresponding string value for a role
+// String retrieves the corresponding string value for a role.
 func (r Role) String() string {
 	return [...]string{"administrator", "editor", "commenter", "viewer"}[r]
 }

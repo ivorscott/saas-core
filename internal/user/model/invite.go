@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// Invite represents a team invitation
+// Invite represents a team invitation.
 type Invite struct {
 	ID         string    `db:"invite_id" json:"id"`
 	TenantID   string    `db:"tenant_id" json:"tenantId"`
@@ -14,12 +14,12 @@ type Invite struct {
 	CreatedAt  time.Time `db:"created_at" json:"createdAt"`
 }
 
-// NewInvite represents a new tenant invite request
+// NewInvite represents a new tenant invite request.
 type NewInvite struct {
 	UserID string `json:"userId" validate:"required"`
 }
 
-// UpdateInvite represents an update to an invite
+// UpdateInvite represents an update to an invite.
 type UpdateInvite struct {
 	Accepted bool `json:"accepted" validate:"required"`
 }

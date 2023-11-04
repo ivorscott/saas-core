@@ -13,6 +13,7 @@ func init() {
 	transactionValidator = v
 }
 
+// TransactionStatusType describes a transaction status type.
 type TransactionStatusType int
 
 const (
@@ -28,10 +29,12 @@ const (
 	TransactionStatusPartiallyRefunded
 )
 
+// String returns the corresponding string value for the TransactionStatusType.
 func (t TransactionStatusType) String() string {
 	return [...]string{"Pending", "Cleared", "Declined", "Refunded", "Partially Refunded"}[t]
 }
 
+// NewTransaction represents a new transaction payload.
 type NewTransaction struct {
 	ID                   string                `json:"id" validate:"required,uuid4"`
 	Amount               int                   `json:"amount" validate:"required,gt=0"`
@@ -46,11 +49,12 @@ type NewTransaction struct {
 	PaymentMethod        string                `json:"paymentMethod" validate:"required"`
 }
 
-// Validate validates NewSubscription.
+// Validate validates NewTransaction.
 func (nt *NewTransaction) Validate() error {
 	return transactionValidator.Struct(nt)
 }
 
+// Transaction represents a stripe transaction.
 type Transaction struct {
 	ID                   string                `json:"id" db:"transaction_id"`
 	Amount               int                   `json:"amount" db:"amount"`
@@ -68,6 +72,7 @@ type Transaction struct {
 	CreatedAt            time.Time             `json:"createdAt" db:"created_at"`
 }
 
+// UpdateTransaction represents a transaction update.
 type UpdateTransaction struct {
 	StatusID  TransactionStatusType `json:"statusId" validate:"required,oneof=0 1 2 3 4"`
 	UpdatedAt time.Time             `json:"updatedAt" validate:"required"`

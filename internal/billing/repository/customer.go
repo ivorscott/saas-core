@@ -3,18 +3,21 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/devpies/saas-core/internal/billing/db"
 	"github.com/devpies/saas-core/internal/billing/model"
 	"github.com/devpies/saas-core/pkg/web"
 	"go.uber.org/zap"
-	"time"
 )
 
+// CustomerRepository manages data access to customers.
 type CustomerRepository struct {
 	logger *zap.Logger
 	pg     *db.PostgresDatabase
 }
 
+// NewCustomerRepository returns a CustomerRepository.
 func NewCustomerRepository(logger *zap.Logger, pg *db.PostgresDatabase) *CustomerRepository {
 	return &CustomerRepository{
 		logger: logger,
@@ -22,6 +25,7 @@ func NewCustomerRepository(logger *zap.Logger, pg *db.PostgresDatabase) *Custome
 	}
 }
 
+// SaveCustomer saves a customer.
 func (cr *CustomerRepository) SaveCustomer(ctx context.Context, nc model.NewCustomer, now time.Time) (model.Customer, error) {
 	var c model.Customer
 

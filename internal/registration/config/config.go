@@ -32,7 +32,7 @@ type Config struct {
 	}
 }
 
-// NewConfig creates a new configuration struct for the service.
+// NewConfig returns a new Config.
 func NewConfig() (Config, error) {
 	var cfg Config
 

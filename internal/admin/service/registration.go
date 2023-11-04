@@ -79,6 +79,7 @@ func (rs *RegistrationService) RegisterTenant(ctx context.Context, newTenant mod
 	return resp.StatusCode, nil
 }
 
+// ResendTemporaryPassword resends the user a temporary password.
 func (rs *RegistrationService) ResendTemporaryPassword(ctx context.Context, username string) (*cognitoidentityprovider.AdminCreateUserOutput, error) {
 	return rs.cognitoClient.AdminCreateUser(ctx, &cognitoidentityprovider.AdminCreateUserInput{
 		Username:      aws.String(username),

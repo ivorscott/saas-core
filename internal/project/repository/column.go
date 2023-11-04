@@ -23,7 +23,7 @@ type ColumnRepository struct {
 	pg     *db.PostgresDatabase
 }
 
-// NewColumnRepository returns a new ColumnRepository. The database connection is in the context.
+// NewColumnRepository returns a new ColumnRepository.
 func NewColumnRepository(logger *zap.Logger, pg *db.PostgresDatabase) *ColumnRepository {
 	return &ColumnRepository{
 		logger: logger,

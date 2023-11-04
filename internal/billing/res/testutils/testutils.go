@@ -16,12 +16,14 @@ import (
 )
 
 const (
+	// MockUUID represents a mock uuid value.
 	MockUUID    = "ac7b523d-1eb9-43f3-bd33-c3e8106c2e70"
 	rootUser    = "postgres"
 	dbDriver    = "postgres"
 	fixturesDir = "fixtures"
 )
 
+// MockCtx represents an empty context for tests.
 var MockCtx = context.Background()
 
 // DatabaseClient sets up a database and enables role switching.
@@ -77,6 +79,7 @@ func (client *DatabaseClient) AsNonRoot() (*db.PostgresDatabase, func() error) {
 	return client.connect()
 }
 
+// setRole sets the user role.
 func (client *DatabaseClient) setRole(role string) {
 	client.cfg.DB.User = role
 }

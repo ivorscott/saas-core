@@ -27,6 +27,7 @@ type subscriptionRepository interface {
 	GetOneSubscription(ctx context.Context, id string) (model.Subscription, error)
 }
 
+// SubscriptionService is responsible for managing subscription related business logic.
 type SubscriptionService struct {
 	logger           *zap.Logger
 	stripeClient     stripeClient
@@ -34,10 +35,13 @@ type SubscriptionService struct {
 }
 
 var (
-	ErrCreatingStripeCustomer    = errors.New("error creating stripe customer")
+	// ErrCreatingStripeCustomer represents an error creating a stripe customer.
+	ErrCreatingStripeCustomer = errors.New("error creating stripe customer")
+	// ErrSubscribingStripeCustomer represents an error creating a subscription for the stripe customer.
 	ErrSubscribingStripeCustomer = errors.New("error subscribing stripe customer")
 )
 
+// NewSubscriptionService returns a new SubscriptionService.
 func NewSubscriptionService(
 	logger *zap.Logger,
 	stripeClient stripeClient,
@@ -50,7 +54,8 @@ func NewSubscriptionService(
 	}
 }
 
-func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePayloadWithPlan) (string, error) {
+// SubscribeStripeCustomer creates a new stripe customer and attaches them to a stripe subscription.
+func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePayload) (string, error) {
 	var (
 		stripeSubscription *stripe.Subscription
 		stripeCustomer     *stripe.Customer
@@ -112,20 +117,24 @@ func (ss *SubscriptionService) Save(ctx context.Context, ns model.NewSubscriptio
 	return s, nil
 }
 
+// GetAll returns all subscriptions.
 func (ss *SubscriptionService) GetAll(ctx context.Context) ([]model.Subscription, error) {
 	var subs []model.Subscription
 	return subs, nil
 }
 
+// GetOne returns one specific subscription by id.
 func (ss *SubscriptionService) GetOne(ctx context.Context, id string) (model.Subscription, error) {
 	var sub model.Subscription
 	return sub, nil
 }
 
+// Cancel cancels a stripe subscription, transitioning the customer to the free tier.
 func (ss *SubscriptionService) Cancel(ctx context.Context) error {
 	return nil
 }
 
+// Refund refunds a subscription payment.
 func (ss *SubscriptionService) Refund(ctx context.Context) error {
 	return nil
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/stripe/stripe-go/v72/sub"
 )
 
-// StripeClient manages stripe credit cards.
+// Client manages stripe credit cards.
 type Client struct {
 	secretKey string
 	key       string

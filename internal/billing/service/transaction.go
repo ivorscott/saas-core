@@ -11,11 +11,13 @@ type transactionRepository interface {
 	SaveTransaction(ctx context.Context, nt model.NewTransaction, now time.Time) (model.Transaction, error)
 }
 
+// TransactionService is responsible for managing transaction related business logic.
 type TransactionService struct {
 	logger *zap.Logger
 	repo   transactionRepository
 }
 
+// NewTransactionService returns a new TransactionService.
 func NewTransactionService(logger *zap.Logger, repo transactionRepository) *TransactionService {
 	return &TransactionService{
 		logger: logger,

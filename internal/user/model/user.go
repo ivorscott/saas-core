@@ -2,7 +2,17 @@ package model
 
 import "time"
 
-// User represent a user profile
+// MaximumSeatsType describes the maximum amount of seats.
+type MaximumSeatsType int
+
+const (
+	// MaximumSeatsBasic represents the number of seats for tenants on a basic plan.
+	MaximumSeatsBasic MaximumSeatsType = 3
+	// MaximumSeatsPremium represents the number of seats for tenants on a premium plan.
+	MaximumSeatsPremium MaximumSeatsType = 25
+)
+
+// User represent a user profile.
 type User struct {
 	ID            string    `db:"user_id" json:"id"`
 	TenantID      string    `db:"tenant_id" json:"tenantId"`
@@ -16,7 +26,7 @@ type User struct {
 	CreatedAt     time.Time `db:"created_at" json:"createdAt"`
 }
 
-// NewUser represents a new user request
+// NewUser represents a new user request.
 type NewUser struct {
 	Company   string `json:"company" validate:"required"`
 	Email     string `json:"email" validate:"required"`
@@ -24,7 +34,7 @@ type NewUser struct {
 	LastName  string `json:"lastName"`
 }
 
-// NewAdminUser represents a new user request
+// NewAdminUser represents a new user request.
 type NewAdminUser struct {
 	UserID        string    `json:"userId" validate:"required"`
 	TenantID      string    `json:"tenantId" validate:"required"`
@@ -36,7 +46,7 @@ type NewAdminUser struct {
 	CreatedAt     time.Time `json:"createdAt"`
 }
 
-// UpdateUser represents an update to a user
+// UpdateUser represents an update to a user.
 type UpdateUser struct {
 	FirstName *string   `json:"firstName"`
 	LastName  *string   `json:"lastName"`
@@ -45,12 +55,14 @@ type UpdateUser struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+// Seats represents the current and allowed number of seats used in a tenant account.
 type Seats struct {
-	MaxSeats  int `db:"max_seats" json:"maxSeats"`
-	SeatsUsed int `db:"seats_used" json:"seatsUsed"`
+	MaxSeats  MaximumSeatsType `db:"max_seats" json:"maxSeats"`
+	SeatsUsed int              `db:"seats_used" json:"seatsUsed"`
 }
 
+// SeatsAvailableResult represents the client response.
 type SeatsAvailableResult struct {
-	MaxSeats       int `json:"maxSeats"`
-	SeatsAvailable int `json:"seatsAvailable"`
+	MaxSeats       MaximumSeatsType `json:"maxSeats"`
+	SeatsAvailable int              `json:"seatsAvailable"`
 }

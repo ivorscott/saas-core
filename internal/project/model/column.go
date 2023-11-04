@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/go-playground/validator/v10"
 	"time"
+
+	"github.com/go-playground/validator/v10"
 )
 
 var columnValidator *validator.Validate
@@ -31,6 +32,7 @@ type NewColumn struct {
 	ProjectID  string `json:"projectId" validate:"required,max=36"`
 }
 
+// Validate validates a NewColumn.
 func (nc *NewColumn) Validate() error {
 	return columnValidator.Struct(nc)
 }
@@ -41,6 +43,7 @@ type UpdateColumn struct {
 	TaskIDS []string `json:"taskIds"`
 }
 
+// Validate validates the UpdateColumn.
 func (uc *UpdateColumn) Validate() error {
 	return columnValidator.Struct(uc)
 }

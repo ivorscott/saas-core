@@ -1,20 +1,24 @@
+// Package repository manages the data access layer for handling queries.
 package repository
 
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/devpies/saas-core/internal/billing/db"
 	"github.com/devpies/saas-core/internal/billing/model"
 	"github.com/devpies/saas-core/pkg/web"
 	"go.uber.org/zap"
-	"time"
 )
 
+// SubscriptionRepository manages data access to subscriptions.
 type SubscriptionRepository struct {
 	logger *zap.Logger
 	pg     *db.PostgresDatabase
 }
 
+// NewSubscriptionRepository returns a new SubscriptionRepository.
 func NewSubscriptionRepository(logger *zap.Logger, pg *db.PostgresDatabase) *SubscriptionRepository {
 	return &SubscriptionRepository{
 		logger: logger,
@@ -22,6 +26,7 @@ func NewSubscriptionRepository(logger *zap.Logger, pg *db.PostgresDatabase) *Sub
 	}
 }
 
+// SaveSubscription saves a subscription.
 func (sr *SubscriptionRepository) SaveSubscription(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error) {
 	var (
 		s   model.Subscription
@@ -73,10 +78,13 @@ func (sr *SubscriptionRepository) SaveSubscription(ctx context.Context, ns model
 	return s, nil
 }
 
+// GetAllSubscriptions retrieves all subscriptions.
 func (sr *SubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([]model.Subscription, error) {
 	var subs []model.Subscription
 	return subs, nil
 }
+
+// GetOneSubscription retrieves one subscription by id.
 func (sr *SubscriptionRepository) GetOneSubscription(ctx context.Context, id string) (model.Subscription, error) {
 	var s model.Subscription
 	return s, nil

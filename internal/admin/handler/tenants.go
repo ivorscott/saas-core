@@ -31,6 +31,7 @@ func NewTenantHandler(
 	}
 }
 
+// ListTenants lists all tenants.
 func (th *TenantHandler) ListTenants(w http.ResponseWriter, r *http.Request) error {
 	tenants, status, err := th.service.ListTenants(r.Context())
 

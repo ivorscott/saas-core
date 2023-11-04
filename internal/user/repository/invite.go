@@ -30,7 +30,7 @@ func NewInviteRepository(
 	}
 }
 
-// Create inserts new invites into the database
+// Create inserts new invites into the database.
 func (ir *InviteRepository) Create(ctx context.Context, ni model.NewInvite, now time.Time) (model.Invite, error) {
 	var (
 		i   model.Invite

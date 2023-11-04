@@ -24,7 +24,7 @@ type TaskRepository struct {
 	pg     *db.PostgresDatabase
 }
 
-// NewTaskRepository returns a new TaskRepository. The database connection is in the context.
+// NewTaskRepository returns a new TaskRepository.
 func NewTaskRepository(logger *zap.Logger, pg *db.PostgresDatabase) *TaskRepository {
 	return &TaskRepository{
 		logger: logger,

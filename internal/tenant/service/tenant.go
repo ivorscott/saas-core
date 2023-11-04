@@ -160,7 +160,6 @@ func (ts *TenantService) Delete(ctx context.Context, tenantID string) error {
 	return nil
 }
 
-// TODO: remove user pool id from event. There's only one pool now (the shared user pool).
 func (ts *TenantService) createTenantIdentity(ctx context.Context, data msg.TenantRegisteredEventData) (*cognitoidentityprovider.AdminCreateUserOutput, error) {
 	return ts.cognitoClient.AdminCreateUser(ctx, &cognitoidentityprovider.AdminCreateUserInput{
 		UserPoolId: aws.String(ts.sharedPoolID),

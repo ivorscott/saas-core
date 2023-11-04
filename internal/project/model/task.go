@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/go-playground/validator/v10"
 	"time"
+
+	"github.com/go-playground/validator/v10"
 )
 
 var taskValidator *validator.Validate
@@ -34,6 +35,7 @@ type NewTask struct {
 	Title string `json:"title" validate:"required,min=1,max=75"`
 }
 
+// Validate validates a NewTask.
 func (nt *NewTask) Validate() error {
 	return taskValidator.Struct(nt)
 }
@@ -49,6 +51,7 @@ type UpdateTask struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
+// Validate validates an UpdateTask payload.
 func (ut *UpdateTask) Validate() error {
 	return taskValidator.Struct(ut)
 }
@@ -60,6 +63,7 @@ type MoveTask struct {
 	TaskIds []string `json:"taskIds" validate:"required"`
 }
 
+// Validate validates a MoveTask payload.
 func (mt *MoveTask) Validate() error {
 	return taskValidator.Struct(mt)
 }

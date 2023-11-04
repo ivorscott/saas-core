@@ -1,3 +1,4 @@
+// Package repository manages the data access layer for handling queries.
 package repository
 
 import (
@@ -26,7 +27,7 @@ type ProjectRepository struct {
 	runTx  func(ctx context.Context, fn func(*sqlx.Tx) error) error
 }
 
-// NewProjectRepository returns a new ProjectRepository. The database connection is in the context.
+// NewProjectRepository returns a new ProjectRepository.
 func NewProjectRepository(logger *zap.Logger, pg *db.PostgresDatabase) *ProjectRepository {
 	return &ProjectRepository{
 		logger: logger,
@@ -35,6 +36,7 @@ func NewProjectRepository(logger *zap.Logger, pg *db.PostgresDatabase) *ProjectR
 	}
 }
 
+// RunTx runs a function within a transaction context.
 func (pr *ProjectRepository) RunTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	return pr.runTx(ctx, fn)
 }

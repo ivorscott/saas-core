@@ -29,7 +29,7 @@ func NewSeatRepository(
 }
 
 // InsertSeatsEntry inserts a new seats entry into the database.
-func (sr *SeatRepository) InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, maxSeats int) error {
+func (sr *SeatRepository) InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, maxSeats model.MaximumSeatsType) error {
 	var err error
 
 	values, ok := web.FromContext(ctx)

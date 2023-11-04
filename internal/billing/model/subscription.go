@@ -12,17 +12,22 @@ func init() {
 	subscriptionValidator = v
 }
 
-type SubscriptionPlan int
+// SubscriptionPlanType describes the type of plan.
+type SubscriptionPlanType int
 
 const (
-	Basic SubscriptionPlan = iota
+	// Basic is the free tier option.
+	Basic SubscriptionPlanType = iota
+	// Premium is the paid tier option.
 	Premium
 )
 
-func (s SubscriptionPlan) String() string {
+// String returns the corresponding string value for a subscription plan.
+func (s SubscriptionPlanType) String() string {
 	return [...]string{"Basic", "Premium"}[s]
 }
 
+// SubscriptionStatusType describes a subscription status type.
 type SubscriptionStatusType int
 
 const (
@@ -34,13 +39,15 @@ const (
 	SubscriptionStatusCancelled
 )
 
+// String returns the corresponding string value for a subscription status.
 func (s SubscriptionStatusType) String() string {
 	return [...]string{"Cleared", "Refunded", "Cancelled"}[s]
 }
 
+// NewSubscription represents a new subscription payload.
 type NewSubscription struct {
 	ID            string                 `json:"id" validate:"required,uuid4"`
-	Plan          SubscriptionPlan       `json:"plan" validate:"oneof=0 1"`
+	Plan          SubscriptionPlanType   `json:"plan" validate:"oneof=0 1"`
 	TransactionID string                 `json:"transactionId" validate:"required,uuid4"`
 	StatusID      SubscriptionStatusType `json:"statusId" validate:"required,oneof=0 1 2"`
 	Amount        int                    `json:"amount" validate:"gt=0"`
@@ -52,9 +59,10 @@ func (ns *NewSubscription) Validate() error {
 	return subscriptionValidator.Struct(ns)
 }
 
+// Subscription represents a stripe subscription for a tenant.
 type Subscription struct {
 	ID            string                 `json:"id" db:"subscription_id"`
-	Plan          SubscriptionPlan       `json:"plan" db:"plan"`
+	Plan          SubscriptionPlanType   `json:"plan" db:"plan"`
 	TransactionID string                 `json:"transactionId" db:"transaction_id"`
 	StatusID      SubscriptionStatusType `json:"statusId" db:"status_id"`
 	Amount        int                    `json:"amount" db:"amount"`
@@ -64,8 +72,9 @@ type Subscription struct {
 	CreatedAt     time.Time              `json:"createdAt" db:"created_at"`
 }
 
+// UpdateSubscription represents a subscription update.
 type UpdateSubscription struct {
-	Plan          *SubscriptionPlan       `json:"plan" validate:"omitempty,oneof=0 1"`
+	Plan          *SubscriptionPlanType   `json:"plan" validate:"omitempty,oneof=0 1"`
 	TransactionID *string                 `json:"transactionId" validate:"omitempty,uuid4"`
 	StatusID      *SubscriptionStatusType `json:"statusId" validate:"omitempty,oneof=0 1 2"`
 	Amount        *int                    `json:"amount" validate:"omitempty,gt=0"`

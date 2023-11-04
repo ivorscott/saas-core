@@ -29,6 +29,7 @@ type NewComment struct {
 	Content string `json:"content" validate:"required,max=500"`
 }
 
+// Validate validates a NewComment.
 func (nc *NewComment) Validate() error {
 	return commentValidator.Struct(nc)
 }
@@ -39,6 +40,7 @@ type UpdateComment struct {
 	Liked   *bool   `json:"liked"`
 }
 
+// Validate validates an UpdateComment.
 func (uc *UpdateComment) Validate() error {
 	return commentValidator.Struct(uc)
 }

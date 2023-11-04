@@ -10,11 +10,13 @@ import (
 	"time"
 )
 
+// TransactionRepository manages data access to customer transactions.
 type TransactionRepository struct {
 	logger *zap.Logger
 	pg     *db.PostgresDatabase
 }
 
+// NewTransactionRepository returns a new TransactionRepository.
 func NewTransactionRepository(logger *zap.Logger, pg *db.PostgresDatabase) *TransactionRepository {
 	return &TransactionRepository{
 		logger: logger,
@@ -22,7 +24,7 @@ func NewTransactionRepository(logger *zap.Logger, pg *db.PostgresDatabase) *Tran
 	}
 }
 
-// SaveTransaction saves a new stripe transaction.
+// SaveTransaction saves a new customer transaction.
 func (tr *TransactionRepository) SaveTransaction(ctx context.Context, nt model.NewTransaction, now time.Time) (model.Transaction, error) {
 	var (
 		t   model.Transaction

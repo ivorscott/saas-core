@@ -12,6 +12,4 @@ var (
 	ErrNoTenant = errors.New("missing tenant id")
 	// ErrConnectionFailed represents a failed connection attempt.
 	ErrConnectionFailed = errors.New("connection failed")
-	// DeleteFailed represents a failed attempt to delete.
-	DeleteFailed = errors.New("delete failed")
 )

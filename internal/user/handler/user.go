@@ -59,6 +59,7 @@ func (uh *UserHandler) List(w http.ResponseWriter, r *http.Request) error {
 	return web.Respond(r.Context(), w, users, http.StatusOK)
 }
 
+// SeatsAvailable returns the remaining number of seats for a tenant account.
 func (uh *UserHandler) SeatsAvailable(w http.ResponseWriter, r *http.Request) error {
 	result, err := uh.userService.SeatsAvailable(r.Context())
 	if err != nil {
@@ -95,8 +96,8 @@ func (uh *UserHandler) RetrieveMe(w http.ResponseWriter, r *http.Request) error 
 	return web.Respond(r.Context(), w, us, http.StatusOK)
 }
 
+// RemoveUser removes a user from a tenant account.
 func (uh *UserHandler) RemoveUser(w http.ResponseWriter, r *http.Request) error {
-
 	uid := chi.URLParam(r, "uid")
 
 	err := uh.userService.RemoveUser(r.Context(), uid)

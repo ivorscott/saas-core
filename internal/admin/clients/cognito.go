@@ -1,3 +1,4 @@
+// Package clients manages the clients.
 package clients
 
 import (

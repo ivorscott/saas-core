@@ -1,13 +1,16 @@
+// Package handler manages the presentation layer for handling incoming requests.
 package handler
 
 import (
 	"context"
+	"net/http"
+	"time"
+
 	"github.com/devpies/saas-core/internal/billing/model"
 	"github.com/devpies/saas-core/pkg/web"
 	"github.com/google/uuid"
+
 	"go.uber.org/zap"
-	"net/http"
-	"time"
 )
 
 type subscriptionService interface {
@@ -16,7 +19,7 @@ type subscriptionService interface {
 	Save(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error)
 	GetAll(ctx context.Context) ([]model.Subscription, error)
 	GetOne(ctx context.Context, id string) (model.Subscription, error)
-	SubscribeStripeCustomer(nsp model.NewStripePayloadWithPlan) (string, error)
+	SubscribeStripeCustomer(nsp model.NewStripePayload) (string, error)
 }
 
 type transactionService interface {
@@ -27,6 +30,7 @@ type customerService interface {
 	Save(ctx context.Context, nc model.NewCustomer, now time.Time) (model.Customer, error)
 }
 
+// SubscriptionHandler handles subscription related requests.
 type SubscriptionHandler struct {
 	logger              *zap.Logger
 	subscriptionService subscriptionService
@@ -34,13 +38,13 @@ type SubscriptionHandler struct {
 	customerService     customerService
 }
 
+// NewSubscriptionHandler returns a SubscriptionHandler.
 func NewSubscriptionHandler(
 	logger *zap.Logger,
 	subscriptionService subscriptionService,
 	transactionService transactionService,
 	customerService customerService,
 ) *SubscriptionHandler {
-
 	return &SubscriptionHandler{
 		logger:              logger,
 		subscriptionService: subscriptionService,
@@ -49,9 +53,10 @@ func NewSubscriptionHandler(
 	}
 }
 
+// Create sets up a new subscription for the customer.
 func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	var (
-		payload model.NewStripePayloadWithPlan
+		payload model.NewStripePayload
 		err     error
 	)
 
@@ -116,22 +121,27 @@ func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) er
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
+// GetAll retrieves all subscriptions.
 func (sh *SubscriptionHandler) GetAll(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// GetOne retrieves a specific subscription by id.
 func (sh *SubscriptionHandler) GetOne(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// GetPaymentIntent retrieves the paymentIntent from stripe.
 func (sh *SubscriptionHandler) GetPaymentIntent(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// Cancel cancels a paid subscription.
 func (sh *SubscriptionHandler) Cancel(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// Refund provides a refund for the customer.
 func (sh *SubscriptionHandler) Refund(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }

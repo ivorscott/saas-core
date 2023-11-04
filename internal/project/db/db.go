@@ -87,6 +87,7 @@ func (pg *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func
 	return conn, conn.Close, nil
 }
 
+// TestsOnlyDBConnection returns a database connection for tests.
 func (pg *PostgresDatabase) TestsOnlyDBConnection() *sql.DB {
 	return pg.db.DB
 }

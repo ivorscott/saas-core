@@ -11,11 +11,13 @@ type customerRepository interface {
 	SaveCustomer(ctx context.Context, nc model.NewCustomer, now time.Time) (model.Customer, error)
 }
 
+// CustomerService is responsible for managing customer related business logic.
 type CustomerService struct {
 	logger *zap.Logger
 	repo   customerRepository
 }
 
+// NewCustomerService returns a new CustomerService.
 func NewCustomerService(logger *zap.Logger, repo customerRepository) *CustomerService {
 	return &CustomerService{
 		logger: logger,

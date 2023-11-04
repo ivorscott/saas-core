@@ -32,7 +32,7 @@ type seatRepository interface {
 	IncrementSeatsUsedTx(ctx context.Context, tx *sqlx.Tx) error
 	DecrementSeatsUsedTx(ctx context.Context, tx *sqlx.Tx) error
 	FindSeatsAvailable(ctx context.Context) (model.Seats, error)
-	InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, maxSeats int) error
+	InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, maxSeats model.MaximumSeatsType) error
 }
 
 type cognitoClient interface {
@@ -66,11 +66,6 @@ type UserService struct {
 	connectionRepo   connectionRepository
 	sharedUserPoolID string
 }
-
-const (
-	MaximumSeatsBasic   = 3
-	MaximumSeatsPremium = 25
-)
 
 // NewUserService returns a new user service.
 func NewUserService(
@@ -245,9 +240,9 @@ func (us *UserService) AddAdminUserFromEvent(ctx context.Context, message interf
 }
 
 func (us *UserService) configureMaxSeats(ctx context.Context, tx *sqlx.Tx, plan string) error {
-	var maxSeats = MaximumSeatsBasic
+	var maxSeats = model.MaximumSeatsBasic
 	if plan == "premium" {
-		maxSeats = MaximumSeatsPremium
+		maxSeats = model.MaximumSeatsPremium
 	}
 	// Add entry to seats table.
 	return us.seatRepo.InsertSeatsEntryTx(ctx, tx, maxSeats)
@@ -266,18 +261,22 @@ func newAdminUser(data msg.TenantIdentityCreatedEventData) model.NewAdminUser {
 	}
 }
 
+// List returns all users associated to the tenant account.
 func (us *UserService) List(ctx context.Context) ([]model.User, error) {
 	return us.userRepo.List(ctx)
 }
 
+// RetrieveByEmail retrieves a user by email.
 func (us *UserService) RetrieveByEmail(ctx context.Context, email string) (model.User, error) {
 	return us.userRepo.RetrieveByEmail(ctx, email)
 }
 
+// RetrieveMe returns the requester user details.
 func (us *UserService) RetrieveMe(ctx context.Context) (model.User, error) {
 	return us.userRepo.RetrieveMe(ctx)
 }
 
+// SeatsAvailable returns the number of remaining seats available.
 func (us *UserService) SeatsAvailable(ctx context.Context) (model.SeatsAvailableResult, error) {
 	var res model.SeatsAvailableResult
 
@@ -286,7 +285,7 @@ func (us *UserService) SeatsAvailable(ctx context.Context) (model.SeatsAvailable
 		return res, err
 	}
 
-	seatsAvailable := result.MaxSeats - result.SeatsUsed
+	seatsAvailable := int(result.MaxSeats) - result.SeatsUsed
 	if seatsAvailable < 0 {
 		us.logger.Error("seats available is less than 0")
 		return res, web.NewShutdownError("unexpected seats available")
@@ -298,6 +297,7 @@ func (us *UserService) SeatsAvailable(ctx context.Context) (model.SeatsAvailable
 	}, nil
 }
 
+// RemoveUser removes a user from a tenant account and updates the available seats.
 func (us *UserService) RemoveUser(ctx context.Context, uid string) error {
 	// Remove user and decrement the seats used counter.
 	if err := us.userRepo.RunTx(ctx, func(tx *sqlx.Tx) error {
