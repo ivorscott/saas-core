@@ -43,10 +43,11 @@ Tested on a m1 mac . It should work on linux as well.
    
 6. Start containers: `tilt up`
 
-7. In another terminal, port forward the traefik ports: `make ports`
-8. In another terminal, deploy ingress routes: `make routes`. http://localhost:8080/dashboard/#/http/routers.
+7. Port forward the traefik ports: `make ports`
+8. Deploy ingress routes: `make routes`
+- http://localhost:8080/dashboard/#/http/routers
 
-![](img/traefik.png)
+![](img/traefik.png) 
 
 ## Getting Help
 If you need help or have questions create an issue. Alternatively, you can join our [discord server](https://discord.gg/MeKKvHBKQG) 

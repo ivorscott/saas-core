@@ -1,10 +1,22 @@
 # SaaS-Core
 
-Multi-tenant SaaS app built on AWS
+This project has 3 repositories:
 
-## Setup
+- [sass-core](https://github.com/devpies/saas-core) (this repo)
+- [sass-client](https://github.com/devpies/saas-client)
+- [sass-infra](https://github.com/devpies/saas-infra)
 
-Read [instructions](docs/SETUP.md).
+## Overview
+
+SaaS-Core is a multi-tenant SaaS backend and monorepo of Go services. It supports the SaaS-Client application: a 
+simple project management tool like Jira or Trello. 
+
+Necessary services include: registration, tenant and user management, 
+project management, billing, and SaaS administration.
+
+## Prerequisites
+
+Read initial setup [instructions](docs/SETUP.md).
 
 ### Cheatsheets
 
@@ -12,11 +24,10 @@ Read [instructions](docs/SETUP.md).
 - [Using Postgres](docs/postgres.md)
 - [Project Structure](docs/structure.md)
 
-## Using Make
-By default, using Tilt allows you to develop against running containers. Alternatively, you can simultaneously run
-go binaries natively for an idiomatic go development experience.
+## Getting Started
 
 ```bash
+# Run make to print instructions
 > make
 
 - Setup Instructions - 
@@ -25,16 +36,14 @@ go binaries natively for an idiomatic go development experience.
 2. make ports
 3. make routes
 
-admin             Run admin app with live reload.
-admin-end         Run end-to-end admin tests with Cypress.
-admin-test        Run admin tests. Add " -- -v" for verbosity.
-admin-mock        Generate admin mocks.
-admin-db          Enter admin database.
-admin-db-gen      Generate migration files. Required <name> argument.
-admin-db-migrate  Migrate admin database. Optional <num> argument.
-admin-db-version  Print migration version for admin database.
-admin-db-rollback Rollback admin database. Optional <num> argument.
-lint              Run linter.
+admin-test           Run admin tests. Add " -- -v" for verbosity.
+admin-mock           Generate admin mocks.
+admin-db             Enter admin database.
+admin-db-gen         Generate migration files. Required <name> argument.
+admin-db-migrate     Migrate admin database. Optional <num> argument.
+admin-db-version     Print migration version for admin database.
+admin-db-rollback    Rollback admin database. Optional <num> argument.
+admin-db-force       Force version on admin database. Optional <num> argument.
 ...
 ```
 > __TIP__
