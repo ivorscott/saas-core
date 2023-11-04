@@ -2,23 +2,9 @@ include .env
 
 .DEFAULT_GOAL := help
 
-# Admin service =============================================================
-admin: ;@ ## Run admin app with live reload.
-	@CompileDaemon \
-	-build="go build -o ./bin/admin ./cmd/admin" \
-	-command="./bin/admin \
-	--web-port=${ADMIN_WEB_PORT} \
-	--cognito-user-pool-id=${ADMIN_USER_POOL_ID} \
-	--cognito-user-pool-client-id=${ADMIN_USER_POOL_CLIENT_ID} \
-	--cognito-shared-user-pool-id=${SHARED_USER_POOL_ID} \
-	--cognito-region=${REGION} \
-	--registration-service-port=${REGISTRATION_WEB_PORT} \
-	--db-port=${ADMIN_DB_PORT} \
-	--db-disable-tls=true" \
-	-include="*.gohtml" \
-	-log-prefix=false
-.PHONY: admin
-
+# =============================================================
+# ADMIN SERVICE
+# =============================================================
 admin-test: admin-mock	;@ ## Run admin tests. Add " -- -v" for verbosity.
 	go test $(val) -cover ./internal/admin/...
 .PHONY: admin-test
@@ -51,20 +37,9 @@ admin-db-force: ;@ ## Force version on admin database. Optional <num> argument.
 	@migrate -path ./internal/admin/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(ADMIN_DB_PORT)/admin?sslmode=disable force $(val)
 .PHONY: admin-db-force
 
-# Registration service =============================================================
-registration: ;@ ## Run registration api with live reload.
-	@CompileDaemon \
-	-build="go build -o ./bin/registration ./cmd/registration" \
-	-command="./bin/registration \
-	--web-port=${REGISTRATION_WEB_PORT} \
-	--cognito-user-pool-id=${ADMIN_USER_POOL_ID} \
-	--cognito-region=${REGION} \
-	--dynamodb-tenant-table=${DYNAMODB_TENANT_TABLE} \
-	--dynamodb-auth-table=${DYNAMODB_AUTH_TABLE} \
-	--dynamodb-config-table=${DYNAMODB_CONFIG_TABLE}" \
-	-log-prefix=false
-.PHONY: registration
-
+# =============================================================
+# REGISTRATION SERVICE
+# =============================================================
 registration-test: registration-mock	;@ ## Run registration tests. Add " -- -v" for verbosity.
 	go test $(val) -cover ./internal/registration/...
 .PHONY: registration-test
@@ -73,22 +48,9 @@ registration-mock: ;@ ## Generate registration mocks.
 	go generate ./internal/registration/...
 .PHONY: registration-mock
 
-# Tenant service =============================================================
-tenant: ;@ ## Run tenant api with live reload.
-	@CompileDaemon \
-	-build="go build -o ./bin/tenant ./cmd/tenant" \
-	-command="./bin/tenant \
-	--web-port=${TENANT_WEB_PORT} \
-	--cognito-user-pool-id=${ADMIN_USER_POOL_ID} \
-	--cognito-shared-user-pool-id=${SHARED_USER_POOL_ID} \
-	--cognito-region=${REGION} \
-	--dynamodb-connection-table=${DYNAMODB_CONNECTION_TABLE} \
-	--dynamodb-tenant-table=${DYNAMODB_TENANT_TABLE} \
-	--dynamodb-auth-table=${DYNAMODB_AUTH_TABLE} \
-	--dynamodb-config-table=${DYNAMODB_CONFIG_TABLE}" \
-	-log-prefix=false
-.PHONY: tenant
-
+# =============================================================
+# TENANT SERVICE
+# =============================================================
 tenant-test: tenant-mock	;@ ## Run tenant tests. Add " -- -v" for verbosity.
 	go test $(val) -cover ./internal/tenant/...
 .PHONY: tenant-test
@@ -97,19 +59,9 @@ tenant-mock: ;@ ## Generate tenant mocks.
 	go generate ./internal/tenant/...
 .PHONY: tenant-mock
 
-# Project service =============================================================
-project: ;@ ## Run project api with live reload.
-	@CompileDaemon \
-	-build="go build -o ./bin/project ./cmd/project" \
-	-command="./bin/project \
-	--web-port=${PROJECT_WEB_PORT} \
-	--cognito-user-pool-id=${SHARED_USER_POOL_ID} \
-	--cognito-region=${REGION} \
-	--db-port=${PROJECT_DB_PORT} \
-	--db-disable-tls=true" \
-	-log-prefix=false
-.PHONY: project
-
+# =============================================================
+# PROJECT SERVICE
+# =============================================================
 project-test: project-mock	;@ ## Run project tests. Add " -- -v" for verbosity.
 	go test $(val) -cover ./internal/project/...
 .PHONY: project-test
@@ -142,20 +94,9 @@ project-db-force: ;@ ## Force version on project database. Optional <num> argume
 	@migrate -path ./internal/project/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(PROJECT_DB_PORT)/project?sslmode=disable force $(val)
 .PHONY: project-db-force
 
-# User service =============================================================
-user: ;@ ## Run user api with live reload.
-	@CompileDaemon \
-	-build="go build -o ./bin/user ./cmd/user" \
-	-command="./bin/user \
-	--web-port=${USER_WEB_PORT} \
-	--cognito-shared-user-pool-id=${SHARED_USER_POOL_ID} \
-	--cognito-region=${REGION} \
-	--dynamodb-connection-table=${DYNAMODB_CONNECTION_TABLE} \
-	--db-port=${USER_DB_PORT} \
-	--db-disable-tls=true" \
-	-log-prefix=false
-.PHONY: user
-
+# =============================================================
+# USER SERVICE
+# =============================================================
 user-db: ;@ ## Enter user database.
 	@pgcli postgres://postgres:postgres@localhost:$(USER_DB_PORT)/user
 .PHONY: user-db
