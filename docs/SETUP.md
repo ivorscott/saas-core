@@ -22,7 +22,6 @@ Tested on a m1 mac . It should work on linux as well.
 1. Checkout `saas-infra` and deploy the `local` infrastructure.
    - You will need to supply a valid email for the _SaaS provider admin user_. This user is used to
    login to the admin web app.
-   ![](img/admin-webapp.png)
 2. Copy `./manifests/secrets.sample.yaml` and create your own `./manifests/secrets.yaml` file.
 3. Generate valid tls self-signed certificates: `mkcert devpie.local "*.devpie.local" localhost 127.0.0.1 ::1`
 4. Generate the `tls-secret` yaml for traefik with the certificate values: 
@@ -45,9 +44,15 @@ Tested on a m1 mac . It should work on linux as well.
 
 7. Port forward the traefik ports: `make ports`
 8. Deploy ingress routes: `make routes`
-- http://localhost:8080/dashboard/#/http/routers
+http://localhost:8080/dashboard/#/http/routers
 
-![](img/traefik.png) 
+    ![](img/traefik.png)
+
+9. Login to the SaaS admin app (check your email for credentials).
+   ![](img/admin-webapp.png)
+10. Create a new tenant. This is required to log into the SaaS-Client application (https://devpie.local:3000). Use a real email. 
+You will be sent a password.
+      ![](img/admin-webapp-tenant.png)
 
 ## Getting Help
 If you need help or have questions create an issue. Alternatively, you can join our [discord server](https://discord.gg/MeKKvHBKQG) 
