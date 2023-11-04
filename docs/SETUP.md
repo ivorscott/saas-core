@@ -1,19 +1,20 @@
 # Setup Guide
 
-## Requirements
-
 Tested on a m1 mac . It should work on linux as well.
 
+## Requirements
+
 - aws account
-- install kubernetes
-- install [terraform](https://www.terraform.io/)
-- install [go v1.21 or higher](https://go.dev/doc/install)
-- install [tilt](https://tilt.dev/)
-- install [mkcert](https://github.com/FiloSottile/mkcert)
-- install [mockery](https://github.com/vektra/mockery)
-- install [pgcli](https://www.pgcli.com/)
-- install [golangci-lint](https://github.com/golangci/golangci-lint)
-- install [go-migrate](https://github.com/golang-migrate/migrate)
+- kubernetes
+- tools:
+  - [terraform](https://www.terraform.io/)
+  - [go v1.21 or higher](https://go.dev/doc/install)
+  - [tilt](https://tilt.dev/)
+  - [mkcert](https://github.com/FiloSottile/mkcert)
+  - [mockery](https://github.com/vektra/mockery)
+  - [pgcli](https://www.pgcli.com/)
+  - [golangci-lint](https://github.com/golangci/golangci-lint)
+  - [go-migrate](https://github.com/golang-migrate/migrate)
 - [saas-infra resources](https://github.com/devpies/saas-infra/tree/main/local/saas)
 
 ## Instructions 
@@ -22,16 +23,14 @@ Tested on a m1 mac . It should work on linux as well.
    - You will need to supply a valid email for the _SaaS provider admin user_. This user is used to
    login to the admin web app.
    ![](img/admin-webapp.png)
-2. Use terraform output values for this repository's `.env` file.
-3. Copy `.env.sample` in the project root and create your own `.env` file.
-4. Copy `./manifests/secrets.sample.yaml` and create your own `./manifests/secrets.yaml` file.
-5. Generate valid tls self-signed certificates: `mkcert devpie.local "*.devpie.local" localhost 127.0.0.1 ::1`
-6. Generate the `tls-secret` yaml for traefik with the certificate values: 
+2. Copy `./manifests/secrets.sample.yaml` and create your own `./manifests/secrets.yaml` file.
+3. Generate valid tls self-signed certificates: `mkcert devpie.local "*.devpie.local" localhost 127.0.0.1 ::1`
+4. Generate the `tls-secret` yaml for traefik with the certificate values: 
    ```
    kubectl create secret generic tls-secret --from-file=tls.crt=./devpie.local.pem --from-file=tls.key=./devpie.local-key.pem -o yaml 
    ```
    Then add the contents to the bottom of your secrets.yaml file.
-7. Modify your hosts file:
+5. Modify your hosts file:
    ```bash
     ##
     # Host Database
@@ -42,11 +41,10 @@ Tested on a m1 mac . It should work on linux as well.
     127.0.0.1       localhost devpie.local admin.devpie.local api.devpie.local 
     ```
    
-8. Start containers: `tilt up`
+6. Start containers: `tilt up`
 
-9. In another terminal, port forward the traefik ports: `make ports`
-10. In another terminal, deploy ingress routes: `make routes`
-11. Navigate to http://localhost:8080/dashboard/#/http/routers. You should see `4` tls terminated routers.
+7. In another terminal, port forward the traefik ports: `make ports`
+8. In another terminal, deploy ingress routes: `make routes`. http://localhost:8080/dashboard/#/http/routers.
 
 ![](img/traefik.png)
 
