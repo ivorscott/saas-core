@@ -38,7 +38,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: admin_user_pool_id
+                  key: shared_user_pool_id
             - name: BILLING_COGNITO_REGION
               valueFrom:
                 configMapKeyRef:

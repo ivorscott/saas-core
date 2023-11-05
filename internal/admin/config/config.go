@@ -23,6 +23,8 @@ type Config struct {
 		UserPoolID       string `conf:"required"`
 		UserPoolClientID string `conf:"required"`
 		SharedUserPoolID string `conf:"required"`
+		M2MClientID      string `conf:"required"`
+		M2MClientSecret  string `conf:"required"`
 		Region           string `conf:"required"`
 	}
 	DB struct {

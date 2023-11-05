@@ -24,8 +24,8 @@ type Config struct {
 		Secret string `conf:"required"`
 	}
 	Cognito struct {
-		UserPoolID string `conf:"required"`
-		Region     string `conf:"required"`
+		SharedUserPoolID string `conf:"required"`
+		Region           string `conf:"required"`
 	}
 	DB struct {
 		User       string `conf:"default:user_a,noprint"`
