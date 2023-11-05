@@ -1,3 +1,4 @@
+// Package model provides data transfer objects and validation.
 package model
 
 import "time"

@@ -1,7 +1,6 @@
 package project
 
 import (
-	"github.com/go-chi/cors"
 	"net/http"
 	"os"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/devpies/saas-core/pkg/web/mid"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"go.uber.org/zap"
 )
 

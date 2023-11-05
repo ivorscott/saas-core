@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+
+	"github.com/devpies/saas-core/internal/user/model"
+	"github.com/devpies/saas-core/pkg/web"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/devpies/saas-core/internal/user/model"
-	"github.com/devpies/saas-core/pkg/web"
 )
 
 // ConnectionRepository manages data access to user tenant connections.

@@ -1,3 +1,4 @@
+// Package render manages the web app page rendering logic.
 package render
 
 import (

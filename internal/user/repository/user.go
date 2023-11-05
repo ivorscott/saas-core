@@ -1,10 +1,10 @@
+// Package repository manages the data access layer for handling queries.
 package repository
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"net/mail"
 	"time"
 
@@ -14,6 +14,7 @@ import (
 	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
@@ -36,6 +37,7 @@ func NewUserRepository(
 	}
 }
 
+// RunTx runs a function within a transaction context.
 func (ur *UserRepository) RunTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	return ur.runTx(ctx, fn)
 }
@@ -70,7 +72,7 @@ func (ur *UserRepository) AddUserTx(ctx context.Context, tx *sqlx.Tx, userID str
 	return nil
 }
 
-// CreateUser creates a tenant agnostic user profile. Row level security is not enabled on "user_profiles".
+// CreateUserProfile creates a tenant agnostic user profile. Row level security is not enabled on "user_profiles".
 func (ur *UserRepository) CreateUserProfile(ctx context.Context, nu model.NewUser, userID string, now time.Time) (model.User, error) {
 	var (
 		u   model.User
@@ -298,6 +300,7 @@ func (ur *UserRepository) RetrieveMe(ctx context.Context) (model.User, error) {
 	return u, nil
 }
 
+// DetachUserTx detaches a user from a tenant account.
 func (ur *UserRepository) DetachUserTx(ctx context.Context, tx *sqlx.Tx, uid string) error {
 	values, ok := web.FromContext(ctx)
 	if !ok {

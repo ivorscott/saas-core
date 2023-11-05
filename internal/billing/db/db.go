@@ -5,10 +5,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/devpies/saas-core/internal/billing/fail"
 	"net/url"
 
 	"github.com/devpies/saas-core/internal/billing/config"
+	"github.com/devpies/saas-core/internal/billing/fail"
 	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/jmoiron/sqlx"
@@ -87,6 +87,7 @@ func (pg *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func
 	return conn, conn.Close, nil
 }
 
+// TestsOnlyDBConnection returns a database connection for tests.
 func (pg *PostgresDatabase) TestsOnlyDBConnection() *sql.DB {
 	return pg.db.DB
 }

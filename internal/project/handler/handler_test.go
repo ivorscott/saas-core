@@ -2,10 +2,11 @@
 package handler_test
 
 import (
-	"github.com/devpies/saas-core/internal/project/model"
-	"github.com/devpies/saas-core/internal/project/res/testutils"
 	"os"
 	"testing"
+
+	"github.com/devpies/saas-core/internal/project/model"
+	"github.com/devpies/saas-core/internal/project/res/testutils"
 )
 
 var (

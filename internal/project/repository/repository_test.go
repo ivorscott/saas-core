@@ -1,16 +1,17 @@
 package repository_test
 
 import (
-	"github.com/devpies/saas-core/internal/project/repository"
-	"github.com/devpies/saas-core/internal/project/res/testutils"
-	"github.com/devpies/saas-core/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 	"os"
 	"testing"
 
 	"github.com/devpies/saas-core/internal/project/model"
+	"github.com/devpies/saas-core/internal/project/repository"
+	"github.com/devpies/saas-core/internal/project/res/testutils"
+	"github.com/devpies/saas-core/pkg/web"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 var (

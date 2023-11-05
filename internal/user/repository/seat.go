@@ -2,12 +2,13 @@ package repository
 
 import (
 	"context"
+
 	"github.com/devpies/saas-core/internal/user/db"
 	"github.com/devpies/saas-core/internal/user/fail"
 	"github.com/devpies/saas-core/internal/user/model"
 	"github.com/devpies/saas-core/pkg/web"
-	"github.com/jmoiron/sqlx"
 
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
@@ -28,7 +29,7 @@ func NewSeatRepository(
 	}
 }
 
-// InsertSeatsEntry inserts a new seats entry into the database.
+// InsertSeatsEntryTx inserts a new seats entry into the database.
 func (sr *SeatRepository) InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, maxSeats model.MaximumSeatsType) error {
 	var err error
 
@@ -60,6 +61,7 @@ func (sr *SeatRepository) InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, m
 	return nil
 }
 
+// FindSeatsAvailable retrieves both the number of available seats and the maximum number of allowed seats.
 func (sr *SeatRepository) FindSeatsAvailable(ctx context.Context) (model.Seats, error) {
 	var (
 		s   model.Seats

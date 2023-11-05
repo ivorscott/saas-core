@@ -1,3 +1,4 @@
+// Package stripe provides the stripe client and subscription logic.
 package stripe
 
 import (
@@ -147,6 +148,7 @@ func (c *Client) Refund(pi string, amount int) error {
 	return nil
 }
 
+// CancelSubscription cancel stripe subscription.
 func (c *Client) CancelSubscription(subID string) error {
 	stripe.Key = c.secretKey
 

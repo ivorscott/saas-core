@@ -1,13 +1,9 @@
+// Package billing provides the billing api.
 package billing
 
 import (
 	"context"
 	"fmt"
-	"github.com/devpies/saas-core/internal/billing/handler"
-	"github.com/devpies/saas-core/internal/billing/repository"
-	"github.com/devpies/saas-core/internal/billing/service"
-	"github.com/devpies/saas-core/internal/billing/stripe"
-
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,8 +11,13 @@ import (
 
 	"github.com/devpies/saas-core/internal/billing/config"
 	"github.com/devpies/saas-core/internal/billing/db"
+	"github.com/devpies/saas-core/internal/billing/handler"
+	"github.com/devpies/saas-core/internal/billing/repository"
 	"github.com/devpies/saas-core/internal/billing/res"
+	"github.com/devpies/saas-core/internal/billing/service"
+	"github.com/devpies/saas-core/internal/billing/stripe"
 	"github.com/devpies/saas-core/pkg/log"
+
 	"go.uber.org/zap"
 )
 

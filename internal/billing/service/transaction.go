@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
-	"github.com/devpies/saas-core/internal/billing/model"
-	"go.uber.org/zap"
 	"time"
+
+	"github.com/devpies/saas-core/internal/billing/model"
+
+	"go.uber.org/zap"
 )
 
 type transactionRepository interface {

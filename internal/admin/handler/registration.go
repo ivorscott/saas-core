@@ -64,6 +64,7 @@ func (rh *RegistrationHandler) ProcessRegistration(w http.ResponseWriter, r *htt
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
+// ResendOTP resends the one time password.
 func (rh *RegistrationHandler) ResendOTP(w http.ResponseWriter, r *http.Request) error {
 	var (
 		payload struct {

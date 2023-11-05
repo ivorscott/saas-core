@@ -8,8 +8,8 @@ import (
 
 	"github.com/devpies/saas-core/internal/billing/model"
 	"github.com/devpies/saas-core/pkg/web"
-	"github.com/google/uuid"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 

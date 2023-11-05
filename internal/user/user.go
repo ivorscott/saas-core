@@ -1,15 +1,15 @@
+// Package user provides the user api.
 package user
 
 import (
 	"context"
 	"fmt"
-	"github.com/devpies/saas-core/internal/user/clients"
-	"github.com/nats-io/nats.go"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/devpies/saas-core/internal/user/clients"
 	"github.com/devpies/saas-core/internal/user/config"
 	"github.com/devpies/saas-core/internal/user/db"
 	"github.com/devpies/saas-core/internal/user/handler"
@@ -19,6 +19,7 @@ import (
 	"github.com/devpies/saas-core/pkg/log"
 	"github.com/devpies/saas-core/pkg/msg"
 
+	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 

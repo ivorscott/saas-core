@@ -5,8 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/devpies/saas-core/pkg/web"
-	"github.com/jmoiron/sqlx"
 	"regexp"
 	"strings"
 	"time"
@@ -14,8 +12,10 @@ import (
 	"github.com/devpies/saas-core/internal/project/db"
 	"github.com/devpies/saas-core/internal/project/fail"
 	"github.com/devpies/saas-core/internal/project/model"
+	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"go.uber.org/zap"
 )

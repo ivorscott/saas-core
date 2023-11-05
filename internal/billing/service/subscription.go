@@ -1,13 +1,15 @@
+// Package service manages the application layer for handling business logic.
 package service
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/devpies/saas-core/internal/billing/model"
-	"github.com/stripe/stripe-go/v72"
 	"time"
 
+	"github.com/devpies/saas-core/internal/billing/model"
+
+	"github.com/stripe/stripe-go/v72"
 	"go.uber.org/zap"
 )
 

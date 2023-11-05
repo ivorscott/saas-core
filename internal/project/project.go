@@ -1,9 +1,9 @@
+// Package project provides the project api.
 package project
 
 import (
 	"context"
 	"fmt"
-	"github.com/devpies/saas-core/internal/project/res"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,8 +13,10 @@ import (
 	"github.com/devpies/saas-core/internal/project/db"
 	"github.com/devpies/saas-core/internal/project/handler"
 	"github.com/devpies/saas-core/internal/project/repository"
+	"github.com/devpies/saas-core/internal/project/res"
 	"github.com/devpies/saas-core/internal/project/service"
 	"github.com/devpies/saas-core/pkg/log"
+
 	"go.uber.org/zap"
 )
 

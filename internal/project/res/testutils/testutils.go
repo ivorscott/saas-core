@@ -3,14 +3,15 @@ package testutils
 
 import (
 	"context"
+	"database/sql"
 	"os"
 	"path"
 	"runtime"
 
-	"database/sql"
 	"github.com/devpies/saas-core/internal/project/config"
 	"github.com/devpies/saas-core/internal/project/db"
 	"github.com/devpies/saas-core/internal/project/res"
+
 	"github.com/go-testfixtures/testfixtures/v3"
 	"go.uber.org/zap"
 )

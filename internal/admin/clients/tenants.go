@@ -3,9 +3,11 @@ package clients
 import (
 	"context"
 	"fmt"
-	"github.com/devpies/saas-core/pkg/web"
-	"go.uber.org/zap"
 	"net/http"
+
+	"github.com/devpies/saas-core/pkg/web"
+
+	"go.uber.org/zap"
 )
 
 // HTTPTenantClient manages calls to the registration service.

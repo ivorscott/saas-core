@@ -1,10 +1,10 @@
 package user
 
 import (
-	"github.com/devpies/saas-core/internal/user/handler"
 	"net/http"
 	"os"
 
+	"github.com/devpies/saas-core/internal/user/handler"
 	"github.com/devpies/saas-core/pkg/web"
 	"github.com/devpies/saas-core/pkg/web/mid"
 

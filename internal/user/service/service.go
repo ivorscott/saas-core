@@ -2,8 +2,9 @@ package service
 
 import (
 	"context"
-	"github.com/devpies/saas-core/internal/user/model"
 	"time"
+
+	"github.com/devpies/saas-core/internal/user/model"
 )
 
 type inviteRepository interface {

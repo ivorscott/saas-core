@@ -3,9 +3,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/ardanlabs/conf"
 	"os"
 	"time"
+
+	"github.com/ardanlabs/conf"
 )
 
 // Config represents the application configuration.

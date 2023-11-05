@@ -1,15 +1,16 @@
+// Package tenant provides the tenant api.
 package tenant
 
 import (
 	"context"
 	"fmt"
-	"github.com/devpies/saas-core/internal/tenant/clients"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime/debug"
 	"syscall"
 
+	"github.com/devpies/saas-core/internal/tenant/clients"
 	"github.com/devpies/saas-core/internal/tenant/config"
 	"github.com/devpies/saas-core/internal/tenant/handler"
 	"github.com/devpies/saas-core/internal/tenant/repository"

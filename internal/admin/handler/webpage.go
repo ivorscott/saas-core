@@ -2,10 +2,11 @@ package handler
 
 import (
 	"context"
-	"github.com/devpies/saas-core/internal/admin/render"
-	"github.com/google/uuid"
 	"net/http"
 
+	"github.com/devpies/saas-core/internal/admin/render"
+
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 

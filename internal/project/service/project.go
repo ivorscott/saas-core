@@ -1,13 +1,14 @@
+// Package service manages the application layer for handling business logic.
 package service
 
 import (
 	"context"
-	"github.com/devpies/saas-core/pkg/web"
-	"github.com/jmoiron/sqlx"
 	"time"
 
 	"github.com/devpies/saas-core/internal/project/model"
+	"github.com/devpies/saas-core/pkg/web"
 
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 

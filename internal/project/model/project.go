@@ -1,3 +1,4 @@
+// Package model provides data transfer objects and validation.
 package model
 
 import (
@@ -33,6 +34,7 @@ type NewProject struct {
 	Name string `json:"name" validate:"required,max=22"`
 }
 
+// Validate validates NewProject..
 func (np *NewProject) Validate() error {
 	return projectValidator.Struct(np)
 }
@@ -46,6 +48,7 @@ type UpdateProject struct {
 	ColumnOrder []string `json:"columnOrder"`
 }
 
+// Validate validates UpdateProject.
 func (up *UpdateProject) Validate() error {
 	return projectValidator.Struct(up)
 }

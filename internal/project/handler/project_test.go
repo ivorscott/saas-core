@@ -3,20 +3,22 @@ package handler_test
 import (
 	"bytes"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+
 	"github.com/devpies/saas-core/internal/project/handler"
 	"github.com/devpies/saas-core/internal/project/mocks"
 	"github.com/devpies/saas-core/internal/project/model"
 	"github.com/devpies/saas-core/internal/project/res/testutils"
 	"github.com/devpies/saas-core/pkg/web"
 	"github.com/devpies/saas-core/pkg/web/mid"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"testing"
 )
 
 func TestProjectHandler_Create(t *testing.T) {

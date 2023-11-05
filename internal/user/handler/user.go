@@ -1,13 +1,16 @@
+// Package handler manages the presentation layer for handling incoming requests.
 package handler
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/devpies/saas-core/internal/user/fail"
 	"github.com/devpies/saas-core/internal/user/model"
 	"github.com/devpies/saas-core/pkg/web"
+
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
-	"net/http"
-	"time"
 )
 
 // UserHandler handles the user requests.

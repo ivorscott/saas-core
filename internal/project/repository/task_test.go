@@ -2,16 +2,18 @@ package repository_test
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go-v2/aws"
+	"testing"
+	"time"
+
 	"github.com/devpies/saas-core/internal/project/fail"
 	"github.com/devpies/saas-core/internal/project/model"
 	"github.com/devpies/saas-core/internal/project/repository"
 	"github.com/devpies/saas-core/internal/project/res/testutils"
 	"github.com/devpies/saas-core/pkg/web"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	"testing"
-	"time"
 )
 
 func TestTaskRepository_Create(t *testing.T) {
