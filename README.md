@@ -16,13 +16,13 @@ project management, billing, and SaaS administration.
 
 ## Prerequisites
 
-Read initial setup [instructions](docs/SETUP.md).
+Read initial setup [instructions](doc/guide/SETUP.md).
 
-### Cheatsheets
+### Guides
 
-- [Using NATS](docs/nats.md)
-- [Using Postgres](docs/postgres.md)
-- [Project Structure](docs/structure.md)
+- [Using NATS](doc/guide/nats.md)
+- [Using Postgres](doc/guide/postgres.md)
+- [Project Structure](doc/guide/structure.md)
 
 ## Getting Started
 

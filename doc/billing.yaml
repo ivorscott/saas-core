@@ -1,0 +1,100 @@
+openapi: 3.0.0
+
+info:
+  title: Billing service
+  description: |
+    The billing service manages the entire stripe customer subscription lifecycle.
+  version: 0.0.1
+  contact:
+    name: Ivor Scott
+    email: ivor@devpie.io
+
+servers:
+  - url: https://api.devpie.local/api/billing
+    description: local development
+
+paths:
+  /subscriptions/{subscription_id}:
+    get:
+      tags:
+        - "Subscriptions"
+      operationId: subscriptions
+      description: |
+        Get subscription.
+      parameters:
+        - $ref: '#/components/parameters/subscription_id'
+      responses:
+        200:
+          $ref: "#/components/responses/SubscriptionResponse"
+        default:
+          $ref: "#/components/responses/Error"
+
+components:
+  parameters:
+    subscription_id:
+      in: path
+      name: subscription_id
+      required: true
+      description: |
+        The subscription id.
+      schema:
+        type: string
+
+  responses:
+    SubscriptionResponse:
+      description: Subscription successfully received.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Subscription"
+
+    Error:
+      description: An error response as application/problem+json.
+      content:
+        application/problem+json:
+          schema:
+            properties:
+              error:
+                type: string
+
+  schemas:
+    Subscription:
+      type: object
+      description: Represents a subscription.
+      properties:
+        subscription_id:
+          type: string
+          description: The subscription id.
+          example: faf5cab6-1daa-4138-b9c0-0cdd93a72fd4
+        tenant_id:
+          type: string
+          description: The tenant id.
+          example: 49fb7d6e-10c9-4cd9-bdcc-dff26fcb9ac1
+        customer_id:
+          type: string
+          description: The customer id.
+          example: e996cfa4-ea76-4dec-a2c9-59379cb23cb0
+        transaction_id:
+          type: string
+          description: The transaction id.
+          example: 96e39385-b6b3-4adb-bf68-d53f13560aac
+        subscription_status_id:
+          type: string
+          description: The subscription status id.
+          example: 2
+        amount:
+          type: string
+          description: The subscription amount.
+          example: 1000
+        plan:
+          type: integer
+          description: The subscription plan.
+          example: 1
+        updated_at:
+          type: string
+          description: The time of the last update.
+          example: 1984-02-01T00:00:00Z
+        created_at:
+          type: string
+          description: The time of creation.
+          example: 1984-02-01T00:00:00Z
