@@ -5,7 +5,7 @@ include .env
 # =============================================================
 # ADMIN SERVICE
 # =============================================================
-admin-test: admin-mock	;@ ## Run admin tests. Add " -- -v" for verbosity.
+admin-test: admin-mock	;@ ## Run admin tests. Add -- -v for verbosity.
 	go test $(val) -cover ./internal/admin/...
 .PHONY: admin-test
 
@@ -40,7 +40,7 @@ admin-db-force: ;@ ## Force version on admin database. Optional <num> argument.
 # =============================================================
 # REGISTRATION SERVICE
 # =============================================================
-registration-test: registration-mock	;@ ## Run registration tests. Add " -- -v" for verbosity.
+registration-test: registration-mock	;@ ## Run registration tests. Add -- -v for verbosity.
 	go test $(val) -cover ./internal/registration/...
 .PHONY: registration-test
 
@@ -51,7 +51,7 @@ registration-mock: ;@ ## Generate registration mocks.
 # =============================================================
 # TENANT SERVICE
 # =============================================================
-tenant-test: tenant-mock	;@ ## Run tenant tests. Add " -- -v" for verbosity.
+tenant-test: tenant-mock	;@ ## Run tenant tests. Add -- -v for verbosity.
 	go test $(val) -cover ./internal/tenant/...
 .PHONY: tenant-test
 
@@ -62,7 +62,7 @@ tenant-mock: ;@ ## Generate tenant mocks.
 # =============================================================
 # PROJECT SERVICE
 # =============================================================
-project-test: project-mock	;@ ## Run project tests. Add " -- -v" for verbosity.
+project-test: project-mock	;@ ## Run project tests. Add -- -v for verbosity.
 	go test $(val) -cover ./internal/project/...
 .PHONY: project-test
 
@@ -164,8 +164,11 @@ nats: ;## Port forward NATS port.
 
 lint: ;@ ## Run linter. Optional <package path> argument.
 	@golangci-lint run $(val)
-
 .PHONY: lint
+
+test: ;@ ## Run all tests. Add -- -v for verbosity.
+	go test $(val) -cover ./...
+.PHONY: test
 
 help:
 	@echo
@@ -181,7 +184,7 @@ help:
 
 # http://bit.ly/37TR1r2
 # TODO: Find a better way
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),lint admin-test admin-db-gen admin-db-migrate admin-db-rollback admin-db-force registration-test project-test project-db-gen project-db-migrate project-db-rollback project-db-force user-test user-db-gen user-db-migrate user-db-rollback user-db-force billing-test billing-db-gen billing-db-migrate billing-db-rollback billing-db-force))
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),test lint admin-test admin-db-gen admin-db-migrate admin-db-rollback admin-db-force project-test project-db-gen project-db-migrate project-db-rollback project-db-force user-test user-db-gen user-db-migrate user-db-rollback user-db-force billing-test billing-db-gen billing-db-migrate billing-db-rollback billing-db-force registration-test tenant-test))
   val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(val):;@:)
 endif

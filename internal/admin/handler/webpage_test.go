@@ -57,7 +57,7 @@ func TestWebPageHandler_CreateTenantPage(t *testing.T) {
 		r := httptest.NewRequest(http.MethodGet, basePath, nil)
 		w := httptest.NewRecorder()
 
-		deps.render.On("Template", mock.Anything, mock.AnythingOfType("*http.Request"), "create-tenant", testTemplateData).Return(nil)
+		deps.render.On("Template", mock.Anything, mock.AnythingOfType("*http.Request"), "create-tenant", mock.AnythingOfType("*render.TemplateData")).Return(nil)
 
 		handle.ServeHTTP(w, r)
 

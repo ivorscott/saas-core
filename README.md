@@ -36,7 +36,7 @@ Read initial setup [instructions](docs/SETUP.md).
 2. make ports
 3. make routes
 
-admin-test           Run admin tests. Add " -- -v" for verbosity.
+admin-test           Run admin tests. Add -- -v for verbosity.
 admin-mock           Generate admin mocks.
 admin-db             Enter admin database.
 admin-db-gen         Generate migration files. Required <name> argument.

@@ -8,7 +8,6 @@ import (
 	"net/url"
 
 	"github.com/devpies/saas-core/internal/billing/config"
-	"github.com/devpies/saas-core/internal/billing/fail"
 	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/jmoiron/sqlx"
@@ -23,6 +22,11 @@ type PostgresDatabase struct {
 	logger *zap.Logger
 	URL    url.URL
 }
+
+var (
+	// ErrNoTenantID represents a missing tenant id in the request context.
+	ErrNoTenantID = errors.New("missing tenant id")
+)
 
 // NewPostgresDatabase creates a new postgres database.
 func NewPostgresDatabase(logger *zap.Logger, cfg config.Config) (*PostgresDatabase, func() error, error) {
@@ -66,7 +70,7 @@ func (pg *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func
 	}
 
 	if values.TenantID == "" {
-		return nil, nil, fail.ErrNoTenant
+		return nil, nil, ErrNoTenantID
 	}
 
 	conn, err := pg.db.Connx(ctx)

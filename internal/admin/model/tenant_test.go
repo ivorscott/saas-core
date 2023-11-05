@@ -20,11 +20,18 @@ func TestNewTenant_Validate(t *testing.T) {
 			err:      "",
 		},
 		{
-			name: "valid (premium tenant)",
+			name: "valid premium tenant",
 			modifier: func(nt *model.NewTenant) {
 				nt.Plan = "premium"
 			},
 			err: "",
+		},
+		{
+			name: "invalid id",
+			modifier: func(nt *model.NewTenant) {
+				nt.ID = ""
+			},
+			err: "failed on the 'required' tag",
 		},
 		{
 			name: "invalid first name",
@@ -73,6 +80,7 @@ func TestNewTenant_Validate(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			nt := model.NewTenant{
+				ID:          "84c59228-52ff-44a2-8163-a429de9fe77b",
 				FirstName:   "Test",
 				LastName:    "User",
 				CompanyName: "Test Company",
