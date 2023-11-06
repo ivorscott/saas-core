@@ -83,6 +83,7 @@ func (ts *TenantService) ListTenants(ctx context.Context) ([]model.Tenant, int, 
 	return tenants, resp.StatusCode, nil
 }
 
+// ListTenantSubscriptions retrieves all the paid subscriptions from the billing service.
 func (ts *TenantService) ListTenantSubscriptions(ctx context.Context) ([]model.Subscription, int, error) {
 	var (
 		resp          *http.Response

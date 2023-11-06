@@ -12,7 +12,7 @@ func generateAccessToken(
 	cognitoClient *cip.Client,
 	credentials cognitoCredentials,
 ) (
-	*cip.AdminInitiateAuthOutput,
+	*string,
 	error,
 ) {
 	signInInput := &cip.AdminInitiateAuthInput{
@@ -24,5 +24,9 @@ func generateAccessToken(
 			"PASSWORD": credentials.m2mClientSecret,
 		},
 	}
-	return cognitoClient.AdminInitiateAuth(ctx, signInInput)
+	result, err := cognitoClient.AdminInitiateAuth(ctx, signInInput)
+	if err != nil {
+		return nil, err
+	}
+	return result.AuthenticationResult.AccessToken, nil
 }

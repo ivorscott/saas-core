@@ -3,11 +3,11 @@ package clients
 import (
 	"context"
 	"fmt"
-	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"net/http"
 
 	"github.com/devpies/saas-core/pkg/web"
 
+	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"go.uber.org/zap"
 )
 
@@ -62,6 +62,10 @@ func (h *HTTPBillingClient) FindAllSubscriptions(ctx context.Context) (*http.Res
 		return nil, err
 	}
 
+	if userToken == nil {
+		h.logger.Error("generated cognito user token is nil")
+	}
+
 	values, ok := web.FromContext(ctx)
 	if !ok {
 		return nil, web.CtxErr()
@@ -77,7 +81,7 @@ func (h *HTTPBillingClient) FindAllSubscriptions(ctx context.Context) (*http.Res
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("TraceID", values.TraceID)
-	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", userToken))
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %+v", userToken))
 
 	client := &http.Client{}
 	return client.Do(request)
