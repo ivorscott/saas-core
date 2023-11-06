@@ -20,12 +20,13 @@ type Config struct {
 		Port            string        `conf:"default:4000"`
 	}
 	Cognito struct {
-		UserPoolID       string `conf:"required"`
-		UserPoolClientID string `conf:"required"`
-		SharedUserPoolID string `conf:"required"`
-		M2MClientID      string `conf:"required"`
-		M2MClientSecret  string `conf:"required"`
-		Region           string `conf:"required"`
+		UserPoolID             string `conf:"required"`
+		UserPoolClientID       string `conf:"required"`
+		SharedUserPoolID       string `conf:"required"`
+		SharedUserPoolClientID string `conf:"required"`
+		M2MClientKey           string `conf:"required"`
+		M2MClientSecret        string `conf:"required"`
+		Region                 string `conf:"required"`
 	}
 	DB struct {
 		User       string `conf:"default:postgres,noprint"`
@@ -42,6 +43,10 @@ type Config struct {
 	Tenant struct {
 		ServiceAddress string `conf:"default:localhost"`
 		ServicePort    string `conf:"default:4002"`
+	}
+	Billing struct {
+		ServiceAddress string `conf:"default:localhost"`
+		ServicePort    string `conf:"default:4006"`
 	}
 }
 

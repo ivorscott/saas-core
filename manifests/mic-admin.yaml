@@ -49,11 +49,16 @@ spec:
                 secretKeyRef:
                   name: secrets
                   key: shared_user_pool_id
-            - name: ADMIN_COGNITO_M2M_CLIENT_ID
+            - name: ADMIN_COGNITO_SHARED_USER_POOL_CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets
-                  key: m2m_client_id
+                  key: shared_user_pool_client_id
+            - name: ADMIN_COGNITO_M2M_CLIENT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: m2m_client_key
             - name: ADMIN_COGNITO_M2M_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:

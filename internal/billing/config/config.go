@@ -17,7 +17,7 @@ type Config struct {
 		WriteTimeout    time.Duration `conf:"default:5s"`
 		ShutdownTimeout time.Duration `conf:"default:5s"`
 		Address         string        `conf:"default:localhost"`
-		Port            string        `conf:"default:4001"`
+		Port            string        `conf:"default:4006"`
 	}
 	Stripe struct {
 		Key    string `conf:"required"`
