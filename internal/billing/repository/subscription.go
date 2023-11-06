@@ -4,6 +4,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"time"
 
 	"github.com/devpies/saas-core/internal/billing/db"
@@ -51,7 +52,7 @@ func (sr *SubscriptionRepository) SaveSubscription(ctx context.Context, ns model
 			) values ($1, $2, $3, $4, $5, $6, $7)
 		`
 	s = model.Subscription{
-		ID:            ns.ID,
+		ID:            uuid.New().String(),
 		Plan:          ns.Plan,
 		TransactionID: ns.TransactionID,
 		StatusID:      ns.StatusID,

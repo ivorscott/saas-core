@@ -9,7 +9,6 @@ import (
 	"github.com/devpies/saas-core/internal/billing/model"
 	"github.com/devpies/saas-core/pkg/web"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -72,7 +71,6 @@ func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) er
 	customer, err := sh.customerService.Save(
 		r.Context(),
 		model.NewCustomer{
-			ID:        uuid.New().String(),
 			FirstName: payload.FirstName,
 			LastName:  payload.LastName,
 			Email:     payload.Email,
@@ -86,7 +84,6 @@ func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) er
 	transaction, err := sh.transactionService.Save(
 		r.Context(),
 		model.NewTransaction{
-			ID:                   uuid.New().String(),
 			Amount:               payload.Amount,
 			Currency:             payload.Currency,
 			LastFour:             payload.LastFour,
@@ -105,7 +102,6 @@ func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) er
 	_, err = sh.subscriptionService.Save(
 		r.Context(),
 		model.NewSubscription{
-			ID:            uuid.New().String(),
 			Plan:          payload.Plan,
 			TransactionID: transaction.ID,
 			StatusID:      model.SubscriptionStatusCleared,

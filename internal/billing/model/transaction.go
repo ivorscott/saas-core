@@ -36,7 +36,6 @@ func (t TransactionStatusType) String() string {
 
 // NewTransaction represents a new transaction payload.
 type NewTransaction struct {
-	ID                   string                `json:"id" validate:"required,uuid4"`
 	Amount               int                   `json:"amount" validate:"required,gt=0"`
 	Currency             string                `json:"currency" validate:"required"`
 	LastFour             string                `json:"lastFour" validate:"required,length=4"`

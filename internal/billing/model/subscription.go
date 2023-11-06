@@ -48,7 +48,6 @@ func (s SubscriptionStatusType) String() string {
 
 // NewSubscription represents a new subscription payload.
 type NewSubscription struct {
-	ID            string                 `json:"id" validate:"required,uuid4"`
 	Plan          SubscriptionPlanType   `json:"plan" validate:"oneof=0 1"`
 	TransactionID string                 `json:"transactionId" validate:"required,uuid4"`
 	StatusID      SubscriptionStatusType `json:"statusId" validate:"required,oneof=0 1 2"`

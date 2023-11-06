@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"time"
 
 	"github.com/devpies/saas-core/internal/billing/db"
@@ -41,7 +42,7 @@ func (cr *CustomerRepository) SaveCustomer(ctx context.Context, nc model.NewCust
 	defer Close()
 
 	c = model.Customer{
-		ID:        nc.ID,
+		ID:        uuid.New().String(),
 		TenantID:  values.TenantID,
 		FirstName: nc.FirstName,
 		LastName:  nc.LastName,

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"time"
 
 	"github.com/devpies/saas-core/internal/billing/db"
@@ -44,7 +45,7 @@ func (tr *TransactionRepository) SaveTransaction(ctx context.Context, nt model.N
 	defer Close()
 
 	t = model.Transaction{
-		ID:                   nt.ID,
+		ID:                   uuid.New().String(),
 		Amount:               nt.Amount,
 		Currency:             nt.Currency,
 		LastFour:             nt.LastFour,
