@@ -3,6 +3,7 @@ package clients
 import (
 	"context"
 	"fmt"
+	cip "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"net/http"
 
 	"github.com/devpies/saas-core/pkg/web"
@@ -10,32 +11,63 @@ import (
 	"go.uber.org/zap"
 )
 
-// HTTPTenantClient manages calls to the registration service.
-type HTTPTenantClient struct {
-	client         *http.Client
+// HTTPBillingClient manages calls to the registration service.
+type HTTPBillingClient struct {
 	logger         *zap.Logger
+	client         *http.Client
+	cognito        *cip.Client
+	credentials    cognitoCredentials
 	serviceAddress string
 	servicePort    string
 }
 
-// NewHTTPTenantClient returns a new HttpTenantClient.
-func NewHTTPTenantClient(logger *zap.Logger, serviceAddress string, servicePort string) *HTTPTenantClient {
-	return &HTTPTenantClient{
+type cognitoCredentials struct {
+	cognitoClientID string
+	userPoolID      string
+	m2mClientKey    string
+	m2mClientSecret string
+}
+
+// NewHTTPBillingClient returns a new HttpBillingClient.
+func NewHTTPBillingClient(
+	logger *zap.Logger,
+	serviceAddress string,
+	servicePort string,
+	cognitoClient *cip.Client,
+	cognitoClientID string,
+	userPoolID string,
+	m2mClientKey string,
+	m2mClientSecret string,
+) *HTTPBillingClient {
+	return &HTTPBillingClient{
 		logger:         logger,
 		client:         &http.Client{},
+		cognito:        cognitoClient,
 		serviceAddress: serviceAddress,
 		servicePort:    servicePort,
+		credentials: cognitoCredentials{
+			cognitoClientID: cognitoClientID,
+			userPoolID:      userPoolID,
+			m2mClientKey:    m2mClientKey,
+			m2mClientSecret: m2mClientSecret,
+		},
 	}
 }
 
-// FindAllTenants calls the tenant service over a http interface to retrieve all tenants.
-func (h *HTTPTenantClient) FindAllTenants(ctx context.Context) (*http.Response, error) {
+// FindAllSubscriptions calls the billing service over a http interface to retrieve all subscriptions.
+// The billing service is a "public" service therefore a user token must be generated to authenticate.
+func (h *HTTPBillingClient) FindAllSubscriptions(ctx context.Context) (*http.Response, error) {
+	userToken, err := generateAccessToken(ctx, h.cognito, h.credentials)
+	if err != nil {
+		return nil, err
+	}
+
 	values, ok := web.FromContext(ctx)
 	if !ok {
 		return nil, web.CtxErr()
 	}
 
-	url := fmt.Sprintf("http://%s:%s/tenants", h.serviceAddress, h.servicePort)
+	url := fmt.Sprintf("http://%s:%s/subscriptions", h.serviceAddress, h.servicePort)
 
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -45,7 +77,7 @@ func (h *HTTPTenantClient) FindAllTenants(ctx context.Context) (*http.Response, 
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("TraceID", values.TraceID)
-	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", values.Token))
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", userToken))
 
 	client := &http.Client{}
 	return client.Do(request)

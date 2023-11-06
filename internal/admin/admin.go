@@ -88,13 +88,23 @@ func Run(staticFS embed.FS) error {
 
 	ctx := context.Background()
 	cognitoClient := clients.NewCognitoClient(ctx, cfg.Cognito.Region)
+	billingClient := clients.NewHTTPBillingClient(
+		logger,
+		cfg.Billing.ServiceAddress,
+		cfg.Billing.ServicePort,
+		cognitoClient,
+		cfg.Cognito.SharedUserPoolClientID,
+		cfg.Cognito.SharedUserPoolID,
+		cfg.Cognito.M2MClientKey,
+		cfg.Cognito.M2MClientSecret,
+	)
 	registrationClient := clients.NewHTTPRegistrationClient(logger, cfg.Registration.ServiceAddress, cfg.Registration.ServicePort)
 	tenantClient := clients.NewHTTPTenantClient(logger, cfg.Tenant.ServiceAddress, cfg.Tenant.ServicePort)
 
 	// Initialize 3-layered architecture.
 	authService := service.NewAuthService(logger, cfg.Cognito.Region, cfg.Cognito.UserPoolClientID, cfg.Cognito.UserPoolID, cognitoClient, session)
 	registrationService := service.NewRegistrationService(logger, cfg.Cognito.SharedUserPoolID, cognitoClient, registrationClient)
-	tenantService := service.NewTenantService(logger, tenantClient)
+	tenantService := service.NewTenantService(logger, tenantClient, billingClient)
 	renderEngine := render.New(logger, cfg, templateFS, session)
 	authHandler := handler.NewAuthHandler(logger, renderEngine, session, authService)
 	webPageHandler := handler.NewWebPageHandler(logger, renderEngine, web.SetContextStatusCode)
