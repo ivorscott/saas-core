@@ -20,11 +20,11 @@ func TestNewTenant_Validate(t *testing.T) {
 			err:      "",
 		},
 		{
-			name: "valid premium tenant",
+			name: "invalid plan for new tenant",
 			modifier: func(nt *model.NewTenant) {
 				nt.Plan = "premium"
 			},
-			err: "",
+			err: "failed on the 'oneof' tag",
 		},
 		{
 			name: "invalid id",
@@ -92,9 +92,15 @@ func TestNewTenant_Validate(t *testing.T) {
 
 			err := nt.Validate()
 			if tc.err != "" {
+				if err == nil {
+					t.Errorf("expected: %s, got nil", tc.err)
+					return
+				}
 				assert.Regexp(t, tc.err, err.Error())
 			} else {
-				assert.Nil(t, err)
+				if err != nil {
+					t.Errorf("expected: nil, got: %s", err.Error())
+				}
 			}
 		})
 	}

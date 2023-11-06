@@ -16,7 +16,7 @@ type NewTenant struct {
 	FirstName   string `json:"firstName" validate:"required"`
 	LastName    string `json:"lastName" validate:"required"`
 	CompanyName string `json:"companyName" validate:"required"`
-	Plan        string `json:"plan"`
+	Plan        string `json:"plan" validate:"required,oneof=basic"`
 }
 
 // Tenant represents a tenant.

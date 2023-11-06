@@ -15,13 +15,14 @@ func init() {
 }
 
 // NewTenant represents a new Tenant.
+// Tenants start on the basic plan.
 type NewTenant struct {
 	ID          string    `json:"id" validate:"required"`
 	Email       string    `json:"email" validate:"required"`
 	FirstName   string    `json:"firstName" validate:"required"`
 	LastName    string    `json:"lastName" validate:"required"`
 	CompanyName string    `json:"companyName" validate:"required"`
-	Plan        string    `json:"plan" validate:"required,oneof=basic premium"`
+	Plan        string    `json:"plan" validate:"required,oneof=basic"`
 	Status      string    `json:"status"`
 	Created     time.Time `json:"createdAt"`
 }

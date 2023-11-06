@@ -1,0 +1,124 @@
+{{template "base" .}}
+
+{{define "title"}}
+    Tenants
+{{end}}
+
+{{define "content"}}
+    <h3 class="mt-2 mb-3">Tenants</h3>
+    <div class="d-flex justify-content-end">
+        <a href="/admin/create-tenant" class="btn btn-primary ">Provision Tenant</a>
+    </div>
+
+    <table id="tenant-table" class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Company Name</th>
+                <th>E-Mail</th>
+                <th>Plan</th>
+                <th>Enabled</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+{{end}}
+
+{{define "js"}}
+    <script>
+        const options = {
+            method: "get",
+            headers: {
+                "Accept": "application/json",
+                "Content-Type":"application/json",
+                "Authorization": `Bearer ${localStorage.getItem("id_token")}`,
+            },
+        };
+
+        document.addEventListener("DOMContentLoaded", function(){
+            let tbody = document.getElementById("tenant-table").getElementsByTagName("tbody")[0]
+
+            fetch("/admin/api/tenants", options)
+                .then(response => response.json())
+                .then(function (users) {
+                    if (!users) {
+                        let row = tbody.insertRow(), cell = row.insertCell();
+                        cell.setAttribute("colspan","2");
+                        cell.setAttribute("class","text-center");
+                        cell.innerHTML = "No data Available";
+                    } else {
+                        users.forEach(function(user) {
+                            let cell, element;
+                            let row = tbody.insertRow()
+
+                            cell = row.insertCell();
+                            cell.innerHTML = `<a href="/admin/tenants/${user.id}">${user.lastName}, ${user.firstName}</a>`
+
+                            cell = row.insertCell();
+                            element = document.createTextNode(user.companyName)
+                            cell.appendChild(element)
+
+                            cell = row.insertCell();
+                            element = document.createTextNode(user.email);
+                            cell.appendChild(element)
+
+                            cell = row.insertCell();
+                            element = document.createTextNode(user.plan);
+
+                            // Make link to subscription if premium
+
+                            cell.appendChild(element)
+
+                            cell = row.insertCell();
+                            let enabledText = user.enabled ? "enabled": "disabled";
+                            element = document.createTextNode(enabledText);
+                            cell.appendChild(element)
+
+                            cell = row.insertCell();
+                            element = document.createTextNode(user.status.toLowerCase());
+                            cell.appendChild(element)
+
+                            cell = row.insertCell();
+                            element = document.createTextNode(user.createdAt);
+                            cell.appendChild(element)
+
+                            cell = row.insertCell();
+                            cell.innerHTML = `<div>
+                            <button data-action="disable" data-email="${user.email}" class="action btn btn-primary">Disable</button>
+                            <button data-action="resend"  data-email="${user.email}" class="action btn btn-secondary">Resend</button>
+                            </div>`
+                        })
+
+                        let actionButtons = document.getElementsByClassName("action");
+
+                        for(let btn = 0; btn < actionButtons.length; btn++) {
+                            actionButtons[btn].addEventListener("click", function (evt) {
+                                let action = evt.target.getAttribute("data-action");
+                                let email = evt.target.getAttribute("data-email");
+                                switch (action) {
+                                    case "resend":
+                                        resendTempPassword(email)
+                                        break;
+                                    case "disable":
+                                        disableTenant(email)
+                                        break;
+                                    default:
+                                }
+                            })
+                        }
+                    }
+                })
+        })
+
+        function disableTenant() {}
+
+        function resendTempPassword(email) {
+            options.method = "post"
+            options.body = JSON.stringify({ username: email })
+            fetch(`/admin/api/resend-otp`, options)
+        }
+    </script>
+{{end}}
