@@ -70,8 +70,9 @@ func (idps *IDPService) GetPlanBasedUserPool(ctx context.Context, tenant model.N
 	}
 
 	if Plan(tenant.Plan) == PlanPremium {
-		poolType = UserPoolSiloed
-		pathToUse = path
+		// Test flow before introducing siloed resource creation with codePipeline
+		//poolType = UserPoolSiloed
+		//pathToUse = path
 	}
 
 	// Fetch existing pool id and exit if one exists.
