@@ -45,6 +45,9 @@ func (rs *RegistrationService) RegisterTenant(ctx context.Context, newTenant mod
 		err  error
 	)
 
+	// Tenants default to a basic plan
+	newTenant.Plan = "basic"
+
 	data, err := json.Marshal(newTenant)
 	if err != nil {
 		return http.StatusInternalServerError, err

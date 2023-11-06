@@ -28,14 +28,6 @@
             <label for="company-name" class="form-label">Company</label>
             <input type="text" class="form-control" id="company-name" name="company-name" required autocomplete="company-name-new">
         </div>
-        <div class="mb-3">
-            <label for="plan" class="form-label">Plan</label>
-            <select name="plan" id="plan" class="form-select" required>
-                <option disabled="disabled" selected="selected" value="">Select Plan</option>
-                <option value="basic">Basic</option>
-                <option value="premium">Premium</option>
-            </select>
-        </div>
         <div class="d-flex justify-content-end">
             <a id="cancel-button" href="/admin/tenants" class="btn btn-secondary mx-2">Cancel</a>
             <a id="create-button" href="javascript:void(0)" class="btn btn-primary" onclick="val()">Create</a>
@@ -75,7 +67,6 @@
             payload.lastName = document.getElementById("last-name").value;
             payload.email = document.getElementById("email").value;
             payload.companyName = document.getElementById("company-name").value;
-            payload.plan = document.getElementById("plan").value;
 
             options = {
                 method: "post",
