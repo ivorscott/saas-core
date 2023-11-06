@@ -122,6 +122,15 @@ user-db-force: ;@ ## Force version on user database. Optional <num> argument.
 .PHONY: user-db-force
 
 # Billing service =============================================================
+billing-test: billing-test	;@ ## Run billing tests. Add -- -v for verbosity.
+	go test $(val) -cover ./internal/billing/...
+.PHONY: billing-test
+
+billing-mock: ;@ ## Generate billing mocks.
+	go generate ./internal/billing/...
+.PHONY: billing-mock
+
+
 billing-db: ;@ ## Enter billing database.
 	@pgcli postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/billing
 .PHONY: billing-db
