@@ -36,13 +36,13 @@ func (t TransactionStatusType) String() string {
 
 // NewTransaction represents a new transaction payload.
 type NewTransaction struct {
-	Amount               int                   `json:"amount" validate:"required,gt=0"`
+	Amount               int                   `json:"amount" validate:"required"`
 	Currency             string                `json:"currency" validate:"required"`
-	LastFour             string                `json:"lastFour" validate:"required,length=4"`
+	LastFour             string                `json:"lastFour" validate:"required,len=4"`
 	BankReturnCode       string                `json:"bankReturnCode"`
 	StatusID             TransactionStatusType `json:"statusId" validate:"required,oneof=0 1 2 3 4"`
-	ExpirationMonth      int                   `json:"expirationMonth" validate:"required,gte=1,lte=12"`
-	ExpirationYear       int                   `json:"expirationYear" validate:"required,length=4"`
+	ExpirationMonth      int                   `json:"expirationMonth" validate:"gte=1,lte=12"`
+	ExpirationYear       int                   `json:"expirationYear" validate:"min=1958"`
 	StripeSubscriptionID string                `json:"stripeSubscriptionId" validate:"required"`
 	PaymentIntent        string                `json:"paymentIntent"`
 	PaymentMethod        string                `json:"paymentMethod" validate:"required"`
@@ -73,7 +73,7 @@ type Transaction struct {
 
 // UpdateTransaction represents a transaction update.
 type UpdateTransaction struct {
-	StatusID  TransactionStatusType `json:"statusId" validate:"required,oneof=0 1 2 3 4"`
+	StatusID  TransactionStatusType `json:"statusId" validate:"oneof=0 1 2 3 4"`
 	UpdatedAt time.Time             `json:"updatedAt" validate:"required"`
 }
 
