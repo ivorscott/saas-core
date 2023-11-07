@@ -8,12 +8,14 @@ import (
 	"github.com/stripe/stripe-go/v72/paymentmethod"
 	"github.com/stripe/stripe-go/v72/refund"
 	"github.com/stripe/stripe-go/v72/sub"
+	"go.uber.org/zap"
 )
 
 // Client manages stripe credit cards.
 type Client struct {
-	secretKey string
+	logger    *zap.Logger
 	key       string
+	secretKey string
 }
 
 // Transaction represents a monetary transaction.
@@ -29,10 +31,11 @@ type Transaction struct {
 }
 
 // NewStripeClient represents a client with access to stripe methods.
-func NewStripeClient(stripeSecretKey, stripeKey string) *Client {
+func NewStripeClient(logger *zap.Logger, stripeKey string, stripeSecretKey string) *Client {
 	return &Client{
-		secretKey: stripeSecretKey,
+		logger:    logger,
 		key:       stripeKey,
+		secretKey: stripeSecretKey,
 	}
 }
 

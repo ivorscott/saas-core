@@ -25,8 +25,7 @@ type stripeClient interface {
 
 type subscriptionRepository interface {
 	SaveSubscription(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error)
-	GetAllSubscriptions(ctx context.Context) ([]model.Subscription, error)
-	GetOneSubscription(ctx context.Context, id string) (model.Subscription, error)
+	GetTenantSubscription(ctx context.Context, id string) (model.Subscription, error)
 }
 
 // SubscriptionService is responsible for managing subscription related business logic.
@@ -54,6 +53,12 @@ func NewSubscriptionService(
 		stripeClient:     stripeClient,
 		subscriptionRepo: subscriptionRepo,
 	}
+}
+
+// CreatePaymentIntent creates a payment intent and returns the stripe client_secret (among other things), required
+// for the frontend to collect payments.
+func (ss *SubscriptionService) CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error) {
+	return ss.stripeClient.CreatePaymentIntent(currency, amount)
 }
 
 // SubscribeStripeCustomer creates a new stripe customer and attaches them to a stripe subscription.
@@ -119,16 +124,22 @@ func (ss *SubscriptionService) Save(ctx context.Context, ns model.NewSubscriptio
 	return s, nil
 }
 
-// GetAll returns all subscriptions.
-func (ss *SubscriptionService) GetAll(ctx context.Context) ([]model.Subscription, error) {
-	var subs []model.Subscription
-	return subs, nil
-}
+// GetOne returns the subscription for the provided tenant.
+func (ss *SubscriptionService) GetOne(ctx context.Context, tenantID string) (model.Subscription, error) {
+	var (
+		s   model.Subscription
+		err error
+	)
 
-// GetOne returns one specific subscription by id.
-func (ss *SubscriptionService) GetOne(ctx context.Context, id string) (model.Subscription, error) {
-	var sub model.Subscription
-	return sub, nil
+	s, err = ss.subscriptionRepo.GetTenantSubscription(ctx, tenantID)
+	if err != nil {
+		switch err {
+		default:
+			return s, err
+		}
+	}
+
+	return s, nil
 }
 
 // Cancel cancels a stripe subscription, transitioning the customer to the free tier.

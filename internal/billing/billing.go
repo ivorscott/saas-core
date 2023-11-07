@@ -62,7 +62,7 @@ func Run() error {
 		}
 	}
 
-	stripeClient := stripe.NewStripeClient(cfg.Stripe.Key, cfg.Stripe.Secret)
+	stripeClient := stripe.NewStripeClient(logger, cfg.Stripe.Key, cfg.Stripe.Secret)
 
 	// Initialize 3-layered architecture.
 	subscriptionRepository := repository.NewSubscriptionRepository(logger, pg)

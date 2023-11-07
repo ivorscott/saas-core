@@ -9,6 +9,9 @@ import (
 	"github.com/devpies/saas-core/internal/billing/model"
 	"github.com/devpies/saas-core/pkg/web"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+	"github.com/stripe/stripe-go/v72"
 	"go.uber.org/zap"
 )
 
@@ -16,8 +19,8 @@ type subscriptionService interface {
 	Refund(ctx context.Context) error
 	Cancel(ctx context.Context) error
 	Save(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error)
-	GetAll(ctx context.Context) ([]model.Subscription, error)
 	GetOne(ctx context.Context, id string) (model.Subscription, error)
+	CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error)
 	SubscribeStripeCustomer(nsp model.NewStripePayload) (string, error)
 }
 
@@ -124,12 +127,45 @@ func (sh *SubscriptionHandler) GetAll(w http.ResponseWriter, r *http.Request) er
 
 // GetOne retrieves a specific subscription by id.
 func (sh *SubscriptionHandler) GetOne(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	var (
+		s        model.Subscription
+		tenantID = chi.URLParam(r, "tenantID")
+		err      error
+	)
+
+	if _, err = uuid.Parse(tenantID); err != nil {
+		return web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	s, err = sh.subscriptionService.GetOne(r.Context(), tenantID)
+	if err != nil {
+		return err
+	}
+
+	return web.Respond(r.Context(), w, s, http.StatusOK)
 }
 
 // GetPaymentIntent retrieves the paymentIntent from stripe.
 func (sh *SubscriptionHandler) GetPaymentIntent(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	var (
+		payload struct {
+			Currency string
+			Amount   int
+		}
+		err error
+	)
+
+	if err = web.Decode(r, &payload); err != nil {
+		return web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	pi, msg, err := sh.subscriptionService.CreatePaymentIntent(payload.Currency, payload.Amount)
+	if err != nil {
+		sh.logger.Error("creating payment intent failed", zap.String("message", msg))
+		return err
+	}
+
+	return web.Respond(r.Context(), w, pi, http.StatusOK)
 }
 
 // Cancel cancels a paid subscription.

@@ -34,7 +34,7 @@ spec:
                   key: region
             - name: BILLING_WEB_PORT
               value: "4006"
-            - name: BILLING_COGNITO_USER_POOL_ID
+            - name: BILLING_COGNITO_SHARED_USER_POOL_ID
               valueFrom:
                 secretKeyRef:
                   name: secrets

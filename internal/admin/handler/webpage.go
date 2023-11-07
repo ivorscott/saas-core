@@ -42,6 +42,13 @@ func (page *WebPageHandler) TenantsPage(w http.ResponseWriter, r *http.Request) 
 	return page.render.Template(w, r, "tenants", nil)
 }
 
+// TenantPage displays a specific tenant's details.
+func (page *WebPageHandler) TenantPage(w http.ResponseWriter, r *http.Request) error {
+	var data = make(map[string]string)
+	//data["UserID"] = chi.URLParam(r, "id")
+	return page.render.Template(w, r, "tenant-detail", &render.TemplateData{StringMap: data})
+}
+
 // CreateTenantPage displays a tenant registration form.
 func (page *WebPageHandler) CreateTenantPage(w http.ResponseWriter, r *http.Request) error {
 	var data = make(map[string]string)

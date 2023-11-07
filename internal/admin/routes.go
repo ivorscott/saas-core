@@ -56,6 +56,7 @@ func Routes(
 	app.Handle(http.MethodGet, "/admin", withSession()(webPageHandler.DashboardPage))
 	app.Handle(http.MethodGet, "/admin/tenants", withSession()(webPageHandler.TenantsPage))
 	app.Handle(http.MethodGet, "/admin/create-tenant", withSession()(webPageHandler.CreateTenantPage))
+	app.Handle(http.MethodGet, "/admin/tenants/{id}", withSession()(webPageHandler.TenantPage))
 	app.Handle(http.MethodGet, "/admin/logout", withSession()(authHandler.Logout))
 	app.Handle(http.MethodGet, "/*", withSession()(webPageHandler.E404Page))
 

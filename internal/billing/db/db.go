@@ -73,6 +73,10 @@ func (pg *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func
 		return nil, nil, ErrNoTenantID
 	}
 
+	//if Admin {
+	//	stmt := "set role postgres"
+	//}
+
 	conn, err := pg.db.Connx(ctx)
 	if err != nil {
 		pg.logger.Error("connection failed", zap.Error(err))
