@@ -57,7 +57,7 @@ spec:
         - name: nats-file-volume
           hostPath:
             # use your local path, not mine
-            path: "/Users/ivorscott/DevPie/saas-core/data/nats"
+            path: /Users/ivorscott/DevPie/saas-core/data/nats
       # Required to be able to HUP signal and apply config reload
       # to the server without restarting the pod.
       shareProcessNamespace: true
@@ -118,13 +118,13 @@ spec:
           #
           livenessProbe:
             httpGet:
-              path: /
+              path: /Users/ivorscott/DevPie/saas-core/data/nats
               port: 8222
             initialDelaySeconds: 10
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
-              path: /
+              path: /Users/ivorscott/DevPie/saas-core/data/nats
               port: 8222
             initialDelaySeconds: 10
             timeoutSeconds: 5

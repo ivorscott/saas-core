@@ -2,11 +2,6 @@ include .env
 
 .DEFAULT_GOAL := help
 
-#TODO: create an init script to optimize the on boarding process.
-init: ;@ ## Initialize project.
-	@./init.sh
-.PHONY: init
-
 # =============================================================
 # ADMIN SERVICE
 # =============================================================
@@ -161,17 +156,17 @@ subscription-db-force: ;@ ## Force version on subscription database. Optional <n
 	@migrate -path ./internal/subscription/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/subscription?sslmode=disable force $(val)
 .PHONY: subscription-db-force
 
-dynamodb-tables:	;@ ## List Dynamodb tables.
-	@aws dynamodb list-tables
-.PHONY: dynamodb-tables
-
-routes: ;@ ## Apply ingress routes.
-	kubectl apply -f ./manifests/traefik-routes.yaml
-.PHONY: routes
+init: ;@ ## Initialize project. Do once.
+	@./scripts/setup-data-folder.sh
+.PHONY: init
 
 ports: ;@ ## Port forward Traefik ports.
 	kubectl port-forward --address 0.0.0.0 service/traefik 8000:8000 8080:8080 443:4443 -n default
 .PHONY: ports
+
+routes: ;@ ## Apply ingress routes.
+	kubectl apply -f ./manifests/traefik-routes.yaml
+.PHONY: routes
 
 nats: ;## Port forward NATS port.
 	kubectl port-forward statefulset.apps/nats 4222
@@ -186,15 +181,15 @@ test: ;@ ## Run all tests. Add -- -v for verbosity.
 .PHONY: test
 
 help:
+	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@echo "- Setup Instructions -"
 	@echo
-	@echo 1. tilt up
-	@echo 2. make ports
-	@echo 3. make routes
+	@echo "1. tilt up"
+	@echo "2. make ports"
+	@echo "3. make routes"
 	@echo
-	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
 # http://bit.ly/37TR1r2

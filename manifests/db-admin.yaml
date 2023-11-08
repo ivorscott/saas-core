@@ -15,7 +15,7 @@ spec:
         - name: db-admin-volume
           hostPath:
             # use your local path, not mine
-            path: "/Users/ivorscott/DevPie/saas-core/data/admin"
+            path: /Users/ivorscott/DevPie/saas-core/data/admin
       containers:
         - name: db-admin
           image: db-admin:latest

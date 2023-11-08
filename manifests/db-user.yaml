@@ -15,7 +15,7 @@ spec:
         - name: db-user-volume
           hostPath:
             # use your local path, not mine
-            path: "/Users/ivorscott/DevPie/saas-core/data/user"
+            path: /Users/ivorscott/DevPie/saas-core/data/user
       containers:
         - name: db-user
           image: db-user:latest

@@ -1,7 +1,7 @@
 k8s_yaml([
-    './manifests/nats.yaml',
     './manifests/configmap.yaml',
     './manifests/secrets.yaml',
+    './manifests/db-nats.yaml',
     './manifests/db-admin.yaml',
     './manifests/db-project.yaml',
     './manifests/db-user.yaml',

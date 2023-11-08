@@ -29,22 +29,28 @@ Read initial setup [instructions](doc/guide/SETUP.md).
 ```bash
 # Run make to print instructions
 > make
+...
+subscription-test         Run subscription tests. Add -- -v for verbosity.
+subscription-mock         Generate subscription mocks.
+subscription-db           Enter subscription database.
+subscription-db-gen       Generate migration files. Required <name> argument.
+subscription-db-migrate   Migrate subscription database. Optional <num> argument.
+subscription-db-version   Print migration version for subscription database.
+subscription-db-rollback  Rollback subscription database. Optional <num> argument.
+subscription-db-force     Force version on subscription database. Optional <num> argument.
+init                      Initialize project. Do once.
+ports                     Port forward Traefik ports.
+routes                    Apply ingress routes.
+nats                      Port forward NATS port.
+lint                      Run linter. Optional <package path> argument.
+test                      Run all tests. Add -- -v for verbosity.
 
-- Setup Instructions - 
+- Setup Instructions -
 
 1. tilt up
 2. make ports
 3. make routes
 
-admin-test           Run admin tests. Add -- -v for verbosity.
-admin-mock           Generate admin mocks.
-admin-db             Enter admin database.
-admin-db-gen         Generate migration files. Required <name> argument.
-admin-db-migrate     Migrate admin database. Optional <num> argument.
-admin-db-version     Print migration version for admin database.
-admin-db-rollback    Rollback admin database. Optional <num> argument.
-admin-db-force       Force version on admin database. Optional <num> argument.
-...
 ```
 > __TIP__
 >

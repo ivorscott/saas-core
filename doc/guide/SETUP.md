@@ -39,18 +39,17 @@ Tested on a m1 mac . It should work on linux as well.
     ##
     127.0.0.1       localhost devpie.local admin.devpie.local api.devpie.local 
     ```
-   
-6. Start containers: `tilt up`
-
-7. Port forward the traefik ports: `make ports`
-8. Deploy ingress routes: `make routes`
+6. Initialize project with setup scripts: `make init`
+7. Start containers: `tilt up`
+8. Port forward the traefik ports: `make ports`
+9. Deploy ingress routes: `make routes`
 http://localhost:8080/dashboard/#/http/routers
 
     ![](img/traefik.png)
 
-9. Login to the SaaS admin app (check your email for credentials).
-   ![](img/admin-webapp.png)
-10. Create a new tenant. This is required to log into the SaaS-Client application (https://devpie.local:3000). Use a real email. 
+10. Login to the SaaS admin app (check your email for credentials).
+    ![](img/admin-webapp.png)
+11. Create a new tenant. This is required to log into the SaaS-Client application (https://devpie.local:3000). Use a real email. 
 You will be sent a password.
       ![](img/admin-webapp-tenant.png)
 

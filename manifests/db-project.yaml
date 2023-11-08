@@ -15,7 +15,7 @@ spec:
         - name: db-project-volume
           hostPath:
             # use your local path, not mine
-            path: "/Users/ivorscott/DevPie/saas-core/data/project"
+            path: /Users/ivorscott/DevPie/saas-core/data/project
       containers:
         - name: db-project
           image: db-project:latest
