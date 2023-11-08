@@ -12,7 +12,7 @@ SaaS-Core is a multi-tenant SaaS backend and monorepo of Go services. It support
 simple project management tool like Jira or Trello. 
 
 Necessary services include: registration, tenant and user management, 
-project management, billing, and SaaS administration.
+project management, subscriptions, and SaaS administration.
 
 ## Prerequisites
 

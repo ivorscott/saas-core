@@ -57,10 +57,10 @@ spec:
       middlewares:
         - name: headers
         - name: stripprefix
-    - match: Host(`api.devpie.local`) && PathPrefix(`/api/billing`)
+    - match: Host(`api.devpie.local`) && PathPrefix(`/api/subscription`)
       kind: Rule
       services:
-        - name: mic-billing-svc
+        - name: mic-subscription-svc
           port: 4006
       middlewares:
         - name: headers

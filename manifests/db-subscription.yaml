@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: db-admin
+  name: db-subscription
 spec:
   selector:
     matchLabels:
-      app: db-admin
+      app: db-subscription
   template:
     metadata:
       labels:
-        app: db-admin
+        app: db-subscription
     spec:
       volumes:
-        - name: db-admin-volume
+        - name: db-subscription-volume
           hostPath:
             # use your local path, not mine
-            path: "/Users/ivorscott/DevPie/saas-core/data/admin"
+            path: "/Users/ivorscott/DevPie/saas-core/data/subscription"
       containers:
-        - name: db-admin
-          image: db-admin:latest
+        - name: db-subscription
+          image: db-subscription:latest
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 5432
@@ -31,25 +31,25 @@ spec:
               memory: "250Mi"
           env:
             - name: POSTGRES_DB
-              value: admin
+              value: subscription
             - name: POSTGRES_USER
               value: postgres
             - name: POSTGRES_PASSWORD
               value: postgres
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
-              name: db-admin-volume
+              name: db-subscription-volume
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: db-admin-svc
+  name: db-subscription-svc
 spec:
   type: NodePort
   selector:
-    app: db-admin
+    app: db-subscription
   ports:
     - port: 5432
       targetPort: 5432
       protocol: TCP
-      nodePort: 30007
+      nodePort: 30008

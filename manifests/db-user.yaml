@@ -18,7 +18,7 @@ spec:
             path: "/Users/ivorscott/DevPie/saas-core/data/user"
       containers:
         - name: db-user
-          image: postgres:11.6
+          image: db-user:latest
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 5432

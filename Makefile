@@ -2,6 +2,11 @@ include .env
 
 .DEFAULT_GOAL := help
 
+#TODO: create an init script to optimize the on boarding process.
+init: ;@ ## Initialize project.
+	@./init.sh
+.PHONY: init
+
 # =============================================================
 # ADMIN SERVICE
 # =============================================================
@@ -121,39 +126,40 @@ user-db-force: ;@ ## Force version on user database. Optional <num> argument.
 	@migrate -path ./internal/user/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(USER_DB_PORT)/user?sslmode=disable force $(val)
 .PHONY: user-db-force
 
-# Billing service =============================================================
-billing-test: billing-test	;@ ## Run billing tests. Add -- -v for verbosity.
-	go test $(val) -cover ./internal/billing/...
-.PHONY: billing-test
+# =============================================================
+# SUBSCRIPTION SERVICE
+# =============================================================
+subscription-test: subscription-test	;@ ## Run subscription tests. Add -- -v for verbosity.
+	go test $(val) -cover ./internal/subscription/...
+.PHONY: subscription-test
 
-billing-mock: ;@ ## Generate billing mocks.
-	go generate ./internal/billing/...
-.PHONY: billing-mock
+subscription-mock: ;@ ## Generate subscription mocks.
+	go generate ./internal/subscription/...
+.PHONY: subscription-mock
 
+subscription-db: ;@ ## Enter subscription database.
+	@pgcli postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/subscription
+.PHONY: subscription-db
 
-billing-db: ;@ ## Enter billing database.
-	@pgcli postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/billing
-.PHONY: billing-db
+subscription-db-gen: ;@ ## Generate migration files. Required <name> argument.
+	@migrate create -ext sql -dir ./internal/subscription/res/migrations -seq $(val)
+.PHONY: subscription-db-gen
 
-billing-db-gen: ;@ ## Generate migration files. Required <name> argument.
-	@migrate create -ext sql -dir ./internal/billing/res/migrations -seq $(val)
-.PHONY: billing-db-gen
+subscription-db-migrate: ;@ ## Migrate subscription database. Optional <num> argument.
+	@migrate -path ./internal/subscription/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/subscription?sslmode=disable up $(val)
+.PHONY: subscription-db-migrate
 
-billing-db-migrate: ;@ ## Migrate billing database. Optional <num> argument.
-	@migrate -path ./internal/billing/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/billing?sslmode=disable up $(val)
-.PHONY: billing-db-migrate
+subscription-db-version: ;@ ## Print migration version for subscription database.
+	@migrate -path ./internal/subscription/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/subscription?sslmode=disable version
+.PHONY: subscription-db-version
 
-billing-db-version: ;@ ## Print migration version for billing database.
-	@migrate -path ./internal/billing/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/billing?sslmode=disable version
-.PHONY: billing-db-version
+subscription-db-rollback: ;@ ## Rollback subscription database. Optional <num> argument.
+	@migrate -path ./internal/subscription/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/subscription?sslmode=disable down $(val)
+.PHONY: subscription-db-rollback
 
-billing-db-rollback: ;@ ## Rollback billing database. Optional <num> argument.
-	@migrate -path ./internal/billing/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/billing?sslmode=disable down $(val)
-.PHONY: billing-db-rollback
-
-billing-db-force: ;@ ## Force version on billing database. Optional <num> argument.
-	@migrate -path ./internal/billing/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/billing?sslmode=disable force $(val)
-.PHONY: billing-db-force
+subscription-db-force: ;@ ## Force version on subscription database. Optional <num> argument.
+	@migrate -path ./internal/subscription/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/subscription?sslmode=disable force $(val)
+.PHONY: subscription-db-force
 
 dynamodb-tables:	;@ ## List Dynamodb tables.
 	@aws dynamodb list-tables
@@ -188,12 +194,12 @@ help:
 	@echo 3. make routes
 	@echo
 	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
 # http://bit.ly/37TR1r2
 # TODO: Find a better way
-ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),test lint admin-test admin-db-gen admin-db-migrate admin-db-rollback admin-db-force project-test project-db-gen project-db-migrate project-db-rollback project-db-force user-test user-db-gen user-db-migrate user-db-rollback user-db-force billing-test billing-db-gen billing-db-migrate billing-db-rollback billing-db-force registration-test tenant-test))
+ifeq ($(firstword $(MAKECMDGOALS)),$(filter $(firstword $(MAKECMDGOALS)),test lint admin-test admin-db-gen admin-db-migrate admin-db-rollback admin-db-force project-test project-db-gen project-db-migrate project-db-rollback project-db-force user-test user-db-gen user-db-migrate user-db-rollback user-db-force subscription-test subscription-db-gen subscription-db-migrate subscription-db-rollback subscription-db-force registration-test tenant-test))
   val := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(val):;@:)
 endif
