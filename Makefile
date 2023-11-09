@@ -156,9 +156,13 @@ subscription-db-force: ;@ ## Force version on subscription database. Optional <n
 	@migrate -path ./internal/subscription/res/migrations -verbose -database postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/subscription?sslmode=disable force $(val)
 .PHONY: subscription-db-force
 
-init: ;@ ## Initialize project. Do once.
+init: ;@ ## Initialize project.
 	@./scripts/setup-data-folder.sh
 .PHONY: init
+
+init-db: admin-db-migrate user-db-migrate project-db-migrate subscription-db-migrate ;@ ## Initialize databases with base schema.
+	@echo "Databases initialized!"
+.PHONY: init-db
 
 ports: ;@ ## Port forward Traefik ports.
 	kubectl port-forward --address 0.0.0.0 service/traefik 8000:8000 8080:8080 443:4443 -n default

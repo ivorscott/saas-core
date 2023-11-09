@@ -18,11 +18,6 @@ k8s_yaml([
     './manifests/mic-subscription.yaml'
 ])
 
-docker_build('db-admin:latest', '.', dockerfile = 'deploy/db/admin.dockerfile')
-docker_build('db-project:latest', '.', dockerfile = 'deploy/db/project.dockerfile')
-docker_build('db-subscription:latest', '.', dockerfile = 'deploy/db/subscription.dockerfile')
-docker_build('db-user:latest', '.', dockerfile = 'deploy/db/user.dockerfile')
-
 docker_build('subscription:latest', '.', dockerfile = 'deploy/subscription.dockerfile')
 docker_build('tenant:latest', '.', dockerfile = 'deploy/tenant.dockerfile')
 docker_build('registration:latest', '.' ,dockerfile = 'deploy/registration.dockerfile')

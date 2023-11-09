@@ -79,7 +79,7 @@ func TestNewTransaction_Validate(t *testing.T) {
 		{
 			name: "invalid stripe subscription id",
 			modifier: func(nt *model.NewTransaction) {
-				nt.StripeSubscriptionID = ""
+				nt.SubscriptionID = ""
 			},
 			err: "failed on the 'required' tag",
 		},
@@ -95,16 +95,16 @@ func TestNewTransaction_Validate(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			nt := model.NewTransaction{
-				Amount:               1000,
-				Currency:             "eur",
-				LastFour:             "0001",
-				BankReturnCode:       "",
-				StatusID:             2,
-				ExpirationMonth:      2,
-				ExpirationYear:       2025,
-				StripeSubscriptionID: "sub_1KzXfrIbOZLMWfd3glCgX807",
-				PaymentIntent:        "",
-				PaymentMethod:        "pm_1KzZYPIbOZLMWfd3GeQlt32W",
+				Amount:          1000,
+				Currency:        "eur",
+				LastFour:        "0001",
+				BankReturnCode:  "",
+				StatusID:        2,
+				ExpirationMonth: 2,
+				ExpirationYear:  2025,
+				SubscriptionID:  "sub_1KzXfrIbOZLMWfd3glCgX807",
+				PaymentIntent:   "",
+				PaymentMethod:   "pm_1KzZYPIbOZLMWfd3GeQlt32W",
 			}
 
 			tc.modifier(&nt)

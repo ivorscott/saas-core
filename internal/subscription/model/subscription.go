@@ -2,10 +2,10 @@
 package model
 
 import (
-	"github.com/stripe/stripe-go/v72"
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/stripe/stripe-go/v72"
 )
 
 var subscriptionValidator *validator.Validate
@@ -41,6 +41,7 @@ func (s SubscriptionStatusType) String() string {
 
 // NewSubscription represents a new subscription payload.
 type NewSubscription struct {
+	ID            string                 `json:"id" validate:"required"`
 	Plan          string                 `json:"plan" validate:"required"`
 	TransactionID string                 `json:"transactionId" validate:"required,uuid4"`
 	StatusID      SubscriptionStatusType `json:"statusId" validate:"required,oneof=0 1 2"`

@@ -17,15 +17,12 @@ import (
 )
 
 type stripeClient interface {
-	GetPlan(planID string) (*stripe.Plan, error)
-	GetProduct(productID string) (*stripe.Product, error)
-	GetCards(customerID string) ([]*stripe.Card, error)
 	GetCustomer(customerID string) (*stripe.Customer, error)
 	GetDefaultPaymentMethod(paymentMethodID string) (*stripe.PaymentMethod, error)
 	CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error)
 	GetPaymentMethod(method string) (*stripe.PaymentMethod, error)
 	GetExistingPaymentIntent(intent string) (*stripe.PaymentIntent, error)
-	SubscribeToPlan(customer *stripe.Customer, plan, email, last4, cardType string) (*stripe.Subscription, error)
+	SubscribeToPlan(customer *stripe.Customer, plan, last4, cardType string) (*stripe.Subscription, error)
 	CreateCustomer(pm, fullName, email string) (*stripe.Customer, string, error)
 	Refund(pi string, amount int) error
 	CancelSubscription(subID string) error
@@ -99,7 +96,6 @@ func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePa
 	stripeSubscription, err = ss.stripeClient.SubscribeToPlan(
 		stripeCustomer,
 		payload.Plan,
-		payload.Email,
 		payload.LastFour,
 		"",
 	)
@@ -117,6 +113,20 @@ func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePa
 		zap.String("plan", payload.Plan),
 		zap.String("subscription_id", stripeSubscription.ID),
 	)
+	var chargeID string
+	var transactionID string
+
+	if stripeSubscription.LatestInvoice != nil {
+		if stripeSubscription.LatestInvoice.Charge != nil {
+			chargeID = stripeSubscription.LatestInvoice.Charge.ID
+			if stripeSubscription.LatestInvoice.Charge.BalanceTransaction != nil {
+				transactionID = stripeSubscription.LatestInvoice.Charge.BalanceTransaction.ID
+			}
+		}
+	}
+
+	ss.logger.Info("==============charge id======" + chargeID)
+	ss.logger.Info("==============transaction id======" + transactionID)
 
 	return stripeSubscription.ID, stripeCustomer.ID, nil
 }
@@ -141,17 +151,20 @@ func (ss *SubscriptionService) SubscriptionInfo(ctx context.Context, tenantID st
 		return info, err
 	}
 
-	paymentMethod, err = ss.stripeClient.GetDefaultPaymentMethod(customer.PaymentMethodID)
-	if err != nil {
-		return info, err
-	}
-
 	transactions, err = ss.transactionRepository.GetAllTransactions(ctx, tenantID)
 	if err != nil {
 		return info, err
 	}
 
 	subscription, err = ss.subscriptionRepo.GetTenantSubscription(ctx, tenantID)
+	if err != nil {
+		return info, err
+	}
+
+	paymentMethod, err = ss.stripeClient.GetDefaultPaymentMethod(customer.PaymentMethodID)
+	if err != nil {
+		return info, err
+	}
 
 	info.DefaultPaymentMethod = paymentMethod
 	info.Transactions = transactions
@@ -178,11 +191,11 @@ func (ss *SubscriptionService) Save(ctx context.Context, ns model.NewSubscriptio
 }
 
 // Cancel cancels a stripe subscription, transitioning the customer to the free tier.
-func (ss *SubscriptionService) Cancel(ctx context.Context) error {
+func (ss *SubscriptionService) Cancel(_ context.Context) error {
 	return nil
 }
 
 // Refund refunds a subscription payment.
-func (ss *SubscriptionService) Refund(ctx context.Context) error {
+func (ss *SubscriptionService) Refund(_ context.Context) error {
 	return nil
 }

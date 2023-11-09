@@ -12,7 +12,6 @@ import (
 	"github.com/devpies/saas-core/internal/subscription/model"
 	"github.com/devpies/saas-core/pkg/web"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -59,7 +58,7 @@ func (sr *SubscriptionRepository) SaveSubscription(ctx context.Context, ns model
 			) values ($1, $2, $3, $4, $5, $6, $7)
 		`
 	s = model.Subscription{
-		ID:            uuid.New().String(),
+		ID:            ns.ID,
 		Plan:          ns.Plan,
 		TransactionID: ns.TransactionID,
 		StatusID:      ns.StatusID,

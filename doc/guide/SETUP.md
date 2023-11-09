@@ -41,15 +41,16 @@ Tested on a m1 mac . It should work on linux as well.
     ```
 6. Initialize project with setup scripts: `make init`
 7. Start containers: `tilt up`
-8. Port forward the traefik ports: `make ports`
-9. Deploy ingress routes: `make routes`
+8. Initialize databases with base schema: `make init-db`
+9. Port forward the traefik ports: `make ports`
+10. Deploy ingress routes: `make routes`
 http://localhost:8080/dashboard/#/http/routers
 
-    ![](img/traefik.png)
+     ![](img/traefik.png)
 
-10. Login to the SaaS admin app (check your email for credentials).
+11. Login to the SaaS admin app (check your email for credentials).
     ![](img/admin-webapp.png)
-11. Create a new tenant. This is required to log into the SaaS-Client application (https://devpie.local:3000). Use a real email. 
+12. Create a new tenant. This is required to log into the SaaS-Client application (https://devpie.local:3000). Use a real email. 
 You will be sent a password.
       ![](img/admin-webapp-tenant.png)
 

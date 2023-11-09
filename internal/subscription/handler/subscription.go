@@ -10,7 +10,6 @@ import (
 	"github.com/devpies/saas-core/pkg/web"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/stripe/stripe-go/v72"
 	"go.uber.org/zap"
 )
@@ -19,7 +18,6 @@ type subscriptionService interface {
 	Refund(ctx context.Context) error
 	Cancel(ctx context.Context) error
 	Save(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error)
-	GetOne(ctx context.Context, id string) (model.Subscription, error)
 	SubscriptionInfo(ctx context.Context, tenantID string) (model.SubscriptionInfo, error)
 	CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error)
 	SubscribeStripeCustomer(nsp model.NewStripePayload) (string, string, error)
@@ -56,6 +54,51 @@ func NewSubscriptionHandler(
 	}
 }
 
+func newCustomer(customerID string, payload model.NewStripePayload) (model.NewCustomer, error) {
+	c := model.NewCustomer{
+		ID:        customerID,
+		FirstName: payload.FirstName,
+		LastName:  payload.LastName,
+		Email:     payload.Email,
+	}
+	if err := c.Validate(); err != nil {
+		return model.NewCustomer{}, web.NewRequestError(err, http.StatusBadRequest)
+	}
+	return c, nil
+}
+
+func newTransaction(subscriptionID string, payload model.NewStripePayload) (model.NewTransaction, error) {
+	t := model.NewTransaction{
+		Amount:          payload.Amount,
+		Currency:        payload.Currency,
+		LastFour:        payload.LastFour,
+		StatusID:        model.TransactionStatusCleared,
+		ExpirationMonth: payload.ExpirationMonth,
+		ExpirationYear:  payload.ExpirationYear,
+		PaymentMethod:   payload.PaymentMethod,
+		SubscriptionID:  subscriptionID,
+	}
+	if err := t.Validate(); err != nil {
+		return model.NewTransaction{}, web.NewRequestError(err, http.StatusBadRequest)
+	}
+	return t, nil
+}
+
+func newSubscription(customerID, transactionID, subscriptionID string, payload model.NewStripePayload) (model.NewSubscription, error) {
+	s := model.NewSubscription{
+		ID:            subscriptionID,
+		Plan:          payload.Plan,
+		TransactionID: transactionID,
+		StatusID:      model.SubscriptionStatusCleared,
+		Amount:        payload.Amount,
+		CustomerID:    customerID,
+	}
+	if err := s.Validate(); err != nil {
+		return model.NewSubscription{}, web.NewRequestError(err, http.StatusBadRequest)
+	}
+	return s, nil
+}
+
 // Create sets up a new subscription for the customer.
 func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) error {
 	var (
@@ -67,69 +110,47 @@ func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) er
 		return err
 	}
 
-	stripeSubscriptionID, stripeCustomerID, err := sh.subscriptionService.SubscribeStripeCustomer(payload)
+	// TODO: opt for running in postgres transaction
+	subscriptionID, customerID, err := sh.subscriptionService.SubscribeStripeCustomer(payload)
 	if err != nil {
 		return err
 	}
 
-	customer, err := sh.customerService.Save(
-		r.Context(),
-		model.NewCustomer{
-			ID:        stripeCustomerID,
-			FirstName: payload.FirstName,
-			LastName:  payload.LastName,
-			Email:     payload.Email,
-		},
-		time.Now(),
-	)
+	c, err := newCustomer(customerID, payload)
 	if err != nil {
 		return err
 	}
 
-	transaction, err := sh.transactionService.Save(
-		r.Context(),
-		model.NewTransaction{
-			Amount:               payload.Amount,
-			Currency:             payload.Currency,
-			LastFour:             payload.LastFour,
-			StatusID:             model.TransactionStatusCleared,
-			ExpirationMonth:      payload.ExpirationMonth,
-			ExpirationYear:       payload.ExpirationYear,
-			PaymentMethod:        payload.PaymentMethod,
-			StripeSubscriptionID: stripeSubscriptionID,
-		},
-		time.Now(),
-	)
+	_, err = sh.customerService.Save(r.Context(), c, time.Now())
 	if err != nil {
 		return err
 	}
 
-	_, err = sh.subscriptionService.Save(
-		r.Context(),
-		model.NewSubscription{
-			Plan:          payload.Plan,
-			TransactionID: transaction.ID,
-			StatusID:      model.SubscriptionStatusCleared,
-			Amount:        payload.Amount,
-			CustomerID:    customer.ID,
-		},
-		time.Now(),
-	)
+	t, err := newTransaction(subscriptionID, payload)
 	if err != nil {
 		return err
 	}
 
-	resp := struct {
-		StripeSubscriptionID string `json:"stripeSubscriptionId"`
-	}{
-		StripeSubscriptionID: stripeSubscriptionID,
+	transaction, err := sh.transactionService.Save(r.Context(), t, time.Now())
+	if err != nil {
+		return err
 	}
 
-	return web.Respond(r.Context(), w, resp, http.StatusOK)
+	s, err := newSubscription(customerID, transaction.ID, subscriptionID, payload)
+	if err != nil {
+		return err
+	}
+
+	_, err = sh.subscriptionService.Save(r.Context(), s, time.Now())
+	if err != nil {
+		return err
+	}
+
+	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
-// BillingInfo aggregates various stripe resource objects into a billing summary.
-func (sh *SubscriptionHandler) BillingInfo(w http.ResponseWriter, r *http.Request) error {
+// SubscriptionInfo aggregates various stripe resource objects into a billing summary.
+func (sh *SubscriptionHandler) SubscriptionInfo(w http.ResponseWriter, r *http.Request) error {
 	var (
 		tenantID = chi.URLParam(r, "tenantID")
 		info     model.SubscriptionInfo
@@ -142,31 +163,6 @@ func (sh *SubscriptionHandler) BillingInfo(w http.ResponseWriter, r *http.Reques
 	}
 
 	return web.Respond(r.Context(), w, info, http.StatusOK)
-}
-
-// GetAll retrieves all subscriptions.
-func (sh *SubscriptionHandler) GetAll(w http.ResponseWriter, r *http.Request) error {
-	return nil
-}
-
-// GetOne retrieves a specific subscription by id.
-func (sh *SubscriptionHandler) GetOne(w http.ResponseWriter, r *http.Request) error {
-	var (
-		s        model.Subscription
-		tenantID = chi.URLParam(r, "tenantID")
-		err      error
-	)
-
-	if _, err = uuid.Parse(tenantID); err != nil {
-		return web.NewRequestError(err, http.StatusBadRequest)
-	}
-
-	s, err = sh.subscriptionService.GetOne(r.Context(), tenantID)
-	if err != nil {
-		return err
-	}
-
-	return web.Respond(r.Context(), w, s, http.StatusOK)
 }
 
 // GetPaymentIntent retrieves the paymentIntent from stripe.
@@ -193,11 +189,11 @@ func (sh *SubscriptionHandler) GetPaymentIntent(w http.ResponseWriter, r *http.R
 }
 
 // Cancel cancels a paid subscription.
-func (sh *SubscriptionHandler) Cancel(w http.ResponseWriter, r *http.Request) error {
+func (sh *SubscriptionHandler) Cancel(_ http.ResponseWriter, _ *http.Request) error {
 	return nil
 }
 
 // Refund provides a refund for the customer.
-func (sh *SubscriptionHandler) Refund(w http.ResponseWriter, r *http.Request) error {
+func (sh *SubscriptionHandler) Refund(_ http.ResponseWriter, _ *http.Request) error {
 	return nil
 }

@@ -39,12 +39,11 @@ func Routes(
 
 	app := web.NewApp(mux, shutdown, log, middleware...)
 
-	app.Handle(http.MethodPost, "/subscription", subscriptionHandler.Create)
-	app.Handle(http.MethodGet, "/subscription/{tenantID}", subscriptionHandler.GetOne)
-	//app.Handle(http.MethodGet, "/subscription/{tenantID}", subscriptionHandler.GetOne)
-	app.Handle(http.MethodPost, "/subscription/payment-intent", subscriptionHandler.GetPaymentIntent)
-	//app.Handle(http.MethodGet, "/subscription/cancel", subscriptionHandler.Cancel)
-	//app.Handle(http.MethodGet, "/subscription/refund", subscriptionHandler.Refund)
+	app.Handle(http.MethodPost, "/subscriptions", subscriptionHandler.Create)
+	app.Handle(http.MethodGet, "/subscriptions/{tenantID}", subscriptionHandler.SubscriptionInfo)
+	app.Handle(http.MethodPost, "/subscriptions/payment-intent", subscriptionHandler.GetPaymentIntent)
+	//app.Handle(http.MethodGet, "/subscriptions/cancel", subscriptionHandler.Cancel)
+	//app.Handle(http.MethodGet, "/subscriptions/refund", subscriptionHandler.Refund)
 
 	return app
 }

@@ -57,7 +57,7 @@ func NewIDPService(logger *zap.Logger, config config.Config, cognitoClient cogni
 
 // GetPlanBasedUserPool either retrieves an existing user pool (shared pool) or creates a new pool (siloed). In both cases,
 // the user pool id is returned. If a new user pool is required a user pool client will also be created.
-func (idps *IDPService) GetPlanBasedUserPool(ctx context.Context, tenant model.NewTenant, path string) (string, error) {
+func (idps *IDPService) GetPlanBasedUserPool(ctx context.Context, tenant model.NewTenant, _ string) (string, error) {
 	var (
 		poolType  = UserPoolPooled
 		pathToUse = DefaultTenantPath
@@ -69,11 +69,11 @@ func (idps *IDPService) GetPlanBasedUserPool(ctx context.Context, tenant model.N
 		return "", web.CtxErr()
 	}
 
-	if Plan(tenant.Plan) == PlanPremium {
-		// Test flow before introducing siloed resource creation with codePipeline
-		//poolType = UserPoolSiloed
-		//pathToUse = path
-	}
+	//if Plan(tenant.Plan) == PlanPremium {
+	// Test flow before introducing siloed resource creation with codePipeline
+	//poolType = UserPoolSiloed
+	//pathToUse = path
+	//}
 
 	// Fetch existing pool id and exit if one exists.
 	existingPoolID, err := idps.fetchPoolID(ctx, pathToUse)

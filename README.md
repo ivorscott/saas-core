@@ -38,7 +38,8 @@ subscription-db-migrate   Migrate subscription database. Optional <num> argument
 subscription-db-version   Print migration version for subscription database.
 subscription-db-rollback  Rollback subscription database. Optional <num> argument.
 subscription-db-force     Force version on subscription database. Optional <num> argument.
-init                      Initialize project. Do once.
+init                      Initialize project.
+init-db                   Initialize databases with base schema.
 ports                     Port forward Traefik ports.
 routes                    Apply ingress routes.
 nats                      Port forward NATS port.

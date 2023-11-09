@@ -18,7 +18,7 @@ spec:
             path: /Users/ivorscott/DevPie/saas-core/data/subscription
       containers:
         - name: db-subscription
-          image: db-subscription:latest
+          image: postgres:11.6
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 5432

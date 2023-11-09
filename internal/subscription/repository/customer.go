@@ -10,7 +10,6 @@ import (
 	"github.com/devpies/saas-core/internal/subscription/model"
 	"github.com/devpies/saas-core/pkg/web"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -47,7 +46,7 @@ func (cr *CustomerRepository) SaveCustomer(ctx context.Context, nc model.NewCust
 	defer Close()
 
 	c = model.Customer{
-		ID:        uuid.New().String(),
+		ID:        nc.ID,
 		TenantID:  values.TenantID,
 		FirstName: nc.FirstName,
 		LastName:  nc.LastName,
@@ -57,8 +56,8 @@ func (cr *CustomerRepository) SaveCustomer(ctx context.Context, nc model.NewCust
 	}
 
 	stmt := `
-			insert into customers (customer_id, tenant_id, first_name, last_name, email, stripe_customer_id, updated_at, created_at)
-			values ($1,$2,$3,$4,$5,$6,$7,$8)
+			insert into customers (customer_id, tenant_id, first_name, last_name, email, updated_at, created_at)
+			values ($1,$2,$3,$4,$5,$6,$7)
 	`
 
 	if _, err = conn.ExecContext(
@@ -69,7 +68,6 @@ func (cr *CustomerRepository) SaveCustomer(ctx context.Context, nc model.NewCust
 		c.FirstName,
 		c.LastName,
 		c.Email,
-		c.StripeCustomerID,
 		c.UpdatedAt,
 		c.CreatedAt,
 	); err != nil {
@@ -92,7 +90,7 @@ func (cr *CustomerRepository) GetCustomer(ctx context.Context, tenantID string) 
 	defer Close()
 	stmt := `
 			select customer_id, tenant_id, first_name, last_name, email,
-				stripe_customer_id, updated_at, created_at
+				updated_at, created_at
 			from customers
 			where tenant_id = $1
 	`
@@ -104,7 +102,6 @@ func (cr *CustomerRepository) GetCustomer(ctx context.Context, tenantID string) 
 		&c.FirstName,
 		&c.LastName,
 		&c.Email,
-		&c.StripeCustomerID,
 		&c.UpdatedAt,
 		&c.CreatedAt,
 	); err != nil {

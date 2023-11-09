@@ -114,21 +114,6 @@ spec:
             - name: nats-file-volume
               mountPath: /var/nats
 
-          # Liveness/Readiness probes against the monitoring
-          #
-          livenessProbe:
-            httpGet:
-              path: /Users/ivorscott/DevPie/saas-core/data/nats
-              port: 8222
-            initialDelaySeconds: 10
-            timeoutSeconds: 5
-          readinessProbe:
-            httpGet:
-              path: /Users/ivorscott/DevPie/saas-core/data/nats
-              port: 8222
-            initialDelaySeconds: 10
-            timeoutSeconds: 5
-
           # Gracefully stop NATS Server on pod deletion or image upgrade.
           #
           lifecycle:

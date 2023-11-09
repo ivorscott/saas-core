@@ -61,10 +61,10 @@ func TestNewCustomer_Validate(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			nc := model.NewCustomer{
-				FirstName:        "Julian",
-				LastName:         "Smith",
-				Email:            "julian@example.com",
-				StripeCustomerID: "cus_OxwmOOTrGdKGcH",
+				FirstName: "Julian",
+				LastName:  "Smith",
+				Email:     "julian@example.com",
+				ID:        "cus_OxwmOOTrGdKGcH",
 			}
 
 			tc.modifier(&nc)

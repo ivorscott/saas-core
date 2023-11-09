@@ -54,8 +54,8 @@ func (ur *UserRepository) AddUserTx(ctx context.Context, tx *sqlx.Tx, userID str
 	}
 
 	stmt := `
-		insert into users (user_id, tenant_id, updated_at, created_at)
-		values ($1, $2, $3, $4)
+		insert into users (user_id, tenant_id, created_at)
+		values ($1, $2, $3)
 	`
 
 	if _, err = tx.ExecContext(
@@ -63,7 +63,6 @@ func (ur *UserRepository) AddUserTx(ctx context.Context, tx *sqlx.Tx, userID str
 		stmt,
 		userID,
 		values.TenantID,
-		now.UTC(),
 		now.UTC(),
 	); err != nil {
 		return err
@@ -150,8 +149,8 @@ func (ur *UserRepository) CreateAdminUser(ctx context.Context, na model.NewAdmin
 	}
 
 	stmt = `
-		insert into users (user_id, tenant_id, updated_at, created_at)
-		values ($1, $2, $3, $4)
+		insert into users (user_id, tenant_id, created_at)
+		values ($1, $2, $3)
 	`
 
 	if _, err = conn.ExecContext(
@@ -159,7 +158,6 @@ func (ur *UserRepository) CreateAdminUser(ctx context.Context, na model.NewAdmin
 		stmt,
 		na.UserID,
 		na.TenantID,
-		na.CreatedAt.UTC(),
 		na.CreatedAt.UTC(),
 	); err != nil {
 		return err
@@ -245,7 +243,7 @@ func (ur *UserRepository) RetrieveByEmail(ctx context.Context, email string) (mo
 	stmt := `
 			select 
 			    u.user_id, tenant_id, email, first_name, last_name,
-			    email_verified, locale, picture, u.updated_at, u.created_at
+			    email_verified, locale, picture, u.created_at
 			from users u
 			inner join user_profiles using (user_id)
 			where email = $1
@@ -283,8 +281,8 @@ func (ur *UserRepository) RetrieveMe(ctx context.Context) (model.User, error) {
 
 	stmt := `
 		select 
-			u.user_id, tenant_id, email, first_name, last_name,
-			email_verified, locale, picture, u.updated_at, u.created_at
+			u.user_id, u.tenant_id, email, first_name, last_name,
+			email_verified, locale, picture, u.created_at
 		from users u
 		inner join user_profiles using (user_id)
 		where user_id = $1

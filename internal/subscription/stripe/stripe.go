@@ -83,7 +83,7 @@ func (c *Client) GetExistingPaymentIntent(intent string) (*stripe.PaymentIntent,
 }
 
 // SubscribeToPlan subscribes a stripe customer to a plan.
-func (c *Client) SubscribeToPlan(customer *stripe.Customer, plan, email, last4, cardType string) (*stripe.Subscription, error) {
+func (c *Client) SubscribeToPlan(customer *stripe.Customer, plan, last4, cardType string) (*stripe.Subscription, error) {
 	var (
 		subscription *stripe.Subscription
 		err          error

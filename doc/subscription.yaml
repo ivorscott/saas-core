@@ -1,26 +1,26 @@
 openapi: 3.0.0
 
 info:
-  title: Billing service
+  title: Subscription service
   description: |
-    The billing service manages the entire stripe customer subscription lifecycle.
+    The subscription service manages the entire stripe customer subscription lifecycle.
   version: 0.0.1
   contact:
     name: Ivor Scott
     email: ivor@devpie.io
 
 servers:
-  - url: https://api.devpie.local/api/billing
+  - url: https://api.devpie.local/api/subscriptions
     description: local development
 
 paths:
-  /subscriptions/{subscription_id}:
+  /subscriptions/{tenant_id}:
     get:
       tags:
         - "Subscriptions"
       operationId: subscriptions
       description: |
-        Get subscription.
+        Get subscription info.
       parameters:
         - $ref: '#/components/parameters/subscription_id'
       responses:
@@ -33,10 +33,10 @@ components:
   parameters:
     subscription_id:
       in: path
-      name: subscription_id
+      name: tenant_id
       required: true
       description: |
-        The subscription id.
+        The tenant id.
       schema:
         type: string
 
@@ -46,7 +46,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Subscription"
+            $ref: "#/components/schemas/SubscriptionInfo"
 
     Error:
       description: An error response as application/problem+json.
@@ -57,8 +57,9 @@ components:
               error:
                 type: string
 
+# TODO: update SubscriptionInfo
   schemas:
-    Subscription:
+    SubscriptionInfo:
       type: object
       description: Represents a subscription.
       properties:

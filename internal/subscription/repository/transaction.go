@@ -45,26 +45,26 @@ func (tr *TransactionRepository) SaveTransaction(ctx context.Context, nt model.N
 	defer Close()
 
 	t = model.Transaction{
-		ID:                   uuid.New().String(),
-		Amount:               nt.Amount,
-		Currency:             nt.Currency,
-		LastFour:             nt.LastFour,
-		BankReturnCode:       nt.BankReturnCode,
-		StatusID:             nt.StatusID,
-		ExpirationMonth:      nt.ExpirationMonth,
-		ExpirationYear:       nt.ExpirationYear,
-		StripeSubscriptionID: nt.StripeSubscriptionID,
-		PaymentIntent:        nt.PaymentIntent,
-		PaymentMethod:        nt.PaymentMethod,
-		TenantID:             values.TenantID,
-		UpdatedAt:            now.UTC(),
-		CreatedAt:            now.UTC(),
+		ID:              uuid.New().String(),
+		Amount:          nt.Amount,
+		Currency:        nt.Currency,
+		LastFour:        nt.LastFour,
+		BankReturnCode:  nt.BankReturnCode,
+		StatusID:        nt.StatusID,
+		ExpirationMonth: nt.ExpirationMonth,
+		ExpirationYear:  nt.ExpirationYear,
+		SubscriptionID:  nt.SubscriptionID,
+		PaymentIntent:   nt.PaymentIntent,
+		PaymentMethod:   nt.PaymentMethod,
+		TenantID:        values.TenantID,
+		UpdatedAt:       now.UTC(),
+		CreatedAt:       now.UTC(),
 	}
 
 	stmt := `
 			insert into transactions (
 				transaction_id, amount, currency, last_four, bank_return_code,
-				transaction_status_id, expiration_month, expiration_year, stripe_subscription_id,
+				transaction_status_id, expiration_month, expiration_year, subscription_id,
 				payment_intent, payment_method, tenant_id, updated_at, created_at
 			) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
 	`
@@ -79,7 +79,7 @@ func (tr *TransactionRepository) SaveTransaction(ctx context.Context, nt model.N
 		t.StatusID,
 		t.ExpirationMonth,
 		t.ExpirationYear,
-		t.StripeSubscriptionID,
+		t.SubscriptionID,
 		t.PaymentIntent,
 		t.PaymentMethod,
 		t.TenantID,
@@ -108,7 +108,7 @@ func (tr *TransactionRepository) GetAllTransactions(ctx context.Context, tenantI
 
 	stmt := `
 			select transaction_id, amount, currency, last_four, bank_return_code, transaction_status_id,
-				expiration_month, expiration_year, stripe_subscription_id, payment_intent, payment_method,
+				expiration_month, expiration_year, subscription_id, payment_intent, payment_method,
 				tenant_id, updated_at, created_at
 			from transactions
 			where tenant_id = $1
@@ -128,7 +128,7 @@ func (tr *TransactionRepository) GetAllTransactions(ctx context.Context, tenantI
 			&t.StatusID,
 			&t.ExpirationMonth,
 			&t.ExpirationYear,
-			&t.StripeSubscriptionID,
+			&t.SubscriptionID,
 			&t.PaymentIntent,
 			&t.PaymentMethod,
 			&t.TenantID,

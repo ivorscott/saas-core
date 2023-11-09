@@ -18,7 +18,7 @@ spec:
             path: /Users/ivorscott/DevPie/saas-core/data/admin
       containers:
         - name: db-admin
-          image: db-admin:latest
+          image: postgres:11.6
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 5432

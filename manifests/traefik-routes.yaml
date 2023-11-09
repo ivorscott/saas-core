@@ -57,7 +57,7 @@ spec:
       middlewares:
         - name: headers
         - name: stripprefix
-    - match: Host(`api.devpie.local`) && PathPrefix(`/api/subscription`)
+    - match: Host(`api.devpie.local`) && PathPrefix(`/api/subscriptions`)
       kind: Rule
       services:
         - name: mic-subscription-svc

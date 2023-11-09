@@ -38,17 +38,11 @@ func (sr *SeatRepository) InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, m
 		return web.CtxErr()
 	}
 
-	conn, Close, err := sr.pg.GetConnection(ctx)
-	if err != nil {
-		return fail.ErrConnectionFailed
-	}
-	defer Close()
-
 	stmt := `
 		insert into seats (tenant_id, max_seats, seats_used)
 		values ($1, $2, $3)
 	`
-	if _, err = conn.ExecContext(
+	if _, err = tx.ExecContext(
 		ctx,
 		stmt,
 		values.TenantID,

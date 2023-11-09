@@ -18,7 +18,7 @@ spec:
             path: /Users/ivorscott/DevPie/saas-core/data/project
       containers:
         - name: db-project
-          image: db-project:latest
+          image: postgres:11.6
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 5432

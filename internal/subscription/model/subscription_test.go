@@ -28,6 +28,13 @@ func TestNewSubscription_Validate(t *testing.T) {
 			err: "failed on the 'required' tag",
 		},
 		{
+			name: "invalid subscription id",
+			modifier: func(ns *model.NewSubscription) {
+				ns.ID = ""
+			},
+			err: "failed on the 'required' tag",
+		},
+		{
 			name: "invalid transaction id",
 			modifier: func(ns *model.NewSubscription) {
 				ns.TransactionID = ""
@@ -67,6 +74,7 @@ func TestNewSubscription_Validate(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			ns := model.NewSubscription{
+				ID:            "sub_1OA5EEIbOZLMWfd3A71N5CfP",
 				Plan:          "price_1OA00qIbOZLMWfd33rqyLFaL",
 				TransactionID: "15ee4790-199a-4514-bb5f-573fe935198e",
 				StatusID:      2,
