@@ -2,15 +2,10 @@
 package stripe
 
 import (
-	"fmt"
-
 	"github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/card"
 	"github.com/stripe/stripe-go/v72/customer"
 	"github.com/stripe/stripe-go/v72/paymentintent"
 	"github.com/stripe/stripe-go/v72/paymentmethod"
-	"github.com/stripe/stripe-go/v72/plan"
-	"github.com/stripe/stripe-go/v72/product"
 	"github.com/stripe/stripe-go/v72/refund"
 	"github.com/stripe/stripe-go/v72/sub"
 
@@ -88,7 +83,7 @@ func (c *Client) GetExistingPaymentIntent(intent string) (*stripe.PaymentIntent,
 }
 
 // SubscribeToPlan subscribes a stripe customer to a plan.
-func (c *Client) SubscribeToPlan(cust *stripe.Customer, plan, email, last4, cardType string) (*stripe.Subscription, error) {
+func (c *Client) SubscribeToPlan(customer *stripe.Customer, plan, email, last4, cardType string) (*stripe.Subscription, error) {
 	var (
 		subscription *stripe.Subscription
 		err          error
@@ -99,7 +94,7 @@ func (c *Client) SubscribeToPlan(cust *stripe.Customer, plan, email, last4, card
 	items := []*stripe.SubscriptionItemsParams{{Plan: stripe.String(plan)}}
 
 	params := &stripe.SubscriptionParams{
-		Customer: stripe.String(cust.ID),
+		Customer: stripe.String(customer.ID),
 		Items:    items,
 	}
 
@@ -112,30 +107,6 @@ func (c *Client) SubscribeToPlan(cust *stripe.Customer, plan, email, last4, card
 		return subscription, err
 	}
 	return subscription, err
-}
-
-// GetPlan retrieves the plan subscribed by the customer.
-func (c *Client) GetPlan(planID string) (*stripe.Plan, error) {
-	var (
-		planResult *stripe.Plan
-		err        error
-	)
-
-	stripe.Key = c.secretKey
-
-	planResult, err = plan.Get(planID, nil)
-	if err != nil {
-		return planResult, err
-	}
-
-	return planResult, nil
-}
-
-// GetProduct retrieves the stripe product.
-func (c *Client) GetProduct(productID string) (*stripe.Product, error) {
-	stripe.Key = c.secretKey
-
-	return product.Get(productID, nil)
 }
 
 // GetCustomer retrieves the customer's profile.
@@ -158,41 +129,22 @@ func (c *Client) GetCustomer(customerID string) (*stripe.Customer, error) {
 }
 
 // GetDefaultPaymentMethod retrieves the default payment method for the customer's account.
-func (c *Client) GetDefaultPaymentMethod(customerID string) (*stripe.PaymentMethod, error) {
+func (c *Client) GetDefaultPaymentMethod(paymentMethodID string) (*stripe.PaymentMethod, error) {
 	var (
-		paymentMethod  *stripe.PaymentMethod
-		stripeCustomer *stripe.Customer
-		err            error
+		pm  *stripe.PaymentMethod
+		err error
 	)
 
 	stripe.Key = c.secretKey
 
-	stripeCustomer, err = c.GetCustomer(customerID)
+	pm, err = paymentmethod.Get(
+		paymentMethodID,
+		nil,
+	)
 	if err != nil {
-		return paymentMethod, err
+		return pm, err
 	}
-	return stripeCustomer.InvoiceSettings.DefaultPaymentMethod, nil
-}
-
-// GetCards retrieves a list of available cards on the customer's account.
-func (c *Client) GetCards(customerID string) ([]*stripe.Card, error) {
-	var (
-		list = make([]*stripe.Card, 0, 3)
-	)
-
-	stripe.Key = c.secretKey
-
-	params := &stripe.CardListParams{
-		Customer: stripe.String(customerID),
-	}
-	params.Filters.AddFilter("limit", "", "3")
-	i := card.List(params)
-	for i.Next() {
-		c.logger.Info(fmt.Sprintf("===========CARD===========     %+v", i.Card()))
-		list = append(list, i.Card())
-	}
-
-	return list, nil
+	return pm, nil
 }
 
 // CreateCustomer creates a stripe customer.

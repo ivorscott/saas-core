@@ -1,17 +1,15 @@
-- customer_id: 826c8b47-06f8-496f-9c1b-3732d89ff896
+- customer_id: cus_OxwmOOTrGdKGcH
   tenant_id: 439f70c8-def5-4419-9f17-986a45339e86
   first_name: Julian
   last_name: Smith
   email: julian@example.com
-  stripe_customer_id: cus_OxwmOOTrGdKGcH
   updated_at: 2023-11-03T09:08:27.895635Z
   created_at: 2023-11-03T09:08:27.895635Z
 
-- customer_id: 4f60389d-dae2-4b78-8567-e13622266c63
+- customer_id: cus_LgvWWio4vYZvXY
   tenant_id: 2ddb7843-7e47-46dd-8288-97576d5717aa
   first_name: Tyler
   last_name: Smith
   email: tyler@example.com
-  stripe_customer_id: cus_LgvWWio4vYZvXY
   updated_at: 2023-11-03T09:08:27.895635Z
   created_at: 2023-11-03T09:08:27.895635Z

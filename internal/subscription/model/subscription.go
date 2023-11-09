@@ -2,6 +2,7 @@
 package model
 
 import (
+	"github.com/stripe/stripe-go/v72"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -12,6 +13,13 @@ var subscriptionValidator *validator.Validate
 func init() {
 	v := NewValidator()
 	subscriptionValidator = v
+}
+
+// SubscriptionInfo represents a collection of subscription information.
+type SubscriptionInfo struct {
+	Subscription         Subscription          `json:"subscription"`
+	Transactions         []Transaction         `json:"transactions"`
+	DefaultPaymentMethod *stripe.PaymentMethod `json:"defaultPaymentMethod"`
 }
 
 // SubscriptionStatusType describes a subscription status type.
@@ -38,7 +46,6 @@ type NewSubscription struct {
 	StatusID      SubscriptionStatusType `json:"statusId" validate:"required,oneof=0 1 2"`
 	Amount        int                    `json:"amount" validate:"gt=0"`
 	CustomerID    string                 `json:"customerId" validate:"required,uuid4"`
-	//
 }
 
 // Validate validates NewSubscription.

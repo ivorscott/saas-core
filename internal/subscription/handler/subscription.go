@@ -20,7 +20,7 @@ type subscriptionService interface {
 	Cancel(ctx context.Context) error
 	Save(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error)
 	GetOne(ctx context.Context, id string) (model.Subscription, error)
-	BillingInfo(ctx context.Context, tenantID string) (model.BillingInfo, error)
+	SubscriptionInfo(ctx context.Context, tenantID string) (model.SubscriptionInfo, error)
 	CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error)
 	SubscribeStripeCustomer(nsp model.NewStripePayload) (string, string, error)
 }
@@ -75,10 +75,10 @@ func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) er
 	customer, err := sh.customerService.Save(
 		r.Context(),
 		model.NewCustomer{
-			StripeCustomerID: stripeCustomerID,
-			FirstName:        payload.FirstName,
-			LastName:         payload.LastName,
-			Email:            payload.Email,
+			ID:        stripeCustomerID,
+			FirstName: payload.FirstName,
+			LastName:  payload.LastName,
+			Email:     payload.Email,
 		},
 		time.Now(),
 	)
@@ -132,11 +132,11 @@ func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) er
 func (sh *SubscriptionHandler) BillingInfo(w http.ResponseWriter, r *http.Request) error {
 	var (
 		tenantID = chi.URLParam(r, "tenantID")
-		info     model.BillingInfo
+		info     model.SubscriptionInfo
 		err      error
 	)
 
-	info, err = sh.subscriptionService.BillingInfo(r.Context(), tenantID)
+	info, err = sh.subscriptionService.SubscriptionInfo(r.Context(), tenantID)
 	if err != nil {
 		return err
 	}

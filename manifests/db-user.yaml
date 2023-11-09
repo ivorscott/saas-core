@@ -33,7 +33,7 @@ spec:
             - name: POSTGRES_DB
               value: user
             - name: POSTGRES_USER
-              value: user_a
+              value: postgres
             - name: POSTGRES_PASSWORD
               value: postgres
           volumeMounts:

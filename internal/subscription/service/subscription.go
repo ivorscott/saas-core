@@ -21,11 +21,11 @@ type stripeClient interface {
 	GetProduct(productID string) (*stripe.Product, error)
 	GetCards(customerID string) ([]*stripe.Card, error)
 	GetCustomer(customerID string) (*stripe.Customer, error)
-	GetDefaultPaymentMethod(customerID string) (*stripe.PaymentMethod, error)
+	GetDefaultPaymentMethod(paymentMethodID string) (*stripe.PaymentMethod, error)
 	CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error)
 	GetPaymentMethod(method string) (*stripe.PaymentMethod, error)
 	GetExistingPaymentIntent(intent string) (*stripe.PaymentIntent, error)
-	SubscribeToPlan(cust *stripe.Customer, plan, email, last4, cardType string) (*stripe.Subscription, error)
+	SubscribeToPlan(customer *stripe.Customer, plan, email, last4, cardType string) (*stripe.Subscription, error)
 	CreateCustomer(pm, fullName, email string) (*stripe.Customer, string, error)
 	Refund(pi string, amount int) error
 	CancelSubscription(subID string) error
@@ -33,7 +33,7 @@ type stripeClient interface {
 
 type subscriptionRepository interface {
 	SaveSubscription(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error)
-	GetTenantSubscription(ctx context.Context, id string) (model.Subscription, error)
+	GetTenantSubscription(ctx context.Context, tenantID string) (model.Subscription, error)
 }
 
 // SubscriptionService is responsible for managing subscription related business logic.
@@ -121,18 +121,15 @@ func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePa
 	return stripeSubscription.ID, stripeCustomer.ID, nil
 }
 
-// BillingInfo aggregates various stripe resources to build a convenient billing info summary.
-func (ss *SubscriptionService) BillingInfo(ctx context.Context, tenantID string) (model.BillingInfo, error) {
+// SubscriptionInfo aggregates various stripe resources to show convenient subscription information.
+func (ss *SubscriptionService) SubscriptionInfo(ctx context.Context, tenantID string) (model.SubscriptionInfo, error) {
 	var (
-		info           model.BillingInfo
-		customer       model.Customer
-		transactions   []model.Transaction
-		plan           *stripe.Plan
-		cardList       []*stripe.Card
-		product        *stripe.Product
-		stripeCustomer *stripe.Customer
-		paymentMethod  *stripe.PaymentMethod
-		err            error
+		info          model.SubscriptionInfo
+		customer      model.Customer
+		transactions  []model.Transaction
+		subscription  model.Subscription
+		paymentMethod *stripe.PaymentMethod
+		err           error
 	)
 
 	customer, err = ss.customerRepository.GetCustomer(ctx, tenantID)
@@ -144,52 +141,21 @@ func (ss *SubscriptionService) BillingInfo(ctx context.Context, tenantID string)
 		return info, err
 	}
 
-	// get stripe customer
-	stripeCustomer, err = ss.stripeClient.GetCustomer(customer.StripeCustomerID)
+	paymentMethod, err = ss.stripeClient.GetDefaultPaymentMethod(customer.PaymentMethodID)
 	if err != nil {
 		return info, err
 	}
-
-	// get plan
-	plan, err = ss.stripeClient.GetPlan(stripeCustomer.Subscriptions.Data[0].Plan.ID)
-	if err != nil {
-		return info, err
-	}
-	ss.logger.Info(fmt.Sprintf("=====PLAN======%+v", plan))
-
-	product, err = ss.stripeClient.GetProduct(plan.Product.ID)
-	ss.logger.Info(fmt.Sprintf("=====PRODUCT======%+v", product))
-	// get card list
-	cardList, err = ss.stripeClient.GetCards(stripeCustomer.ID)
-	if err != nil {
-		return info, err
-	}
-	ss.logger.Info(fmt.Sprintf("=====cardLIST======%+v", cardList))
-
-	// get customer (default payment method)
-	paymentMethod, err = ss.stripeClient.GetDefaultPaymentMethod(stripeCustomer.ID)
-	if err != nil {
-		return info, err
-	}
-	ss.logger.Info(fmt.Sprintf("=====paymentMthod======%+v", paymentMethod))
 
 	transactions, err = ss.transactionRepository.GetAllTransactions(ctx, tenantID)
 	if err != nil {
 		return info, err
 	}
 
+	subscription, err = ss.subscriptionRepo.GetTenantSubscription(ctx, tenantID)
+
 	info.DefaultPaymentMethod = paymentMethod
-	info.Cards = cardList
-	info.PlanSummary = model.PlanSummary{
-		Name:        product.Name,
-		Description: product.Description,
-		Active:      plan.Active,
-		Amount:      plan.Amount,
-		Currency:    string(plan.Currency),
-		ProductID:   plan.Product.ID,
-		Interval:    string(plan.Interval),
-	}
 	info.Transactions = transactions
+	info.Subscription = subscription
 
 	return info, nil
 }
@@ -208,24 +174,6 @@ func (ss *SubscriptionService) Save(ctx context.Context, ns model.NewSubscriptio
 			return s, err
 		}
 	}
-	return s, nil
-}
-
-// GetOne returns the subscription for the provided tenant.
-func (ss *SubscriptionService) GetOne(ctx context.Context, tenantID string) (model.Subscription, error) {
-	var (
-		s   model.Subscription
-		err error
-	)
-
-	s, err = ss.subscriptionRepo.GetTenantSubscription(ctx, tenantID)
-	if err != nil {
-		switch err {
-		default:
-			return s, err
-		}
-	}
-
 	return s, nil
 }
 

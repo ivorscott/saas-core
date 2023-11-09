@@ -32,7 +32,7 @@ type Config struct {
 		Password   string `conf:"default:postgres,noprint"`
 		Host       string `conf:"default:localhost,noprint"`
 		Port       int    `conf:"default:5432,noprint"`
-		Name       string `conf:"default:billing,noprint"`
+		Name       string `conf:"default:subscription,noprint"`
 		DisableTLS bool   `conf:"default:false"`
 	}
 }

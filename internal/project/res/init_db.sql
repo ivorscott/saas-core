@@ -5,7 +5,6 @@ CREATE TABLE projects (
     prefix VARCHAR(4) NOT NULL,
     description TEXT,
     user_id VARCHAR(36) NOT NULL,
-    team_id VARCHAR(36),
     active BOOLEAN DEFAULT TRUE,
     public BOOLEAN DEFAULT FALSE,
     column_order TEXT ARRAY[10],
@@ -14,10 +13,8 @@ CREATE TABLE projects (
 );
 
 CREATE INDEX idx_project_tenant ON projects(tenant_id);
-CREATE INDEX idx_project_team ON projects(team_id);
 CREATE INDEX idx_project_name ON projects(name);
 CREATE INDEX idx_project_public ON projects(public);
-
 
 CREATE TABLE columns (
     column_id VARCHAR(36) PRIMARY KEY,
@@ -35,10 +32,10 @@ CREATE INDEX idx_column_project ON columns(project_id);
 
 CREATE TABLE tasks (
     task_id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
     project_id VARCHAR(36) NOT NULL,
     tenant_id VARCHAR(36) NOT NULL,
     key VARCHAR(10),
-    seq SERIAL,
     title VARCHAR(48) NOT NULL,
     points INT DEFAULT 0,
     content TEXT,
@@ -68,40 +65,24 @@ CREATE TABLE comments (
 CREATE INDEX idx_comment_tenant ON comments(tenant_id);
 CREATE INDEX idx_comment_task ON comments(task_id);
 
--- role and memberships are redundant copies of user service data
-CREATE TYPE ROLE AS ENUM ('administrator', 'editor', 'commenter','viewer');
-CREATE TABLE IF NOT EXISTS memberships (
-   membership_id VARCHAR(36) PRIMARY KEY,
-   tenant_id VARCHAR(36) NOT NULL,
-   user_id VARCHAR(36) NOT NULL,
-   team_id VARCHAR(36) NOT NULL,
-   role ROLE DEFAULT 'editor',
-   created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
-   updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
-);
-CREATE INDEX idx_membership_tenant ON memberships(tenant_id);
-CREATE INDEX idx_membership_user ON memberships(user_id);
-CREATE INDEX idx_membership_team ON memberships(team_id);
-
 -- enable RLS
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE columns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memberships ENABLE ROW LEVEL SECURITY;
 
 -- create policies
-CREATE POLICY projects_isolation_policy ON projects
-    USING (tenant_id = current_setting('app.current_tenant'));
-
-CREATE POLICY columns_isolation_policy ON columns
-    USING (tenant_id = current_setting('app.current_tenant'));
+CREATE POLICY comments_isolation_policy ON comments
+    USING (tenant_id = (SELECT current_setting('app.current_tenant')));
 
 CREATE POLICY tasks_isolation_policy ON tasks
-    USING (tenant_id = current_setting('app.current_tenant'));
+    USING (tenant_id = (SELECT current_setting('app.current_tenant')));
 
-CREATE POLICY comments_isolation_policy ON comments
-    USING (tenant_id = current_setting('app.current_tenant'));
+CREATE POLICY columns_isolation_policy ON columns
+    USING (tenant_id = (SELECT current_setting('app.current_tenant')));
 
-CREATE POLICY memberships_isolation_policy ON memberships
-    USING (tenant_id = current_setting('app.current_tenant'));
+CREATE POLICY projects_isolation_policy ON projects
+    USING (tenant_id = (SELECT current_setting('app.current_tenant')));
+
+CREATE USER user_a WITH PASSWORD 'postgres';
+GRANT ALL ON ALL TABLES IN SCHEMA "public" TO user_a;

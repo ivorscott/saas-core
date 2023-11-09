@@ -40,7 +40,7 @@ func Routes(
 	app := web.NewApp(mux, shutdown, log, middleware...)
 
 	app.Handle(http.MethodPost, "/subscription", subscriptionHandler.Create)
-	app.Handle(http.MethodGet, "/subscription/{tenantID}", subscriptionHandler.BillingInfo)
+	app.Handle(http.MethodGet, "/subscription/{tenantID}", subscriptionHandler.GetOne)
 	//app.Handle(http.MethodGet, "/subscription/{tenantID}", subscriptionHandler.GetOne)
 	app.Handle(http.MethodPost, "/subscription/payment-intent", subscriptionHandler.GetPaymentIntent)
 	//app.Handle(http.MethodGet, "/subscription/cancel", subscriptionHandler.Cancel)
