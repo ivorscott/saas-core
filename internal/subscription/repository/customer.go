@@ -46,18 +46,19 @@ func (cr *CustomerRepository) SaveCustomer(ctx context.Context, nc model.NewCust
 	defer Close()
 
 	c = model.Customer{
-		ID:        nc.ID,
-		TenantID:  values.TenantID,
-		FirstName: nc.FirstName,
-		LastName:  nc.LastName,
-		Email:     nc.Email,
-		UpdatedAt: now.UTC(),
-		CreatedAt: now.UTC(),
+		ID:              nc.ID,
+		TenantID:        values.TenantID,
+		FirstName:       nc.FirstName,
+		LastName:        nc.LastName,
+		Email:           nc.Email,
+		PaymentMethodID: nc.PaymentMethodID,
+		UpdatedAt:       now.UTC(),
+		CreatedAt:       now.UTC(),
 	}
 
 	stmt := `
-			insert into customers (customer_id, tenant_id, first_name, last_name, email, updated_at, created_at)
-			values ($1,$2,$3,$4,$5,$6,$7)
+			insert into customers (customer_id, tenant_id, first_name, last_name, email, payment_method)
+			values ($1,$2,$3,$4,$5,$6)
 	`
 
 	if _, err = conn.ExecContext(
@@ -68,8 +69,7 @@ func (cr *CustomerRepository) SaveCustomer(ctx context.Context, nc model.NewCust
 		c.FirstName,
 		c.LastName,
 		c.Email,
-		c.UpdatedAt,
-		c.CreatedAt,
+		c.PaymentMethodID,
 	); err != nil {
 		return c, fmt.Errorf("error inserting customer %v :%w", c, err)
 	}

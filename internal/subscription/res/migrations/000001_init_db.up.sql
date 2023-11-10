@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS customers (
     last_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     tenant_id VARCHAR(36) NOT NULL,
-    payment_method VARCHAR(36) NOT NULL,
+    payment_method VARCHAR(255) NOT NULL,
     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
 );

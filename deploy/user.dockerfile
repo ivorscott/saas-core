@@ -11,7 +11,6 @@ RUN mkdir log
 COPY go.* ./
 COPY cmd/user ./cmd/user
 COPY internal/user ./internal/user
-COPY pkg ./pkg
 
 RUN go mod download && go build ./cmd/user
 

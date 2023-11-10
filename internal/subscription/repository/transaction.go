@@ -9,7 +9,6 @@ import (
 	"github.com/devpies/saas-core/internal/subscription/model"
 	"github.com/devpies/saas-core/pkg/web"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -45,7 +44,7 @@ func (tr *TransactionRepository) SaveTransaction(ctx context.Context, nt model.N
 	defer Close()
 
 	t = model.Transaction{
-		ID:              uuid.New().String(),
+		ID:              nt.ID,
 		Amount:          nt.Amount,
 		Currency:        nt.Currency,
 		LastFour:        nt.LastFour,
@@ -65,8 +64,8 @@ func (tr *TransactionRepository) SaveTransaction(ctx context.Context, nt model.N
 			insert into transactions (
 				transaction_id, amount, currency, last_four, bank_return_code,
 				transaction_status_id, expiration_month, expiration_year, subscription_id,
-				payment_intent, payment_method, tenant_id, updated_at, created_at
-			) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+				payment_intent, payment_method, tenant_id
+			) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
 	`
 	if _, err = conn.ExecContext(
 		ctx,
@@ -83,8 +82,6 @@ func (tr *TransactionRepository) SaveTransaction(ctx context.Context, nt model.N
 		t.PaymentIntent,
 		t.PaymentMethod,
 		t.TenantID,
-		t.UpdatedAt,
-		t.CreatedAt,
 	); err != nil {
 		return t, fmt.Errorf("error inserting transaction %v :%w", t, err)
 	}

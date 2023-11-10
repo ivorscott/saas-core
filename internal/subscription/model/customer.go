@@ -15,10 +15,11 @@ func init() {
 
 // NewCustomer represents a new customer.
 type NewCustomer struct {
-	ID        string `json:"id" validate:"required"`
-	FirstName string `json:"firstName" validate:"required,max=255"`
-	LastName  string `json:"lastName" validate:"required,max=255"`
-	Email     string `json:"email" validate:"required,email"`
+	ID              string `validate:"required"`
+	FirstName       string `validate:"required,max=255"`
+	LastName        string `validate:"required,max=255"`
+	Email           string `validate:"required,email"`
+	PaymentMethodID string `validate:"required"`
 }
 
 // Validate validates NewCustomer.

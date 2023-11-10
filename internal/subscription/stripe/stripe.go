@@ -101,6 +101,7 @@ func (c *Client) SubscribeToPlan(customer *stripe.Customer, plan, last4, cardTyp
 	params.AddMetadata("last_four", last4)
 	params.AddMetadata("card_type", cardType)
 	params.AddExpand("latest_invoice.payment_intent")
+	params.AddExpand("latest_invoice.charge.balance_transaction")
 
 	subscription, err = sub.New(params)
 	if err != nil {

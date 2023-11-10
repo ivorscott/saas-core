@@ -36,16 +36,17 @@ func (t TransactionStatusType) String() string {
 
 // NewTransaction represents a new transaction payload.
 type NewTransaction struct {
-	Amount          int                   `json:"amount" validate:"required"`
-	Currency        string                `json:"currency" validate:"required"`
-	LastFour        string                `json:"lastFour" validate:"required,len=4"`
-	BankReturnCode  string                `json:"bankReturnCode"`
-	StatusID        TransactionStatusType `json:"statusId" validate:"required,oneof=0 1 2 3 4"`
-	ExpirationMonth int                   `json:"expirationMonth" validate:"gte=1,lte=12"`
-	ExpirationYear  int                   `json:"expirationYear" validate:"min=1958"`
-	SubscriptionID  string                `json:"subscriptionId" validate:"required"`
-	PaymentIntent   string                `json:"paymentIntent"`
-	PaymentMethod   string                `json:"paymentMethod" validate:"required"`
+	ID              string `validate:"required"`
+	Amount          int    `validate:"required"`
+	Currency        string `validate:"required"`
+	LastFour        string `validate:"required,len=4"`
+	BankReturnCode  string
+	StatusID        TransactionStatusType `validate:"required,oneof=0 1 2 3 4"`
+	ExpirationMonth int                   `validate:"gte=1,lte=12"`
+	ExpirationYear  int                   `validate:"min=1958"`
+	SubscriptionID  string                `validate:"required"`
+	PaymentIntent   string
+	PaymentMethod   string `validate:"required"`
 }
 
 // Validate validates NewTransaction.

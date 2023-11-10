@@ -20,7 +20,7 @@ type subscriptionService interface {
 	Save(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error)
 	SubscriptionInfo(ctx context.Context, tenantID string) (model.SubscriptionInfo, error)
 	CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error)
-	SubscribeStripeCustomer(nsp model.NewStripePayload) (string, string, error)
+	SubscribeStripeCustomer(nsp model.NewStripePayload) (string, string, string, error)
 }
 
 type transactionService interface {
@@ -56,10 +56,11 @@ func NewSubscriptionHandler(
 
 func newCustomer(customerID string, payload model.NewStripePayload) (model.NewCustomer, error) {
 	c := model.NewCustomer{
-		ID:        customerID,
-		FirstName: payload.FirstName,
-		LastName:  payload.LastName,
-		Email:     payload.Email,
+		ID:              customerID,
+		FirstName:       payload.FirstName,
+		LastName:        payload.LastName,
+		Email:           payload.Email,
+		PaymentMethodID: payload.PaymentMethod,
 	}
 	if err := c.Validate(); err != nil {
 		return model.NewCustomer{}, web.NewRequestError(err, http.StatusBadRequest)
@@ -67,8 +68,9 @@ func newCustomer(customerID string, payload model.NewStripePayload) (model.NewCu
 	return c, nil
 }
 
-func newTransaction(subscriptionID string, payload model.NewStripePayload) (model.NewTransaction, error) {
+func newTransaction(transactionID, subscriptionID string, payload model.NewStripePayload) (model.NewTransaction, error) {
 	t := model.NewTransaction{
+		ID:              transactionID,
 		Amount:          payload.Amount,
 		Currency:        payload.Currency,
 		LastFour:        payload.LastFour,
@@ -111,7 +113,7 @@ func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) er
 	}
 
 	// TODO: opt for running in postgres transaction
-	subscriptionID, customerID, err := sh.subscriptionService.SubscribeStripeCustomer(payload)
+	subscriptionID, customerID, transactionID, err := sh.subscriptionService.SubscribeStripeCustomer(payload)
 	if err != nil {
 		return err
 	}
@@ -126,22 +128,22 @@ func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) er
 		return err
 	}
 
-	t, err := newTransaction(subscriptionID, payload)
-	if err != nil {
-		return err
-	}
-
-	transaction, err := sh.transactionService.Save(r.Context(), t, time.Now())
-	if err != nil {
-		return err
-	}
-
-	s, err := newSubscription(customerID, transaction.ID, subscriptionID, payload)
+	s, err := newSubscription(customerID, transactionID, subscriptionID, payload)
 	if err != nil {
 		return err
 	}
 
 	_, err = sh.subscriptionService.Save(r.Context(), s, time.Now())
+	if err != nil {
+		return err
+	}
+
+	t, err := newTransaction(transactionID, subscriptionID, payload)
+	if err != nil {
+		return err
+	}
+
+	_, err = sh.transactionService.Save(r.Context(), t, time.Now())
 	if err != nil {
 		return err
 	}

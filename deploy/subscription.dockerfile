@@ -11,7 +11,6 @@ RUN mkdir log
 COPY go.* ./
 COPY cmd/subscription ./cmd/subscription
 COPY internal/subscription ./internal/subscription
-COPY pkg ./pkg
 
 RUN go mod download && go build ./cmd/subscription
 

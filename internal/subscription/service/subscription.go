@@ -73,7 +73,7 @@ func (ss *SubscriptionService) CreatePaymentIntent(currency string, amount int) 
 }
 
 // SubscribeStripeCustomer creates a new stripe customer and attaches them to a stripe subscription.
-func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePayload) (string, string, error) {
+func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePayload) (string, string, string, error) {
 	var (
 		stripeSubscription *stripe.Subscription
 		stripeCustomer     *stripe.Customer
@@ -89,7 +89,7 @@ func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePa
 			fmt.Sprintf("%s: %s", customerMsg, err.Error()),
 			zap.String("email", stripeCustomer.Email),
 		)
-		return "", "", ErrCreatingStripeCustomer
+		return "", "", "", ErrCreatingStripeCustomer
 	}
 
 	// subscribe to plan
@@ -105,7 +105,7 @@ func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePa
 			zap.String("email", stripeCustomer.Email),
 			zap.String("plan", payload.Plan),
 		)
-		return "", "", ErrSubscribingStripeCustomer
+		return "", "", "", ErrSubscribingStripeCustomer
 	}
 	ss.logger.Info(
 		"successfully subscribed",
@@ -113,22 +113,17 @@ func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePa
 		zap.String("plan", payload.Plan),
 		zap.String("subscription_id", stripeSubscription.ID),
 	)
-	var chargeID string
 	var transactionID string
 
 	if stripeSubscription.LatestInvoice != nil {
 		if stripeSubscription.LatestInvoice.Charge != nil {
-			chargeID = stripeSubscription.LatestInvoice.Charge.ID
 			if stripeSubscription.LatestInvoice.Charge.BalanceTransaction != nil {
 				transactionID = stripeSubscription.LatestInvoice.Charge.BalanceTransaction.ID
 			}
 		}
 	}
 
-	ss.logger.Info("==============charge id======" + chargeID)
-	ss.logger.Info("==============transaction id======" + transactionID)
-
-	return stripeSubscription.ID, stripeCustomer.ID, nil
+	return stripeSubscription.ID, stripeCustomer.ID, transactionID, nil
 }
 
 // SubscriptionInfo aggregates various stripe resources to show convenient subscription information.
