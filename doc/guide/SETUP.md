@@ -15,7 +15,7 @@ Tested on a m1 mac . It should work on linux as well.
   - [pgcli](https://www.pgcli.com/)
   - [golangci-lint](https://github.com/golangci/golangci-lint)
   - [go-migrate](https://github.com/golang-migrate/migrate)
-- [saas-infra resources](https://github.com/devpies/saas-infra/tree/main/local/saas)
+- [saas-infra resources](https://github.com/devpies/saas-infra)
 
 ## Instructions 
 
