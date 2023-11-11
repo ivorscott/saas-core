@@ -95,6 +95,7 @@ func TestNewTransaction_Validate(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			nt := model.NewTransaction{
+				ID:              "txn_3OArDkIbOZLMWfd30wyBVTpt",
 				Amount:          1000,
 				Currency:        "eur",
 				LastFour:        "0001",

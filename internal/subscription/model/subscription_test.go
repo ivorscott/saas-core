@@ -42,13 +42,6 @@ func TestNewSubscription_Validate(t *testing.T) {
 			err: "failed on the 'required' tag",
 		},
 		{
-			name: "transaction id is not a uuid",
-			modifier: func(ns *model.NewSubscription) {
-				ns.TransactionID = model.InvalidUUID
-			},
-			err: "failed on the 'uuid4' tag",
-		},
-		{
 			name: "invalid amount",
 			modifier: func(ns *model.NewSubscription) {
 				ns.Amount = 0
@@ -61,13 +54,6 @@ func TestNewSubscription_Validate(t *testing.T) {
 				ns.CustomerID = ""
 			},
 			err: "failed on the 'required' tag",
-		},
-		{
-			name: "customer id is not a uuid",
-			modifier: func(ns *model.NewSubscription) {
-				ns.CustomerID = model.InvalidUUID
-			},
-			err: "failed on the 'uuid4' tag",
 		},
 	}
 

@@ -42,17 +42,9 @@ CREATE INDEX idx_invite_tenant ON invites(tenant_id);
 CREATE INDEX idx_invite_user ON invites(user_id);
 
 -- enable RLS
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE seats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invites ENABLE ROW LEVEL SECURITY;
 
 -- create policies
-CREATE POLICY users_isolation_policy ON users
-    USING (tenant_id = (SELECT current_setting('app.current_tenant')));
-
-CREATE POLICY seats_isolation_policy ON seats
-    USING (tenant_id = (SELECT current_setting('app.current_tenant')));
-
 CREATE POLICY invites_isolation_policy ON invites
     USING (tenant_id = (SELECT current_setting('app.current_tenant')));
 

@@ -4,7 +4,6 @@ package handler
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/devpies/saas-core/internal/subscription/model"
 	"github.com/devpies/saas-core/pkg/web"
@@ -17,88 +16,26 @@ import (
 type subscriptionService interface {
 	Refund(ctx context.Context) error
 	Cancel(ctx context.Context) error
-	Save(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error)
 	SubscriptionInfo(ctx context.Context, tenantID string) (model.SubscriptionInfo, error)
 	CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error)
-	SubscribeStripeCustomer(nsp model.NewStripePayload) (string, string, string, error)
-}
-
-type transactionService interface {
-	Save(ctx context.Context, nt model.NewTransaction, now time.Time) (model.Transaction, error)
-}
-
-type customerService interface {
-	Save(ctx context.Context, nc model.NewCustomer, now time.Time) (model.Customer, error)
+	SubscribeStripeCustomer(ctx context.Context, nsp model.NewStripePayload) error
 }
 
 // SubscriptionHandler handles subscription related requests.
 type SubscriptionHandler struct {
 	logger              *zap.Logger
 	subscriptionService subscriptionService
-	transactionService  transactionService
-	customerService     customerService
 }
 
 // NewSubscriptionHandler returns a SubscriptionHandler.
 func NewSubscriptionHandler(
 	logger *zap.Logger,
 	subscriptionService subscriptionService,
-	transactionService transactionService,
-	customerService customerService,
 ) *SubscriptionHandler {
 	return &SubscriptionHandler{
 		logger:              logger,
 		subscriptionService: subscriptionService,
-		transactionService:  transactionService,
-		customerService:     customerService,
 	}
-}
-
-func newCustomer(customerID string, payload model.NewStripePayload) (model.NewCustomer, error) {
-	c := model.NewCustomer{
-		ID:              customerID,
-		FirstName:       payload.FirstName,
-		LastName:        payload.LastName,
-		Email:           payload.Email,
-		PaymentMethodID: payload.PaymentMethod,
-	}
-	if err := c.Validate(); err != nil {
-		return model.NewCustomer{}, web.NewRequestError(err, http.StatusBadRequest)
-	}
-	return c, nil
-}
-
-func newTransaction(transactionID, subscriptionID string, payload model.NewStripePayload) (model.NewTransaction, error) {
-	t := model.NewTransaction{
-		ID:              transactionID,
-		Amount:          payload.Amount,
-		Currency:        payload.Currency,
-		LastFour:        payload.LastFour,
-		StatusID:        model.TransactionStatusCleared,
-		ExpirationMonth: payload.ExpirationMonth,
-		ExpirationYear:  payload.ExpirationYear,
-		PaymentMethod:   payload.PaymentMethod,
-		SubscriptionID:  subscriptionID,
-	}
-	if err := t.Validate(); err != nil {
-		return model.NewTransaction{}, web.NewRequestError(err, http.StatusBadRequest)
-	}
-	return t, nil
-}
-
-func newSubscription(customerID, transactionID, subscriptionID string, payload model.NewStripePayload) (model.NewSubscription, error) {
-	s := model.NewSubscription{
-		ID:            subscriptionID,
-		Plan:          payload.Plan,
-		TransactionID: transactionID,
-		StatusID:      model.SubscriptionStatusCleared,
-		Amount:        payload.Amount,
-		CustomerID:    customerID,
-	}
-	if err := s.Validate(); err != nil {
-		return model.NewSubscription{}, web.NewRequestError(err, http.StatusBadRequest)
-	}
-	return s, nil
 }
 
 // Create sets up a new subscription for the customer.
@@ -112,38 +49,7 @@ func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) er
 		return err
 	}
 
-	// TODO: opt for running in postgres transaction
-	subscriptionID, customerID, transactionID, err := sh.subscriptionService.SubscribeStripeCustomer(payload)
-	if err != nil {
-		return err
-	}
-
-	c, err := newCustomer(customerID, payload)
-	if err != nil {
-		return err
-	}
-
-	_, err = sh.customerService.Save(r.Context(), c, time.Now())
-	if err != nil {
-		return err
-	}
-
-	s, err := newSubscription(customerID, transactionID, subscriptionID, payload)
-	if err != nil {
-		return err
-	}
-
-	_, err = sh.subscriptionService.Save(r.Context(), s, time.Now())
-	if err != nil {
-		return err
-	}
-
-	t, err := newTransaction(transactionID, subscriptionID, payload)
-	if err != nil {
-		return err
-	}
-
-	_, err = sh.transactionService.Save(r.Context(), t, time.Now())
+	err = sh.subscriptionService.SubscribeStripeCustomer(r.Context(), payload)
 	if err != nil {
 		return err
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/devpies/saas-core/internal/subscription/model"
 	"github.com/devpies/saas-core/pkg/web"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stripe/stripe-go/v72"
 	"go.uber.org/zap"
 )
@@ -29,17 +30,17 @@ type stripeClient interface {
 }
 
 type subscriptionRepository interface {
-	SaveSubscription(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error)
+	SaveSubscriptionTx(ctx context.Context, tx *sqlx.Tx, ns model.NewSubscription, now time.Time) (model.Subscription, error)
 	GetTenantSubscription(ctx context.Context, tenantID string) (model.Subscription, error)
 }
 
 // SubscriptionService is responsible for managing subscription related business logic.
 type SubscriptionService struct {
-	logger                *zap.Logger
-	stripeClient          stripeClient
-	subscriptionRepo      subscriptionRepository
-	customerRepository    customerRepository
-	transactionRepository transactionRepository
+	logger           *zap.Logger
+	stripeClient     stripeClient
+	subscriptionRepo subscriptionRepository
+	customerRepo     customerRepository
+	transactionRepo  transactionRepository
 }
 
 var (
@@ -54,15 +55,15 @@ func NewSubscriptionService(
 	logger *zap.Logger,
 	stripeClient stripeClient,
 	subscriptionRepo subscriptionRepository,
-	customerRepository customerRepository,
-	transactionRepository transactionRepository,
+	customerRepo customerRepository,
+	transactionRepo transactionRepository,
 ) *SubscriptionService {
 	return &SubscriptionService{
-		logger:                logger,
-		stripeClient:          stripeClient,
-		subscriptionRepo:      subscriptionRepo,
-		customerRepository:    customerRepository,
-		transactionRepository: transactionRepository,
+		logger:           logger,
+		stripeClient:     stripeClient,
+		subscriptionRepo: subscriptionRepo,
+		customerRepo:     customerRepo,
+		transactionRepo:  transactionRepo,
 	}
 }
 
@@ -73,7 +74,7 @@ func (ss *SubscriptionService) CreatePaymentIntent(currency string, amount int) 
 }
 
 // SubscribeStripeCustomer creates a new stripe customer and attaches them to a stripe subscription.
-func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePayload) (string, string, string, error) {
+func (ss *SubscriptionService) SubscribeStripeCustomer(ctx context.Context, payload model.NewStripePayload) error {
 	var (
 		stripeSubscription *stripe.Subscription
 		stripeCustomer     *stripe.Customer
@@ -89,7 +90,7 @@ func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePa
 			fmt.Sprintf("%s: %s", customerMsg, err.Error()),
 			zap.String("email", stripeCustomer.Email),
 		)
-		return "", "", "", ErrCreatingStripeCustomer
+		return ErrCreatingStripeCustomer
 	}
 
 	// subscribe to plan
@@ -105,7 +106,7 @@ func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePa
 			zap.String("email", stripeCustomer.Email),
 			zap.String("plan", payload.Plan),
 		)
-		return "", "", "", ErrSubscribingStripeCustomer
+		return ErrSubscribingStripeCustomer
 	}
 	ss.logger.Info(
 		"successfully subscribed",
@@ -123,7 +124,96 @@ func (ss *SubscriptionService) SubscribeStripeCustomer(payload model.NewStripePa
 		}
 	}
 
-	return stripeSubscription.ID, stripeCustomer.ID, transactionID, nil
+	return ss.saveStripeResources(ctx, payload, stripeSubscription.ID, stripeCustomer.ID, transactionID)
+}
+
+func (ss *SubscriptionService) saveStripeResources(
+	ctx context.Context,
+	payload model.NewStripePayload,
+	subscriptionID,
+	customerID,
+	transactionID string,
+) error {
+	var (
+		err error
+	)
+
+	c, err := newCustomer(customerID, payload)
+	if err != nil {
+		return err
+	}
+	s, err := newSubscription(customerID, transactionID, subscriptionID, payload)
+	if err != nil {
+		return err
+	}
+	t, err := newTransaction(transactionID, subscriptionID, payload)
+	if err != nil {
+		return err
+	}
+
+	err = ss.customerRepo.RunTx(ctx, func(tx *sqlx.Tx) error {
+		_, err = ss.customerRepo.SaveCustomerTx(ctx, tx, c, time.Now())
+		if err != nil {
+			return err
+		}
+		_, err = ss.subscriptionRepo.SaveSubscriptionTx(ctx, tx, s, time.Now())
+		if err != nil {
+			return err
+		}
+		_, err = ss.transactionRepo.SaveTransactionTx(ctx, tx, t, time.Now())
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return nil
+}
+
+func newCustomer(customerID string, payload model.NewStripePayload) (model.NewCustomer, error) {
+	c := model.NewCustomer{
+		ID:              customerID,
+		FirstName:       payload.FirstName,
+		LastName:        payload.LastName,
+		Email:           payload.Email,
+		PaymentMethodID: payload.PaymentMethod,
+	}
+	if err := c.Validate(); err != nil {
+		return model.NewCustomer{}, web.NewRequestError(err, http.StatusBadRequest)
+	}
+	return c, nil
+}
+
+func newTransaction(transactionID, subscriptionID string, payload model.NewStripePayload) (model.NewTransaction, error) {
+	t := model.NewTransaction{
+		ID:              transactionID,
+		Amount:          payload.Amount,
+		Currency:        payload.Currency,
+		LastFour:        payload.LastFour,
+		StatusID:        model.TransactionStatusCleared,
+		ExpirationMonth: payload.ExpirationMonth,
+		ExpirationYear:  payload.ExpirationYear,
+		PaymentMethod:   payload.PaymentMethod,
+		SubscriptionID:  subscriptionID,
+	}
+	if err := t.Validate(); err != nil {
+		return model.NewTransaction{}, web.NewRequestError(err, http.StatusBadRequest)
+	}
+	return t, nil
+}
+
+func newSubscription(customerID, transactionID, subscriptionID string, payload model.NewStripePayload) (model.NewSubscription, error) {
+	s := model.NewSubscription{
+		ID:            subscriptionID,
+		Plan:          payload.Plan,
+		TransactionID: transactionID,
+		StatusID:      model.SubscriptionStatusCleared,
+		Amount:        payload.Amount,
+		CustomerID:    customerID,
+	}
+	if err := s.Validate(); err != nil {
+		return model.NewSubscription{}, web.NewRequestError(err, http.StatusBadRequest)
+	}
+	return s, nil
 }
 
 // SubscriptionInfo aggregates various stripe resources to show convenient subscription information.
@@ -137,16 +227,15 @@ func (ss *SubscriptionService) SubscriptionInfo(ctx context.Context, tenantID st
 		err           error
 	)
 
-	customer, err = ss.customerRepository.GetCustomer(ctx, tenantID)
+	customer, err = ss.customerRepo.GetCustomer(ctx, tenantID)
 	if err != nil {
-		switch {
-		case strings.Contains(err.Error(), "not found"):
+		if strings.Contains(err.Error(), "not found") {
 			return info, web.NewRequestError(err, http.StatusNotFound)
 		}
 		return info, err
 	}
 
-	transactions, err = ss.transactionRepository.GetAllTransactions(ctx, tenantID)
+	transactions, err = ss.transactionRepo.GetAllTransactions(ctx, tenantID)
 	if err != nil {
 		return info, err
 	}
@@ -166,23 +255,6 @@ func (ss *SubscriptionService) SubscriptionInfo(ctx context.Context, tenantID st
 	info.Subscription = subscription
 
 	return info, nil
-}
-
-// Save persists the new subscription details.
-func (ss *SubscriptionService) Save(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error) {
-	var (
-		s   model.Subscription
-		err error
-	)
-
-	s, err = ss.subscriptionRepo.SaveSubscription(ctx, ns, now)
-	if err != nil {
-		switch err {
-		default:
-			return s, err
-		}
-	}
-	return s, nil
 }
 
 // Cancel cancels a stripe subscription, transitioning the customer to the free tier.

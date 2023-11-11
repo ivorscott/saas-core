@@ -117,22 +117,16 @@ func (ur *UserRepository) CreateUserProfile(ctx context.Context, nu model.NewUse
 	return u, nil
 }
 
-// CreateAdminUser creates an admin user for the tenant.
-func (ur *UserRepository) CreateAdminUser(ctx context.Context, na model.NewAdminUser) error {
+// CreateAdminUserTx creates an admin user for the tenant.
+func (ur *UserRepository) CreateAdminUserTx(ctx context.Context, tx *sqlx.Tx, na model.NewAdminUser) error {
 	var err error
-
-	conn, Close, err := ur.pg.GetConnection(ctx)
-	if err != nil {
-		return fail.ErrConnectionFailed
-	}
-	defer Close()
 
 	stmt := `
 		insert into user_profiles (user_id, email, email_verified, first_name, last_name, picture, locale, updated_at, created_at)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
-	if _, err = conn.ExecContext(
+	if _, err = tx.ExecContext(
 		ctx,
 		stmt,
 		na.UserID,
@@ -153,7 +147,7 @@ func (ur *UserRepository) CreateAdminUser(ctx context.Context, na model.NewAdmin
 		values ($1, $2, $3)
 	`
 
-	if _, err = conn.ExecContext(
+	if _, err = tx.ExecContext(
 		ctx,
 		stmt,
 		na.UserID,

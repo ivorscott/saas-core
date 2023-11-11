@@ -10,6 +10,7 @@ import (
 	"github.com/devpies/saas-core/internal/subscription/model"
 	"github.com/devpies/saas-core/pkg/web"
 
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
@@ -17,6 +18,7 @@ import (
 type CustomerRepository struct {
 	logger *zap.Logger
 	pg     *db.PostgresDatabase
+	runTx  func(ctx context.Context, fn func(*sqlx.Tx) error) error
 }
 
 // NewCustomerRepository returns a CustomerRepository.
@@ -24,12 +26,21 @@ func NewCustomerRepository(logger *zap.Logger, pg *db.PostgresDatabase) *Custome
 	return &CustomerRepository{
 		logger: logger,
 		pg:     pg,
+		runTx:  pg.RunInTransaction,
 	}
 }
 
-// SaveCustomer saves a customer.
-func (cr *CustomerRepository) SaveCustomer(ctx context.Context, nc model.NewCustomer, now time.Time) (model.Customer, error) {
-	var c model.Customer
+// RunTx runs a function within a transaction context.
+func (cr *CustomerRepository) RunTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
+	return cr.runTx(ctx, fn)
+}
+
+// SaveCustomerTx saves a customer.
+func (cr *CustomerRepository) SaveCustomerTx(ctx context.Context, tx *sqlx.Tx, nc model.NewCustomer, now time.Time) (model.Customer, error) {
+	var (
+		c   model.Customer
+		err error
+	)
 
 	if err := nc.Validate(); err != nil {
 		return c, err
@@ -39,11 +50,6 @@ func (cr *CustomerRepository) SaveCustomer(ctx context.Context, nc model.NewCust
 	if !ok {
 		return c, web.CtxErr()
 	}
-	conn, Close, err := cr.pg.GetConnection(ctx)
-	if err != nil {
-		return c, err
-	}
-	defer Close()
 
 	c = model.Customer{
 		ID:              nc.ID,
@@ -61,7 +67,7 @@ func (cr *CustomerRepository) SaveCustomer(ctx context.Context, nc model.NewCust
 			values ($1,$2,$3,$4,$5,$6)
 	`
 
-	if _, err = conn.ExecContext(
+	if _, err = tx.ExecContext(
 		ctx,
 		stmt,
 		c.ID,

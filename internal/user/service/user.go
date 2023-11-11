@@ -24,7 +24,7 @@ type userRepository interface {
 	RunTx(ctx context.Context, fn func(*sqlx.Tx) error) error
 	AddUserTx(ctx context.Context, tx *sqlx.Tx, userID string, now time.Time) error
 	CreateUserProfile(ctx context.Context, nu model.NewUser, userID string, now time.Time) (model.User, error)
-	CreateAdminUser(ctx context.Context, na model.NewAdminUser) error
+	CreateAdminUserTx(ctx context.Context, tx *sqlx.Tx, na model.NewAdminUser) error
 	List(ctx context.Context) ([]model.User, error)
 	RetrieveIDByEmail(ctx context.Context, email string) (string, error)
 	RetrieveByEmail(ctx context.Context, email string) (model.User, error)
@@ -36,7 +36,7 @@ type seatRepository interface {
 	IncrementSeatsUsedTx(ctx context.Context, tx *sqlx.Tx) error
 	DecrementSeatsUsedTx(ctx context.Context, tx *sqlx.Tx) error
 	FindSeatsAvailable(ctx context.Context) (model.Seats, error)
-	InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, maxSeats model.MaximumSeatsType) error
+	InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, maxSeats model.MaximumSeatsType, tenantID string) error
 }
 
 type cognitoClient interface {
@@ -229,27 +229,25 @@ func (us *UserService) AddAdminUserFromEvent(ctx context.Context, message interf
 		// The requester may be a SaaS Admin. Use the tenantID from the event instead of context.
 		ctx = web.NewContext(ctx, &web.Values{TenantID: na.TenantID})
 
-		if err = us.userRepo.CreateAdminUser(ctx, na); err != nil {
+		if err = us.userRepo.CreateAdminUserTx(ctx, tx, na); err != nil {
 			us.logger.Error("failed to create tenant admin")
 			return err
 		}
+
 		// Determine max seats based on plan.
-		if err = us.configureMaxSeats(ctx, tx, event.Data.Plan); err != nil {
+		var maxSeats = model.MaximumSeatsBasic
+		if event.Data.Plan == "premium" {
+			maxSeats = model.MaximumSeatsPremium
+		}
+
+		// Add entry to seats table.
+		if err = us.seatRepo.InsertSeatsEntryTx(ctx, tx, maxSeats, na.TenantID); err != nil {
 			us.logger.Error("failed to insert seats entry")
 			return err
 		}
 		return nil
 	})
 	return nil
-}
-
-func (us *UserService) configureMaxSeats(ctx context.Context, tx *sqlx.Tx, plan string) error {
-	var maxSeats = model.MaximumSeatsBasic
-	if plan == "premium" {
-		maxSeats = model.MaximumSeatsPremium
-	}
-	// Add entry to seats table.
-	return us.seatRepo.InsertSeatsEntryTx(ctx, tx, maxSeats)
 }
 
 func newAdminUser(data msg.TenantIdentityCreatedEventData) model.NewAdminUser {

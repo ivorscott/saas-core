@@ -9,6 +9,7 @@ import (
 	"github.com/devpies/saas-core/internal/subscription/model"
 	"github.com/devpies/saas-core/pkg/web"
 
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
@@ -26,8 +27,8 @@ func NewTransactionRepository(logger *zap.Logger, pg *db.PostgresDatabase) *Tran
 	}
 }
 
-// SaveTransaction saves a new customer transaction.
-func (tr *TransactionRepository) SaveTransaction(ctx context.Context, nt model.NewTransaction, now time.Time) (model.Transaction, error) {
+// SaveTransactionTx saves a new customer transaction.
+func (tr *TransactionRepository) SaveTransactionTx(ctx context.Context, tx *sqlx.Tx, nt model.NewTransaction, now time.Time) (model.Transaction, error) {
 	var (
 		t   model.Transaction
 		err error
@@ -37,11 +38,6 @@ func (tr *TransactionRepository) SaveTransaction(ctx context.Context, nt model.N
 	if !ok {
 		return t, web.CtxErr()
 	}
-	conn, Close, err := tr.pg.GetConnection(ctx)
-	if err != nil {
-		return t, err
-	}
-	defer Close()
 
 	t = model.Transaction{
 		ID:              nt.ID,
@@ -67,7 +63,7 @@ func (tr *TransactionRepository) SaveTransaction(ctx context.Context, nt model.N
 				payment_intent, payment_method, tenant_id
 			) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
 	`
-	if _, err = conn.ExecContext(
+	if _, err = tx.ExecContext(
 		ctx,
 		stmt,
 		t.ID,

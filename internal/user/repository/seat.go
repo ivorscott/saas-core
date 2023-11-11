@@ -6,8 +6,7 @@ import (
 	"github.com/devpies/saas-core/internal/user/db"
 	"github.com/devpies/saas-core/internal/user/fail"
 	"github.com/devpies/saas-core/internal/user/model"
-	"github.com/devpies/saas-core/pkg/web"
-
+	
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
@@ -30,13 +29,8 @@ func NewSeatRepository(
 }
 
 // InsertSeatsEntryTx inserts a new seats entry into the database.
-func (sr *SeatRepository) InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, maxSeats model.MaximumSeatsType) error {
+func (sr *SeatRepository) InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, maxSeats model.MaximumSeatsType, tenantID string) error {
 	var err error
-
-	values, ok := web.FromContext(ctx)
-	if !ok {
-		return web.CtxErr()
-	}
 
 	stmt := `
 		insert into seats (tenant_id, max_seats, seats_used)
@@ -45,7 +39,7 @@ func (sr *SeatRepository) InsertSeatsEntryTx(ctx context.Context, tx *sqlx.Tx, m
 	if _, err = tx.ExecContext(
 		ctx,
 		stmt,
-		values.TenantID,
+		tenantID,
 		maxSeats,
 		0,
 	); err != nil {

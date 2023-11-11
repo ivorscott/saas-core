@@ -3,6 +3,7 @@
   first_name: Julian
   last_name: Smith
   email: julian@example.com
+  payment_method: pm_1KzRIfIbOZLMWfd3M0YVrVfc
   updated_at: 2023-11-03T09:08:27.895635Z
   created_at: 2023-11-03T09:08:27.895635Z
 
@@ -11,5 +12,6 @@
   first_name: Tyler
   last_name: Smith
   email: tyler@example.com
+  payment_method: pm_2KzXIfAbOZLCWfd3M0YUeXad
   updated_at: 2023-11-03T09:08:27.895635Z
   created_at: 2023-11-03T09:08:27.895635Z

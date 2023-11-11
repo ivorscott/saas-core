@@ -70,10 +70,8 @@ func Run() error {
 	customerRepository := repository.NewCustomerRepository(logger, pg)
 
 	subscriptionService := service.NewSubscriptionService(logger, stripeClient, subscriptionRepository, customerRepository, transactionRepository)
-	transactionService := service.NewTransactionService(logger, transactionRepository)
-	customerService := service.NewCustomerService(logger, customerRepository)
 
-	subscriptionHandler := handler.NewSubscriptionHandler(logger, subscriptionService, transactionService, customerService)
+	subscriptionHandler := handler.NewSubscriptionHandler(logger, subscriptionService)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Web.Port),

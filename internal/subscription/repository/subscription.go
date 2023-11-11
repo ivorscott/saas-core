@@ -12,6 +12,7 @@ import (
 	"github.com/devpies/saas-core/internal/subscription/model"
 	"github.com/devpies/saas-core/pkg/web"
 
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
@@ -34,8 +35,8 @@ func NewSubscriptionRepository(logger *zap.Logger, pg *db.PostgresDatabase) *Sub
 	}
 }
 
-// SaveSubscription saves a subscription.
-func (sr *SubscriptionRepository) SaveSubscription(ctx context.Context, ns model.NewSubscription, now time.Time) (model.Subscription, error) {
+// SaveSubscriptionTx saves a subscription.
+func (sr *SubscriptionRepository) SaveSubscriptionTx(ctx context.Context, tx *sqlx.Tx, ns model.NewSubscription, now time.Time) (model.Subscription, error) {
 	var (
 		s   model.Subscription
 		err error
@@ -45,11 +46,6 @@ func (sr *SubscriptionRepository) SaveSubscription(ctx context.Context, ns model
 	if !ok {
 		return s, web.CtxErr()
 	}
-	conn, Close, err := sr.pg.GetConnection(ctx)
-	if err != nil {
-		return s, err
-	}
-	defer Close()
 
 	stmt := `
 			insert into subscriptions (
@@ -69,7 +65,7 @@ func (sr *SubscriptionRepository) SaveSubscription(ctx context.Context, ns model
 		CreatedAt:     now.UTC(),
 	}
 
-	if _, err = conn.ExecContext(
+	if _, err = tx.ExecContext(
 		ctx,
 		stmt,
 		s.ID,
