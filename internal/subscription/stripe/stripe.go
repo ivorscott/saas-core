@@ -70,9 +70,10 @@ func (c *Client) CreatePaymentIntent(currency string, amount int) (*stripe.Payme
 }
 
 // GetPaymentMethod get the payment method information via payment intend id.
-func (c *Client) GetPaymentMethod(method string) (*stripe.PaymentMethod, error) {
+func (c *Client) GetPaymentMethod(paymentMethodID string) (*stripe.PaymentMethod, error) {
 	stripe.Key = c.secretKey
-	return paymentmethod.Get(method, nil)
+	c.logger.Info("===========" + paymentMethodID)
+	return paymentmethod.Get(paymentMethodID, nil)
 }
 
 // GetExistingPaymentIntent retrieves an existing payment intent.
@@ -127,25 +128,6 @@ func (c *Client) GetCustomer(customerID string) (*stripe.Customer, error) {
 	}
 
 	return stripeCustomer, nil
-}
-
-// GetDefaultPaymentMethod retrieves the default payment method for the customer's account.
-func (c *Client) GetDefaultPaymentMethod(paymentMethodID string) (*stripe.PaymentMethod, error) {
-	var (
-		pm  *stripe.PaymentMethod
-		err error
-	)
-
-	stripe.Key = c.secretKey
-
-	pm, err = paymentmethod.Get(
-		paymentMethodID,
-		nil,
-	)
-	if err != nil {
-		return pm, err
-	}
-	return pm, nil
 }
 
 // CreateCustomer creates a stripe customer.

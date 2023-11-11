@@ -17,9 +17,9 @@ func init() {
 
 // SubscriptionInfo represents a collection of subscription information.
 type SubscriptionInfo struct {
-	Subscription         Subscription          `json:"subscription"`
-	Transactions         []Transaction         `json:"transactions"`
-	DefaultPaymentMethod *stripe.PaymentMethod `json:"defaultPaymentMethod"`
+	Subscription  Subscription          `json:"subscription"`
+	Transactions  []Transaction         `json:"transactions"`
+	PaymentMethod *stripe.PaymentMethod `json:"paymentMethod"`
 }
 
 // SubscriptionStatusType describes a subscription status type.

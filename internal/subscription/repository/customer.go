@@ -95,7 +95,7 @@ func (cr *CustomerRepository) GetCustomer(ctx context.Context, tenantID string) 
 	}
 	defer Close()
 	stmt := `
-			select customer_id, tenant_id, first_name, last_name, email,
+			select customer_id, tenant_id, first_name, last_name, email, payment_method,
 				updated_at, created_at
 			from customers
 			where tenant_id = $1
@@ -108,6 +108,7 @@ func (cr *CustomerRepository) GetCustomer(ctx context.Context, tenantID string) 
 		&c.FirstName,
 		&c.LastName,
 		&c.Email,
+		&c.PaymentMethodID,
 		&c.UpdatedAt,
 		&c.CreatedAt,
 	); err != nil {

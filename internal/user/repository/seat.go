@@ -6,7 +6,7 @@ import (
 	"github.com/devpies/saas-core/internal/user/db"
 	"github.com/devpies/saas-core/internal/user/fail"
 	"github.com/devpies/saas-core/internal/user/model"
-	
+
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )

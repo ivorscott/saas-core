@@ -19,9 +19,8 @@ import (
 
 type stripeClient interface {
 	GetCustomer(customerID string) (*stripe.Customer, error)
-	GetDefaultPaymentMethod(paymentMethodID string) (*stripe.PaymentMethod, error)
 	CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error)
-	GetPaymentMethod(method string) (*stripe.PaymentMethod, error)
+	GetPaymentMethod(paymentMethodID string) (*stripe.PaymentMethod, error)
 	GetExistingPaymentIntent(intent string) (*stripe.PaymentIntent, error)
 	SubscribeToPlan(customer *stripe.Customer, plan, last4, cardType string) (*stripe.Subscription, error)
 	CreateCustomer(pm, fullName, email string) (*stripe.Customer, string, error)
@@ -245,12 +244,12 @@ func (ss *SubscriptionService) SubscriptionInfo(ctx context.Context, tenantID st
 		return info, err
 	}
 
-	paymentMethod, err = ss.stripeClient.GetDefaultPaymentMethod(customer.PaymentMethodID)
+	paymentMethod, err = ss.stripeClient.GetPaymentMethod(customer.PaymentMethodID)
 	if err != nil {
 		return info, err
 	}
 
-	info.DefaultPaymentMethod = paymentMethod
+	info.PaymentMethod = paymentMethod
 	info.Transactions = transactions
 	info.Subscription = subscription
 
