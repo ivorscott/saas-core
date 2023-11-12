@@ -42,8 +42,8 @@ func Routes(
 	app.Handle(http.MethodPost, "/subscriptions", subscriptionHandler.Create)
 	app.Handle(http.MethodGet, "/subscriptions/{tenantID}", subscriptionHandler.SubscriptionInfo)
 	app.Handle(http.MethodPost, "/subscriptions/payment-intent", subscriptionHandler.GetPaymentIntent)
-	//app.Handle(http.MethodGet, "/subscriptions/cancel", subscriptionHandler.Cancel)
-	//app.Handle(http.MethodGet, "/subscriptions/refund", subscriptionHandler.Refund)
+	app.Handle(http.MethodGet, "/subscriptions/cancel/{subID}", subscriptionHandler.Cancel)
+	app.Handle(http.MethodGet, "/subscriptions/refund", subscriptionHandler.Refund)
 
 	return app
 }

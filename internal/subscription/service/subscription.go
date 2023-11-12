@@ -133,9 +133,7 @@ func (ss *SubscriptionService) saveStripeResources(
 	customerID,
 	transactionID string,
 ) error {
-	var (
-		err error
-	)
+	var err error
 
 	c, err := newCustomer(customerID, payload)
 	if err != nil {
@@ -257,11 +255,26 @@ func (ss *SubscriptionService) SubscriptionInfo(ctx context.Context, tenantID st
 }
 
 // Cancel cancels a stripe subscription, transitioning the customer to the free tier.
-func (ss *SubscriptionService) Cancel(_ context.Context) error {
-	return nil
+func (ss *SubscriptionService) Cancel(subID string) error {
+	return ss.stripeClient.CancelSubscription(subID)
 }
 
 // Refund refunds a subscription payment.
-func (ss *SubscriptionService) Refund(_ context.Context) error {
+func (ss *SubscriptionService) Refund() error {
+	var (
+		premiumPlanAmount = 1000
+		pi                *stripe.PaymentIntent
+		msg               string
+		err               error
+	)
+	pi, msg, err = ss.stripeClient.CreatePaymentIntent("eur", premiumPlanAmount)
+	if err != nil {
+		ss.logger.Error("failed creating payment intent", zap.String("message", msg))
+		return err
+	}
+	err = ss.stripeClient.Refund(pi.ID, premiumPlanAmount)
+	if err != nil {
+		return err
+	}
 	return nil
 }

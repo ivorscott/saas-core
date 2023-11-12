@@ -14,8 +14,8 @@ import (
 )
 
 type subscriptionService interface {
-	Refund(ctx context.Context) error
-	Cancel(ctx context.Context) error
+	Refund() error
+	Cancel(subID string) error
 	SubscriptionInfo(ctx context.Context, tenantID string) (model.SubscriptionInfo, error)
 	CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error)
 	SubscribeStripeCustomer(ctx context.Context, nsp model.NewStripePayload) error
@@ -97,11 +97,23 @@ func (sh *SubscriptionHandler) GetPaymentIntent(w http.ResponseWriter, r *http.R
 }
 
 // Cancel cancels a paid subscription.
-func (sh *SubscriptionHandler) Cancel(_ http.ResponseWriter, _ *http.Request) error {
+func (sh *SubscriptionHandler) Cancel(_ http.ResponseWriter, r *http.Request) error {
+	var (
+		subID = chi.URLParam(r, "subID")
+		err   error
+	)
+
+	err = sh.subscriptionService.Cancel(subID)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 // Refund provides a refund for the customer.
 func (sh *SubscriptionHandler) Refund(_ http.ResponseWriter, _ *http.Request) error {
+	if err := sh.subscriptionService.Refund(); err != nil {
+		return err
+	}
 	return nil
 }

@@ -72,7 +72,6 @@ func (c *Client) CreatePaymentIntent(currency string, amount int) (*stripe.Payme
 // GetPaymentMethod get the payment method information via payment intend id.
 func (c *Client) GetPaymentMethod(paymentMethodID string) (*stripe.PaymentMethod, error) {
 	stripe.Key = c.secretKey
-	c.logger.Info("===========" + paymentMethodID)
 	return paymentmethod.Get(paymentMethodID, nil)
 }
 
