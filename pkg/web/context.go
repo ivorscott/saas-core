@@ -10,13 +10,14 @@ import (
 
 // Values carries information about each request.
 type Values struct {
-	Token      string
-	TraceID    string
-	StatusCode int
-	Start      time.Time
-	UserID     string
-	TenantID   string
-	TenantMap  TenantConnectionMap
+	Token       string
+	TraceID     string
+	StatusCode  int
+	Start       time.Time
+	UserID      string
+	TenantID    string
+	TenantMap   TenantConnectionMap
+	IsM2MClient bool
 }
 
 // ctxKey represents the type of value for the context key.
@@ -37,7 +38,14 @@ func FromContext(ctx context.Context) (*Values, bool) {
 }
 
 // addContextMetadata adds Metadata to context.
-func addContextMetadata(r *http.Request, token string, sub string, defaultTenantID string, tenantMap TenantConnectionMap) *http.Request {
+func addContextMetadata(
+	r *http.Request,
+	token string,
+	sub string,
+	defaultTenantID string,
+	tenantMap TenantConnectionMap,
+	isM2MClient bool,
+) *http.Request {
 	basePath := r.Header.Get("BasePath")
 	traceID := r.Header.Get("TraceID")
 	if traceID == "" {
@@ -50,6 +58,7 @@ func addContextMetadata(r *http.Request, token string, sub string, defaultTenant
 		v.TraceID = traceID
 		v.TenantID = defaultTenantID
 		v.TenantMap = tenantMap
+		v.IsM2MClient = isM2MClient
 
 		val, okay := tenantMap[basePath]
 		if okay {

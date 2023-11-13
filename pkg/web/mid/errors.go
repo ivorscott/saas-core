@@ -10,16 +10,11 @@ import (
 // application errors which are used to respond to the client in a uniform way.
 // Unexpected errors (status >= 500) are logged.
 func Errors(log *zap.Logger) web.Middleware {
-
 	// This is the actual middleware function to be executed.
-	f := func(before web.Handler) web.Handler {
-
+	f := func(handler web.Handler) web.Handler {
 		h := func(w http.ResponseWriter, r *http.Request) error {
-
 			// Run the handler chain and catch any propagated error.
-			if err := before(w, r); err != nil {
-
-				// Log the error.
+			if err := handler(w, r); err != nil {
 				log.Error("", zap.Error(err))
 
 				// Respond to the error.
@@ -33,11 +28,9 @@ func Errors(log *zap.Logger) web.Middleware {
 					return err
 				}
 			}
-
 			// Return nil to indicate the error has been handled.
 			return nil
 		}
-
 		return h
 	}
 

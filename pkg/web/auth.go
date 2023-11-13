@@ -17,11 +17,11 @@ var ErrInvalidAuthorizationHeader = errors.New("missing or invalid authorization
 
 func Authenticate(log *zap.Logger, r *http.Request, region string, userPoolID string) (*http.Request, error) {
 	authHeader := r.Header.Get("Authorization")
-	token, sub, tenantID, tenantMap, err := verifyToken(r.Context(), log, authHeader, region, userPoolID)
+	token, sub, tenantID, tenantMap, isM2MClient, err := verifyToken(r.Context(), log, authHeader, region, userPoolID)
 	if err != nil {
 		return nil, NewRequestError(err, http.StatusUnauthorized)
 	}
-	r = addContextMetadata(r, token, sub, tenantID, tenantMap)
+	r = addContextMetadata(r, token, sub, tenantID, tenantMap, isM2MClient)
 	return r, nil
 }
 
@@ -46,7 +46,7 @@ func verifyToken(
 	authHeader string,
 	region string,
 	userPoolID string,
-) (token string, sub string, tenantID string, tenantMap TenantConnectionMap, err error) {
+) (token string, sub string, tenantID string, tenantMap TenantConnectionMap, isM2MClient bool, err error) {
 	token, err = getToken(authHeader)
 	if err != nil {
 		return
@@ -72,13 +72,18 @@ func verifyToken(
 	}
 	sub = parsedToken.Subject()
 
-	val, ok := parsedToken.Get("custom:tenant-id")
-	if ok {
+	if val, ok := parsedToken.Get("custom:tenant-id"); ok {
 		tenantID = val.(string)
 	}
 
-	val, ok = parsedToken.Get("custom:tenant-connections")
-	if ok {
+	if val, ok := parsedToken.Get("custom:m2m-client"); ok {
+		value := val.(int)
+		if tenantID == "" && value > 0 {
+			isM2MClient = true
+		}
+	}
+
+	if val, ok := parsedToken.Get("custom:tenant-connections"); ok {
 		err = json.Unmarshal([]byte(val.(string)), &tenantMap)
 		if err != nil {
 			return
