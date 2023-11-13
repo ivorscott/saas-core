@@ -18,4 +18,5 @@ type customerRepository interface {
 type transactionRepository interface {
 	SaveTransactionTx(ctx context.Context, tx *sqlx.Tx, nt model.NewTransaction, now time.Time) (model.Transaction, error)
 	GetAllTransactions(ctx context.Context, tenantID string) ([]model.Transaction, error)
+	GetTransaction(ctx context.Context, subID string) (model.Transaction, error)
 }

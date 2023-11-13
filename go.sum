@@ -403,6 +403,8 @@ github.com/devpies/saas-core/pkg/msg v0.0.0-20231024015845-c995bf9e8052 h1:trTbF
 github.com/devpies/saas-core/pkg/msg v0.0.0-20231024015845-c995bf9e8052/go.mod h1:YYhXQZOLp2yEqUEeGVD4EHjwhrjzdRcvLe97N/aZ9JQ=
 github.com/devpies/saas-core/pkg/web v0.0.0-20231024015845-c995bf9e8052 h1:nkSpTxB2FIRnBU6C1V5rdNAqxZ/iidnIk1sSxM+TI6g=
 github.com/devpies/saas-core/pkg/web v0.0.0-20231024015845-c995bf9e8052/go.mod h1:a97IlwfR8tm+V0ksYppXB6lNuQ8qPT6lvQOo2cjMedg=
+github.com/devpies/saas-core/pkg/web v0.0.0-20231113060620-c670e42ba7d1 h1:SorR6GRvUjwqpYjeRpVe1FhQkEK+qPSycBTBcTLtzdg=
+github.com/devpies/saas-core/pkg/web v0.0.0-20231113060620-c670e42ba7d1/go.mod h1:a97IlwfR8tm+V0ksYppXB6lNuQ8qPT6lvQOo2cjMedg=
 github.com/dgrijalva/jwt-go v0.0.0-20170104182250-a601269ab70c/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=

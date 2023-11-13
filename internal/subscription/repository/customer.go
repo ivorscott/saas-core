@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -20,6 +21,11 @@ type CustomerRepository struct {
 	pg     *db.PostgresDatabase
 	runTx  func(ctx context.Context, fn func(*sqlx.Tx) error) error
 }
+
+var (
+	// ErrCustomerNotFound represents a customer not found.
+	ErrCustomerNotFound = errors.New("customer not found")
+)
 
 // NewCustomerRepository returns a CustomerRepository.
 func NewCustomerRepository(logger *zap.Logger, pg *db.PostgresDatabase) *CustomerRepository {
@@ -113,7 +119,7 @@ func (cr *CustomerRepository) GetCustomer(ctx context.Context, tenantID string) 
 		&c.CreatedAt,
 	); err != nil {
 		if err == sql.ErrNoRows {
-			return c, ErrNotFound
+			return c, ErrCustomerNotFound
 		}
 		return c, err
 	}

@@ -93,8 +93,9 @@ func setupWebPageHandler() (http.Handler, webPageHandlerDeps) {
 	router := chi.NewRouter()
 	logger := zap.NewNop()
 	renderEngine := &mocks.Renderer{}
+	tenantService := &mocks.TenantService{}
 	setStatusCodeFunc := &mocks.SetStatusCodeFunc{}
-	webpage := handler.NewWebPageHandler(logger, renderEngine, setStatusCodeFunc.Execute)
+	webpage := handler.NewWebPageHandler(logger, renderEngine, setStatusCodeFunc.Execute, tenantService)
 
 	router.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
 		_ = webpage.DashboardPage(w, r)
@@ -106,6 +107,10 @@ func setupWebPageHandler() (http.Handler, webPageHandlerDeps) {
 
 	router.Get("/admin/create-tenant", func(w http.ResponseWriter, r *http.Request) {
 		_ = webpage.CreateTenantPage(w, r)
+	})
+
+	router.Get("/admin/tenant/8b3bf953-81d9-11ee-8ac9-1e87a571cfab", func(w http.ResponseWriter, r *http.Request) {
+		_ = webpage.TenantPage(w, r)
 	})
 
 	router.Get("/*", func(w http.ResponseWriter, r *http.Request) {

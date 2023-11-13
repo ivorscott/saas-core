@@ -124,7 +124,7 @@ user-db-force: ;@ ## Force version on user database. Optional <num> argument.
 # =============================================================
 # SUBSCRIPTION SERVICE
 # =============================================================
-subscription-test: subscription-test	;@ ## Run subscription tests. Add -- -v for verbosity.
+subscription-test: subscription-mock	;@ ## Run subscription tests. Add -- -v for verbosity.
 	go test $(val) -cover ./internal/subscription/...
 .PHONY: subscription-test
 

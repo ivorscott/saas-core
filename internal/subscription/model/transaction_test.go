@@ -35,6 +35,13 @@ func TestNewTransaction_Validate(t *testing.T) {
 			err: "failed on the 'required' tag",
 		},
 		{
+			name: "invalid charge id",
+			modifier: func(nt *model.NewTransaction) {
+				nt.ChargeID = ""
+			},
+			err: "failed on the 'required' tag",
+		},
+		{
 			name: "invalid last four digits",
 			modifier: func(nt *model.NewTransaction) {
 				nt.LastFour = ""
@@ -106,6 +113,7 @@ func TestNewTransaction_Validate(t *testing.T) {
 				SubscriptionID:  "sub_1KzXfrIbOZLMWfd3glCgX807",
 				PaymentIntent:   "",
 				PaymentMethod:   "pm_1KzZYPIbOZLMWfd3GeQlt32W",
+				ChargeID:        "ch_3OAp3yIbOZLMWfd323RiA4iu",
 			}
 
 			tc.modifier(&nt)

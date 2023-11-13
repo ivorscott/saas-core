@@ -13,6 +13,12 @@ func handler(ctx context.Context, event events.CognitoEventUserPoolsPreTokenGen)
 
 	client := repository.NewDynamoRepository(ctx, event.Region)
 
+	// Early return if tenant-id does not exist.
+	// e.g., an M2M client application will not have a tenant id.
+	if _, ok := event.Request.UserAttributes["custom:tenant-id"]; !ok {
+		return event, nil
+	}
+
 	connections, err := client.FindTenantConnections(ctx, event.Request.UserAttributes["sub"])
 	if err != nil {
 		return event, err

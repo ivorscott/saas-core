@@ -38,7 +38,19 @@ type TemplateData struct {
 	API             string
 }
 
-var functions = template.FuncMap{}
+var functions = template.FuncMap{
+	"formatCurrency": formatCurrency,
+}
+
+var currencyMap = map[string]string{
+	"eur": "€",
+	"usd": "$",
+}
+
+func formatCurrency(n int, currency string) string {
+	f := float32(n) / float32(100)
+	return fmt.Sprintf("%s %.2f", currencyMap[currency], f)
+}
 
 // New returns a new Render with template rendering logic.
 func New(logger *zap.Logger, config config.Config, templateFS fs.FS, session *scs.SessionManager) *Render {

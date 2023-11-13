@@ -78,3 +78,4 @@ CREATE POLICY customers_isolation_policy ON customers
 
 CREATE USER user_a WITH PASSWORD 'postgres';
 GRANT ALL ON ALL TABLES IN SCHEMA "public" TO user_a;
+GRANT postgres to user_a;

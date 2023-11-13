@@ -23,8 +23,8 @@ type SubscriptionRepository struct {
 }
 
 var (
-	// ErrNotFound represents a resource not found.
-	ErrNotFound = errors.New("not found")
+	// ErrSubscriptionNotFound represents a subscription not found.
+	ErrSubscriptionNotFound = errors.New("subscription not found")
 )
 
 // NewSubscriptionRepository returns a new SubscriptionRepository.
@@ -117,7 +117,7 @@ func (sr *SubscriptionRepository) GetTenantSubscription(ctx context.Context, ten
 		&s.CreatedAt,
 	); err != nil {
 		if err == sql.ErrNoRows {
-			return s, ErrNotFound
+			return s, ErrSubscriptionNotFound
 		}
 		return s, err
 	}

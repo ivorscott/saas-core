@@ -56,7 +56,7 @@ func Routes(
 	app.Handle(http.MethodGet, "/admin", withSession()(webPageHandler.DashboardPage))
 	app.Handle(http.MethodGet, "/admin/tenants", withSession()(webPageHandler.TenantsPage))
 	app.Handle(http.MethodGet, "/admin/create-tenant", withSession()(webPageHandler.CreateTenantPage))
-	app.Handle(http.MethodGet, "/admin/tenants/{id}", withSession()(webPageHandler.TenantPage))
+	app.Handle(http.MethodGet, "/admin/tenants/{tenantID}", withSession()(webPageHandler.TenantPage))
 	app.Handle(http.MethodGet, "/admin/logout", withSession()(authHandler.Logout))
 	app.Handle(http.MethodGet, "/*", withSession()(webPageHandler.E404Page))
 
@@ -65,6 +65,8 @@ func Routes(
 	app.Handle(http.MethodGet, "/admin/api/tenants", tenantsHandler.ListTenants)
 	app.Handle(http.MethodPost, "/admin/api/send-registration", registrationHandler.ProcessRegistration)
 	app.Handle(http.MethodPost, "/admin/api/resend-otp", registrationHandler.ResendOTP)
+	app.Handle(http.MethodPost, "/admin/api/cancel-subscription/{subID}", tenantsHandler.CancelSubscription)
+	app.Handle(http.MethodPost, "/admin/api/refund-user/{subID}", tenantsHandler.RefundUser)
 
 	return mux
 }

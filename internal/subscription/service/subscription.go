@@ -24,7 +24,7 @@ type stripeClient interface {
 	GetExistingPaymentIntent(intent string) (*stripe.PaymentIntent, error)
 	SubscribeToPlan(customer *stripe.Customer, plan, last4, cardType string) (*stripe.Subscription, error)
 	CreateCustomer(pm, fullName, email string) (*stripe.Customer, string, error)
-	Refund(pi string, amount int) error
+	Refund(chargeID string) error
 	CancelSubscription(subID string) error
 }
 
@@ -114,16 +114,18 @@ func (ss *SubscriptionService) SubscribeStripeCustomer(ctx context.Context, payl
 		zap.String("subscription_id", stripeSubscription.ID),
 	)
 	var transactionID string
+	var chargeID string
 
 	if stripeSubscription.LatestInvoice != nil {
 		if stripeSubscription.LatestInvoice.Charge != nil {
+			chargeID = stripeSubscription.LatestInvoice.Charge.ID
 			if stripeSubscription.LatestInvoice.Charge.BalanceTransaction != nil {
 				transactionID = stripeSubscription.LatestInvoice.Charge.BalanceTransaction.ID
 			}
 		}
 	}
 
-	return ss.saveStripeResources(ctx, payload, stripeSubscription.ID, stripeCustomer.ID, transactionID)
+	return ss.saveStripeResources(ctx, payload, stripeSubscription.ID, stripeCustomer.ID, transactionID, chargeID)
 }
 
 func (ss *SubscriptionService) saveStripeResources(
@@ -132,6 +134,7 @@ func (ss *SubscriptionService) saveStripeResources(
 	subscriptionID,
 	customerID,
 	transactionID string,
+	chargeID string,
 ) error {
 	var err error
 
@@ -143,7 +146,7 @@ func (ss *SubscriptionService) saveStripeResources(
 	if err != nil {
 		return err
 	}
-	t, err := newTransaction(transactionID, subscriptionID, payload)
+	t, err := newTransaction(chargeID, transactionID, subscriptionID, payload)
 	if err != nil {
 		return err
 	}
@@ -180,7 +183,7 @@ func newCustomer(customerID string, payload model.NewStripePayload) (model.NewCu
 	return c, nil
 }
 
-func newTransaction(transactionID, subscriptionID string, payload model.NewStripePayload) (model.NewTransaction, error) {
+func newTransaction(chargeID, transactionID, subscriptionID string, payload model.NewStripePayload) (model.NewTransaction, error) {
 	t := model.NewTransaction{
 		ID:              transactionID,
 		Amount:          payload.Amount,
@@ -191,6 +194,7 @@ func newTransaction(transactionID, subscriptionID string, payload model.NewStrip
 		ExpirationYear:  payload.ExpirationYear,
 		PaymentMethod:   payload.PaymentMethod,
 		SubscriptionID:  subscriptionID,
+		ChargeID:        chargeID,
 	}
 	if err := t.Validate(); err != nil {
 		return model.NewTransaction{}, web.NewRequestError(err, http.StatusBadRequest)
@@ -260,19 +264,18 @@ func (ss *SubscriptionService) Cancel(subID string) error {
 }
 
 // Refund refunds a subscription payment.
-func (ss *SubscriptionService) Refund() error {
+func (ss *SubscriptionService) Refund(ctx context.Context, subID string) error {
 	var (
-		premiumPlanAmount = 1000
-		pi                *stripe.PaymentIntent
-		msg               string
-		err               error
+		t   model.Transaction
+		err error
 	)
-	pi, msg, err = ss.stripeClient.CreatePaymentIntent("eur", premiumPlanAmount)
+
+	t, err = ss.transactionRepo.GetTransaction(ctx, subID)
 	if err != nil {
-		ss.logger.Error("failed creating payment intent", zap.String("message", msg))
 		return err
 	}
-	err = ss.stripeClient.Refund(pi.ID, premiumPlanAmount)
+
+	err = ss.stripeClient.Refund(t.ChargeID)
 	if err != nil {
 		return err
 	}

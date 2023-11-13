@@ -63,19 +63,19 @@ func NewPostgresDatabase(logger *zap.Logger, cfg config.Config) (*PostgresDataba
 
 // GetConnection returns a tenant aware connection.
 func (pg *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func() error, error) {
+	var (
+		stmt = ""
+	)
 	values, ok := web.FromContext(ctx)
 	if !ok {
 		pg.logger.Error("invalid context values")
 		return nil, nil, web.CtxErr()
 	}
 
-	if values.TenantID == "" {
-		return nil, nil, ErrNoTenantID
+	if values.TenantID == "" && values.IsM2MClient {
+		pg.logger.Info("machine to machine client application detected")
+		stmt += "set role postgres;"
 	}
-
-	//if Admin {
-	//	stmt := "set role postgres"
-	//}
 
 	conn, err := pg.db.Connx(ctx)
 	if err != nil {
@@ -84,7 +84,7 @@ func (pg *PostgresDatabase) GetConnection(ctx context.Context) (*sqlx.Conn, func
 		return nil, nil, err
 	}
 
-	stmt := fmt.Sprintf("select set_config('app.current_tenant', '%s', false);", values.TenantID)
+	stmt += fmt.Sprintf("select set_config('app.current_tenant', '%s', false);", values.TenantID)
 
 	_, err = conn.ExecContext(ctx, stmt)
 	if err != nil {

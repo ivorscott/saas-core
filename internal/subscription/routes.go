@@ -23,7 +23,7 @@ func Routes(
 ) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://devpie.local:3000", "https://devpie.io"},
+		AllowedOrigins:   []string{"https://admin.devpie.local", "https://admin.devpie.io", "https://devpie.local:3000", "https://devpie.io"},
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "BasePath"},
 		AllowCredentials: false,
@@ -42,8 +42,8 @@ func Routes(
 	app.Handle(http.MethodPost, "/subscriptions", subscriptionHandler.Create)
 	app.Handle(http.MethodGet, "/subscriptions/{tenantID}", subscriptionHandler.SubscriptionInfo)
 	app.Handle(http.MethodPost, "/subscriptions/payment-intent", subscriptionHandler.GetPaymentIntent)
-	app.Handle(http.MethodGet, "/subscriptions/cancel/{subID}", subscriptionHandler.Cancel)
-	app.Handle(http.MethodGet, "/subscriptions/refund", subscriptionHandler.Refund)
+	app.Handle(http.MethodPost, "/subscriptions/cancel/{subID}", subscriptionHandler.Cancel)
+	app.Handle(http.MethodPost, "/subscriptions/refund/{subID}", subscriptionHandler.Refund)
 
 	return app
 }

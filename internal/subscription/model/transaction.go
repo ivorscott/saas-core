@@ -47,6 +47,7 @@ type NewTransaction struct {
 	SubscriptionID  string                `validate:"required"`
 	PaymentIntent   string
 	PaymentMethod   string `validate:"required"`
+	ChargeID        string `validate:"required"`
 }
 
 // Validate validates NewTransaction.
@@ -68,6 +69,7 @@ type Transaction struct {
 	PaymentIntent   string                `json:"paymentIntent" db:"payment_intent"`
 	PaymentMethod   string                `json:"paymentMethod" db:"payment_method"`
 	TenantID        string                `json:"tenantId" db:"tenant_id"`
+	ChargeID        string                `json:"chargeId" db:"charge_id"`
 	UpdatedAt       time.Time             `json:"updatedAt" db:"updated_at"`
 	CreatedAt       time.Time             `json:"createdAt" db:"created_at"`
 }

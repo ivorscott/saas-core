@@ -77,6 +77,10 @@ spec:
               value: "mic-tenant-svc"
             - name: ADMIN_TENANT_SERVICE_PORT
               value: "4002"
+            - name: ADMIN_SUBSCRIPTION_SERVICE_ADDRESS
+              value: "mic-subscription-svc"
+            - name: ADMIN_SUBSCRIPTION_SERVICE_PORT
+              value: "4006"
             - name: ADMIN_DB_HOST
               value: db-admin-svc
             - name: ADMIN_DB_DISABLE_TLS

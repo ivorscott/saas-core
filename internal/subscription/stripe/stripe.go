@@ -158,13 +158,11 @@ func (c *Client) CreateCustomer(pm, fullName, email string) (*stripe.Customer, s
 }
 
 // Refund refunds an amount for a payment intent.
-func (c *Client) Refund(pi string, amount int) error {
+func (c *Client) Refund(chargeID string) error {
 	stripe.Key = c.secretKey
-	amountToRefund := int64(amount)
 
 	refundParams := &stripe.RefundParams{
-		Amount:        &amountToRefund,
-		PaymentIntent: &pi,
+		Charge: stripe.String(chargeID),
 	}
 
 	_, err := refund.New(refundParams) // Returns a refund object.

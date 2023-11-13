@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -26,6 +28,11 @@ func NewTransactionRepository(logger *zap.Logger, pg *db.PostgresDatabase) *Tran
 		pg:     pg,
 	}
 }
+
+var (
+	// ErrTransactionNotFound represents an error when a transaction is not found.
+	ErrTransactionNotFound = errors.New("transaction not found")
+)
 
 // SaveTransactionTx saves a new customer transaction.
 func (tr *TransactionRepository) SaveTransactionTx(ctx context.Context, tx *sqlx.Tx, nt model.NewTransaction, now time.Time) (model.Transaction, error) {
@@ -52,6 +59,7 @@ func (tr *TransactionRepository) SaveTransactionTx(ctx context.Context, tx *sqlx
 		PaymentIntent:   nt.PaymentIntent,
 		PaymentMethod:   nt.PaymentMethod,
 		TenantID:        values.TenantID,
+		ChargeID:        nt.ChargeID,
 		UpdatedAt:       now.UTC(),
 		CreatedAt:       now.UTC(),
 	}
@@ -60,8 +68,8 @@ func (tr *TransactionRepository) SaveTransactionTx(ctx context.Context, tx *sqlx
 			insert into transactions (
 				transaction_id, amount, currency, last_four, bank_return_code,
 				transaction_status_id, expiration_month, expiration_year, subscription_id,
-				payment_intent, payment_method, tenant_id
-			) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+				payment_intent, payment_method, tenant_id, charge_id
+			) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
 	`
 	if _, err = tx.ExecContext(
 		ctx,
@@ -78,10 +86,60 @@ func (tr *TransactionRepository) SaveTransactionTx(ctx context.Context, tx *sqlx
 		t.PaymentIntent,
 		t.PaymentMethod,
 		t.TenantID,
+		t.ChargeID,
 	); err != nil {
 		return t, fmt.Errorf("error inserting transaction %v :%w", t, err)
 	}
 
+	return t, nil
+}
+
+// GetTransaction retrieves a transaction for the given subscription id.
+func (tr *TransactionRepository) GetTransaction(ctx context.Context, subID string) (model.Transaction, error) {
+	var (
+		t   model.Transaction
+		err error
+	)
+
+	conn, Close, err := tr.pg.GetConnection(ctx)
+	if err != nil {
+		return t, err
+	}
+	defer Close()
+
+	stmt := `
+			select distinct on (subscription_id) subscription_id, transaction_id, amount, currency, last_four,
+				bank_return_code, transaction_status_id,expiration_month, expiration_year, payment_intent, payment_method,
+				tenant_id, charge_id, updated_at, created_at
+			from transactions
+			where subscription_id = $1
+			order by subscription_id, created_at desc
+			limit 1
+	`
+
+	row := conn.QueryRowContext(ctx, stmt, subID)
+	if err = row.Scan(
+		&t.SubscriptionID,
+		&t.ID,
+		&t.Amount,
+		&t.Currency,
+		&t.LastFour,
+		&t.BankReturnCode,
+		&t.StatusID,
+		&t.ExpirationMonth,
+		&t.ExpirationYear,
+		&t.PaymentIntent,
+		&t.PaymentMethod,
+		&t.TenantID,
+		&t.ChargeID,
+		&t.UpdatedAt,
+		&t.CreatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return t, ErrTransactionNotFound
+		}
+		return t, err
+	}
 	return t, nil
 }
 
@@ -102,7 +160,7 @@ func (tr *TransactionRepository) GetAllTransactions(ctx context.Context, tenantI
 	stmt := `
 			select transaction_id, amount, currency, last_four, bank_return_code, transaction_status_id,
 				expiration_month, expiration_year, subscription_id, payment_intent, payment_method,
-				tenant_id, updated_at, created_at
+				tenant_id, charge_id, updated_at, created_at
 			from transactions
 			where tenant_id = $1
 	`
@@ -125,6 +183,7 @@ func (tr *TransactionRepository) GetAllTransactions(ctx context.Context, tenantI
 			&t.PaymentIntent,
 			&t.PaymentMethod,
 			&t.TenantID,
+			&t.ChargeID,
 			&t.UpdatedAt,
 			&t.CreatedAt,
 		)

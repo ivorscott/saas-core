@@ -1,21 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
 
-// SubscriptionPlanType describes the type of plan.
-type SubscriptionPlanType int
-
-const (
-	// Basic is the free tier option.
-	Basic SubscriptionPlanType = iota
-	// Premium is the paid tier option.
-	Premium
+	"github.com/stripe/stripe-go/v72"
 )
-
-// String returns the corresponding string value for a subscription plan.
-func (s SubscriptionPlanType) String() string {
-	return [...]string{"Basic", "Premium"}[s]
-}
 
 // SubscriptionStatusType describes a subscription status type.
 type SubscriptionStatusType int
@@ -36,13 +25,55 @@ func (s SubscriptionStatusType) String() string {
 
 // Subscription represents a stripe subscription for a tenant.
 type Subscription struct {
-	ID            string                 `json:"id" db:"subscription_id"`
-	Plan          SubscriptionPlanType   `json:"plan" db:"plan"`
-	TransactionID string                 `json:"transactionId" db:"transaction_id"`
-	StatusID      SubscriptionStatusType `json:"statusId" db:"status_id"`
-	Amount        int                    `json:"amount" db:"amount"`
-	TenantID      string                 `json:"tenantId" db:"tenant_id"`
-	CustomerID    string                 `json:"customerId" db:"customer_id"`
-	UpdatedAt     time.Time              `json:"updatedAt" db:"updated_at"`
-	CreatedAt     time.Time              `json:"createdAt" db:"created_at"`
+	ID            string                 `json:"id"`
+	Plan          string                 `json:"plan"`
+	TransactionID string                 `json:"transactionId"`
+	StatusID      SubscriptionStatusType `json:"statusId"`
+	Amount        int                    `json:"amount"`
+	TenantID      string                 `json:"tenantId"`
+	CustomerID    string                 `json:"customerId"`
+	UpdatedAt     time.Time              `json:"updatedAt"`
+	CreatedAt     time.Time              `json:"createdAt"`
 }
+
+// SubscriptionInfo represents a collection of subscription information.
+type SubscriptionInfo struct {
+	Subscription  Subscription          `json:"subscription"`
+	Transactions  []Transaction         `json:"transactions"`
+	PaymentMethod *stripe.PaymentMethod `json:"paymentMethod"`
+}
+
+// Transaction represents a stripe transaction.
+type Transaction struct {
+	ID              string                `json:"id" db:"transaction_id"`
+	Amount          int                   `json:"amount" db:"amount"`
+	Currency        string                `json:"currency" db:"currency"`
+	LastFour        string                `json:"lastFour" db:"last_four"`
+	BankReturnCode  string                `json:"bankReturnCode" db:"bank_return_code"`
+	StatusID        TransactionStatusType `json:"statusId" db:"transaction_status_id"`
+	ExpirationMonth int                   `json:"expirationMonth" db:"expiration_month"`
+	ExpirationYear  int                   `json:"expirationYear" db:"expiration_year"`
+	SubscriptionID  string                `json:"subscriptionID" db:"subscription_id"`
+	PaymentIntent   string                `json:"paymentIntent" db:"payment_intent"`
+	PaymentMethod   string                `json:"paymentMethod" db:"payment_method"`
+	TenantID        string                `json:"tenantId" db:"tenant_id"`
+	ChargeID        string                `json:"chargeId" db:"charge_id"`
+	UpdatedAt       time.Time             `json:"updatedAt" db:"updated_at"`
+	CreatedAt       time.Time             `json:"createdAt" db:"created_at"`
+}
+
+// TransactionStatusType describes a transaction status type.
+type TransactionStatusType int
+
+const (
+	// TransactionStatusPending represents a pending transaction.
+	TransactionStatusPending TransactionStatusType = iota
+	// TransactionStatusCleared represents a successfully cleared transaction.
+	TransactionStatusCleared
+	// TransactionStatusDeclined represents a declined transaction.
+	TransactionStatusDeclined
+	// TransactionStatusRefunded represents a refunded transaction.
+	TransactionStatusRefunded
+	// TransactionStatusPartiallyRefunded represents a partially refunded transaction.
+	TransactionStatusPartiallyRefunded
+)

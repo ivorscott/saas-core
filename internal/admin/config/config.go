@@ -37,16 +37,16 @@ type Config struct {
 		DisableTLS bool   `conf:"default:false"`
 	}
 	Registration struct {
-		ServiceAddress string `conf:"default:localhost"`
-		ServicePort    string `conf:"default:4001"`
+		ServiceAddress string `conf:"required"`
+		ServicePort    string `conf:"required"`
 	}
 	Tenant struct {
-		ServiceAddress string `conf:"default:localhost"`
-		ServicePort    string `conf:"default:4002"`
+		ServiceAddress string `conf:"required"`
+		ServicePort    string `conf:"required"`
 	}
-	Billing struct {
-		ServiceAddress string `conf:"default:localhost"`
-		ServicePort    string `conf:"default:4006"`
+	Subscription struct {
+		ServiceAddress string `conf:"required"`
+		ServicePort    string `conf:"required"`
 	}
 }
 

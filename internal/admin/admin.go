@@ -88,10 +88,10 @@ func Run(staticFS embed.FS) error {
 
 	ctx := context.Background()
 	cognitoClient := clients.NewCognitoClient(ctx, cfg.Cognito.Region)
-	billingClient := clients.NewHTTPBillingClient(
+	billingClient := clients.NewHTTPSubscriptionClient(
 		logger,
-		cfg.Billing.ServiceAddress,
-		cfg.Billing.ServicePort,
+		cfg.Subscription.ServiceAddress,
+		cfg.Subscription.ServicePort,
 		cognitoClient,
 		cfg.Cognito.SharedUserPoolClientID,
 		cfg.Cognito.SharedUserPoolID,
@@ -107,7 +107,7 @@ func Run(staticFS embed.FS) error {
 	tenantService := service.NewTenantService(logger, tenantClient, billingClient)
 	renderEngine := render.New(logger, cfg, templateFS, session)
 	authHandler := handler.NewAuthHandler(logger, renderEngine, session, authService)
-	webPageHandler := handler.NewWebPageHandler(logger, renderEngine, web.SetContextStatusCode)
+	webPageHandler := handler.NewWebPageHandler(logger, renderEngine, web.SetContextStatusCode, tenantService)
 	registrationHandler := handler.NewRegistrationHandler(logger, registrationService)
 	tenantHandler := handler.NewTenantHandler(logger, tenantService)
 

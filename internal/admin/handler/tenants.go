@@ -1,18 +1,13 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 
-	"github.com/devpies/saas-core/internal/admin/model"
 	"github.com/devpies/saas-core/pkg/web"
 
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
-
-type tenantService interface {
-	ListTenants(ctx context.Context) ([]model.Tenant, int, error)
-}
 
 // TenantHandler handles the tenant requests.
 type TenantHandler struct {
@@ -50,4 +45,30 @@ func (th *TenantHandler) ListTenants(w http.ResponseWriter, r *http.Request) err
 	}
 
 	return web.Respond(r.Context(), w, tenants, http.StatusOK)
+}
+
+// CancelSubscription cancels a stripe subscription for the customer.
+func (th *TenantHandler) CancelSubscription(w http.ResponseWriter, r *http.Request) error {
+	var (
+		subID = chi.URLParam(r, "subID")
+		err   error
+	)
+	_, err = th.service.CancelSubscription(r.Context(), subID)
+	if err != nil {
+		return err
+	}
+	return web.Respond(r.Context(), w, nil, http.StatusOK)
+}
+
+// RefundUser refunds the stripe customer.
+func (th *TenantHandler) RefundUser(w http.ResponseWriter, r *http.Request) error {
+	var (
+		subID = chi.URLParam(r, "subID")
+		err   error
+	)
+	_, err = th.service.RefundUser(r.Context(), subID)
+	if err != nil {
+		return err
+	}
+	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }

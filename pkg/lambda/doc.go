@@ -6,6 +6,7 @@
 // https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-lambda-pre-token-generation.html
 //
 // Build instructions:
-// 1. GOARCH=amd64 GOOS=linux go build -o main
-// 2. zip function.zip main
+// 1. cd pkg/lambda/modifytoken
+// 1. GOARCH=amd64 GOOS=linux go build -o modifytoken
+// 2. zip modifytoken.zip modifytoken
 package lambda

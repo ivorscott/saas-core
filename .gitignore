@@ -6,6 +6,6 @@ log/*
 !log/.gitkeep
 manifests/secrets.yaml
 .run
-function.zip
+*.zip
 main
 devpie.local*.pem
