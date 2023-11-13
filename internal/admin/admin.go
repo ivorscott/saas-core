@@ -88,7 +88,7 @@ func Run(staticFS embed.FS) error {
 
 	ctx := context.Background()
 	cognitoClient := clients.NewCognitoClient(ctx, cfg.Cognito.Region)
-	billingClient := clients.NewHTTPSubscriptionClient(
+	subscriptionClient := clients.NewHTTPSubscriptionClient(
 		logger,
 		cfg.Subscription.ServiceAddress,
 		cfg.Subscription.ServicePort,
@@ -104,7 +104,7 @@ func Run(staticFS embed.FS) error {
 	// Initialize 3-layered architecture.
 	authService := service.NewAuthService(logger, cfg.Cognito.Region, cfg.Cognito.UserPoolClientID, cfg.Cognito.UserPoolID, cognitoClient, session)
 	registrationService := service.NewRegistrationService(logger, cfg.Cognito.SharedUserPoolID, cognitoClient, registrationClient)
-	tenantService := service.NewTenantService(logger, tenantClient, billingClient)
+	tenantService := service.NewTenantService(logger, tenantClient, subscriptionClient)
 	renderEngine := render.New(logger, cfg, templateFS, session)
 	authHandler := handler.NewAuthHandler(logger, renderEngine, session, authService)
 	webPageHandler := handler.NewWebPageHandler(logger, renderEngine, web.SetContextStatusCode, tenantService)

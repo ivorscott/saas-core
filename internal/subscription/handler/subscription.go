@@ -57,7 +57,7 @@ func (sh *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) er
 	return web.Respond(r.Context(), w, nil, http.StatusOK)
 }
 
-// SubscriptionInfo aggregates various stripe resource objects into a billing summary.
+// SubscriptionInfo aggregates various stripe resource objects into a subscription summary.
 func (sh *SubscriptionHandler) SubscriptionInfo(w http.ResponseWriter, r *http.Request) error {
 	var (
 		tenantID = chi.URLParam(r, "tenantID")

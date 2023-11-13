@@ -17,29 +17,29 @@ type tenantClient interface {
 	FindAllTenants(ctx context.Context) (*http.Response, error)
 }
 
-type billingClient interface {
-	GetSubscriptionInfo(ctx context.Context, tenantID string) (*http.Response, error)
+type subscriptionClient interface {
 	RefundUser(ctx context.Context, subID string) (*http.Response, error)
+	GetSubscriptionInfo(ctx context.Context, tenantID string) (*http.Response, error)
 	CancelSubscription(ctx context.Context, subID string) (*http.Response, error)
 }
 
 // TenantService manages the example business operations.
 type TenantService struct {
-	logger        *zap.Logger
-	tenantClient  tenantClient
-	billingClient billingClient
+	logger             *zap.Logger
+	tenantClient       tenantClient
+	subscriptionClient subscriptionClient
 }
 
 // NewTenantService returns a new example service.
 func NewTenantService(
 	logger *zap.Logger,
 	tenantClient tenantClient,
-	billingClient billingClient,
+	subscriptionClient subscriptionClient,
 ) *TenantService {
 	return &TenantService{
-		logger:        logger,
-		tenantClient:  tenantClient,
-		billingClient: billingClient,
+		logger:             logger,
+		tenantClient:       tenantClient,
+		subscriptionClient: subscriptionClient,
 	}
 }
 
@@ -93,7 +93,7 @@ func (ts *TenantService) GetSubscriptionInfo(ctx context.Context, tenantID strin
 		err          error
 	)
 
-	resp, err = ts.billingClient.GetSubscriptionInfo(ctx, tenantID)
+	resp, err = ts.subscriptionClient.GetSubscriptionInfo(ctx, tenantID)
 	if err != nil {
 		ts.logger.Error("error performing request")
 		return subscription, http.StatusInternalServerError, err
@@ -135,7 +135,7 @@ func (ts *TenantService) RefundUser(ctx context.Context, subID string) (int, err
 		err          error
 	)
 
-	resp, err = ts.billingClient.RefundUser(ctx, subID)
+	resp, err = ts.subscriptionClient.RefundUser(ctx, subID)
 	if err != nil {
 		ts.logger.Error("error performing request")
 		return http.StatusInternalServerError, err
@@ -177,7 +177,7 @@ func (ts *TenantService) CancelSubscription(ctx context.Context, tenantID string
 		err          error
 	)
 
-	resp, err = ts.billingClient.CancelSubscription(ctx, tenantID)
+	resp, err = ts.subscriptionClient.CancelSubscription(ctx, tenantID)
 	if err != nil {
 		ts.logger.Error("error performing request")
 		return http.StatusInternalServerError, err

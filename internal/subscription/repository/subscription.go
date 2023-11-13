@@ -83,7 +83,7 @@ func (sr *SubscriptionRepository) SaveSubscriptionTx(ctx context.Context, tx *sq
 }
 
 // GetTenantSubscription retrieves the tenant subscription by tenant id.
-// Because the admin service will also make calls to the billing service,
+// Because the admin service will also make calls to the subscription service,
 // we cannot rely on there being a tenant id in the request context.
 func (sr *SubscriptionRepository) GetTenantSubscription(ctx context.Context, tenantID string) (model.Subscription, error) {
 	var (
