@@ -124,10 +124,6 @@ func prepareEnvironment() {
 			value: "project_test",
 		},
 		{
-			key:   "PROJECT_DB_HOST",
-			value: "db-project-test-svc",
-		},
-		{
 			key:   "PROJECT_DB_PORT",
 			value: "5432",
 		},
