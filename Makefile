@@ -5,13 +5,9 @@ include .env
 # =============================================================
 # ADMIN SERVICE
 # =============================================================
-admin-test: admin-mock	;@ ## Run admin tests. Add -- -v for verbosity.
+admin-test:	;@ ## Run admin tests. Add -- -v for verbosity.
 	go test $(val) ./internal/admin/...
 .PHONY: admin-test
-
-admin-mock: ;@ ## Generate admin mocks.
-	go generate ./internal/admin/...
-.PHONY: admin-mock
 
 admin-db: ;@ ## Enter admin database.
 	@pgcli postgres://postgres:postgres@localhost:$(ADMIN_DB_PORT)/admin
@@ -40,35 +36,23 @@ admin-db-force: ;@ ## Force version on admin database. Optional <num> argument.
 # =============================================================
 # REGISTRATION SERVICE
 # =============================================================
-registration-test: registration-mock	;@ ## Run registration tests. Add -- -v for verbosity.
+registration-test:	;@ ## Run registration tests. Add -- -v for verbosity.
 	go test $(val) ./internal/registration/...
 .PHONY: registration-test
-
-registration-mock: ;@ ## Generate registration mocks.
-	go generate ./internal/registration/...
-.PHONY: registration-mock
 
 # =============================================================
 # TENANT SERVICE
 # =============================================================
-tenant-test: tenant-mock	;@ ## Run tenant tests. Add -- -v for verbosity.
+tenant-test:	;@ ## Run tenant tests. Add -- -v for verbosity.
 	go test $(val) ./internal/tenant/...
 .PHONY: tenant-test
-
-tenant-mock: ;@ ## Generate tenant mocks.
-	go generate ./internal/tenant/...
-.PHONY: tenant-mock
 
 # =============================================================
 # PROJECT SERVICE
 # =============================================================
-project-test: project-mock	;@ ## Run project tests. Add -- -v for verbosity.
+project-test: 	;@ ## Run project tests. Add -- -v for verbosity.
 	go test $(val) ./internal/project/...
 .PHONY: project-test
-
-project-mock: ;@ ## Generate project mocks.
-	go generate ./internal/project/...
-.PHONY: project-mock
 
 project-db: ;@ ## Enter project database.
 	@pgcli postgres://postgres:postgres@localhost:$(PROJECT_DB_PORT)/project
@@ -124,13 +108,9 @@ user-db-force: ;@ ## Force version on user database. Optional <num> argument.
 # =============================================================
 # SUBSCRIPTION SERVICE
 # =============================================================
-subscription-test: subscription-mock	;@ ## Run subscription tests. Add -- -v for verbosity.
+subscription-test:	;@ ## Run subscription tests. Add -- -v for verbosity.
 	go test $(val) ./internal/subscription/...
 .PHONY: subscription-test
-
-subscription-mock: ;@ ## Generate subscription mocks.
-	go generate ./internal/subscription/...
-.PHONY: subscription-mock
 
 subscription-db: ;@ ## Enter subscription database.
 	@pgcli postgres://postgres:postgres@localhost:$(BILLING_DB_PORT)/subscription
@@ -180,13 +160,17 @@ lint: ;@ ## Run linter. Optional <package path> argument.
 	@golangci-lint run $(val)
 .PHONY: lint
 
-test: ;@ ## Run all tests. Add -- -v for verbosity.
+test: generate;@ ## Run all tests. Add -- -v for verbosity.
 	go test $(val) ./...
 .PHONY: test
 
 cover: ;@ ## Run coverage report.
 	go test -cover ./...
 .PHONY: cover
+
+generate: ;@ ## Run Go generate.
+	go generate ./...
+.PHONY: generate
 
 help:
 	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
