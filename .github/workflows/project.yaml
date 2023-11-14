@@ -14,4 +14,4 @@ jobs:
   buildAndDeploy:
     uses: devpies/saas-core/.github/workflows/reusable.yaml@main
     secrets:
-      envPAT: ${{ secrets.PAT }} # pass just this secret
+      PAT: ${{ secrets.PAT }}
