@@ -7,55 +7,14 @@ on:
       - "cmd/admin/**"
       - "internal/admin/**"
       - "deploy/admin.dockerfile"
+      - ".github/workflows/reusable.yaml"
       - "go.*"
   workflow_dispatch:
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and Push Image
-        env:
-          IMAGE: admin
-          OWNER: ${{ github.repository_owner }}
-        run: |
-          export SHA=$(git rev-parse --short HEAD)
-          
-          docker build --file ./deploy/admin.dockerfile --tag ghcr.io/$OWNER/$IMAGE:$SHA .
-          docker push ghcr.io/$OWNER/$IMAGE:$SHA
-
-          echo $OWNER/$IMAGE:$SHA > .build-version
-
-          cat > patch.sh <<EOF
-          #!/bin/bash
-          sed -i 's/$IMAGE:.*/$IMAGE:$SHA/' ./main/manifests/mic-$IMAGE.yaml
-          EOF
-
-          chmod +x patch.sh
-
-      - uses: actions/checkout@v2
-        with:
-          repository: devpies/saas-infra
-          token: ${{ secrets.PAT }}
-          path: main
-      - run: |
-          ./patch.sh
-          export VERSION=$(cat .build-version)
-
-          cd main
-          git config --local user.email github-actions@github.com
-          git config --local user.name github-actions
-          git add .
-          git commit -m "new release: $VERSION"
-          git push
+  buildAndDeploy:
+    uses: ./.github/workflows/reusable.yaml
+    with:
+      service: admin
+    secrets:
+      token: ${{ secrets.PAT }}
