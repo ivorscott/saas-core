@@ -14,9 +14,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    services:
-
     steps:
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.8.0
