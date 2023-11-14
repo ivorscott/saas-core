@@ -27,9 +27,14 @@ jobs:
           kubectl get deploy
           kubectl describe deploy db-project-test
           kubectl get events --sort-by='{.lastTimestamp}'
+  test:
+    runs-on: ubuntu-latest
+    needs: create-cluster
+    steps:
       - name: Run Tests
         run: make project-test
   buildAndDeploy:
+    needs: test
     uses: ./.github/workflows/reusable.yaml
     with:
       service: project

@@ -26,7 +26,7 @@ type Config struct {
 	DB struct {
 		User       string `conf:"default:user_a,noprint"`
 		Password   string `conf:"default:postgres,noprint"`
-		Host       string `conf:"default:localhost,noprint"`
+		Host       string `conf:"default:127.0.0.1,noprint"`
 		Port       int    `conf:"default:5432,noprint"`
 		Name       string `conf:"default:project,noprint"`
 		DisableTLS bool   `conf:"default:false"`
