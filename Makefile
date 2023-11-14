@@ -6,7 +6,7 @@ include .env
 # ADMIN SERVICE
 # =============================================================
 admin-test: admin-mock	;@ ## Run admin tests. Add -- -v for verbosity.
-	go test $(val) -cover ./internal/admin/...
+	go test $(val) ./internal/admin/...
 .PHONY: admin-test
 
 admin-mock: ;@ ## Generate admin mocks.
@@ -41,7 +41,7 @@ admin-db-force: ;@ ## Force version on admin database. Optional <num> argument.
 # REGISTRATION SERVICE
 # =============================================================
 registration-test: registration-mock	;@ ## Run registration tests. Add -- -v for verbosity.
-	go test $(val) -cover ./internal/registration/...
+	go test $(val) ./internal/registration/...
 .PHONY: registration-test
 
 registration-mock: ;@ ## Generate registration mocks.
@@ -52,7 +52,7 @@ registration-mock: ;@ ## Generate registration mocks.
 # TENANT SERVICE
 # =============================================================
 tenant-test: tenant-mock	;@ ## Run tenant tests. Add -- -v for verbosity.
-	go test $(val) -cover ./internal/tenant/...
+	go test $(val) ./internal/tenant/...
 .PHONY: tenant-test
 
 tenant-mock: ;@ ## Generate tenant mocks.
@@ -63,7 +63,7 @@ tenant-mock: ;@ ## Generate tenant mocks.
 # PROJECT SERVICE
 # =============================================================
 project-test: project-mock	;@ ## Run project tests. Add -- -v for verbosity.
-	go test $(val) -cover ./internal/project/...
+	go test $(val) ./internal/project/...
 .PHONY: project-test
 
 project-mock: ;@ ## Generate project mocks.
@@ -125,7 +125,7 @@ user-db-force: ;@ ## Force version on user database. Optional <num> argument.
 # SUBSCRIPTION SERVICE
 # =============================================================
 subscription-test: subscription-mock	;@ ## Run subscription tests. Add -- -v for verbosity.
-	go test $(val) -cover ./internal/subscription/...
+	go test $(val) ./internal/subscription/...
 .PHONY: subscription-test
 
 subscription-mock: ;@ ## Generate subscription mocks.
@@ -181,8 +181,12 @@ lint: ;@ ## Run linter. Optional <package path> argument.
 .PHONY: lint
 
 test: ;@ ## Run all tests. Add -- -v for verbosity.
-	go test $(val) -cover ./...
+	go test $(val) ./...
 .PHONY: test
+
+cover: ;@ ## Run coverage report.
+	go test -cover ./...
+.PHONY: cover
 
 help:
 	@grep -hE '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
