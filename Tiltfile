@@ -4,6 +4,7 @@ k8s_yaml([
     './manifests/db-nats.yaml',
     './manifests/db-admin.yaml',
     './manifests/db-project.yaml',
+    './manifests/db-project-test.yaml',
     './manifests/db-user.yaml',
     './manifests/db-subscription.yaml',
     './manifests/traefik-crd.yaml',

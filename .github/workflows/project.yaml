@@ -12,6 +12,15 @@ on:
   workflow_dispatch:
 
 jobs:
+  create-cluster:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.8.0
+      - name: Deploy manifest
+        run: kubectl apply -f ./manifests/db-project-test.yaml
+      - name: Run Tests
+        run: make project-test
   buildAndDeploy:
     uses: ./.github/workflows/reusable.yaml
     with:
