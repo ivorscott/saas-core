@@ -12,6 +12,6 @@ on:
 
 jobs:
   buildAndDeploy:
-    uses: devpies/saas-core/.github/workflows/reusable.yaml@main
+    uses: ./.github/workflows/reusable.yaml
     secrets:
       PAT: ${{ secrets.PAT }}

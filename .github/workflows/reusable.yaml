@@ -4,6 +4,7 @@ on:
   workflow_call:
     secrets:
       PAT:
+        description: Github personal access token
         required: true
 jobs:
   publish:
