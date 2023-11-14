@@ -2,7 +2,9 @@ name: Reusable workflow
 
 on:
   workflow_call:
-
+    secrets:
+      PAT:
+        required: true
 jobs:
   publish:
     runs-on: ubuntu-latest
