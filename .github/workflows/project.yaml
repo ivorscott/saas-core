@@ -13,5 +13,7 @@ on:
 jobs:
   buildAndDeploy:
     uses: ./.github/workflows/reusable.yaml
+    with:
+      service: project
     secrets:
-      PAT: ${{ secrets.PAT }}
+      token: ${{ secrets.PAT }}

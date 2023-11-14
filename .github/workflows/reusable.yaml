@@ -2,8 +2,12 @@ name: Reusable workflow
 
 on:
   workflow_call:
+    input:
+      service:
+        description: The microservice name.
+        required: true
     secrets:
-      PAT:
+      token:
         description: Github personal access token
         required: true
 jobs:
@@ -23,12 +27,12 @@ jobs:
 
       - name: Build and Push Image
         env:
-          IMAGE: project
+          IMAGE: ${{ inputs.service }}
           OWNER: ${{ github.repository_owner }}
         run: |
           export SHA=$(git rev-parse --short HEAD)
           
-          docker build --file ./deploy/project.dockerfile --tag ghcr.io/$OWNER/$IMAGE:$SHA .
+          docker build --file ./deploy/${{ inputs.service }}.dockerfile --tag ghcr.io/$OWNER/$IMAGE:$SHA .
           docker push ghcr.io/$OWNER/$IMAGE:$SHA
 
           echo $OWNER/$IMAGE:$SHA > .build-version
@@ -43,7 +47,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: devpies/saas-infra
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.token }}
           path: main
       - run: |
           ./patch.sh
