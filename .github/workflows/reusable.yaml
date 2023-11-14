@@ -2,9 +2,10 @@ name: Reusable workflow
 
 on:
   workflow_call:
-    input:
+    inputs:
       service:
         description: The microservice name.
+        type: string
         required: true
     secrets:
       token:
