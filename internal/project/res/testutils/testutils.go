@@ -125,7 +125,7 @@ func prepareEnvironment() {
 		},
 		{
 			key:   "PROJECT_DB_PORT",
-			value: "30019",
+			value: "5432",
 		},
 		{
 			key:   "PROJECT_DB_DISABLE_TLS",
