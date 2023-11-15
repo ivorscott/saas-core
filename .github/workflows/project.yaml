@@ -23,12 +23,12 @@ jobs:
       - name: Deploy manifest
         run: |
           kubectl apply -f ./manifests/db-project-test.yaml
-          sleep 20
+          sleep 5
            kubectl port-forward deploy/db-project-test 5432:5432 &>/dev/null &
           sleep 5
            kubectl port-forward deploy/db-project-test 5432:5432 &>/dev/null &
       - name: Run Tests
-        run: make project-test
+        run: make project-test -- -port
   buildAndDeploy:
     needs: test
     uses: ./.github/workflows/reusable.yaml

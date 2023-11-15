@@ -1,6 +1,7 @@
 package repository_test
 
 import (
+	"flag"
 	"os"
 	"testing"
 
@@ -24,8 +25,11 @@ var (
 	testTask     model.Task
 )
 
+var port = flag.String("port", "5432", "database port to use in integration tests")
+
 func TestMain(m *testing.M) {
-	db, dbClose := testutils.NewDatabaseClient()
+	flag.Parse()
+	db, dbClose := testutils.NewDatabaseClient(*port)
 	dbConnect = db
 	defer dbClose()
 

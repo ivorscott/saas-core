@@ -36,8 +36,8 @@ type DatabaseClient struct {
 }
 
 // NewDatabaseClient returns a DatabaseClient and a close method to clean up the setup connection.
-func NewDatabaseClient() (*DatabaseClient, func() error) {
-	prepareEnvironment()
+func NewDatabaseClient(port string) (*DatabaseClient, func() error) {
+	prepareEnvironment(port)
 
 	cfg, err := config.NewConfig()
 	if err != nil {
@@ -114,7 +114,7 @@ func (client *DatabaseClient) setFixtures(db *sql.DB) {
 }
 
 // prepareEnvironment prepares environment for integration testing with postgres while mocking cognito.
-func prepareEnvironment() {
+func prepareEnvironment(port string) {
 	env := []struct {
 		key   string
 		value string
@@ -125,7 +125,7 @@ func prepareEnvironment() {
 		},
 		{
 			key:   "PROJECT_DB_PORT",
-			value: "5432",
+			value: port,
 		},
 		{
 			key:   "PROJECT_DB_DISABLE_TLS",

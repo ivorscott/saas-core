@@ -6,7 +6,7 @@ include .env
 # ADMIN SERVICE
 # =============================================================
 admin-test:	;@ ## Run admin tests. Add -- -v for verbosity.
-	go test $(val) ./internal/admin/...
+	go test ./internal/admin/... -v $(val)
 .PHONY: admin-test
 
 admin-db: ;@ ## Enter admin database.
@@ -37,21 +37,22 @@ admin-db-force: ;@ ## Force version on admin database. Optional <num> argument.
 # REGISTRATION SERVICE
 # =============================================================
 registration-test:	;@ ## Run registration tests. Add -- -v for verbosity.
-	go test $(val) ./internal/registration/...
+	go test ./internal/registration/... -v $(val)
 .PHONY: registration-test
 
 # =============================================================
 # TENANT SERVICE
 # =============================================================
 tenant-test:	;@ ## Run tenant tests. Add -- -v for verbosity.
-	go test $(val) ./internal/tenant/...
+	go test ./internal/tenant/... -v $(val)
 .PHONY: tenant-test
 
 # =============================================================
 # PROJECT SERVICE
 # =============================================================
 project-test: 	;@ ## Run project tests. Add -- -v for verbosity.
-	go test $(val) ./internal/project/...
+	@go test `go list ./internal/project/... | grep -v repository` $(val)
+	@go test ./internal/project/repository/... $(val) -port $(PROJECT_DB_TEST_PORT)
 .PHONY: project-test
 
 project-db: ;@ ## Enter project database.
@@ -109,7 +110,7 @@ user-db-force: ;@ ## Force version on user database. Optional <num> argument.
 # SUBSCRIPTION SERVICE
 # =============================================================
 subscription-test:	;@ ## Run subscription tests. Add -- -v for verbosity.
-	go test $(val) ./internal/subscription/...
+	go test ./internal/subscription/... -v $(val)
 .PHONY: subscription-test
 
 subscription-db: ;@ ## Enter subscription database.
@@ -161,7 +162,7 @@ lint: ;@ ## Run linter. Optional <package path> argument.
 .PHONY: lint
 
 test: generate;@ ## Run all tests. Add -- -v for verbosity.
-	go test $(val) ./...
+	go test  ./... $(val)
 .PHONY: test
 
 cover: ;@ ## Run coverage report.
