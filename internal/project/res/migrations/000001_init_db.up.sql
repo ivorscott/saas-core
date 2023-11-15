@@ -8,8 +8,8 @@ CREATE TABLE projects (
     active BOOLEAN DEFAULT TRUE,
     public BOOLEAN DEFAULT FALSE,
     column_order TEXT ARRAY[10],
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
+    updated_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL
 );
 
 CREATE INDEX idx_project_tenant ON projects(tenant_id);
@@ -23,8 +23,8 @@ CREATE TABLE columns (
     title VARCHAR(36) NOT NULL,
     column_name VARCHAR(8) NOT NULL,
     task_ids TEXT[],
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
+    updated_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
     FOREIGN KEY(project_id) REFERENCES projects (project_id)
 );
 CREATE INDEX idx_column_tenant ON columns(tenant_id);
@@ -42,8 +42,8 @@ CREATE TABLE tasks (
     assigned_to VARCHAR(36),
     attachments TEXT[],
     comments TEXT[],
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
+    updated_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
     FOREIGN KEY(project_id) REFERENCES projects (project_id)
 );
 CREATE INDEX idx_task_tenant ON tasks(tenant_id);
@@ -59,8 +59,8 @@ CREATE TABLE comments (
     likes INT,
     user_id VARCHAR(36) NOT NULL,
     edited BOOLEAN DEFAULT FALSE,
-    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
+    updated_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL
 );
 CREATE INDEX idx_comment_tenant ON comments(tenant_id);
 CREATE INDEX idx_comment_task ON comments(task_id);

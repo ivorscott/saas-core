@@ -6,8 +6,8 @@
     "columnName": "column-1",
     "taskIds": [],
     "projectId": "96c3424e-17cf-4bd2-916e-1ec2ddc979a5",
-    "updatedAt": "2022-07-09T05:51:24.211989Z",
-    "createdAt": "2022-07-09T05:51:24.211989Z"
+    "updatedAt": "2022-07-09T05:51:24Z",
+    "createdAt": "2022-07-09T05:51:24Z"
   },
   {
     "id": "4ffd92ae-32c7-4314-b295-18aa7da66d62",
@@ -16,8 +16,8 @@
     "columnName": "column-2",
     "taskIds": [],
     "projectId": "96c3424e-17cf-4bd2-916e-1ec2ddc979a5",
-    "updatedAt": "2022-07-09T05:51:24.219037Z",
-    "createdAt": "2022-07-09T05:51:24.219037Z"
+    "updatedAt": "2022-07-09T05:51:24Z",
+    "createdAt": "2022-07-09T05:51:24Z"
   },
   {
     "id": "29c1b8d2-caba-4d61-9523-a4d2b83df3d9",
@@ -26,8 +26,8 @@
     "columnName": "column-3",
     "taskIds": [],
     "projectId": "96c3424e-17cf-4bd2-916e-1ec2ddc979a5",
-    "updatedAt": "2022-07-09T05:51:24.220731Z",
-    "createdAt": "2022-07-09T05:51:24.220731Z"
+    "updatedAt": "2022-07-09T05:51:24Z",
+    "createdAt": "2022-07-09T05:51:24Z"
   },
   {
     "id": "37bd403f-a9dd-4527-a168-b3b2ac5666db",
@@ -36,8 +36,8 @@
     "columnName": "column-4",
     "taskIds": [],
     "projectId": "96c3424e-17cf-4bd2-916e-1ec2ddc979a5",
-    "updatedAt": "2022-07-09T05:51:24.222499Z",
-    "createdAt": "2022-07-09T05:51:24.222499Z"
+    "updatedAt": "2022-07-09T05:51:24Z",
+    "createdAt": "2022-07-09T05:51:24Z"
   },
   {
     "id": "67459719-a22d-4aff-a6ad-7216bbd87dbd",
@@ -46,8 +46,8 @@
     "columnName": "column-1",
     "taskIds": [],
     "projectId": "f8a6daf8-7239-47c3-a4e7-74d46439c7e5",
-    "updatedAt": "2022-07-09T05:51:24.211989Z",
-    "createdAt": "2022-07-09T05:51:24.211989Z"
+    "updatedAt": "2022-07-09T05:51:24Z",
+    "createdAt": "2022-07-09T05:51:24Z"
   },
   {
     "id": "aae5b0b4-3c31-4019-a1b5-783c01de6884",
@@ -56,8 +56,8 @@
     "columnName": "column-2",
     "taskIds": [],
     "projectId": "f8a6daf8-7239-47c3-a4e7-74d46439c7e5",
-    "updatedAt": "2022-07-09T05:51:24.219037Z",
-    "createdAt": "2022-07-09T05:51:24.219037Z"
+    "updatedAt": "2022-07-09T05:51:24Z",
+    "createdAt": "2022-07-09T05:51:24Z"
   },
   {
     "id": "131f311f-6880-44df-818b-0e986fbed104",
@@ -66,8 +66,8 @@
     "columnName": "column-3",
     "taskIds": [],
     "projectId": "f8a6daf8-7239-47c3-a4e7-74d46439c7e5",
-    "updatedAt": "2022-07-09T05:51:24.220731Z",
-    "createdAt": "2022-07-09T05:51:24.220731Z"
+    "updatedAt": "2022-07-09T05:51:24Z",
+    "createdAt": "2022-07-09T05:51:24Z"
   },
   {
     "id": "83d3a5fd-08e2-487a-a882-a19717e8b143",
@@ -76,7 +76,7 @@
     "columnName": "column-4",
     "taskIds": [],
     "projectId": "f8a6daf8-7239-47c3-a4e7-74d46439c7e5",
-    "updatedAt": "2022-07-09T05:51:24.222499Z",
-    "createdAt": "2022-07-09T05:51:24.222499Z"
+    "updatedAt": "2022-07-09T05:51:24Z",
+    "createdAt": "2022-07-09T05:51:24Z"
   }
 ]

@@ -5,8 +5,8 @@
   title: To Do
   column_name: column-1
   task_ids: RAW='{}'
-  updated_at: 2022-07-09 05:51:24.211989Z
-  created_at: 2022-07-09 05:51:24.211989Z
+  updated_at: 2022-07-09 05:51:24Z
+  created_at: 2022-07-09 05:51:24Z
 
 - column_id: 4ffd92ae-32c7-4314-b295-18aa7da66d62
   project_id: 96c3424e-17cf-4bd2-916e-1ec2ddc979a5
@@ -14,8 +14,8 @@
   title: In Progress
   column_name: column-2
   task_ids: RAW='{}'
-  updated_at: 2022-07-09 05:51:24.219037Z
-  created_at: 2022-07-09 05:51:24.219037Z
+  updated_at: 2022-07-09 05:51:24Z
+  created_at: 2022-07-09 05:51:24Z
 
 - column_id: 29c1b8d2-caba-4d61-9523-a4d2b83df3d9
   project_id: 96c3424e-17cf-4bd2-916e-1ec2ddc979a5
@@ -23,8 +23,8 @@
   title: Review
   column_name: column-3
   task_ids: RAW='{}'
-  updated_at: 2022-07-09 05:51:24.220731Z
-  created_at: 2022-07-09 05:51:24.220731Z
+  updated_at: 2022-07-09 05:51:24Z
+  created_at: 2022-07-09 05:51:24Z
 
 - column_id: 37bd403f-a9dd-4527-a168-b3b2ac5666db
   project_id: 96c3424e-17cf-4bd2-916e-1ec2ddc979a5
@@ -32,8 +32,8 @@
   title: Done
   column_name: column-4
   task_ids: RAW='{}'
-  updated_at: 2022-07-09 05:51:24.222499Z
-  created_at: 2022-07-09 05:51:24.222499Z
+  updated_at: 2022-07-09 05:51:24Z
+  created_at: 2022-07-09 05:51:24Z
 
 # Project 2
 - column_id: 67459719-a22d-4aff-a6ad-7216bbd87dbd
@@ -42,8 +42,8 @@
   title: To Do
   column_name: column-1
   task_ids: RAW='{}'
-  updated_at: 2022-07-09 05:51:24.211989Z
-  created_at: 2022-07-09 05:51:24.211989Z
+  updated_at: 2022-07-09 05:51:24Z
+  created_at: 2022-07-09 05:51:24Z
 
 - column_id: aae5b0b4-3c31-4019-a1b5-783c01de6884
   project_id: f8a6daf8-7239-47c3-a4e7-74d46439c7e5
@@ -51,8 +51,8 @@
   title: In Progress
   column_name: column-2
   task_ids: RAW='{}'
-  updated_at: 2022-07-09 05:51:24.219037Z
-  created_at: 2022-07-09 05:51:24.219037Z
+  updated_at: 2022-07-09 05:51:24Z
+  created_at: 2022-07-09 05:51:24Z
 
 - column_id: 131f311f-6880-44df-818b-0e986fbed104
   project_id: f8a6daf8-7239-47c3-a4e7-74d46439c7e5
@@ -60,8 +60,8 @@
   title: Review
   column_name: column-3
   task_ids: RAW='{}'
-  updated_at: 2022-07-09 05:51:24.220731Z
-  created_at: 2022-07-09 05:51:24.220731Z
+  updated_at: 2022-07-09 05:51:24Z
+  created_at: 2022-07-09 05:51:24Z
 
 - column_id: 83d3a5fd-08e2-487a-a882-a19717e8b143
   project_id: f8a6daf8-7239-47c3-a4e7-74d46439c7e5
@@ -69,5 +69,5 @@
   title: Done
   column_name: column-4
   task_ids: RAW='{}'
-  updated_at: 2022-07-09 05:51:24.222499Z
-  created_at: 2022-07-09 05:51:24.222499Z
+  updated_at: 2022-07-09 05:51:24Z
+  created_at: 2022-07-09 05:51:24Z
