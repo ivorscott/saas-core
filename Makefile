@@ -2,11 +2,13 @@ include .env
 
 .DEFAULT_GOAL := help
 
+project-db-test-port ?=$(PROJECT_DB_TEST_PORT)
+
 # =============================================================
 # ADMIN SERVICE
 # =============================================================
 admin-test:	;@ ## Run admin tests. Add -- -v for verbosity.
-	go test ./internal/admin/... -v $(val)
+	go test ./internal/admin/... $(val)
 .PHONY: admin-test
 
 admin-db: ;@ ## Enter admin database.
@@ -37,14 +39,14 @@ admin-db-force: ;@ ## Force version on admin database. Optional <num> argument.
 # REGISTRATION SERVICE
 # =============================================================
 registration-test:	;@ ## Run registration tests. Add -- -v for verbosity.
-	go test ./internal/registration/... -v $(val)
+	go test ./internal/registration/... $(val)
 .PHONY: registration-test
 
 # =============================================================
 # TENANT SERVICE
 # =============================================================
 tenant-test:	;@ ## Run tenant tests. Add -- -v for verbosity.
-	go test ./internal/tenant/... -v $(val)
+	go test ./internal/tenant/... $(val)
 .PHONY: tenant-test
 
 # =============================================================
@@ -52,7 +54,7 @@ tenant-test:	;@ ## Run tenant tests. Add -- -v for verbosity.
 # =============================================================
 project-test: 	;@ ## Run project tests. Add -- -v for verbosity.
 	@go test `go list ./internal/project/... | grep -v repository` $(val)
-	@go test ./internal/project/repository/... $(val) -port $(PROJECT_DB_TEST_PORT)
+	@go test ./internal/project/repository/... $(val) -port $(project-db-test-port)
 .PHONY: project-test
 
 project-db: ;@ ## Enter project database.
@@ -110,7 +112,7 @@ user-db-force: ;@ ## Force version on user database. Optional <num> argument.
 # SUBSCRIPTION SERVICE
 # =============================================================
 subscription-test:	;@ ## Run subscription tests. Add -- -v for verbosity.
-	go test ./internal/subscription/... -v $(val)
+	go test ./internal/subscription/... $(val)
 .PHONY: subscription-test
 
 subscription-db: ;@ ## Enter subscription database.

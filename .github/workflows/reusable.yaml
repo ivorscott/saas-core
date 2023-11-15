@@ -12,7 +12,7 @@ on:
         description: Github personal access token
         required: true
 jobs:
-  publish:
+  buildAndDeploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read

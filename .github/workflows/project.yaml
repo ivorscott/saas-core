@@ -28,8 +28,9 @@ jobs:
           sleep 5
            kubectl port-forward deploy/db-project-test 5432:5432 &>/dev/null &
       - name: Run Tests
-        run: make project-test -- -port
-  buildAndDeploy:
+        run: |
+          make project-test project-db-test-port=5432 -- -v
+  reuse:
     needs: test
     uses: ./.github/workflows/reusable.yaml
     with:
