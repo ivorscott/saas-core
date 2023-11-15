@@ -21,8 +21,12 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Deploy manifest
-        run: kubectl apply -f ./manifests/db-project-test.yaml
-
+        run: |
+          kubectl apply -f ./manifests/db-project-test.yaml
+          sleep 20
+           kubectl port-forward deploy/db-project-test 5432:5432 &>/dev/null &
+          sleep 5
+           kubectl port-forward deploy/db-project-test 5432:5432 &>/dev/null &
       - name: Run Tests
         run: make project-test
   buildAndDeploy:
