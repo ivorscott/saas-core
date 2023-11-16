@@ -207,8 +207,8 @@ func (tr *TaskRepository) Create(ctx context.Context, nt model.NewTask, pid stri
 		ProjectID:   pid,
 		Comments:    make([]string, 0),
 		Attachments: make([]string, 0),
-		UpdatedAt:   now.UTC(),
-		CreatedAt:   now.UTC(),
+		UpdatedAt:   now.Round(time.Microsecond).UTC(),
+		CreatedAt:   now.Round(time.Microsecond).UTC(),
 	}
 
 	stmt = `
@@ -297,7 +297,7 @@ func (tr *TaskRepository) Update(ctx context.Context, tid string, update model.U
 		t.AssignedTo,
 		pq.Array(t.Comments),
 		pq.Array(t.Attachments),
-		now.UTC(),
+		now.Round(time.Microsecond).UTC(),
 		t.ID,
 	); err != nil {
 		return t, fmt.Errorf("error updating task: %s: %w", tid, err)

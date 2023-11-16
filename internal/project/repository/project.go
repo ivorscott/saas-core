@@ -153,8 +153,8 @@ func (pr *ProjectRepository) Create(ctx context.Context, np model.NewProject, no
 		Active:      true,
 		UserID:      values.UserID,
 		ColumnOrder: []string{"column-1", "column-2", "column-3", "column-4"},
-		UpdatedAt:   now.UTC(),
-		CreatedAt:   now.UTC(),
+		UpdatedAt:   now.Round(time.Microsecond).UTC(),
+		CreatedAt:   now.Round(time.Microsecond).UTC(),
 	}
 
 	stmt := `
@@ -236,7 +236,7 @@ func (pr *ProjectRepository) Update(ctx context.Context, pid string, update mode
 		p.Active,
 		p.Public,
 		pq.Array(p.ColumnOrder),
-		now.UTC(),
+		now.Round(time.Microsecond).UTC(),
 		pid,
 	)
 	if err != nil {

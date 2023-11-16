@@ -2,7 +2,6 @@ package repository_test
 
 import (
 	"context"
-	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
 
@@ -35,7 +34,7 @@ func TestTaskRepository_Create(t *testing.T) {
 				assert.Nil(t, err)
 				expected, err := repo.Retrieve(ctx, actual.ID)
 				assert.Nil(t, err)
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -107,7 +106,7 @@ func TestTaskRepository_Retrieve(t *testing.T) {
 			taskID: expected.ID,
 			expectations: func(t *testing.T, ctx context.Context, actual model.Task, err error) {
 				assert.Nil(t, err)
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -175,7 +174,7 @@ func TestTaskRepository_List(t *testing.T) {
 			projectID: expectedProject.ID,
 			expectations: func(t *testing.T, ctx context.Context, actual []model.Task, err error) {
 				assert.Nil(t, err)
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -242,7 +241,7 @@ func TestTaskRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.Title = actual.Title
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -256,7 +255,7 @@ func TestTaskRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.Points = actual.Points
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -270,7 +269,7 @@ func TestTaskRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expectedTask, actual)
 				expected.Content = actual.Content
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -284,7 +283,7 @@ func TestTaskRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.AssignedTo = actual.AssignedTo
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -298,7 +297,7 @@ func TestTaskRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.Attachments = actual.Attachments
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{

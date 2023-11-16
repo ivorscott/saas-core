@@ -2,7 +2,6 @@ package repository_test
 
 import (
 	"context"
-	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
 
@@ -30,16 +29,16 @@ func TestProjectRepository_Create(t *testing.T) {
 		{
 			name: "success",
 			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID, UserID: expectedUserID}),
-			expectations: func(t *testing.T, ctx context.Context, repo *repository.ProjectRepository, expected model.NewProject, actual model.Project, err error) {
+			expectations: func(t *testing.T, ctx context.Context, repo *repository.ProjectRepository, newProject model.NewProject, actual model.Project, err error) {
 				assert.Nil(t, err)
 				assert.Equal(t, expectedTenantID, actual.TenantID)
 				assert.Equal(t, "MYP-", actual.Prefix)
 				assert.Equal(t, []string{"column-1", "column-2", "column-3", "column-4"}, actual.ColumnOrder)
-				assert.Equal(t, expected.Name, actual.Name)
+				assert.Equal(t, newProject.Name, actual.Name)
 
-				expectedProject, err := repo.Retrieve(ctx, actual.ID)
+				expected, err := repo.Retrieve(ctx, actual.ID)
 				assert.Nil(t, err)
-				assert.Equal(t, expectedProject, actual)
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -100,7 +99,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 			ctx:       web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID}),
 			expectations: func(t *testing.T, ctx context.Context, expected model.Project, actual model.Project, err error) {
 				assert.Nil(t, err)
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -179,7 +178,7 @@ func TestProjectRepository_List(t *testing.T) {
 			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID}),
 			expectations: func(t *testing.T, ctx context.Context, expected []model.Project, actual []model.Project, err error) {
 				assert.Nil(t, err)
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -243,7 +242,7 @@ func TestProjectRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.Name = actual.Name
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -257,7 +256,7 @@ func TestProjectRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.Description = actual.Description
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -271,7 +270,7 @@ func TestProjectRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expectedProject, actual)
 				expected.Active = actual.Active
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -285,7 +284,7 @@ func TestProjectRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expectedProject, actual)
 				expected.Public = actual.Public
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{
@@ -299,7 +298,7 @@ func TestProjectRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expectedProject, actual)
 				expected.ColumnOrder = actual.ColumnOrder
-				assert.True(t, cmp.Equal(expected, actual))
+				assert.Equal(t, expected, actual)
 			},
 		},
 		{

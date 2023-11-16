@@ -138,8 +138,8 @@ func (cr *ColumnRepository) Create(ctx context.Context, nc model.NewColumn, now 
 		ColumnName: nc.ColumnName,
 		TaskIDS:    make([]string, 0),
 		ProjectID:  nc.ProjectID,
-		UpdatedAt:  now.UTC(),
-		CreatedAt:  now.UTC(),
+		UpdatedAt:  now.Round(time.Microsecond).UTC(),
+		CreatedAt:  now.Round(time.Microsecond).UTC(),
 	}
 
 	stmt := `
@@ -206,7 +206,7 @@ func (cr *ColumnRepository) Update(ctx context.Context, cid string, uc model.Upd
 		where column_id = $4
 	`
 
-	_, err = conn.ExecContext(ctx, stmt, c.Title, pq.Array(c.TaskIDS), now.UTC(), cid)
+	_, err = conn.ExecContext(ctx, stmt, c.Title, pq.Array(c.TaskIDS), now.Round(time.Microsecond).UTC(), cid)
 	if err != nil {
 		return c, fmt.Errorf("error updating column :%w", err)
 	}
