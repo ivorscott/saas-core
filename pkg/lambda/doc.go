@@ -9,4 +9,11 @@
 // 1. cd pkg/lambda/modifytoken
 // 1. GOARCH=amd64 GOOS=linux go build -o modifytoken
 // 2. zip modifytoken.zip modifytoken
+//
+// The updatestatus package modifies the status of the tenant post sign up confirmation.
+// https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-lambda-post-confirmation.html
+// Build instructions:
+// 1. cd pkg/lambda/updatestatus
+// 1. GOARCH=amd64 GOOS=linux go build -o updatestatus
+// 2. zip updatestatus.zip updatestatus
 package lambda
