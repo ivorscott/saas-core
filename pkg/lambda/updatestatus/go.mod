@@ -1,4 +1,4 @@
-module github.com/devpies/saas-core/pkg/lambda/modifytoken
+module github.com/devpies/saas-core/pkg/lambda/updatestatus
 
 go 1.18
 
