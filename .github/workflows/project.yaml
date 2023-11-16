@@ -30,7 +30,7 @@ jobs:
       - name: Run Tests
         run: |
           make project-test project-db-test-port=5432 -- -v
-  reuse:
+  publish:
     needs: test
     uses: ./.github/workflows/reusable.yaml
     with:

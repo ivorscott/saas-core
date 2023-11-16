@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  buildAndDeploy:
+  publish:
     uses: ./.github/workflows/reusable.yaml
     with:
       service: subscription
