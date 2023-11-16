@@ -2,6 +2,7 @@ package repository_test
 
 import (
 	"context"
+	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
 
@@ -32,9 +33,9 @@ func TestTaskRepository_Create(t *testing.T) {
 			projectID: expectedProject.ID,
 			expectations: func(t *testing.T, ctx context.Context, repo *repository.TaskRepository, actual model.Task, err error) {
 				assert.Nil(t, err)
-				task, err := repo.Retrieve(ctx, actual.ID)
+				expected, err := repo.Retrieve(ctx, actual.ID)
 				assert.Nil(t, err)
-				assert.Equal(t, task, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -92,7 +93,7 @@ func TestTaskRepository_Create(t *testing.T) {
 
 func TestTaskRepository_Retrieve(t *testing.T) {
 	expectedTenantID := testProjects[0].TenantID
-	expectedTask := testTasks[0]
+	expected := testTasks[0]
 
 	tests := []struct {
 		name         string
@@ -103,10 +104,10 @@ func TestTaskRepository_Retrieve(t *testing.T) {
 		{
 			name:   "success",
 			ctx:    web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID, UserID: testutils.MockUUID}),
-			taskID: expectedTask.ID,
+			taskID: expected.ID,
 			expectations: func(t *testing.T, ctx context.Context, actual model.Task, err error) {
 				assert.Nil(t, err)
-				assert.Equal(t, expectedTask, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -116,13 +117,13 @@ func TestTaskRepository_Retrieve(t *testing.T) {
 			expectations: func(t *testing.T, ctx context.Context, actual model.Task, err error) {
 				assert.NotNil(t, err)
 				assert.Equal(t, fail.ErrInvalidID, err)
-				assert.NotEqual(t, expectedTask, actual)
+				assert.NotEqual(t, expected, actual)
 			},
 		},
 		{
 			name:   "context error",
 			ctx:    testutils.MockCtx,
-			taskID: expectedTask.ID,
+			taskID: expected.ID,
 			expectations: func(t *testing.T, ctx context.Context, actual model.Task, err error) {
 				assert.NotNil(t, err)
 				assert.Equal(t, err, web.CtxErr())
@@ -131,7 +132,7 @@ func TestTaskRepository_Retrieve(t *testing.T) {
 		{
 			name:   "no tenant error",
 			ctx:    web.NewContext(testutils.MockCtx, &web.Values{TenantID: "", UserID: testutils.MockUUID}),
-			taskID: expectedTask.ID,
+			taskID: expected.ID,
 			expectations: func(t *testing.T, ctx context.Context, actual model.Task, err error) {
 				assert.NotNil(t, err)
 				assert.Equal(t, fail.ErrNoTenant, err)
@@ -155,10 +156,10 @@ func TestTaskRepository_List(t *testing.T) {
 	expectedTenantID := testProjects[1].TenantID
 	expectedProject := testProjects[1]
 
-	expectedTasks := make([]model.Task, 0)
+	expected := make([]model.Task, 0)
 	for _, v := range testTasks {
 		if v.ProjectID == expectedProject.ID {
-			expectedTasks = append(expectedTasks, v)
+			expected = append(expected, v)
 		}
 	}
 
@@ -174,7 +175,7 @@ func TestTaskRepository_List(t *testing.T) {
 			projectID: expectedProject.ID,
 			expectations: func(t *testing.T, ctx context.Context, actual []model.Task, err error) {
 				assert.Nil(t, err)
-				assert.Equal(t, expectedTasks, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -184,7 +185,7 @@ func TestTaskRepository_List(t *testing.T) {
 			expectations: func(t *testing.T, ctx context.Context, actual []model.Task, err error) {
 				assert.NotNil(t, err)
 				assert.Equal(t, fail.ErrInvalidID, err)
-				assert.NotEqual(t, expectedTasks, actual)
+				assert.NotEqual(t, expected, actual)
 			},
 		},
 		{
@@ -241,7 +242,7 @@ func TestTaskRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.Title = actual.Title
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -255,7 +256,7 @@ func TestTaskRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.Points = actual.Points
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -269,7 +270,7 @@ func TestTaskRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expectedTask, actual)
 				expected.Content = actual.Content
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -283,7 +284,7 @@ func TestTaskRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.AssignedTo = actual.AssignedTo
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -297,7 +298,7 @@ func TestTaskRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.Attachments = actual.Attachments
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{

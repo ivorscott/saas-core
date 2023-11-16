@@ -2,6 +2,7 @@ package repository_test
 
 import (
 	"context"
+	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
 
@@ -99,7 +100,7 @@ func TestProjectRepository_Retrieve(t *testing.T) {
 			ctx:       web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID}),
 			expectations: func(t *testing.T, ctx context.Context, expected model.Project, actual model.Project, err error) {
 				assert.Nil(t, err)
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -178,7 +179,7 @@ func TestProjectRepository_List(t *testing.T) {
 			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID}),
 			expectations: func(t *testing.T, ctx context.Context, expected []model.Project, actual []model.Project, err error) {
 				assert.Nil(t, err)
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -242,7 +243,7 @@ func TestProjectRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.Name = actual.Name
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -256,7 +257,7 @@ func TestProjectRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.Description = actual.Description
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -270,7 +271,7 @@ func TestProjectRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expectedProject, actual)
 				expected.Active = actual.Active
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -284,7 +285,7 @@ func TestProjectRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expectedProject, actual)
 				expected.Public = actual.Public
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -298,7 +299,7 @@ func TestProjectRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expectedProject, actual)
 				expected.ColumnOrder = actual.ColumnOrder
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{

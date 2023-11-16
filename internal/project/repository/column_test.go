@@ -2,6 +2,7 @@ package repository_test
 
 import (
 	"context"
+	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
 
@@ -31,9 +32,9 @@ func TestColumnRepository_Create(t *testing.T) {
 			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID, UserID: expectedProject.UserID}),
 			expectations: func(t *testing.T, ctx context.Context, repo *repository.ColumnRepository, actual model.Column, err error) {
 				assert.Nil(t, err)
-				column, err := repo.Retrieve(ctx, actual.ID)
+				expected, err := repo.Retrieve(ctx, actual.ID)
 				assert.Nil(t, err)
-				assert.Equal(t, column, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -86,7 +87,7 @@ func TestColumnRepository_Retrieve(t *testing.T) {
 			ctx:      web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedColumn.TenantID}),
 			expectations: func(t *testing.T, expected model.Column, actual model.Column, err error) {
 				assert.Nil(t, err)
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -174,7 +175,7 @@ func TestColumnRepository_List(t *testing.T) {
 			ctx:       web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID}),
 			expectations: func(t *testing.T, expected []model.Column, actual []model.Column, err error) {
 				assert.Nil(t, err)
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -250,7 +251,7 @@ func TestColumnRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.Title = actual.Title
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
@@ -264,7 +265,7 @@ func TestColumnRepository_Update(t *testing.T) {
 				assert.Nil(t, err)
 				assert.NotEqual(t, expected, actual)
 				expected.TaskIDS = actual.TaskIDS
-				assert.Equal(t, expected, actual)
+				assert.True(t, cmp.Equal(expected, actual))
 			},
 		},
 		{
