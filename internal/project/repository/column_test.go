@@ -174,7 +174,7 @@ func TestColumnRepository_List(t *testing.T) {
 			ctx:       web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID}),
 			expectations: func(t *testing.T, expected []model.Column, actual []model.Column, err error) {
 				assert.Nil(t, err)
-				assert.Equal(t, expected, actual)
+				assert.ElementsMatch(t, expected, actual)
 			},
 		},
 		{

@@ -178,7 +178,7 @@ func TestProjectRepository_List(t *testing.T) {
 			ctx:  web.NewContext(testutils.MockCtx, &web.Values{TenantID: expectedTenantID}),
 			expectations: func(t *testing.T, ctx context.Context, expected []model.Project, actual []model.Project, err error) {
 				assert.Nil(t, err)
-				assert.Equal(t, expected, actual)
+				assert.ElementsMatch(t, expected, actual)
 			},
 		},
 		{

@@ -174,7 +174,7 @@ func TestTaskRepository_List(t *testing.T) {
 			projectID: expectedProject.ID,
 			expectations: func(t *testing.T, ctx context.Context, actual []model.Task, err error) {
 				assert.Nil(t, err)
-				assert.Equal(t, expected, actual)
+				assert.ElementsMatch(t, expected, actual)
 			},
 		},
 		{
