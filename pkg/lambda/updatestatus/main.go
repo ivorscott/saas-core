@@ -13,13 +13,14 @@ import (
 
 func handler(ctx context.Context, event events.CognitoEventUserPoolsPostConfirmation) (events.CognitoEventUserPoolsPostConfirmation, error) {
 	client := repository.NewDynamoRepository(ctx, event.Region)
-
+	fmt.Printf("event: %v", event)
+	
 	id, ok := event.Request.UserAttributes["custom:tenant-id"]
 	if !ok {
 		return event, fmt.Errorf("error: missing tenant-id")
 	}
 
-	fmt.Printf("%s", id)
+	fmt.Printf("tenant id: %s", id)
 
 	out, err := client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		TableName: aws.String("local-tenants"),
@@ -38,7 +39,7 @@ func handler(ctx context.Context, event events.CognitoEventUserPoolsPostConfirma
 	if err != nil {
 		return event, fmt.Errorf("error: %w", err)
 	}
-	fmt.Printf("%v", out.Attributes)
+	fmt.Printf("attributes: %v", out.Attributes)
 
 	return event, nil
 }

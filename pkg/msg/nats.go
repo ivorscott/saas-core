@@ -108,7 +108,6 @@ func (jctx *StreamContext) setupMsgHandler(messageType string, handler listenHan
 			}
 			jctx.logger.Info("message acknowledged", zap.String("traceId", message.Metadata.TraceID))
 		case *web.Error:
-			err = m.Ack()
 			if err != nil {
 				jctx.logger.Error("error acknowledging message", zap.Error(err))
 			}
