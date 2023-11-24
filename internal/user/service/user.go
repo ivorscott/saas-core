@@ -225,10 +225,10 @@ func (us *UserService) AddAdminUserFromEvent(ctx context.Context, message interf
 
 	na := newAdminUser(event.Data)
 
-	err = us.userRepo.RunTx(ctx, func(tx *sqlx.Tx) error {
-		// The requester may be a SaaS Admin. Use the tenantID from the event instead of context.
-		ctx = web.NewContext(ctx, &web.Values{TenantID: na.TenantID})
+	// The requester may be a SaaS Admin. Use the tenantID from the event instead of context.
+	ctx = web.NewContext(ctx, &web.Values{TenantID: na.TenantID})
 
+	err = us.userRepo.RunTx(ctx, func(tx *sqlx.Tx) error {
 		if err = us.userRepo.CreateAdminUserTx(ctx, tx, na); err != nil {
 			us.logger.Error("failed to create tenant admin")
 			return err

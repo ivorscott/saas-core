@@ -14,7 +14,7 @@ import (
 func handler(ctx context.Context, event events.CognitoEventUserPoolsPostConfirmation) (events.CognitoEventUserPoolsPostConfirmation, error) {
 	client := repository.NewDynamoRepository(ctx, event.Region)
 	fmt.Printf("event: %v", event)
-	
+
 	id, ok := event.Request.UserAttributes["custom:tenant-id"]
 	if !ok {
 		return event, fmt.Errorf("error: missing tenant-id")
