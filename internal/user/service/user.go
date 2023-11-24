@@ -247,7 +247,7 @@ func (us *UserService) AddAdminUserFromEvent(ctx context.Context, message interf
 		}
 		return nil
 	})
-	return nil
+	return err
 }
 
 func newAdminUser(data msg.TenantIdentityCreatedEventData) model.NewAdminUser {
